@@ -100,7 +100,7 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
       `${isMobile ? (mobileSize ?? Math.max(desktopSize - 2, 10)) : desktopSize}px`,
     [isMobile],
   );
-  const helpCloseButtonSize = isMobile ? 28 : 32;
+  const helpCloseButtonSize = isMobile ? 20 : 24;
 
   const helpDistanceFactor = useMemo(() => {
     const { width } = size;
@@ -519,91 +519,94 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
             distanceFactor={helpDistanceFactor}
             style={{
               pointerEvents: "auto",
-              width: "min(500px, 80vw)",
-              maxHeight: "70vh",
-              padding: isMobile ? "16px 18px" : "20px 24px",
+              width: "min(440px, 75vw)",
+              maxHeight: "65vh",
+              padding: isMobile ? "14px 16px" : "18px 20px",
               background: "rgba(12, 12, 18, 0.97)",
               border: "1px solid rgba(255, 255, 255, 0.16)",
-              borderRadius: "14px",
+              borderRadius: "12px",
               boxShadow: "0 22px 56px rgba(4, 8, 24, 0.65)",
               color: "white",
               fontFamily: "monospace",
               overflowY: "auto",
+              position: "relative",
             }}
           >
+            <button
+              type="button"
+              onClick={() => onHelpToggle(false)}
+              style={{
+                position: "absolute",
+                top: isMobile ? "10px" : "12px",
+                right: isMobile ? "10px" : "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: `${helpCloseButtonSize}px`,
+                minWidth: `${helpCloseButtonSize}px`,
+                height: `${helpCloseButtonSize}px`,
+                borderRadius: "9999px",
+                border: "1px solid rgba(255, 255, 255, 0.25)",
+                background: "rgba(255, 255, 255, 0.14)",
+                color: "#ffffff",
+                fontSize: getFontSize(12, 10),
+                fontWeight: 700,
+                lineHeight: 1,
+                flexShrink: 0,
+                cursor: "pointer",
+                transition: "transform 0.2s ease, background 0.2s ease",
+                touchAction: "manipulation",
+                zIndex: 10,
+              }}
+              onPointerEnter={e => {
+                e.currentTarget.style.transform = "scale(1.1)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+              }}
+              onPointerLeave={e => {
+                e.currentTarget.style.transform = "scale(1)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.14)";
+              }}
+              onPointerDown={e => {
+                e.currentTarget.style.transform = "scale(0.95)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
+              }}
+              onPointerUp={e => {
+                e.currentTarget.style.transform = "scale(1.1)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+              }}
+            >
+              ×
+            </button>
             <div
               ref={helpCardRef}
               style={{
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: isMobile ? "16px" : "20px",
+                flexDirection: "column",
+                gap: "5px",
+                marginBottom: isMobile ? "14px" : "18px",
               }}
             >
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <h3 style={{ fontSize: getFontSize(18, 16), fontWeight: 700, letterSpacing: "0.1em" }}>
-                  DOOM INDEX SIGNAL GUIDE
-                </h3>
-                <p style={{ fontSize: getFontSize(12, 11), opacity: 0.72, maxWidth: "480px", lineHeight: 1.6 }}>
-                  DOOM INDEX listens to live market caps on Solana. Every minute the gallery rebuilds a single
-                  painting—if the numbers shift, the world on the canvas mutates. Each token below bends the prompt in a
-                  specific direction.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onHelpToggle(false)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: `${helpCloseButtonSize}px`,
-                  minWidth: `${helpCloseButtonSize}px`,
-                  height: `${helpCloseButtonSize}px`,
-                  borderRadius: "9999px",
-                  border: "1px solid rgba(255, 255, 255, 0.25)",
-                  background: "rgba(255, 255, 255, 0.14)",
-                  color: "#ffffff",
-                  fontSize: getFontSize(16, 14),
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  flexShrink: 0,
-                  cursor: "pointer",
-                  transition: "transform 0.2s ease, background 0.2s ease",
-                  touchAction: "manipulation",
-                }}
-                onPointerEnter={e => {
-                  e.currentTarget.style.transform = "scale(1.1)";
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-                }}
-                onPointerLeave={e => {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.14)";
-                }}
-                onPointerDown={e => {
-                  e.currentTarget.style.transform = "scale(0.95)";
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
-                }}
-                onPointerUp={e => {
-                  e.currentTarget.style.transform = "scale(1.1)";
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-                }}
-              >
-                ×
-              </button>
+              <h3 style={{ fontSize: getFontSize(16, 14), fontWeight: 700, letterSpacing: "0.1em" }}>
+                DOOM INDEX SIGNAL GUIDE
+              </h3>
+              <p style={{ fontSize: getFontSize(11, 10), opacity: 0.72, maxWidth: "420px", lineHeight: 1.5 }}>
+                DOOM INDEX listens to live market caps on Solana. Every minute the gallery rebuilds a single painting—if
+                the numbers shift, the world on the canvas mutates. Each token below bends the prompt in a specific
+                direction.
+              </p>
             </div>
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "14px",
-                marginBottom: isMobile ? "16px" : "20px",
+                gap: "12px",
+                marginBottom: isMobile ? "14px" : "18px",
               }}
             >
-              <div style={{ display: "flex", gap: "16px", alignItems: "baseline" }}>
+              <div style={{ display: "flex", gap: "14px", alignItems: "baseline" }}>
                 <span
                   style={{
-                    fontSize: getFontSize(11, 10),
+                    fontSize: getFontSize(10, 9),
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
                     opacity: 0.6,
@@ -611,26 +614,26 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
                 >
                   Mechanics
                 </span>
-                <p style={{ fontSize: getFontSize(12, 11), opacity: 0.72, lineHeight: 1.6 }}>
+                <p style={{ fontSize: getFontSize(11, 10), opacity: 0.72, lineHeight: 1.5 }}>
                   1. Fetch current market caps → 2. Compare against the previous minute → 3. If anything moved, rebuild
                   the prompt and generate a new frame → 4. Store the image and state for the next cycle.
                 </p>
               </div>
             </div>
-            <div style={{ display: "grid", gap: "16px" }}>
+            <div style={{ display: "grid", gap: "14px" }}>
               {TOKEN_TICKERS.map(ticker => {
                 const description = TOKEN_DESCRIPTIONS[ticker];
                 return (
                   <div
                     key={ticker}
                     style={{
-                      padding: "14px 18px",
-                      borderRadius: "14px",
+                      padding: "12px 16px",
+                      borderRadius: "12px",
                       background: "rgba(255, 255, 255, 0.06)",
                       border: "1px solid rgba(255, 255, 255, 0.1)",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "6px",
+                      gap: "5px",
                     }}
                   >
                     <div
@@ -640,22 +643,22 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
                         alignItems: "baseline",
                       }}
                     >
-                      <span style={{ fontSize: getFontSize(12, 11), letterSpacing: "0.18em", opacity: 0.58 }}>
+                      <span style={{ fontSize: getFontSize(11, 10), letterSpacing: "0.18em", opacity: 0.58 }}>
                         ${ticker}
                       </span>
-                      <span style={{ fontSize: getFontSize(11, 10), opacity: 0.52, letterSpacing: "0.08em" }}>
+                      <span style={{ fontSize: getFontSize(10, 9), opacity: 0.52, letterSpacing: "0.08em" }}>
                         Threshold · 1M MC
                       </span>
                     </div>
-                    <h4 style={{ fontSize: getFontSize(14, 12), fontWeight: 700 }}>{description.title}</h4>
-                    <p style={{ fontSize: getFontSize(12, 11), opacity: 0.78, lineHeight: 1.6 }}>
+                    <h4 style={{ fontSize: getFontSize(13, 11), fontWeight: 700 }}>{description.title}</h4>
+                    <p style={{ fontSize: getFontSize(11, 10), opacity: 0.78, lineHeight: 1.5 }}>
                       {description.description}
                     </p>
                     <p
                       style={{
-                        fontSize: getFontSize(11, 10),
+                        fontSize: getFontSize(10, 9),
                         opacity: 0.62,
-                        lineHeight: 1.6,
+                        lineHeight: 1.5,
                         fontStyle: "italic",
                       }}
                     >

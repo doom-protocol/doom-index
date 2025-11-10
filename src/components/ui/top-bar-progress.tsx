@@ -8,11 +8,13 @@ const MINUTE_MS = 60000;
 const HAPTIC_WINDOW_START_REMAINING_SECOND = 10;
 
 export const TopBarProgress: FC = () => {
+  // Hydrationエラーを防ぐため、初期値は0に設定し、クライアント側で実際の値を設定
   const [progress, setProgress] = useState<number>(0);
-  const [displaySecond, setDisplaySecond] = useState<number>(59);
+  const [displaySecond, setDisplaySecond] = useState<number>(0);
   const animationFrameRef = useRef<number | undefined>(undefined);
-  const lastRemainingRef = useRef<number>(59);
+  const lastRemainingRef = useRef<number>(0);
   const previousProgressRef = useRef<number>(0);
+  const isInitializedRef = useRef<boolean>(false);
 
   const { triggerHaptic } = useHaptic();
   const [playChime] = useSound("/clock-chime.mp3", { interrupt: true });
@@ -24,6 +26,21 @@ export const TopBarProgress: FC = () => {
       const remainingMs = MINUTE_MS - elapsedInCycle;
       const nextRemainingSeconds = Math.floor(remainingMs / 1000);
       const currentElapsedProgress = elapsedInCycle / MINUTE_MS;
+
+      // クライアント側でのみ初期値を設定（Hydrationエラーを防ぐ）
+      if (!isInitializedRef.current) {
+        const initialProgress = currentElapsedProgress;
+        const initialDisplaySecond = Math.min(59, nextRemainingSeconds);
+
+        setProgress(initialProgress);
+        setDisplaySecond(initialDisplaySecond);
+        lastRemainingRef.current = initialDisplaySecond;
+        previousProgressRef.current = initialProgress;
+        isInitializedRef.current = true;
+        animationFrameRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
       const hasWrapped = currentElapsedProgress < previousProgressRef.current;
       const previousRemaining = lastRemainingRef.current;
 
@@ -38,36 +55,23 @@ export const TopBarProgress: FC = () => {
         previousProgressRef.current = 0;
       } else {
         const displaySeconds = Math.min(59, nextRemainingSeconds);
+        // ゲージは実際の経過時間から直接計算（秒数の切り捨ての影響を受けない）
+        const progressValue = elapsedInCycle / MINUTE_MS;
+
         if (displaySeconds !== previousRemaining) {
           if (displaySeconds <= HAPTIC_WINDOW_START_REMAINING_SECOND && displaySeconds > 0) {
             triggerHaptic();
           }
           if (displaySeconds === 0) {
             playChime();
-            setProgress(1);
-            previousProgressRef.current = 1;
-          } else {
-            setDisplaySecond(displaySeconds);
-            lastRemainingRef.current = displaySeconds;
-            // 秒数に基づいてゲージを計算: (60 - displaySeconds) / 60
-            const progressValue = (60 - displaySeconds) / 60;
-            previousProgressRef.current = currentElapsedProgress;
-            setProgress(progressValue);
           }
-        } else {
-          // 秒数が変わらない場合でも、ゲージを更新
-          if (displaySeconds === 0) {
-            setProgress(1);
-          } else {
-            const progressValue = (60 - displaySeconds) / 60;
-            // 現在の秒内での進捗を追加
-            const msInCurrentSecond = remainingMs % 1000;
-            const progressInSecond = msInCurrentSecond / 1000;
-            const fineProgress = progressValue + (1 / 60) * (1 - progressInSecond);
-            previousProgressRef.current = currentElapsedProgress;
-            setProgress(fineProgress);
-          }
+          setDisplaySecond(displaySeconds);
+          lastRemainingRef.current = displaySeconds;
         }
+
+        // ゲージは毎フレーム更新（秒数とは独立して正確な進捗を表示）
+        previousProgressRef.current = currentElapsedProgress;
+        setProgress(progressValue);
       }
 
       animationFrameRef.current = requestAnimationFrame(animate);

@@ -10,10 +10,15 @@ interface CameraRigProps {
   preset?: CameraPreset;
 }
 
+// Dashboard position: [1.8, 0.5, 2.2]
+// 手動調整で確認したdashboardの正面にカメラを配置する座標
+const DASHBOARD_POSITION: [number, number, number] = [1.8, 0.5, 2.2];
+
 const PRESETS: Record<CameraPreset, { position: [number, number, number]; lookAt: [number, number, number] }> = {
   dashboard: {
-    position: [1.2, 0.5, 1.5],
-    lookAt: [1.8, 0.5, 2.2],
+    // 手動調整で確認したdashboardの正面のカメラ位置
+    position: [3.1, 0.53, 1.01],
+    lookAt: DASHBOARD_POSITION,
   },
   painting: {
     position: [0, 0.8, 0.8],
