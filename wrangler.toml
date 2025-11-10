@@ -1,7 +1,7 @@
 # Cloudflare Workers Configuration for DOOM INDEX
 
 name = "doom-index"
-main = "src/worker.ts"
+main = "./src/worker.ts"
 compatibility_date = "2025-03-25"
 compatibility_flags = [
  "nodejs_compat",
