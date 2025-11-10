@@ -33,7 +33,9 @@ export const TopBarProgress: FC = () => {
           playChime();
         }
         setDisplaySecond(0);
+        setProgress(0);
         lastRemainingRef.current = 0;
+        previousProgressRef.current = 0;
       } else {
         if (nextRemainingSeconds !== previousRemaining) {
           if (nextRemainingSeconds <= HAPTIC_WINDOW_START_REMAINING_SECOND) {
@@ -41,14 +43,15 @@ export const TopBarProgress: FC = () => {
           }
           if (nextRemainingSeconds === 0) {
             playChime();
+            setProgress(0);
+            previousProgressRef.current = 0;
           }
           setDisplaySecond(nextRemainingSeconds);
           lastRemainingRef.current = nextRemainingSeconds;
         }
+        previousProgressRef.current = currentProgress;
+        setProgress(currentProgress);
       }
-
-      previousProgressRef.current = currentProgress;
-      setProgress(currentProgress);
 
       animationFrameRef.current = requestAnimationFrame(animate);
     };
