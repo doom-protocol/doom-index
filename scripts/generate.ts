@@ -14,7 +14,7 @@ import { join } from "path";
 import type { McMapRounded } from "@/constants/token";
 import { createPromptService } from "@/services/prompt";
 import { resolveProviderWithMock, type ProviderNameWithMock } from "@/lib/providers";
-import logger from "@/utils/logger";
+import { logger } from "@/utils/logger";
 
 type Args = {
   provider: ProviderNameWithMock;

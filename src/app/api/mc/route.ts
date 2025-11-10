@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { roundMc4 } from "@/lib/round";
 import { getServices } from "@/services/container";
 import { TOKEN_TICKERS } from "@/constants/token";
-import logger from "@/utils/logger";
+import { logger } from "@/utils/logger";
 
 export const runtime = "edge";
 

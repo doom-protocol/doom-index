@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { TOKEN_TICKERS, type TokenTicker } from "@/constants/token";
 import { getServices } from "@/services/container";
-import logger from "@/utils/logger";
+import { logger } from "@/utils/logger";
 
 export const runtime = "edge";
 

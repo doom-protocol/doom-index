@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import logger from "@/utils/logger";
+import { logger } from "@/utils/logger";
 import { getServices } from "@/services/container";
 
 export const runtime = "edge";

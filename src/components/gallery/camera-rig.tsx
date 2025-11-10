@@ -12,12 +12,12 @@ interface CameraRigProps {
 
 const PRESETS: Record<CameraPreset, { position: [number, number, number]; lookAt: [number, number, number] }> = {
   dashboard: {
-    position: [2.5, 1.6, 0],
-    lookAt: [2.5, 1.6, -1],
+    position: [1.2, 0.5, 1.5],
+    lookAt: [1.8, 0.5, 2.2],
   },
   painting: {
-    position: [0, 1.6, 1.0],
-    lookAt: [0, 1.6, -4.5],
+    position: [0, 0.8, 0.8],
+    lookAt: [0, 0.8, 2.8],
   },
 };
 

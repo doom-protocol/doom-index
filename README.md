@@ -25,6 +25,11 @@ IMAGE_PROVIDER=smart  # Options: smart (recommended), ai-sdk, runware-sdk
 # Prompt Template
 PROMPT_TEMPLATE=default  # Options: default, experimental
 
+# Log Level (optional)
+# Options: ERROR, WARN, INFO, DEBUG, LOG
+# Default: DEBUG in development, INFO in production
+# LOG_LEVEL=DEBUG
+
 # Vercel Blob Storage (required for production)
 BLOB_READ_WRITE_TOKEN=your_vercel_blob_token_here
 

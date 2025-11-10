@@ -1,7 +1,7 @@
 import { err, ok, Result } from "neverthrow";
 import { roundMc4 } from "@/lib/round";
 import { hashRoundedMap } from "@/lib/pure/hash";
-import logger from "@/utils/logger";
+import { logger } from "@/utils/logger";
 import { TOKEN_TICKERS, type McMap, type McMapRounded } from "@/constants/token";
 import type { MarketCapService } from "@/services/market-cap";
 import type { PromptService, PromptComposition } from "@/services/prompt";

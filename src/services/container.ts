@@ -1,4 +1,4 @@
-import logger from "@/utils/logger";
+import { logger } from "@/utils/logger";
 import { createMarketCapService } from "@/services/market-cap";
 import { createPromptService } from "@/services/prompt";
 import { createStateService } from "@/services/state";

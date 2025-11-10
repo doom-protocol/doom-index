@@ -24,6 +24,7 @@ export const env = createEnv({
 
     // Node Environment
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    LOG_LEVEL: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]).optional(),
   },
 
   /**
@@ -59,7 +60,7 @@ export const env = createEnv({
     RUNWARE_API_KEY: process.env.RUNWARE_API_KEY,
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
     NODE_ENV: process.env.NODE_ENV,
-
+    LOG_LEVEL: process.env.LOG_LEVEL,
     // Shared
     IMAGE_PROVIDER: process.env.IMAGE_PROVIDER,
     PROMPT_TEMPLATE: process.env.PROMPT_TEMPLATE,

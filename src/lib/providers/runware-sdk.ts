@@ -3,7 +3,7 @@ import { Runware } from "@runware/sdk-js";
 import { env } from "@/env";
 import type { ImageProvider, ImageRequest } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
-import logger from "@/utils/logger";
+import { logger } from "@/utils/logger";
 
 /**
  * Extended Runware type with runtime methods
@@ -63,7 +63,7 @@ export const createRunwareSdkProvider = (): ImageProvider => ({
         } as AppError);
       }
 
-      const images = await runware.requestImages({
+      const images = (await runware.requestImages({
         positivePrompt: input.prompt,
         negativePrompt: input.negative,
         height: input.height,
@@ -74,7 +74,7 @@ export const createRunwareSdkProvider = (): ImageProvider => ({
         outputType: "base64Data",
         uploadEndpoint: undefined, // Return base64 instead of uploading
         ...(seedInt !== undefined && { seed: seedInt }),
-      }) as Array<{ taskUUID: string; imageBase64Data?: string }>;
+      })) as Array<{ taskUUID: string; imageBase64Data?: string }>;
 
       if (!images || images.length === 0) {
         return err({

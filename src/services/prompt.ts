@@ -4,7 +4,7 @@ import { mapToVisualParams, type VisualParams } from "@/lib/pure/mapping";
 import { hashVisualParams, seedForMinute, buildGenerationFileName } from "@/lib/pure/hash";
 import { buildSDXLPrompt } from "@/lib/pure/doom-prompt";
 import { getMinuteBucket } from "@/lib/time";
-import logger from "@/utils/logger";
+import { logger } from "@/utils/logger";
 import type { McMapRounded } from "@/constants/token";
 import type { AppError } from "@/types/app-error";
 

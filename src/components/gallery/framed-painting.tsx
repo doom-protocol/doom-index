@@ -14,24 +14,25 @@ const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 
 export const FramedPainting: React.FC<FramedPaintingProps> = ({
   thumbnailUrl = DEFAULT_THUMBNAIL,
-  framePosition = [0, 1.6, -4.5],
+  framePosition = [0, 0.8, 2.8],
 }) => {
   const meshRef = useRef<Mesh>(null);
 
   // Load GLB frame model
   const { scene: frameModel } = useGLTF("/frame.glb") as GLTF;
 
-  // Load texture - useTexture from drei already handles texture configuration
+  // Load texture
   const texture = useTexture(thumbnailUrl || DEFAULT_THUMBNAIL, loadedTexture => {
-    // Configure texture on load
     loadedTexture.colorSpace = SRGBColorSpace;
     loadedTexture.anisotropy = 4;
     loadedTexture.needsUpdate = true;
   });
 
   // Frame dimensions (inner dimensions for the painting)
-  const innerWidth = 2.0;
-  const innerHeight = 2.0;
+  // GLB model is 1m height, so inner painting should be slightly smaller
+  // Adjust size to fit both mobile and PC screens
+  const innerWidth = 0.7;
+  const innerHeight = 0.7;
 
   // Calculate aspect ratio fit (contain)
   const image = texture.image as HTMLImageElement | undefined;
@@ -50,11 +51,11 @@ export const FramedPainting: React.FC<FramedPaintingProps> = ({
   }
 
   return (
-    <group position={framePosition}>
-      {/* GLB Frame Model */}
-      <primitive object={frameModel.clone()} />
+    <group position={framePosition} rotation={[0, Math.PI, 0]}>
+      {/* GLB Frame Model - flip X-axis to show front face */}
+      <primitive object={frameModel.clone()} scale={[-1, 1, 1]} />
 
-      {/* Painting plane (ImageAnchor equivalent) */}
+      {/* Painting plane */}
       <mesh ref={meshRef} position={[0, 0, 0.01]}>
         <planeGeometry args={[planeWidth, planeHeight]} />
         <meshStandardMaterial map={texture} roughness={0.4} metalness={0.0} />

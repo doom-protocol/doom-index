@@ -4,7 +4,7 @@ import { openai } from "@ai-sdk/openai";
 import type { ImageModel } from "ai";
 import type { ImageProvider, ImageRequest } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
-import logger from "@/utils/logger";
+import { logger } from "@/utils/logger";
 
 type OpenAiProviderMetadata = {
   images?: Array<{

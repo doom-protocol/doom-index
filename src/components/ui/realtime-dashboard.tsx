@@ -2,18 +2,10 @@
 
 import { Html } from "@react-three/drei";
 import { useMc } from "@/hooks/use-mc";
+import { TOKEN_CONFIG_MAP } from "@/constants/token";
 import type { TokenTicker } from "@/types/domain";
 
-const TOKEN_LABELS: Record<TokenTicker, string> = {
-  CO2: "Carbon Dioxide",
-  ICE: "Ice Coverage",
-  FOREST: "Forest Area",
-  NUKE: "Nuclear Activity",
-  MACHINE: "Mechanization",
-  PANDEMIC: "Disease Spread",
-  FEAR: "Fear Index",
-  HOPE: "Hope Index",
-};
+const getPumpFunUrl = (address: string) => `https://pump.fun/${address}`;
 
 export const RealtimeDashboard: React.FC = () => {
   const { data, isLoading, isError } = useMc();
@@ -21,8 +13,9 @@ export const RealtimeDashboard: React.FC = () => {
   return (
     <Html
       transform
-      position={[2.5, 1.6, -4.5]}
-      distanceFactor={1.5}
+      position={[1.8, 0.5, 2.2]}
+      rotation={[0, -Math.PI / 4, 0]}
+      distanceFactor={0.6}
       style={{
         width: "400px",
         padding: "20px",
@@ -35,19 +28,40 @@ export const RealtimeDashboard: React.FC = () => {
       }}
     >
       <div>
-        <h2 style={{ fontSize: "18px", marginBottom: "16px", fontWeight: "bold" }}>Market Indicators</h2>
+        <h2 style={{ fontSize: "18px", marginBottom: "16px", fontWeight: "bold" }}>Elements of the World</h2>
 
         {isLoading && <p style={{ opacity: 0.6 }}>Loading...</p>}
         {isError && <p style={{ color: "#ff6b6b" }}>Error loading data</p>}
 
         {data && (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {(Object.keys(data.tokens) as TokenTicker[]).map(ticker => (
-              <div key={ticker} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "12px", opacity: 0.8 }}>{TOKEN_LABELS[ticker]}</span>
-                <span style={{ fontSize: "14px", fontWeight: "bold" }}>${data.tokens[ticker].toFixed(4)}</span>
-              </div>
-            ))}
+            {(Object.keys(data.tokens) as TokenTicker[]).map(ticker => {
+              const tokenConfig = TOKEN_CONFIG_MAP[ticker];
+              const pumpFunUrl = getPumpFunUrl(tokenConfig.address);
+
+              return (
+                <div key={ticker} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <a
+                    href={pumpFunUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      color: "#4ade80",
+                      textDecoration: "none",
+                      cursor: "pointer",
+                      transition: "color 0.2s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#22c55e")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#4ade80")}
+                  >
+                    ${ticker}
+                  </a>
+                  <span style={{ fontSize: "14px", fontWeight: "bold" }}>${data.tokens[ticker].toFixed(4)}</span>
+                </div>
+              );
+            })}
             <div
               style={{
                 marginTop: "8px",
