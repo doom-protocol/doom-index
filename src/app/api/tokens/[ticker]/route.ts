@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { TOKEN_TICKERS, type TokenTicker } from "@/constants/token";
-import { getJsonFromPublicUrl } from "@/lib/r2";
+import { getJsonR2, resolveR2Bucket } from "@/lib/r2";
 import { logger } from "@/utils/logger";
-import { env } from "@/env";
 import type { TokenState } from "@/types/domain";
 
 const isTokenTicker = (value: string): value is TokenTicker => TOKEN_TICKERS.includes(value as TokenTicker);
@@ -18,9 +17,17 @@ export async function GET(_request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Unknown ticker" }, { status: 404 });
   }
 
-  // Read directly from R2 public URL
-  const url = `${env.R2_PUBLIC_DOMAIN}/state/${ticker}.json`;
-  const result = await getJsonFromPublicUrl<TokenState>(url);
+  const bucketResult = resolveR2Bucket();
+  if (bucketResult.isErr()) {
+    logger.error("api.token.resolve-bucket.error", {
+      ticker,
+      error: bucketResult.error,
+    });
+    return NextResponse.json({ error: bucketResult.error }, { status: 500 });
+  }
+
+  const bucket = bucketResult.value;
+  const result = await getJsonR2<TokenState>(bucket, `state/${ticker}.json`);
 
   if (result.isErr()) {
     logger.error("api.token.error", { ticker, error: result.error });

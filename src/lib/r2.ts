@@ -6,6 +6,8 @@
  * - Next.js environment: Uses public URL via fetch
  */
 
+import { cache } from "react";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { err, ok, Result } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 
@@ -21,6 +23,49 @@ export type R2GetResult = {
   text: () => Promise<string>;
   arrayBuffer: () => Promise<ArrayBuffer>;
 };
+
+const contextError = (message: string, cause?: unknown): AppError => ({
+  type: "InternalError",
+  message,
+  cause,
+});
+
+const resolveContext = cache(() => getCloudflareContext());
+const resolveContextAsync = cache(async () => getCloudflareContext({ async: true }));
+
+/**
+ * Resolve Cloudflare R2 bucket from worker context (SSR handlers)
+ */
+export function resolveR2Bucket(): Result<R2Bucket, AppError> {
+  try {
+    const { env } = resolveContext();
+    const bucket = (env as Cloudflare.Env | Record<string, unknown>).R2_BUCKET as R2Bucket | undefined;
+    if (!bucket) {
+      return err(contextError("R2_BUCKET binding is not configured on Cloudflare environment"));
+    }
+    return ok(bucket);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return err(contextError(`Failed to resolve Cloudflare context: ${message}`, error));
+  }
+}
+
+/**
+ * Resolve Cloudflare R2 bucket for static routes (uses async context)
+ */
+export async function resolveR2BucketAsync(): Promise<Result<R2Bucket, AppError>> {
+  try {
+    const { env } = await resolveContextAsync();
+    const bucket = (env as Cloudflare.Env | Record<string, unknown>).R2_BUCKET as R2Bucket | undefined;
+    if (!bucket) {
+      return err(contextError("R2_BUCKET binding is not configured on Cloudflare environment"));
+    }
+    return ok(bucket);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return err(contextError(`Failed to resolve Cloudflare context asynchronously: ${message}`, error));
+  }
+}
 
 /**
  * For Workers environment: JSON storage using R2 Binding
@@ -73,18 +118,14 @@ export async function putImageR2(
   key: string,
   buf: ArrayBuffer,
   contentType = "image/webp",
-  r2PublicDomain: string,
-): Promise<Result<string, AppError>> {
+): Promise<Result<void, AppError>> {
   try {
     await bucket.put(key, buf, {
       httpMetadata: {
         contentType,
       },
     });
-
-    // Construct R2 public URL (custom domain or r2.dev)
-    const url = `${r2PublicDomain}/${key}`;
-    return ok(url);
+    return ok(undefined);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return err({
@@ -118,72 +159,6 @@ export async function getImageR2(bucket: R2Bucket, key: string): Promise<Result<
 }
 
 /**
- * For Next.js environment: JSON retrieval via public URL
- */
-export async function getJsonFromPublicUrl<T>(url: string): Promise<Result<T | null, AppError>> {
-  try {
-    const res = await fetch(url, { cache: "no-store" });
-
-    if (res.status === 404) {
-      return ok(null);
-    }
-
-    if (!res.ok) {
-      return err({
-        type: "StorageError",
-        op: "get",
-        key: url,
-        message: `HTTP ${res.status}: ${res.statusText}`,
-      });
-    }
-
-    const data = (await res.json()) as T;
-    return ok(data);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return err({
-      type: "StorageError",
-      op: "get",
-      key: url,
-      message: `Fetch JSON failed: ${message}`,
-    });
-  }
-}
-
-/**
- * For Next.js environment: Image retrieval via public URL
- */
-export async function getImageFromPublicUrl(url: string): Promise<Result<ArrayBuffer | null, AppError>> {
-  try {
-    const res = await fetch(url, { cache: "no-store" });
-
-    if (res.status === 404) {
-      return ok(null);
-    }
-
-    if (!res.ok) {
-      return err({
-        type: "StorageError",
-        op: "get",
-        key: url,
-        message: `HTTP ${res.status}: ${res.statusText}`,
-      });
-    }
-
-    const arrayBuffer = await res.arrayBuffer();
-    return ok(arrayBuffer);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return err({
-      type: "StorageError",
-      op: "get",
-      key: url,
-      message: `Fetch image failed: ${message}`,
-    });
-  }
-}
-
-/**
  * In-memory R2 client for development and testing
  */
 type StoredValue = {
@@ -193,7 +168,7 @@ type StoredValue = {
 
 const cloneBuffer = (buffer: ArrayBuffer): ArrayBuffer => buffer.slice(0);
 
-export function createMemoryR2Client(r2PublicDomain = "https://r2.local"): {
+export function createMemoryR2Client(): {
   bucket: R2Bucket;
   store: Map<string, StoredValue>;
 } {

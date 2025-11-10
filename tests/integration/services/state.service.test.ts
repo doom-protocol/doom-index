@@ -3,12 +3,10 @@ import { createStateService } from "@/services/state";
 import { createMemoryR2Client } from "@/lib/r2";
 import type { GlobalState, TokenState, RevenueReport } from "@/types/domain";
 
-const R2_PUBLIC_DOMAIN = "https://r2.local";
-
 describe("StateService (5.1)", () => {
   it("reads and writes global state JSON", async () => {
-    const { bucket, store } = createMemoryR2Client(R2_PUBLIC_DOMAIN);
-    const service = createStateService({ r2Bucket: bucket, r2PublicDomain: R2_PUBLIC_DOMAIN });
+    const { bucket, store } = createMemoryR2Client();
+    const service = createStateService({ r2Bucket: bucket });
     const initial = await service.readGlobalState();
     expect(initial.isOk()).toBe(true);
     if (initial.isOk()) {
@@ -27,8 +25,8 @@ describe("StateService (5.1)", () => {
   });
 
   it("writes token states individually", async () => {
-    const { bucket, store } = createMemoryR2Client(R2_PUBLIC_DOMAIN);
-    const service = createStateService({ r2Bucket: bucket, r2PublicDomain: R2_PUBLIC_DOMAIN });
+    const { bucket, store } = createMemoryR2Client();
+    const service = createStateService({ r2Bucket: bucket });
     const states: TokenState[] = [
       { ticker: "CO2", thumbnailUrl: "https://img", updatedAt: "2025-11-09T12:34:00Z" },
       { ticker: "ICE", thumbnailUrl: "https://img", updatedAt: "2025-11-09T12:34:00Z" },
@@ -49,19 +47,19 @@ describe("StateService (5.1)", () => {
   });
 
   it("stores image binaries and returns URL", async () => {
-    const { bucket, store } = createMemoryR2Client(R2_PUBLIC_DOMAIN);
-    const service = createStateService({ r2Bucket: bucket, r2PublicDomain: R2_PUBLIC_DOMAIN });
+    const { bucket } = createMemoryR2Client();
+    const service = createStateService({ r2Bucket: bucket });
     const buffer = new ArrayBuffer(8);
     const storeResult = await service.storeImage("images/test.webp", buffer);
     expect(storeResult.isOk()).toBe(true);
     if (storeResult.isOk()) {
-      expect(storeResult.value).toBe(`${R2_PUBLIC_DOMAIN}/images/test.webp`);
+      expect(storeResult.value).toBe("/api/r2/images/test.webp");
     }
   });
 
   it("persists revenue reports", async () => {
-    const { bucket, store } = createMemoryR2Client(R2_PUBLIC_DOMAIN);
-    const service = createStateService({ r2Bucket: bucket, r2PublicDomain: R2_PUBLIC_DOMAIN });
+    const { bucket, store } = createMemoryR2Client();
+    const service = createStateService({ r2Bucket: bucket });
     const report: RevenueReport = {
       perTokenFee: { CO2: 1, ICE: 1, FOREST: 1, NUKE: 1, MACHINE: 1, PANDEMIC: 1, FEAR: 1, HOPE: 1 },
       totalFee: 8,

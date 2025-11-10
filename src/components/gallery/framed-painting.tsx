@@ -125,14 +125,13 @@ export const FramedPainting: React.FC<FramedPaintingProps> = ({
     pulseGroupRef.current.visible = true;
     pulseGroupRef.current.scale.set(1, 1, 1);
 
-    const fillMaterial = pulseFillRef.current?.material;
-    if (fillMaterial instanceof MeshBasicMaterial) {
-      fillMaterial.opacity = INITIAL_PULSE_FILL_OPACITY;
+    // Reset material opacity directly without storing references
+    if (pulseFillRef.current?.material instanceof MeshBasicMaterial) {
+      pulseFillRef.current.material.opacity = INITIAL_PULSE_FILL_OPACITY;
     }
 
-    const outlineMaterial = pulseOutlineRef.current?.material;
-    if (outlineMaterial instanceof LineBasicMaterial) {
-      outlineMaterial.opacity = INITIAL_PULSE_OUTLINE_OPACITY;
+    if (pulseOutlineRef.current?.material instanceof LineBasicMaterial) {
+      pulseOutlineRef.current.material.opacity = INITIAL_PULSE_OUTLINE_OPACITY;
     }
   }, []);
 

@@ -11,6 +11,7 @@
 
 import { describe, expect, test, mock, beforeEach } from "bun:test";
 import { getArtworkDataUrl, getPlaceholderDataUrl, getFrameDataUrl } from "@/app/opengraph-image";
+import { createMemoryR2Client } from "@/lib/r2";
 
 describe("OGP Image Generation (Integration Tests)", () => {
   const mockBaseUrl = "http://test.example.com";
@@ -82,46 +83,37 @@ describe("OGP Image Generation (Integration Tests)", () => {
 
   describe("getArtworkDataUrl", () => {
     test("should return artwork data URL when state and image exist", async () => {
-      // Mock successful R2 responses
-      global.fetch = mock(async (url: string) => {
-        if (url.includes("state/global.json")) {
-          return new Response(
-            JSON.stringify({
-              prevHash: "test-hash",
-              lastTs: "2025-11-10T00:00:00Z",
-              imageUrl: "https://test.r2.dev/images/test.webp",
-            }),
-            {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-            },
-          );
-        }
+      const { bucket } = createMemoryR2Client();
 
-        if (url.includes("images/test.webp")) {
-          const buffer = new TextEncoder().encode("mock image data").buffer;
-          return new Response(buffer, {
-            status: 200,
-            headers: { "Content-Type": "image/webp" },
-          });
-        }
+      await bucket.put(
+        "state/global.json",
+        JSON.stringify({
+          prevHash: "test-hash",
+          lastTs: "2025-11-10T00:00:00Z",
+          imageUrl: "/api/r2/images/test.webp",
+        }),
+        {
+          httpMetadata: {
+            contentType: "application/json",
+          },
+        },
+      );
 
-        return new Response(null, { status: 404 });
-      }) as unknown as typeof fetch;
+      const imageBuffer = new TextEncoder().encode("mock image data").buffer;
+      await bucket.put("images/test.webp", imageBuffer, {
+        httpMetadata: {
+          contentType: "image/webp",
+        },
+      });
 
-      const result = await getArtworkDataUrl(mockBaseUrl);
+      const result = await getArtworkDataUrl(mockBaseUrl, bucket);
 
       expect(result.fallbackUsed).toBe(false);
       expect(result.dataUrl).toStartWith("data:image/webp;base64,");
     });
 
-    test("should use fallback when state fetch fails", async () => {
-      // Mock failed state fetch but successful placeholder
+    test("should use fallback when state retrieval throws", async () => {
       global.fetch = mock(async (url: string) => {
-        if (url.includes("state/global.json")) {
-          return new Response(null, { status: 500 });
-        }
-
         if (url.includes("placeholder-painting.webp")) {
           const buffer = new TextEncoder().encode("placeholder").buffer;
           return new Response(buffer, {
@@ -129,33 +121,25 @@ describe("OGP Image Generation (Integration Tests)", () => {
             headers: { "Content-Type": "image/webp" },
           });
         }
-
         return new Response(null, { status: 404 });
       }) as unknown as typeof fetch;
 
-      const result = await getArtworkDataUrl(mockBaseUrl);
+      const { bucket } = createMemoryR2Client();
+      const failingBucket = {
+        ...bucket,
+        get: mock(async () => {
+          throw new Error("R2 failure");
+        }),
+      } as unknown as R2Bucket;
+
+      const result = await getArtworkDataUrl(mockBaseUrl, failingBucket);
 
       expect(result.fallbackUsed).toBe(true);
       expect(result.dataUrl).toStartWith("data:image/webp;base64,");
     });
 
     test("should use fallback when state has no imageUrl", async () => {
-      // Mock state without imageUrl
       global.fetch = mock(async (url: string) => {
-        if (url.includes("state/global.json")) {
-          return new Response(
-            JSON.stringify({
-              prevHash: "test-hash",
-              lastTs: "2025-11-10T00:00:00Z",
-              imageUrl: null,
-            }),
-            {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-            },
-          );
-        }
-
         if (url.includes("placeholder-painting.webp")) {
           const buffer = new TextEncoder().encode("placeholder").buffer;
           return new Response(buffer, {
@@ -163,37 +147,32 @@ describe("OGP Image Generation (Integration Tests)", () => {
             headers: { "Content-Type": "image/webp" },
           });
         }
-
         return new Response(null, { status: 404 });
       }) as unknown as typeof fetch;
 
-      const result = await getArtworkDataUrl(mockBaseUrl);
+      const { bucket } = createMemoryR2Client();
+      await bucket.put(
+        "state/global.json",
+        JSON.stringify({
+          prevHash: "test-hash",
+          lastTs: "2025-11-10T00:00:00Z",
+          imageUrl: null,
+        }),
+        {
+          httpMetadata: {
+            contentType: "application/json",
+          },
+        },
+      );
+
+      const result = await getArtworkDataUrl(mockBaseUrl, bucket);
 
       expect(result.fallbackUsed).toBe(true);
       expect(result.dataUrl).toStartWith("data:image/webp;base64,");
     });
 
-    test("should use fallback when image fetch fails", async () => {
-      // Mock successful state but failed image fetch
+    test("should use fallback when image fetch returns null", async () => {
       global.fetch = mock(async (url: string) => {
-        if (url.includes("state/global.json")) {
-          return new Response(
-            JSON.stringify({
-              prevHash: "test-hash",
-              lastTs: "2025-11-10T00:00:00Z",
-              imageUrl: "https://test.r2.dev/images/test.webp",
-            }),
-            {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-            },
-          );
-        }
-
-        if (url.includes("images/test.webp")) {
-          return new Response(null, { status: 404 });
-        }
-
         if (url.includes("placeholder-painting.webp")) {
           const buffer = new TextEncoder().encode("placeholder").buffer;
           return new Response(buffer, {
@@ -201,11 +180,25 @@ describe("OGP Image Generation (Integration Tests)", () => {
             headers: { "Content-Type": "image/webp" },
           });
         }
-
         return new Response(null, { status: 404 });
       }) as unknown as typeof fetch;
 
-      const result = await getArtworkDataUrl(mockBaseUrl);
+      const { bucket } = createMemoryR2Client();
+      await bucket.put(
+        "state/global.json",
+        JSON.stringify({
+          prevHash: "test-hash",
+          lastTs: "2025-11-10T00:00:00Z",
+          imageUrl: "/api/r2/images/missing.webp",
+        }),
+        {
+          httpMetadata: {
+            contentType: "application/json",
+          },
+        },
+      );
+
+      const result = await getArtworkDataUrl(mockBaseUrl, bucket);
 
       expect(result.fallbackUsed).toBe(true);
       expect(result.dataUrl).toStartWith("data:image/webp;base64,");

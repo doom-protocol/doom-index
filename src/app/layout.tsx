@@ -25,7 +25,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const description =
     "8 global indicators ($CO2, $ICE, $FOREST, $NUKE, $MACHINE, $PANDEMIC, $FEAR, $HOPE) visualized as generative art in real-time.";
   const title = "DOOM INDEX - Every buy paints the apocalypse.";
-  const metadataBase = new URL(env.NEXT_PUBLIC_BASE_URL);
+  // Fallback for build time when env var is not available
+  const metadataBase = new URL(env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000");
   const ogImageUrl = new URL("/opengraph-image", metadataBase).toString();
   const ogImageAlt = "DOOM INDEX - Current Every buy paints the apocalypse.";
 

@@ -10,14 +10,14 @@
  */
 
 import { ImageResponse } from "next/og";
-import { getJsonFromPublicUrl, getImageFromPublicUrl } from "@/lib/r2";
+import { getJsonR2, getImageR2, resolveR2BucketAsync } from "@/lib/r2";
 import { logger } from "@/utils/logger";
 import { arrayBufferToDataUrl } from "@/utils/image";
 import { getBaseUrl } from "@/utils/url";
-import { env } from "@/env";
 import type { GlobalState } from "@/types/domain";
 
 // Route Segment Config for ISR
+export const dynamic = "force-dynamic"; // Skip static generation at build time
 export const revalidate = 60; // Regenerate every 60 seconds
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -69,35 +69,83 @@ export async function getFrameDataUrl(baseUrl?: string): Promise<string> {
  *
  * @param baseUrl - Optional base URL for testing (uses env-based URL if not provided)
  */
-export async function getArtworkDataUrl(baseUrl?: string): Promise<{ dataUrl: string; fallbackUsed: boolean }> {
-  const r2Domain = env.R2_PUBLIC_DOMAIN;
-  const stateUrl = `${r2Domain}/state/global.json`;
-  const stateResult = await getJsonFromPublicUrl<GlobalState>(stateUrl);
+const R2_ROUTE_PREFIX = "/api/r2/";
+
+const decodeR2Key = (value: string): string | null => {
+  if (!value) return null;
+
+  let path = value;
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    try {
+      const parsed = new URL(value);
+      path = parsed.pathname;
+    } catch {
+      return null;
+    }
+  }
+
+  if (!path.startsWith(R2_ROUTE_PREFIX)) return null;
+
+  const encoded = path.slice(R2_ROUTE_PREFIX.length);
+  if (!encoded) return null;
+
+  return encoded
+    .split("/")
+    .map(segment => decodeURIComponent(segment))
+    .join("/");
+};
+
+export async function getArtworkDataUrl(
+  baseUrl?: string,
+  bucketOverride?: R2Bucket,
+): Promise<{ dataUrl: string; fallbackUsed: boolean }> {
+  const fallback = async () => {
+    const placeholderDataUrl = await getPlaceholderDataUrl(baseUrl);
+    return { dataUrl: placeholderDataUrl, fallbackUsed: true };
+  };
+
+  let bucket: R2Bucket;
+  if (bucketOverride) {
+    bucket = bucketOverride;
+  } else {
+    const bucketResult = await resolveR2BucketAsync();
+    if (bucketResult.isErr()) {
+      logger.warn("ogp.bucket-resolution-failed", {
+        error: bucketResult.error.message,
+      });
+      return fallback();
+    }
+    bucket = bucketResult.value;
+  }
+
+  const stateResult = await getJsonR2<GlobalState>(bucket, "state/global.json");
 
   if (stateResult.isErr()) {
     logger.warn("ogp.state-fetch-failed", {
-      url: stateUrl,
       error: stateResult.error.message,
     });
-    const placeholderDataUrl = await getPlaceholderDataUrl(baseUrl);
-    return { dataUrl: placeholderDataUrl, fallbackUsed: true };
+    return fallback();
   }
 
   const state = stateResult.value;
   if (!state || !state.imageUrl) {
     logger.warn("ogp.state-no-image-url", { state });
-    const placeholderDataUrl = await getPlaceholderDataUrl(baseUrl);
-    return { dataUrl: placeholderDataUrl, fallbackUsed: true };
+    return fallback();
   }
 
-  const imageResult = await getImageFromPublicUrl(state.imageUrl);
+  const imageKey = decodeR2Key(state.imageUrl);
+  if (!imageKey) {
+    logger.warn("ogp.state-invalid-image-url", { imageUrl: state.imageUrl });
+    return fallback();
+  }
+
+  const imageResult = await getImageR2(bucket, imageKey);
   if (imageResult.isErr() || !imageResult.value) {
     logger.warn("ogp.image-fetch-failed", {
-      url: state.imageUrl,
+      key: imageKey,
       error: imageResult.isErr() ? imageResult.error.message : "Image not found",
     });
-    const placeholderDataUrl = await getPlaceholderDataUrl(baseUrl);
-    return { dataUrl: placeholderDataUrl, fallbackUsed: true };
+    return fallback();
   }
 
   const dataUrl = arrayBufferToDataUrl(imageResult.value, "image/webp");

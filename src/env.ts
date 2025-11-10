@@ -19,12 +19,9 @@ export const env = createEnv({
     REPLICATE_API_KEY: z.string().optional(),
     RUNWARE_API_KEY: z.string().optional(),
 
-    // Cloudflare R2 Storage
-    R2_PUBLIC_DOMAIN: z.string().default("https://doom-index-storage.r2.dev"),
-
     // Node Environment
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-    LOG_LEVEL: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]).optional(),
+    LOG_LEVEL: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]).default("DEBUG"),
   },
 
   /**
@@ -33,7 +30,7 @@ export const env = createEnv({
    */
   client: {
     // Currently no client-side env vars
-    NEXT_PUBLIC_BASE_URL: z.string().default("http://localhost:8787"),
+    NEXT_PUBLIC_BASE_URL: z.string().min(1),
   },
 
   /**
@@ -59,8 +56,7 @@ export const env = createEnv({
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     REPLICATE_API_KEY: process.env.REPLICATE_API_KEY,
     RUNWARE_API_KEY: process.env.RUNWARE_API_KEY,
-    R2_PUBLIC_DOMAIN: process.env.R2_PUBLIC_DOMAIN ?? "https://pub-30c2e77f5a154e8090c0b1cbe0f30948.r2.dev",
-    NODE_ENV: process.env.NODE_ENV ?? "production",
+    NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     // Shared

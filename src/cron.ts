@@ -8,9 +8,6 @@
 
 import { createServicesForWorkers } from "./services/container";
 
-// R2 public domain configured based on environment
-const R2_PUBLIC_DOMAIN = "https://doom-index-storage.r2.dev";
-
 /**
  * Processing logic for Cron execution
  */
@@ -28,7 +25,7 @@ export async function handleScheduledEvent(
 
   try {
     // Create service container
-    const services = createServicesForWorkers(env.R2_BUCKET, R2_PUBLIC_DOMAIN);
+    const services = createServicesForWorkers(env.R2_BUCKET);
 
     // Execute image generation
     const result = await services.generationService.evaluateMinute();
