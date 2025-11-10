@@ -6,6 +6,7 @@ import { TOKEN_TICKERS, type McMap, type McMapRounded } from "@/constants/token"
 import type { PromptComposition } from "@/services/prompt";
 import type { AppError } from "@/types/app-error";
 import type { RevenueReport, TradeSnapshot } from "@/types/domain";
+import { LogLevel } from "@/utils/logger";
 
 const makeMap = (base: number): McMap =>
   TOKEN_TICKERS.reduce((acc, ticker, idx) => {
@@ -96,10 +97,13 @@ describe("GenerationService orchestration (4.x)", () => {
     };
     const tradeFetcher = mock(async () => [] as TradeSnapshot[]);
     const logger = {
+      log: mock(() => undefined),
       debug: mock(() => undefined),
       info: mock(() => undefined),
       warn: mock(() => undefined),
       error: mock(() => undefined),
+      getCurrentLevel: mock(() => LogLevel.INFO),
+      getLevels: mock(() => []),
     };
 
     const service = createGenerationService({
@@ -162,10 +166,13 @@ describe("GenerationService orchestration (4.x)", () => {
     }));
     const tradeFetcher = mock(async () => tradeSnapshots);
     const logger = {
+      log: mock(() => undefined),
       debug: mock(() => undefined),
       info: mock(() => undefined),
       warn: mock(() => undefined),
       error: mock(() => undefined),
+      getCurrentLevel: mock(() => LogLevel.INFO),
+      getLevels: mock(() => []),
     };
 
     const service = createGenerationService({
@@ -230,10 +237,13 @@ describe("GenerationService orchestration (4.x)", () => {
     };
     const tradeFetcher = mock(async () => [] as TradeSnapshot[]);
     const logger = {
+      log: mock(() => undefined),
       debug: mock(() => undefined),
       info: mock(() => undefined),
       warn: mock(() => undefined),
       error: mock(() => undefined),
+      getCurrentLevel: mock(() => LogLevel.INFO),
+      getLevels: mock(() => []),
     };
 
     const service = createGenerationService({

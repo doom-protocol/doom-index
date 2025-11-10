@@ -1,6 +1,7 @@
 import { describe, it, expect, mock } from "bun:test";
 import { createMarketCapService } from "@/services/market-cap";
 import { TOKEN_CONFIG_MAP, TOKEN_TICKERS, type TokenConfig } from "@/constants/token";
+import { LogLevel } from "@/utils/logger";
 
 const jsonResponse = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
@@ -9,10 +10,13 @@ const jsonResponse = (body: unknown, status = 200): Response =>
   });
 
 const createLoggerMock = () => ({
+  log: mock(() => undefined),
   debug: mock(() => undefined),
   info: mock(() => undefined),
   warn: mock(() => undefined),
   error: mock(() => undefined),
+  getCurrentLevel: mock(() => LogLevel.INFO),
+  getLevels: mock(() => []),
 });
 
 type FetchMock = ReturnType<typeof mock<(input: string | URL) => Promise<Response>>>;
