@@ -7,7 +7,7 @@ compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env"]
 
 # Cron Triggers - 毎分実行
 [triggers]
-crons = ["* * * * *"]
+crons = ["0 * * * *"]
 
 # R2 Bucket Binding
 [[r2_buckets]]
