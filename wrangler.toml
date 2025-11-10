@@ -18,6 +18,10 @@ crons = ["0 * * * *"]
 binding = "R2_BUCKET"
 bucket_name = "doom-index-storage"
 
+[[r2_buckets]]
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "doom-index-next-inc-cache"
+
 # Next.js on Cloudflare Pages の設定は別途 open-next.config.ts で管理
 [assets]
 directory = ".open-next/assets"
