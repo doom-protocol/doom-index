@@ -1,0 +1,88 @@
+# Implementation Plan
+
+- [x] 1. 指標トークン基盤を整備する
+- [x] 1.1 トークン設定と正規化ロジックを 8 トークン仕様へ統一する
+  - 8 種類の指標トークン識別子・アドレス・影響軸キーを単一構成で管理し、将来の変更にも耐える形で再宣言する
+  - 市場データを 0〜1 スケールへ写像する正規化と量子化の計算を調整し、極端値でも滑らかに遷移させる
+  - 視覚パラメータへ接続する純関数を fogDensity など新しい影響軸に合わせ、丸め済み値を安全に受け渡す
+  - _Requirements: 1.1, 1.4, 3.1_
+- [x] 1.2 決定的なハッシュとシード生成の検証基盤を整える
+  - SHA ベースの minute ハッシュが新トークンセットで安定するよう、丸め後マップとの比較テストを追加する
+  - シード・パラメータハッシュ・ファイル名生成の境界ケースを網羅し、再生成時の差異を検知できるようにする
+  - スキップ判定に使用する純関数群へ TDD で回帰テストを整備し、仕様変更時の破壊を防ぐ
+  - _Requirements: 2.1, 3.3_
+
+- [x] 2. 市場データ取得を再設計する
+- [x] 2.1 Dexscreener 連携を 8 トークン対応で強化する
+  - 最大流動性ペアから USD 建て market cap を抽出し、指標リスト全体で欠損なくマップを構築する
+  - 通信失敗やレスポンス欠損時に対象トークンの値を 0 にフォールバックし、エラー情報を記録する
+  - API 呼び出しのモックテストを用意し、成功・失敗・部分欠損の各分岐を検証する
+  - _Requirements: 1.1, 1.2_
+- [x] 2.2 分スナップショット丸めと Result 伝搬を安定化する
+  - 小数第 4 位まで丸めた market cap マップを生成し、後段のハッシュ比較で使用できるようにする
+  - 取得フェーズから返す Result を標準化し、ゼロフォールバックとエラー伝搬の挙動を揃える
+  - 正常系・例外系を対象としたサービスレベルのテストを追加し、 minute 処理が再現可能であることを示す
+  - _Requirements: 1.3, 2.1_
+
+- [x] 3. プロンプトと視覚パラメータを刷新する
+- [x] 3.1 指標マップから視覚パラメータへの変換を実装する
+  - 丸め済み値を 0〜1 のレンジへ再正規化し、fogDensity や mechanicalPattern などの影響軸にマッピングする
+  - 視覚パラメータを自然言語テンプレートへ埋め込み、解釈しやすいプロンプトを生成する
+  - 同一入力から同一出力が得られることをテストで証明し、変換ロジックの決定性を担保する
+  - _Requirements: 3.1, 3.2_
+- [x] 3.2 画像生成リクエストの決定性と回復力を高める
+  - minute バケットとパラメータハッシュから算出した seed を用いて、 Provider リクエストを固定する
+  - 生成 API を 1024×1024 webp 固定で送信し、 429/5xx 時に 1 回リトライする制御を導入する
+  - 生成成功・失敗をカバーするサービステストを作成し、リトライとエラー伝搬を可視化する
+  - _Requirements: 3.3, 3.4_
+
+- [x] 4. 分単位生成オーケストレーションを完成させる
+- [x] 4.1 ハッシュ比較と生成スキップ制御を確立する
+  - 丸め済みマップから nowHash を算出し、 prevHash と比較して生成／スキップを分岐させる
+  - スキップ時に status=skipped を記録しつつ、生成中は追加リクエストを拒否するロックを設ける
+  - 生成成功時のみ新しい prevHash と lastTs を更新するテスト駆動の実装を行う
+  - _Requirements: 2.1, 2.2, 2.4_
+- [x] 4.2 生成ジョブと外部サービス呼び出しを直列化する
+  - 生成が必要な場合に限り Prompt Service と Image Provider を呼び出し、 1 分あたり 1 件のジョブに制限する
+  - 成功シナリオで画像 URL を取り扱い、 JSON 応答へ反映できるようにする
+  - `/api/cron` のレスポンスとログをテストで検証し、 skip/生成の両ケースを保証する
+  - _Requirements: 2.3, 4.4_
+
+- [x] 5. 永続化と公開インタフェースを整備する
+- [x] 5.1 状態永続化と一貫更新の仕組みを仕上げる
+  - 画像バイナリ・グローバル state・トークン state を原子的な順序で保存し、最新画像 URL を全トークンに統一する
+  - Blob 書き込み失敗時には既存 state を保持し、エラーを上位へ返す例外経路を整備する
+  - CRUD テストを通じて状態更新の整合性とフォールバック動作を確認する
+  - _Requirements: 4.1, 4.2, 4.3_
+- [x] 5.2 公開エンドポイントと共有体験を更新する
+  - `/api/mc`・`/api/tokens/[ticker]` のレスポンスを新しいデータ構造で提供し、欠損時の 204 応答を維持する
+  - `/share/[ticker]` の SSR で最新 `thumbnailUrl` を `og:image` / `twitter:image` に設定する（`cache: no-store` 推奨、フォールバック画像あり）
+  - API ルートおよび SSR の統合テストを整備し、エッジ環境でも応答が安定することを証明する
+  - _Requirements: 4.4, 7.1, 7.2, 7.3_
+
+- [x] 6. 3D フロントエンドを実装する（R3F/Three.js）
+- [x] 6.1 `Canvas` と `GalleryScene` の骨組みを作成する
+  - `camera: { fov: 50, position: [0,1.6,1.0] }`、`gl: { antialias: true, toneMapping: ACESFilmic }` を設定する
+  - ダーク背景・床/壁メッシュを追加し、反射を抑えたマテリアルで中央額縁を強調する
+  - _Requirements: 5.1, 5.3_
+- [x] 6.2 照明を実装する（ambient + spot）
+  - `ambientLight intensity=0.05`、`spotLight intensity=3.0 angle=0.20 penumbra=0.6 position=[0,3.0,-2.0]` を配置する
+  - `spotLight.target` を中央額縁中心へ向け、ターゲットオブジェクトをシーンに追加する
+  - _Requirements: 5.2_
+- [x] 6.3 カメラ制御を実装する（`CameraRig`）
+  - `'dashboard' | 'painting'` の 2 プリセット間を 800ms、`easeInOutCubic` で補間移動する
+  - `useFrame` 内で `Vector3.lerp` と `lookAt` 補間を行い、割り込み時は最新指示へ追従する
+  - _Requirements: 6.4_
+- [x] 6.4 GLB 額縁への画像はめ込み（`FramedPainting`）
+  - `useGLTF('/models/frame.glb')` の `ImageAnchor` 配下に `Plane` を生成する
+  - `useTexture(thumbnailUrl)` を sRGB + `anisotropy>=4` で読み込み、内寸に対して contain フィットでスケールする
+  - `thumbnailUrl` 更新時に 1 フレーム以内でテクスチャ差し替えを行う
+  - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
+- [x] 6.5 データ同期フックを実装する（React Query）
+  - `useMc`: `refetchInterval=10000` で `/api/mc` を取得し、エラー時は 8 トークン 0 でフォールバックする
+  - `useTokenImage(ticker)`: `cacheTime=60000`、`refetchOnWindowFocus=false` で `thumbnailUrl` を取得し、変化を検知してテクスチャ更新する
+  - _Requirements: 6.1, 6.2, 6.3_
+- [x] 6.6 UI 要素を組み込む
+  - `TopBar`: requestAnimationFrame で 60,000ms の線形ゲージを描画
+  - `RealtimeDashboard`: `<Html transform>` を額縁内に投影し、MC 値を 10 秒毎に更新
+  - _Requirements: 5.4, 6.1_
