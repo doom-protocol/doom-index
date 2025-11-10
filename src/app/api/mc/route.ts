@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { roundMc4 } from "@/lib/round";
-import { getServices } from "@/services/container";
+import { createServicesForNextjs } from "@/services/container";
 import { TOKEN_TICKERS } from "@/constants/token";
 import { logger } from "@/utils/logger";
+import { env } from "@/env";
 
 export const runtime = "edge";
 
@@ -15,7 +16,7 @@ const zeroMap = TOKEN_TICKERS.reduce(
 );
 
 export async function GET() {
-  const { marketCapService } = getServices();
+  const { marketCapService } = createServicesForNextjs(env.R2_PUBLIC_DOMAIN);
   const result = await marketCapService.getMcMap();
   if (result.isErr()) {
     logger.error("api.mc.error", result.error);

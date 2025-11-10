@@ -1,14 +1,12 @@
 import { err, ok, Result } from "neverthrow";
 import type { StateService, GlobalState, TokenState, RevenueReport } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
-import type { BlobClient } from "@/lib/blob-client";
-import { blobKeys, batchWriteJson } from "@/lib/blob-helpers";
+import { putJsonR2, getJsonR2, putImageR2 } from "@/lib/r2";
 
 type StateServiceDeps = {
-  blobClient: BlobClient;
+  r2Bucket: R2Bucket;
+  r2PublicDomain: string;
 };
-
-const JSON_CONTENT_TYPE = "application/json";
 
 const validationError = (message: string, details?: unknown): AppError => ({
   type: "ValidationError",
@@ -16,62 +14,51 @@ const validationError = (message: string, details?: unknown): AppError => ({
   details,
 });
 
-async function readJson<T>(blobClient: BlobClient, key: string): Promise<Result<T | null, AppError>> {
-  const getResult = await blobClient.get(key);
-  if (getResult.isErr()) return err(getResult.error);
+const stateKeys = {
+  globalState: () => "state/global.json",
+  tokenState: (ticker: string) => `state/${ticker}.json`,
+  revenue: (minuteIso: string) => `revenue/${minuteIso}.json`,
+};
 
-  const target = getResult.value;
-  if (!target) return ok(null);
-
-  try {
-    const text = await target.text();
-    return ok(JSON.parse(text) as T);
-  } catch (parseError) {
-    return err(
-      validationError(`Invalid JSON for ${key}`, parseError instanceof Error ? parseError.message : parseError),
-    );
-  }
-}
-
-async function writeJson(blobClient: BlobClient, key: string, value: unknown): Promise<Result<void, AppError>> {
-  const putResult = await blobClient.put(key, JSON.stringify(value), { contentType: JSON_CONTENT_TYPE });
-  if (putResult.isErr()) return err(putResult.error);
-  return ok(undefined);
-}
-
-export function createStateService({ blobClient }: StateServiceDeps): StateService {
+export function createStateService({ r2Bucket, r2PublicDomain }: StateServiceDeps): StateService {
   async function readGlobalState(): Promise<Result<GlobalState | null, AppError>> {
-    return readJson<GlobalState>(blobClient, blobKeys.globalState());
+    return getJsonR2<GlobalState>(r2Bucket, stateKeys.globalState());
   }
 
   async function writeGlobalState(state: GlobalState): Promise<Result<void, AppError>> {
-    return writeJson(blobClient, blobKeys.globalState(), state);
+    return putJsonR2(r2Bucket, stateKeys.globalState(), state);
   }
 
   async function readTokenState(ticker: string): Promise<Result<TokenState | null, AppError>> {
-    return readJson<TokenState>(blobClient, blobKeys.tokenState(ticker));
+    return getJsonR2<TokenState>(r2Bucket, stateKeys.tokenState(ticker));
   }
 
   async function writeTokenStates(states: TokenState[]): Promise<Result<void, AppError>> {
-    const entries = states.map(state => ({
-      key: blobKeys.tokenState(state.ticker),
-      value: state,
-    }));
-    return batchWriteJson(blobClient, entries);
+    // R2 は並列書き込みをサポートしているため、Promise.allSettled を使用
+    const results = await Promise.allSettled(
+      states.map(state => putJsonR2(r2Bucket, stateKeys.tokenState(state.ticker), state)),
+    );
+
+    // すべての結果を確認し、エラーがあれば最初のエラーを返す
+    for (const result of results) {
+      if (result.status === "fulfilled" && result.value.isErr()) {
+        return err(result.value.error);
+      }
+    }
+
+    return ok(undefined);
   }
 
   async function storeImage(key: string, buf: ArrayBuffer): Promise<Result<string, AppError>> {
-    const putResult = await blobClient.put(key, buf, { contentType: "image/webp" });
-    if (putResult.isErr()) return err(putResult.error);
-    return ok(putResult.value);
+    return putImageR2(r2Bucket, key, buf, "image/webp", r2PublicDomain);
   }
 
   async function writeRevenue(report: RevenueReport, minuteIso: string): Promise<Result<void, AppError>> {
-    return writeJson(blobClient, blobKeys.revenue(minuteIso), report);
+    return putJsonR2(r2Bucket, stateKeys.revenue(minuteIso), report);
   }
 
   async function readRevenue(minuteIso: string): Promise<Result<RevenueReport | null, AppError>> {
-    return readJson<RevenueReport>(blobClient, blobKeys.revenue(minuteIso));
+    return getJsonR2<RevenueReport>(r2Bucket, stateKeys.revenue(minuteIso));
   }
 
   return {

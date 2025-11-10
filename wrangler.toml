@@ -1,0 +1,17 @@
+# Cloudflare Workers Configuration for DOOM INDEX
+
+name = "doom-index-cron"
+main = "workers/cron.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env"]
+
+# Cron Triggers - 毎分実行
+[triggers]
+crons = ["* * * * *"]
+
+# R2 Bucket Binding
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "doom-index-storage"
+
+# Next.js on Cloudflare Pages の設定は別途 open-next.config.ts で管理

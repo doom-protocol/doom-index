@@ -19,8 +19,8 @@ export const env = createEnv({
     REPLICATE_API_KEY: z.string().optional(),
     RUNWARE_API_KEY: z.string().optional(),
 
-    // Vercel Blob Storage
-    BLOB_READ_WRITE_TOKEN: z.string().optional(),
+    // Cloudflare R2 Storage
+    R2_PUBLIC_DOMAIN: z.string().default("https://doom-index-storage.r2.dev"),
 
     // Node Environment
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -58,7 +58,7 @@ export const env = createEnv({
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     REPLICATE_API_KEY: process.env.REPLICATE_API_KEY,
     RUNWARE_API_KEY: process.env.RUNWARE_API_KEY,
-    BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
+    R2_PUBLIC_DOMAIN: process.env.R2_PUBLIC_DOMAIN,
     NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL,
     // Shared
