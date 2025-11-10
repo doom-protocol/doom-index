@@ -5,11 +5,11 @@
  * and Cron Triggers event handling.
  */
 
-import { default as handler } from "../.open-next/worker.js";
+import nextHandler from "../.open-next/worker.js";
 import { handleScheduledEvent } from "./cron";
 
 const worker = {
-  fetch: handler.fetch,
+  fetch: nextHandler.fetch,
   scheduled: handleScheduledEvent,
 };
 
