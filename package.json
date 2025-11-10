@@ -6,7 +6,7 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "build:cloudflare": "opennextjs-cloudflare build",
-    "start": "next start",
+    "start": "next start --webpack",
     "lint": "eslint",
     "format": "prettier --write .",
     "test": "bun test --env-file=.env --preload=./tests/preload.ts",
