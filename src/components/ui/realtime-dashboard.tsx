@@ -326,14 +326,23 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
             fontWeight: 700,
             cursor: "pointer",
             transition: "transform 0.2s ease, background 0.2s ease",
+            touchAction: "manipulation",
           }}
-          onMouseEnter={e => {
+          onPointerEnter={e => {
             e.currentTarget.style.transform = "scale(1.08)";
             e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
           }}
-          onMouseLeave={e => {
+          onPointerLeave={e => {
             e.currentTarget.style.transform = "scale(1)";
             e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+          }}
+          onPointerDown={e => {
+            e.currentTarget.style.transform = "scale(0.95)";
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+          }}
+          onPointerUp={e => {
+            e.currentTarget.style.transform = "scale(1.08)";
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
           }}
         >
           ?
@@ -462,9 +471,12 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
                         textDecoration: "none",
                         cursor: "pointer",
                         transition: "color 0.2s",
+                        touchAction: "manipulation",
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.color = "#22c55e")}
-                      onMouseLeave={e => (e.currentTarget.style.color = "#4ade80")}
+                      onPointerEnter={e => (e.currentTarget.style.color = "#22c55e")}
+                      onPointerLeave={e => (e.currentTarget.style.color = "#4ade80")}
+                      onPointerDown={e => (e.currentTarget.style.color = "#16a34a")}
+                      onPointerUp={e => (e.currentTarget.style.color = "#22c55e")}
                     >
                       ${ticker}
                     </a>
@@ -557,6 +569,24 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
                   lineHeight: 1,
                   flexShrink: 0,
                   cursor: "pointer",
+                  transition: "transform 0.2s ease, background 0.2s ease",
+                  touchAction: "manipulation",
+                }}
+                onPointerEnter={e => {
+                  e.currentTarget.style.transform = "scale(1.1)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                }}
+                onPointerLeave={e => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.14)";
+                }}
+                onPointerDown={e => {
+                  e.currentTarget.style.transform = "scale(0.95)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
+                }}
+                onPointerUp={e => {
+                  e.currentTarget.style.transform = "scale(1.1)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
                 }}
               >
                 ×
