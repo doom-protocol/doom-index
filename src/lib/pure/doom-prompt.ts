@@ -55,7 +55,7 @@ export type WeightedFragment = {
 export function toWeightedFragments(mc: McMap): WeightedFragment[] {
   const tokens: TokenTicker[] = ["CO2", "ICE", "FOREST", "NUKE", "MACHINE", "PANDEMIC", "FEAR", "HOPE"];
 
-  const fragments = tokens.map((ticker) => ({
+  const fragments = tokens.map(ticker => ({
     text: TOKEN_PHRASE[ticker],
     weight: safeWeight(normalize(mc[ticker])),
   }));
@@ -76,7 +76,7 @@ export function toWeightedFragments(mc: McMap): WeightedFragment[] {
 export function buildSDXLPrompt(mc: McMap): { prompt: string; negative: string } {
   const fragments = toWeightedFragments(mc);
 
-  const weightedLines = fragments.map((f) => `(${f.text}:${f.weight.toFixed(2)})`).join(",\n");
+  const weightedLines = fragments.map(f => `(${f.text}:${f.weight.toFixed(2)})`).join(",\n");
 
   const prompt = [
     "a grand medieval allegorical oil painting of the world, all forces visible and weighted by real-time power,",
@@ -126,11 +126,9 @@ export function buildSimplePrompt(mc: McMap): { prompt: string; negative: string
 
   // Create a weighted description by repeating phrases based on weight
   const weightedPhrases = fragments
-    .map((f) => {
+    .map(f => {
       const intensity = Math.round(f.weight * 2); // 0-3 repetitions
-      return Array(Math.max(1, intensity))
-        .fill(f.text)
-        .join(", ");
+      return Array(Math.max(1, intensity)).fill(f.text).join(", ");
     })
     .join(", ");
 

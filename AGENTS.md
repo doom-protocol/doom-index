@@ -24,7 +24,8 @@ Project memory keeps persistent guidance (steering, specs notes, component docs)
 
 ### Active Specifications
 
-- Check `.kiro/specs/` for active specifications
+- **doom-index**: DOOM Index - 時価総額連動型プロンプト生成システム
+- **dynamic-ogp**: Dynamic OGP - 動的OGP画像生成機能 (initialized)
 - Use `/prompts:kiro-spec-status [feature-name]` to check progress
 
 ## Development Guidelines

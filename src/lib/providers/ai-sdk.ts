@@ -80,9 +80,10 @@ export const createAiSdkProvider = (): ImageProvider => ({
       // Convert Uint8Array to ArrayBuffer
       const uint8Array = result.image.uint8Array;
       const buffer = uint8Array.buffer;
-      const imageBuffer: ArrayBuffer = buffer instanceof ArrayBuffer
-        ? buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength)
-        : new ArrayBuffer(uint8Array.byteLength).slice(0);
+      const imageBuffer: ArrayBuffer =
+        buffer instanceof ArrayBuffer
+          ? buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength)
+          : new ArrayBuffer(uint8Array.byteLength).slice(0);
 
       return ok({
         imageBuffer,

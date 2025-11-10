@@ -59,7 +59,7 @@ export const env = createEnv({
     REPLICATE_API_KEY: process.env.REPLICATE_API_KEY,
     RUNWARE_API_KEY: process.env.RUNWARE_API_KEY,
     R2_PUBLIC_DOMAIN: process.env.R2_PUBLIC_DOMAIN,
-    NODE_ENV: process.env.NODE_ENV,
+    NODE_ENV: process.env.NODE_ENV ?? "production",
     LOG_LEVEL: process.env.LOG_LEVEL,
     // Shared
     IMAGE_PROVIDER: process.env.IMAGE_PROVIDER,
@@ -69,8 +69,12 @@ export const env = createEnv({
   /**
    * Skip validation during build if set to "1"
    * Useful for Docker builds or CI where env vars are not available
+   *
+   * IMPORTANT: For Cloudflare Workers deployment, validation is always skipped
+   * because environment variables are passed via the `env` object at runtime,
+   * not through process.env at build/load time.
    */
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  skipValidation: true,
 
   /**
    * Makes it so that empty strings are treated as undefined

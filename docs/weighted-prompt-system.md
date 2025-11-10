@@ -16,16 +16,16 @@ Doom Indexの画像生成システムは、トークンの時価総額（Market 
 
 各トークンは特定の寓意的要素に対応：
 
-| Token | 寓意的要素 | フレーズ |
-|-------|-----------|---------|
-| CO2 | 有毒な煙霧 | dense toxic smog in the sky |
-| ICE | 氷河と冷たい反射 | glittering blue glaciers and cold reflections |
-| FOREST | 生命力ある森林 | lush emerald forests and living roots |
-| NUKE | 核の閃光 | blinding nuclear flash on the horizon |
-| MACHINE | ディストピア的機械 | colossal dystopian machine towers and metal grids |
-| PANDEMIC | 生物発光する胞子 | bioluminescent spores and organic clusters |
-| FEAR | 抑圧的な暗闇 | oppressive darkness with many red eyes |
-| HOPE | 神聖な光 | radiant golden divine light breaking the clouds |
+| Token    | 寓意的要素         | フレーズ                                          |
+| -------- | ------------------ | ------------------------------------------------- |
+| CO2      | 有毒な煙霧         | dense toxic smog in the sky                       |
+| ICE      | 氷河と冷たい反射   | glittering blue glaciers and cold reflections     |
+| FOREST   | 生命力ある森林     | lush emerald forests and living roots             |
+| NUKE     | 核の閃光           | blinding nuclear flash on the horizon             |
+| MACHINE  | ディストピア的機械 | colossal dystopian machine towers and metal grids |
+| PANDEMIC | 生物発光する胞子   | bioluminescent spores and organic clusters        |
+| FEAR     | 抑圧的な暗闇       | oppressive darkness with many red eyes            |
+| HOPE     | 神聖な光           | radiant golden divine light breaking the clouds   |
 
 ### 固定要素
 
@@ -46,6 +46,7 @@ Doom Indexの画像生成システムは、トークンの時価総額（Market 
 ### 例
 
 Market Cap値:
+
 ```
 CO2=1,300,000 → 重み 1.30
 ICE=200,000   → 重み 0.20
@@ -76,6 +77,7 @@ medieval renaissance allegorical oil painting, Bosch and Bruegel influence, chia
 ```
 
 **ネガティブプロンプト**:
+
 ```
 watermark, text, logo, oversaturated colors, low detail hands, extra limbs
 ```
@@ -88,14 +90,14 @@ watermark, text, logo, oversaturated colors, low detail hands, extra limbs
   "negatives": "watermark, text, logo, oversaturated colors, low detail hands, extra limbs",
   "fragments": [
     { "text": "colossal dystopian machine towers and metal grids", "weight": 1.45 },
-    { "text": "dense toxic smog in the sky", "weight": 1.30 },
-    { "text": "oppressive darkness with many red eyes", "weight": 1.10 },
-    { "text": "lush emerald forests and living roots", "weight": 0.90 },
-    { "text": "bioluminescent spores and organic clusters", "weight": 0.70 },
-    { "text": "radiant golden divine light breaking the clouds", "weight": 0.40 },
-    { "text": "glittering blue glaciers and cold reflections", "weight": 0.20 },
+    { "text": "dense toxic smog in the sky", "weight": 1.3 },
+    { "text": "oppressive darkness with many red eyes", "weight": 1.1 },
+    { "text": "lush emerald forests and living roots", "weight": 0.9 },
+    { "text": "bioluminescent spores and organic clusters", "weight": 0.7 },
+    { "text": "radiant golden divine light breaking the clouds", "weight": 0.4 },
+    { "text": "glittering blue glaciers and cold reflections", "weight": 0.2 },
     { "text": "blinding nuclear flash on the horizon", "weight": 0.05 },
-    { "text": "medieval figures praying, trading, recording the scene", "weight": 1.00 }
+    { "text": "medieval figures praying, trading, recording the scene", "weight": 1.0 }
   ],
   "width": 1280,
   "height": 720,

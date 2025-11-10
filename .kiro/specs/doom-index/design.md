@@ -162,18 +162,18 @@ ApplyMaterial --> RenderFrame
 
 ## Requirements Traceability
 
-| Requirement | Summary                                        | Components                                                  | Interfaces / Flows                                                                 |
-| ----------- | ---------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| 1           | 8 トークン市場データの取得と正規化             | `MarketCapService`, `lib/dexScreener`                       | `getMcMap`, `roundMc4`, `fetchPriceUsdByToken`, `FetchMc`                         |
-| 2           | Cloudflare Workers Cron による分単位生成制御   | `GenerationService`, `workers/cron.ts`                      | `runMinuteGeneration`, `CronTrigger`, `CompareHash`                                |
-| 3           | プロンプト合成と視覚パラメータ決定             | `PromptService`, `ImageProvider`                            | `composePrompt`, `generate`, `ComposePrompt`                                       |
-| 4           | Cloudflare R2 永続化と Next.js API 公開        | `StateService`, `lib/r2`, `app/api/*`, `share`              | `putImageR2`, `GET /api/mc`, `StoreImageR2`, `UpdateStateR2`                       |
-| 5           | 3D ミュージアムレンダリング UI                 | `GalleryScene`, `Lights`, `FramedPainting`                  | `GLB Texture Update Flow`                                                          |
-| 6           | インタラクティブ制御とデータ同期               | `CameraRig`, `useMc`, `useTokenImage`                       | `GLB Texture Update Flow`, `Minute Generation Flow`                                |
-| 7           | OGP 更新と共有（SSR）                          | `share/[ticker]`                                            | `OGP Share SSR Flow`                                                               |
-| 8           | GLB 額縁への画像はめ込み                       | `FramedPainting`                                            | `GLB Texture Update Flow`                                                          |
-| 9           | Cloudflare Pages デプロイと @opennextjs/cloudflare 統合 | `@opennextjs/cloudflare`, `wrangler.toml`, `open-next.config.ts` | `opennextjs-cloudflare build`, `wrangler deploy`                                   |
-| 10          | Cloudflare Workers Secrets 管理                | `wrangler secret put`, `env.PROVIDER_API_KEY`               | `workers/cron.ts` での Secret 取得、`.dev.vars` でのローカル開発                  |
+| Requirement | Summary                                                 | Components                                                       | Interfaces / Flows                                               |
+| ----------- | ------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| 1           | 8 トークン市場データの取得と正規化                      | `MarketCapService`, `lib/dexScreener`                            | `getMcMap`, `roundMc4`, `fetchPriceUsdByToken`, `FetchMc`        |
+| 2           | Cloudflare Workers Cron による分単位生成制御            | `GenerationService`, `workers/cron.ts`                           | `runMinuteGeneration`, `CronTrigger`, `CompareHash`              |
+| 3           | プロンプト合成と視覚パラメータ決定                      | `PromptService`, `ImageProvider`                                 | `composePrompt`, `generate`, `ComposePrompt`                     |
+| 4           | Cloudflare R2 永続化と Next.js API 公開                 | `StateService`, `lib/r2`, `app/api/*`, `share`                   | `putImageR2`, `GET /api/mc`, `StoreImageR2`, `UpdateStateR2`     |
+| 5           | 3D ミュージアムレンダリング UI                          | `GalleryScene`, `Lights`, `FramedPainting`                       | `GLB Texture Update Flow`                                        |
+| 6           | インタラクティブ制御とデータ同期                        | `CameraRig`, `useMc`, `useTokenImage`                            | `GLB Texture Update Flow`, `Minute Generation Flow`              |
+| 7           | OGP 更新と共有（SSR）                                   | `share/[ticker]`                                                 | `OGP Share SSR Flow`                                             |
+| 8           | GLB 額縁への画像はめ込み                                | `FramedPainting`                                                 | `GLB Texture Update Flow`                                        |
+| 9           | Cloudflare Pages デプロイと @opennextjs/cloudflare 統合 | `@opennextjs/cloudflare`, `wrangler.toml`, `open-next.config.ts` | `opennextjs-cloudflare build`, `wrangler deploy`                 |
+| 10          | Cloudflare Workers Secrets 管理                         | `wrangler secret put`, `env.PROVIDER_API_KEY`                    | `workers/cron.ts` での Secret 取得、`.dev.vars` でのローカル開発 |
 
 ## Components and Interfaces
 
@@ -247,7 +247,7 @@ export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     const startTime = Date.now();
     const result = await runMinuteGeneration(env.R2_BUCKET, env.PROVIDER_API_KEY);
-    
+
     if (result.isErr()) {
       console.error("Cron failed", {
         error: result.error,
@@ -255,7 +255,7 @@ export default {
       });
       return;
     }
-    
+
     console.info("Cron success", {
       status: result.value.status,
       hash: result.value.hash,
@@ -498,10 +498,10 @@ export interface StateService {
 
 **エンドポイント契約**
 
-| Method | Path                   | Request | Response                                                              | Errors                           |
-| ------ | ---------------------- | ------- | --------------------------------------------------------------------- | -------------------------------- |
-| GET    | `/api/mc`              | `none`  | `{ tokens: McMapRounded; generatedAt: string }`                       | `500`（Result.err → fallback 0） |
-| GET    | `/api/tokens/[ticker]` | `none`  | `{ thumbnailUrl: string; updatedAt: string }` or `204`                | `500`                            |
+| Method | Path                   | Request | Response                                               | Errors                           |
+| ------ | ---------------------- | ------- | ------------------------------------------------------ | -------------------------------- |
+| GET    | `/api/mc`              | `none`  | `{ tokens: McMapRounded; generatedAt: string }`        | `500`（Result.err → fallback 0） |
+| GET    | `/api/tokens/[ticker]` | `none`  | `{ thumbnailUrl: string; updatedAt: string }` or `204` | `500`                            |
 
 **SSR `share/[ticker]`**: R2 公開 URL から最新の `thumbnailUrl` を取得し、OG/Twitter meta に設定（`cache: no-store` 推奨、フォールバック画像を用意）。
 
@@ -523,12 +523,12 @@ export interface StateService {
 
 ### Logical Data Model
 
-| Entity          | Key                     | Attributes                                                   | Notes                                        |
-| --------------- | ----------------------- | ------------------------------------------------------------ | -------------------------------------------- |
-| `GlobalState`   | Singleton               | `prevHash: string`, `lastTs: string`                         | R2 key `state/global.json`                   |
-| `TokenState`    | `ticker`                | `thumbnailUrl: string`, `updatedAt: string`                  | R2 key `state/{ticker}.json`                 |
-| `ImageAsset`    | R2 key (`images/...`)   | Binary webp, metadata from provider                          | 最新のみ常備。履歴は 7 日保持想定。          |
-| `PromptVersion` | `id`                    | プロンプトテンプレート、ネガティブプロンプト、視覚設定マップ | 別途 R2 / Git 管理、実行時に読み取り専用。   |
+| Entity          | Key                   | Attributes                                                   | Notes                                      |
+| --------------- | --------------------- | ------------------------------------------------------------ | ------------------------------------------ |
+| `GlobalState`   | Singleton             | `prevHash: string`, `lastTs: string`                         | R2 key `state/global.json`                 |
+| `TokenState`    | `ticker`              | `thumbnailUrl: string`, `updatedAt: string`                  | R2 key `state/{ticker}.json`               |
+| `ImageAsset`    | R2 key (`images/...`) | Binary webp, metadata from provider                          | 最新のみ常備。履歴は 7 日保持想定。        |
+| `PromptVersion` | `id`                  | プロンプトテンプレート、ネガティブプロンプト、視覚設定マップ | 別途 R2 / Git 管理、実行時に読み取り専用。 |
 
 ### Data Contracts & Integration
 

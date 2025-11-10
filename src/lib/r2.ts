@@ -99,10 +99,7 @@ export async function putImageR2(
 /**
  * For Workers environment: Image retrieval using R2 Binding
  */
-export async function getImageR2(
-  bucket: R2Bucket,
-  key: string,
-): Promise<Result<ArrayBuffer | null, AppError>> {
+export async function getImageR2(bucket: R2Bucket, key: string): Promise<Result<ArrayBuffer | null, AppError>> {
   try {
     const obj = await bucket.get(key);
     if (!obj) return ok(null);

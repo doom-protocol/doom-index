@@ -35,14 +35,7 @@ export const Lights: React.FC = () => {
       <directionalLight position={[0, -2, 0]} intensity={0.3} />
 
       {/* Main spotlight targeting the painting */}
-      <spotLight
-        ref={spotLightRef}
-        position={[0, 2.8, 1]}
-        intensity={8.0}
-        angle={0.6}
-        penumbra={0.8}
-        distance={6}
-      />
+      <spotLight ref={spotLightRef} position={[0, 2.8, 1]} intensity={8.0} angle={0.6} penumbra={0.8} distance={6} />
 
       {/* Additional spotlights for painting glow effect */}
       <spotLight

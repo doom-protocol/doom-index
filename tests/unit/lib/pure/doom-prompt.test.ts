@@ -28,10 +28,10 @@ describe("Doom Prompt Generation", () => {
       }
 
       // Check weight normalization (threshold = 1M)
-      const machineFragment = fragments.find((f) => f.text.includes("machine"));
+      const machineFragment = fragments.find(f => f.text.includes("machine"));
       expect(machineFragment?.weight).toBeCloseTo(1.45, 2);
 
-      const iceFragment = fragments.find((f) => f.text.includes("glaciers"));
+      const iceFragment = fragments.find(f => f.text.includes("glaciers"));
       expect(iceFragment?.weight).toBeCloseTo(0.2, 2);
     });
 

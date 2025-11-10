@@ -53,8 +53,8 @@ export const RealtimeDashboard: React.FC = () => {
                       cursor: "pointer",
                       transition: "color 0.2s",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#22c55e")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#4ade80")}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#22c55e")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "#4ade80")}
                   >
                     ${ticker}
                   </a>

@@ -5,11 +5,7 @@
 
 declare module "*/.open-next/worker.js" {
   export interface WorkerHandler {
-    fetch: (
-      request: Request,
-      env: Record<string, unknown>,
-      ctx: ExecutionContext,
-    ) => Promise<Response>;
+    fetch: (request: Request, env: Record<string, unknown>, ctx: ExecutionContext) => Promise<Response>;
   }
 
   const handler: WorkerHandler;

@@ -20,17 +20,13 @@ const toExternalApiError = (overrides: Partial<ExternalApiError>): ExternalApiEr
   ...overrides,
 });
 
-const selectHighestLiquidityPrice = (
-  payload: DexResponse,
-  ticker: TokenTicker,
-  log: typeof logger
-): number | null => {
+const selectHighestLiquidityPrice = (payload: DexResponse, ticker: TokenTicker, log: typeof logger): number | null => {
   const pairs = payload?.pairs ?? [];
 
   if (pairs.length === 0) {
     log.warn("market-cap.price.no-pairs", {
       ticker,
-      reason: "DexScreener returned no pairs for this token"
+      reason: "DexScreener returned no pairs for this token",
     });
     return null;
   }
@@ -61,13 +57,13 @@ const selectHighestLiquidityPrice = (
   if (bestPrice === null) {
     log.warn("market-cap.price.no-valid-pair", {
       ticker,
-      reason: "No pairs with valid liquidity and price found"
+      reason: "No pairs with valid liquidity and price found",
     });
     log.debug("market-cap.price.pair-details", {
       ticker,
       totalPairs: pairs.length,
       pairsWithoutLiquidity,
-      pairsWithInvalidPrice
+      pairsWithInvalidPrice,
     });
   }
 
@@ -99,12 +95,12 @@ export function createMarketCapService({
       if (!response.ok) {
         log.error("market-cap.fetch.error", {
           ...toExternalApiError({ status: response.status, ticker: token.ticker }),
-          statusText: response.statusText
+          statusText: response.statusText,
         });
         log.debug("market-cap.fetch.error-details", {
           ticker: token.ticker,
           url,
-          status: response.status
+          status: response.status,
         });
         return 0;
       }
@@ -119,11 +115,11 @@ export function createMarketCapService({
       if (!token.supply || token.supply <= 0) {
         log.warn("market-cap.supply.missing", {
           ticker: token.ticker,
-          reason: "Token supply is missing or invalid"
+          reason: "Token supply is missing or invalid",
         });
         log.debug("market-cap.supply.details", {
           ticker: token.ticker,
-          supply: token.supply
+          supply: token.supply,
         });
         return 0;
       }
@@ -134,12 +130,12 @@ export function createMarketCapService({
       const stack = error instanceof Error ? error.stack : undefined;
 
       log.error("market-cap.fetch.exception", {
-        ...toExternalApiError({ message, ticker: token.ticker })
+        ...toExternalApiError({ message, ticker: token.ticker }),
       });
       log.debug("market-cap.fetch.exception-details", {
         ticker: token.ticker,
         url,
-        stack
+        stack,
       });
       return 0;
     }

@@ -129,6 +129,7 @@ scripts/.out/DOOM_<timestamp>_<hash>_<seed>/
 ```
 
 The `params.json` includes:
+
 - Prompt and negative prompt
 - Visual parameters
 - Market cap values
@@ -235,16 +236,19 @@ Or create your own template by adding it to `src/constants/prompts.ts`.
 ### Cloudflare Setup
 
 1. **Create R2 Bucket**
+
    ```bash
    wrangler r2 bucket create doom-index-storage
    ```
 
 2. **Set Workers Secrets**
+
    ```bash
    wrangler secret put PROVIDER_API_KEY
    ```
 
 3. **Deploy Workers**
+
    ```bash
    bun run wrangler:deploy
    ```

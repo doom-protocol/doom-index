@@ -27,7 +27,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         fov: 50,
         position: [0, 0.8, 0.8],
         near: 0.1,
-        far: 100
+        far: 100,
       }}
       gl={{ antialias: true, toneMapping: ACESFilmicToneMapping }}
       style={{
@@ -39,7 +39,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         margin: 0,
         padding: 0,
         display: "block",
-        background: "#000000"
+        background: "#000000",
       }}
     >
       <CameraRig preset={cameraPreset} />
@@ -48,7 +48,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         dampingFactor={0.05}
         touches={{
           ONE: 0, // TOUCH_ROTATE (one finger rotation) - 0 = ROTATE
-          TWO: 2  // TOUCH_DOLLY_PAN (two finger zoom/pan) - 2 = DOLLY_PAN
+          TWO: 2, // TOUCH_DOLLY_PAN (two finger zoom/pan) - 2 = DOLLY_PAN
         }}
         enableZoom={true}
         enablePan={true}
@@ -60,9 +60,9 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         panSpeed={0.5}
         enableRotate={true}
         mouseButtons={{
-          LEFT: 0,   // ROTATE
+          LEFT: 0, // ROTATE
           MIDDLE: 1, // DOLLY
-          RIGHT: 2   // PAN
+          RIGHT: 2, // PAN
         }}
       />
       <Lights />
@@ -91,12 +91,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
       {/* Gallery Room - Smaller box with inside visible */}
       <mesh position={[0, 1.5, 0]}>
         <boxGeometry args={[6, 4, 6]} />
-        <meshStandardMaterial
-          color="#2a2a2a"
-          roughness={0.9}
-          metalness={0.05}
-          side={2}
-        />
+        <meshStandardMaterial color="#2a2a2a" roughness={0.9} metalness={0.05} side={2} />
       </mesh>
 
       {/* Central framed painting */}

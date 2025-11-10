@@ -193,11 +193,7 @@ import { ok, err, Result } from "neverthrow";
 import type { AppError } from "@/src/services/errors";
 
 // Workers 環境用（R2 Binding）
-export async function putJsonR2(
-  bucket: R2Bucket,
-  key: string,
-  data: unknown,
-): Promise<Result<void, AppError>> {
+export async function putJsonR2(bucket: R2Bucket, key: string, data: unknown): Promise<Result<void, AppError>> {
   try {
     await bucket.put(key, JSON.stringify(data), {
       httpMetadata: { contentType: "application/json" },
@@ -208,10 +204,7 @@ export async function putJsonR2(
   }
 }
 
-export async function getJsonR2<T>(
-  bucket: R2Bucket,
-  key: string,
-): Promise<Result<T | null, AppError>> {
+export async function getJsonR2<T>(bucket: R2Bucket, key: string): Promise<Result<T | null, AppError>> {
   try {
     const obj = await bucket.get(key);
     if (!obj) return ok(null);
