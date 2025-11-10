@@ -5,8 +5,6 @@ import { TOKEN_TICKERS } from "@/constants/token";
 import { logger } from "@/utils/logger";
 import { env } from "@/env";
 
-export const runtime = "edge";
-
 const zeroMap = TOKEN_TICKERS.reduce(
   (acc, ticker) => {
     acc[ticker] = 0;

@@ -5,8 +5,6 @@ import { logger } from "@/utils/logger";
 import { env } from "@/env";
 import type { TokenState } from "@/types/domain";
 
-export const runtime = "edge";
-
 const isTokenTicker = (value: string): value is TokenTicker => TOKEN_TICKERS.includes(value as TokenTicker);
 
 type RouteContext = {
