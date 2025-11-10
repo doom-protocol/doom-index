@@ -1,6 +1,6 @@
 # Cloudflare Workers Configuration for DOOM INDEX
 
-name = "doom-index-cron"
+name = "doom-index"
 main = "workers/cron.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env"]
