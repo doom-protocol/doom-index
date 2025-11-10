@@ -8,13 +8,13 @@ import { resolveProvider } from "@/lib/providers";
 import { createRevenueEngine } from "@/services/revenue";
 
 /**
- * Cloudflare Workers 環境用のサービスコンテナを作成
+ * Create service container for Cloudflare Workers environment
  */
-export function createServicesForWorkers(r2Bucket: R2Bucket, r2PublicDomain: string, providerApiKey: string) {
+export function createServicesForWorkers(r2Bucket: R2Bucket, r2PublicDomain: string) {
   const marketCapService = createMarketCapService({ fetch, log: logger });
   const promptService = createPromptService();
   const stateService = createStateService({ r2Bucket, r2PublicDomain });
-  const imageProvider = resolveProvider("smart"); // TODO: 環境変数から取得
+  const imageProvider = resolveProvider("smart"); // TODO: Get from environment variable
   const revenueEngine = createRevenueEngine();
 
   const fetchTradeSnapshots = async () => [];
@@ -40,12 +40,12 @@ export function createServicesForWorkers(r2Bucket: R2Bucket, r2PublicDomain: str
 }
 
 /**
- * Next.js 環境用のサービスコンテナ（読み取り専用）
- * R2 公開 URL 経由でアクセス
+ * Create service container for Next.js environment (read-only)
+ * Access via R2 public URL
  */
 export function createServicesForNextjs(r2PublicDomain: string) {
-  // Next.js では R2 Binding が使えないため、メモリクライアントを使用
-  // 実際の読み取りは getJsonFromPublicUrl を直接使用
+  // Use memory client since R2 Binding is not available in Next.js
+  // Actual reads use getJsonFromPublicUrl directly
   const { bucket } = createMemoryR2Client(r2PublicDomain);
 
   const marketCapService = createMarketCapService({ fetch, log: logger });

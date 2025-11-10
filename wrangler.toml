@@ -1,9 +1,13 @@
 # Cloudflare Workers Configuration for DOOM INDEX
 
 name = "doom-index"
-main = ".open-next/worker.js"
+main = "src/worker.ts"
 compatibility_date = "2025-03-25"
-compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env"]
+compatibility_flags = [
+ "nodejs_compat",
+ "nodejs_compat_populate_process_env",
+ "global_fetch_strictly_public",
+]
 
 # Cron Triggers - 毎分実行
 [triggers]
@@ -18,6 +22,11 @@ bucket_name = "doom-index-storage"
 [assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "doom-index"
+
 
 [observability]
 [observability.logs]

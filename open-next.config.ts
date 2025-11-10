@@ -1,6 +1,6 @@
 import { defineCloudflareConfig } from "@opennextjs/cloudflare";
+import r2IncrementalCache from "@opennextjs/cloudflare/overrides/incremental-cache/r2-incremental-cache";
 
 export default defineCloudflareConfig({
-  // Cloudflare R2 Binding を Next.js ランタイムに注入
-  // キャッシュ設定はデフォルトを使用
+  incrementalCache: r2IncrementalCache,
 });

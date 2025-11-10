@@ -20,7 +20,7 @@ export async function GET(_request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Unknown ticker" }, { status: 404 });
   }
 
-  // R2 公開 URL から直接読み取り
+  // Read directly from R2 public URL
   const url = `${env.R2_PUBLIC_DOMAIN}/state/${ticker}.json`;
   const result = await getJsonFromPublicUrl<TokenState>(url);
 

@@ -34,12 +34,12 @@ export function createStateService({ r2Bucket, r2PublicDomain }: StateServiceDep
   }
 
   async function writeTokenStates(states: TokenState[]): Promise<Result<void, AppError>> {
-    // R2 は並列書き込みをサポートしているため、Promise.allSettled を使用
+    // Use Promise.allSettled since R2 supports parallel writes
     const results = await Promise.allSettled(
       states.map(state => putJsonR2(r2Bucket, stateKeys.tokenState(state.ticker), state)),
     );
 
-    // すべての結果を確認し、エラーがあれば最初のエラーを返す
+    // Check all results and return the first error if any
     for (const result of results) {
       if (result.status === "fulfilled" && result.value.isErr()) {
         return err(result.value.error);

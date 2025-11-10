@@ -23,7 +23,7 @@ export type R2GetResult = {
 };
 
 /**
- * Workers 環境用: R2 Binding を使用した JSON 保存
+ * For Workers environment: JSON storage using R2 Binding
  */
 export async function putJsonR2(bucket: R2Bucket, key: string, data: unknown): Promise<Result<void, AppError>> {
   try {
@@ -45,7 +45,7 @@ export async function putJsonR2(bucket: R2Bucket, key: string, data: unknown): P
 }
 
 /**
- * Workers 環境用: R2 Binding を使用した JSON 取得
+ * For Workers environment: JSON retrieval using R2 Binding
  */
 export async function getJsonR2<T>(bucket: R2Bucket, key: string): Promise<Result<T | null, AppError>> {
   try {
@@ -66,7 +66,7 @@ export async function getJsonR2<T>(bucket: R2Bucket, key: string): Promise<Resul
 }
 
 /**
- * Workers 環境用: R2 Binding を使用した画像保存
+ * For Workers environment: Image storage using R2 Binding
  */
 export async function putImageR2(
   bucket: R2Bucket,
@@ -82,7 +82,7 @@ export async function putImageR2(
       },
     });
 
-    // R2 公開 URL を構築（カスタムドメイン or r2.dev）
+    // Construct R2 public URL (custom domain or r2.dev)
     const url = `${r2PublicDomain}/${key}`;
     return ok(url);
   } catch (error) {
@@ -97,7 +97,7 @@ export async function putImageR2(
 }
 
 /**
- * Workers 環境用: R2 Binding を使用した画像取得
+ * For Workers environment: Image retrieval using R2 Binding
  */
 export async function getImageR2(
   bucket: R2Bucket,
@@ -121,7 +121,7 @@ export async function getImageR2(
 }
 
 /**
- * Next.js 環境用: 公開 URL 経由での JSON 取得
+ * For Next.js environment: JSON retrieval via public URL
  */
 export async function getJsonFromPublicUrl<T>(url: string): Promise<Result<T | null, AppError>> {
   try {
@@ -154,7 +154,7 @@ export async function getJsonFromPublicUrl<T>(url: string): Promise<Result<T | n
 }
 
 /**
- * Next.js 環境用: 公開 URL 経由での画像取得
+ * For Next.js environment: Image retrieval via public URL
  */
 export async function getImageFromPublicUrl(url: string): Promise<Result<ArrayBuffer | null, AppError>> {
   try {

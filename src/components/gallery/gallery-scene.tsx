@@ -47,8 +47,8 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         enableDamping
         dampingFactor={0.05}
         touches={{
-          ONE: 0, // TOUCH_ROTATE (1本指で回転) - 0 = ROTATE
-          TWO: 2  // TOUCH_DOLLY_PAN (2本指でズーム・パン) - 2 = DOLLY_PAN
+          ONE: 0, // TOUCH_ROTATE (one finger rotation) - 0 = ROTATE
+          TWO: 2  // TOUCH_DOLLY_PAN (two finger zoom/pan) - 2 = DOLLY_PAN
         }}
         enableZoom={true}
         enablePan={true}
