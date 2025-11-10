@@ -21,10 +21,10 @@ export const TopBarProgress: FC = () => {
     const animate = () => {
       const now = Date.now();
       const elapsedInCycle = now % MINUTE_MS;
-      const currentProgress = elapsedInCycle / MINUTE_MS;
       const remainingMs = MINUTE_MS - elapsedInCycle;
-      const nextRemainingSeconds = Math.min(59, Math.floor(remainingMs / 1000));
-      const hasWrapped = currentProgress < previousProgressRef.current;
+      const nextRemainingSeconds = Math.floor(remainingMs / 1000);
+      const currentElapsedProgress = elapsedInCycle / MINUTE_MS;
+      const hasWrapped = currentElapsedProgress < previousProgressRef.current;
       const previousRemaining = lastRemainingRef.current;
 
       if (hasWrapped) {
@@ -37,20 +37,37 @@ export const TopBarProgress: FC = () => {
         lastRemainingRef.current = 0;
         previousProgressRef.current = 0;
       } else {
-        if (nextRemainingSeconds !== previousRemaining) {
-          if (nextRemainingSeconds <= HAPTIC_WINDOW_START_REMAINING_SECOND) {
+        const displaySeconds = Math.min(59, nextRemainingSeconds);
+        if (displaySeconds !== previousRemaining) {
+          if (displaySeconds <= HAPTIC_WINDOW_START_REMAINING_SECOND && displaySeconds > 0) {
             triggerHaptic();
           }
-          if (nextRemainingSeconds === 0) {
+          if (displaySeconds === 0) {
             playChime();
-            setProgress(0);
-            previousProgressRef.current = 0;
+            setProgress(1);
+            previousProgressRef.current = 1;
+          } else {
+            setDisplaySecond(displaySeconds);
+            lastRemainingRef.current = displaySeconds;
+            // 秒数に基づいてゲージを計算: (60 - displaySeconds) / 60
+            const progressValue = (60 - displaySeconds) / 60;
+            previousProgressRef.current = currentElapsedProgress;
+            setProgress(progressValue);
           }
-          setDisplaySecond(nextRemainingSeconds);
-          lastRemainingRef.current = nextRemainingSeconds;
+        } else {
+          // 秒数が変わらない場合でも、ゲージを更新
+          if (displaySeconds === 0) {
+            setProgress(1);
+          } else {
+            const progressValue = (60 - displaySeconds) / 60;
+            // 現在の秒内での進捗を追加
+            const msInCurrentSecond = remainingMs % 1000;
+            const progressInSecond = msInCurrentSecond / 1000;
+            const fineProgress = progressValue + (1 / 60) * (1 - progressInSecond);
+            previousProgressRef.current = currentElapsedProgress;
+            setProgress(fineProgress);
+          }
         }
-        previousProgressRef.current = currentProgress;
-        setProgress(currentProgress);
       }
 
       animationFrameRef.current = requestAnimationFrame(animate);

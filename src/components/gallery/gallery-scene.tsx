@@ -65,7 +65,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         enablePan={true}
         minDistance={0.5}
         maxDistance={5}
-        target={[0, 0.8, 2.8]}
+        target={[0, 0.8, 4.0]}
         rotateSpeed={1.0}
         zoomSpeed={1.0}
         panSpeed={0.5}
@@ -111,23 +111,23 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         {/* Back wall */}
         <mesh position={[0, 1.65, 5]} rotation={[0, Math.PI, 0]} receiveShadow>
           <planeGeometry args={[10, 4.5]} />
-          <meshStandardMaterial color="#5c5d79" roughness={0.84} metalness={0.11} side={DoubleSide} />
+          <meshStandardMaterial color="#6c6d89" roughness={0.84} metalness={0.11} side={DoubleSide} />
         </mesh>
 
         {/* Side walls */}
         <mesh rotation={[0, -Math.PI / 2, 0]} position={[5, 1.65, 0]} receiveShadow>
           <planeGeometry args={[10, 4.5]} />
-          <meshStandardMaterial color="#585a76" roughness={0.84} metalness={0.11} side={DoubleSide} />
+          <meshStandardMaterial color="#686a86" roughness={0.84} metalness={0.11} side={DoubleSide} />
         </mesh>
         <mesh rotation={[0, Math.PI / 2, 0]} position={[-5, 1.65, 0]} receiveShadow>
           <planeGeometry args={[10, 4.5]} />
-          <meshStandardMaterial color="#585a76" roughness={0.84} metalness={0.11} side={DoubleSide} />
+          <meshStandardMaterial color="#686a86" roughness={0.84} metalness={0.11} side={DoubleSide} />
         </mesh>
 
         {/* Front wall */}
         <mesh position={[0, 1.65, -5]} receiveShadow>
           <planeGeometry args={[10, 4.5]} />
-          <meshStandardMaterial color="#585a76" roughness={0.84} metalness={0.11} side={DoubleSide} />
+          <meshStandardMaterial color="#686a86" roughness={0.84} metalness={0.11} side={DoubleSide} />
         </mesh>
 
         {/* Ceiling */}

@@ -31,7 +31,7 @@ const POINTER_DRAG_THRESHOLD = 6;
 
 export const FramedPainting: React.FC<FramedPaintingProps> = ({
   thumbnailUrl = DEFAULT_THUMBNAIL,
-  framePosition = [0, 0.8, 2.8],
+  framePosition = [0, 0.8, 4.0],
 }) => {
   const paintingMeshRef = useRef<Mesh>(null);
   const pulseGroupRef = useRef<Group>(null);
@@ -159,9 +159,13 @@ export const FramedPainting: React.FC<FramedPaintingProps> = ({
         return;
       }
 
-      if (event.button !== 0 && event.pointerType !== "touch") {
+      // For touch events, allow all touches. For mouse, only allow left button (button 0)
+      if (event.pointerType !== "touch" && event.button !== 0) {
         return;
       }
+
+      // Stop propagation to prevent OrbitControls from handling the event
+      event.stopPropagation();
 
       resetPointerState();
 
@@ -188,6 +192,9 @@ export const FramedPainting: React.FC<FramedPaintingProps> = ({
       return;
     }
 
+    // Stop propagation to prevent OrbitControls from handling the event during drag
+    event.stopPropagation();
+
     const deltaX = event.clientX - start.x;
     const deltaY = event.clientY - start.y;
     if (Math.hypot(deltaX, deltaY) > POINTER_DRAG_THRESHOLD) {
@@ -208,7 +215,7 @@ export const FramedPainting: React.FC<FramedPaintingProps> = ({
       const shouldTrigger =
         pointerDownPositionRef.current !== null &&
         !hasPointerMovedRef.current &&
-        (event.button === 0 || event.pointerType === "touch");
+        (event.pointerType === "touch" || event.button === 0);
 
       resetPointerState();
 

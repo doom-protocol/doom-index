@@ -56,10 +56,10 @@ export const Lights: React.FC = () => {
   return (
     <>
       {/* Gentle ambient glow to lift the space */}
-      <ambientLight intensity={0.36} color="#323248" />
+      <ambientLight intensity={0.48} color="#323248" />
 
       {/* Ceiling bounce to keep wall details visible */}
-      <hemisphereLight args={["#737395", "#1e1e2c", 0.4]} />
+      <hemisphereLight args={["#737395", "#1e1e2c", 0.55]} />
 
       {/* Subtle overhead wash to outline architecture */}
       <directionalLight position={[-1.8, 2.8, 3]} intensity={0.45} color="#5c5c74" />
@@ -67,7 +67,7 @@ export const Lights: React.FC = () => {
       {/* Key spotlight directly above the painting */}
       <spotLight
         ref={keyLightRef}
-        position={[0, 2.95, 2.75]}
+        position={[0, 2.95, 4.0]}
         angle={0.62}
         penumbra={0.96}
         intensity={20}
@@ -81,7 +81,7 @@ export const Lights: React.FC = () => {
       {/* Secondary spill from the front to soften falloff */}
       <spotLight
         ref={fillLightRef}
-        position={[0.35, 2.4, 1.6]}
+        position={[0.35, 2.4, 2.8]}
         angle={0.6}
         penumbra={0.95}
         intensity={12}
@@ -91,14 +91,14 @@ export const Lights: React.FC = () => {
       />
 
       {/* Subtle floor wash */}
-      <pointLight position={[0, 1.05, 2.25]} intensity={1.2} distance={5.2} decay={2.1} color="#4a4a66" />
+      <pointLight position={[0, 1.05, 3.45]} intensity={1.2} distance={5.2} decay={2.1} color="#4a4a66" />
 
       {/* Wall grazers for a luxurious ambient glow */}
-      <pointLight position={[-2.4, 1.7, 2.6]} intensity={1.55} distance={7.2} decay={2.05} color="#5a5a75" />
-      <pointLight position={[2.4, 1.7, 2.4]} intensity={1.45} distance={7.2} decay={2.05} color="#5c5c78" />
+      <pointLight position={[-2.4, 1.7, 3.8]} intensity={1.55} distance={7.2} decay={2.05} color="#5a5a75" />
+      <pointLight position={[2.4, 1.7, 3.6]} intensity={1.45} distance={7.2} decay={2.05} color="#5c5c78" />
 
       {/* Back wall uplight to silhouette the frame */}
-      <pointLight position={[0, 0.78, 3.25]} intensity={1.05} distance={5.8} decay={2.2} color="#3c3c52" />
+      <pointLight position={[0, 0.78, 4.45]} intensity={1.05} distance={5.8} decay={2.2} color="#3c3c52" />
 
       {/* Soft floor glow to hint at the spotlight focus */}
       <mesh ref={floorGlowRef} rotation={[-Math.PI / 2, 0, 0]} geometry={floorGlowGeometry}>
@@ -113,7 +113,7 @@ export const Lights: React.FC = () => {
       </mesh>
 
       {/* Target object for the focused lights */}
-      <object3D ref={targetRef} position={[0, 0.82, 2.8]} />
+      <object3D ref={targetRef} position={[0, 0.82, 4.0]} />
     </>
   );
 };

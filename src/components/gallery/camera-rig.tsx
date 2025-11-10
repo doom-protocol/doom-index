@@ -17,7 +17,7 @@ const PRESETS: Record<CameraPreset, { position: [number, number, number]; lookAt
   },
   painting: {
     position: [0, 0.8, 0.8],
-    lookAt: [0, 0.8, 2.8],
+    lookAt: [0, 0.8, 4.0],
   },
 };
 
