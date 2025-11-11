@@ -194,7 +194,8 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
             onPointerEnter={e => {
               e.currentTarget.style.background = "rgba(255, 255, 255, 0.12)";
               e.currentTarget.style.transform = "scale(1.1)";
-              e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)";
             }}
             onPointerLeave={e => {
               e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
@@ -207,12 +208,32 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
             }}
           >
             {preset === "painting" ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255, 255, 255, 0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))" }}>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="rgba(255, 255, 255, 0.9)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))" }}
+              >
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <path d="M9 9h6v6H9z" />
               </svg>
             ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255, 255, 255, 0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))" }}>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="rgba(255, 255, 255, 0.9)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))" }}
+              >
                 <rect x="3" y="4" width="18" height="16" rx="2" />
                 <path d="M8 10h8M8 14h6" />
               </svg>

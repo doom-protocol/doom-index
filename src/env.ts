@@ -16,7 +16,6 @@ export const env = createEnv({
   server: {
     // Image Provider API Keys
     OPENAI_API_KEY: z.string().optional(),
-    REPLICATE_API_KEY: z.string().optional(),
     RUNWARE_API_KEY: z.string().optional(),
 
     // Node Environment
@@ -39,13 +38,10 @@ export const env = createEnv({
    */
   shared: {
     // Image Generation Model
-    // The model name to use for image generation (e.g., "dall-e-3", "runware:100@1", "civitai:38784@44716")
-    // If not specified, defaults to "dall-e-3"
+    // The model name to use for image generation (e.g., "runware:100@1", "civitai:38784@44716", "dall-e-3")
+    // If not specified, defaults to "runware:100@1"
     // The provider will be automatically resolved based on the model
     IMAGE_MODEL: z.string().optional(),
-
-    // Prompt Template
-    PROMPT_TEMPLATE: z.enum(["default", "experimental"]).default("default"),
   },
 
   /**
@@ -55,14 +51,12 @@ export const env = createEnv({
   runtimeEnv: {
     // Server
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-    REPLICATE_API_KEY: process.env.REPLICATE_API_KEY,
     RUNWARE_API_KEY: process.env.RUNWARE_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     // Shared
     IMAGE_MODEL: process.env.IMAGE_MODEL,
-    PROMPT_TEMPLATE: process.env.PROMPT_TEMPLATE,
   },
 
   /**

@@ -46,10 +46,7 @@ const PAINTING_MATERIAL_ROUGHNESS = 0.25;
 const PAINTING_MATERIAL_METALNESS = 0.05;
 
 // Helper function to validate pointer event
-const isValidPointerEvent = (
-  event: ThreeEvent<PointerEvent>,
-  activePointerId: number | null,
-): boolean => {
+const isValidPointerEvent = (event: ThreeEvent<PointerEvent>, activePointerId: number | null): boolean => {
   if (!event.isPrimary) {
     return false;
   }
@@ -115,322 +112,318 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
   onPointerUp,
   onPointerCancel,
 }) => {
-    const paintingMeshRef = useRef<Mesh>(null);
-    const previousPaintingMeshRef = useRef<Mesh>(null);
-    const pulseGroupRef = useRef<Group>(null);
-    const pulseFillRef = useRef<Mesh>(null);
-    const pulseOutlineRef = useRef<LineSegments>(null);
-    const pulseElapsedRef = useRef(0);
-    const isPulseActiveRef = useRef(false);
+  const paintingMeshRef = useRef<Mesh>(null);
+  const previousPaintingMeshRef = useRef<Mesh>(null);
+  const pulseGroupRef = useRef<Group>(null);
+  const pulseFillRef = useRef<Mesh>(null);
+  const pulseOutlineRef = useRef<LineSegments>(null);
+  const pulseElapsedRef = useRef(0);
+  const isPulseActiveRef = useRef(false);
 
-    // Load texture - useTexture automatically handles URL changes
-    const texture = useTexture(thumbnailUrl, loadedTexture => {
-      loadedTexture.colorSpace = SRGBColorSpace;
-      loadedTexture.anisotropy = 4;
-      loadedTexture.needsUpdate = true;
-    });
+  // Load texture - useTexture automatically handles URL changes
+  const texture = useTexture(thumbnailUrl, loadedTexture => {
+    loadedTexture.colorSpace = SRGBColorSpace;
+    loadedTexture.anisotropy = 4;
+    loadedTexture.needsUpdate = true;
+  });
 
-    // Texture transition state
-    const [currentTexture, setCurrentTexture] = useState<Texture | null>(texture);
-    const [previousTexture, setPreviousTexture] = useState<Texture | null>(null);
-    const [isTransitionActive, setIsTransitionActive] = useState(false);
-    const previousThumbnailUrlRef = useRef<string | null>(thumbnailUrl);
-    const transitionElapsedRef = useRef(0);
-    const previousTextureRef = useRef<Texture | null>(null);
-    const currentTextureRef = useRef<Texture | null>(texture);
-    const pendingUrlRef = useRef<string | null>(null);
+  // Texture transition state
+  const [currentTexture, setCurrentTexture] = useState<Texture | null>(texture);
+  const [previousTexture, setPreviousTexture] = useState<Texture | null>(null);
+  const [isTransitionActive, setIsTransitionActive] = useState(false);
+  const previousThumbnailUrlRef = useRef<string | null>(thumbnailUrl);
+  const transitionElapsedRef = useRef(0);
+  const previousTextureRef = useRef<Texture | null>(null);
+  const currentTextureRef = useRef<Texture | null>(texture);
+  const pendingUrlRef = useRef<string | null>(null);
 
-    // Handle thumbnailUrl changes - start transition when URL changes
-    useLayoutEffect(() => {
-      // URL changed - prepare for transition
-      if (previousThumbnailUrlRef.current !== thumbnailUrl) {
-        pendingUrlRef.current = thumbnailUrl;
-        previousThumbnailUrlRef.current = thumbnailUrl;
+  // Handle thumbnailUrl changes - start transition when URL changes
+  useLayoutEffect(() => {
+    // URL changed - prepare for transition
+    if (previousThumbnailUrlRef.current !== thumbnailUrl) {
+      pendingUrlRef.current = thumbnailUrl;
+      previousThumbnailUrlRef.current = thumbnailUrl;
 
-        // If texture is already loaded and different, start transition immediately
-        if (texture && currentTextureRef.current && texture !== currentTextureRef.current) {
-          const oldTexture = currentTextureRef.current;
+      // If texture is already loaded and different, start transition immediately
+      if (texture && currentTextureRef.current && texture !== currentTextureRef.current) {
+        const oldTexture = currentTextureRef.current;
+        previousTextureRef.current = oldTexture;
+        setPreviousTexture(oldTexture);
+        currentTextureRef.current = texture;
+        setCurrentTexture(texture);
+        transitionElapsedRef.current = 0;
+        setIsTransitionActive(true);
+        pendingUrlRef.current = null;
+      }
+    }
+  }, [thumbnailUrl, texture]);
+
+  // Watch for texture.image loading to catch when new texture is ready
+  useEffect(() => {
+    if (!texture?.image) {
+      return;
+    }
+
+    const image = texture.image as HTMLImageElement;
+    const imageSrc = image.src || image.currentSrc || "";
+
+    // If we have a pending URL, check if this texture matches it
+    if (pendingUrlRef.current) {
+      if (imageSrc && imageSrc.includes(pendingUrlRef.current)) {
+        const oldTexture = currentTextureRef.current;
+        if (oldTexture && oldTexture !== texture) {
           previousTextureRef.current = oldTexture;
           setPreviousTexture(oldTexture);
-          currentTextureRef.current = texture;
-          setCurrentTexture(texture);
-          transitionElapsedRef.current = 0;
-          setIsTransitionActive(true);
-          pendingUrlRef.current = null;
         }
-      }
-    }, [thumbnailUrl, texture]);
 
-    // Watch for texture.image loading to catch when new texture is ready
-    useEffect(() => {
-      if (!texture?.image) {
+        currentTextureRef.current = texture;
+        setCurrentTexture(texture);
+        transitionElapsedRef.current = 0;
+        setIsTransitionActive(true);
+        pendingUrlRef.current = null;
         return;
       }
+    }
 
-      const image = texture.image as HTMLImageElement;
-      const imageSrc = image.src || image.currentSrc || "";
+    // Also check if texture reference changed (useTexture returned new texture)
+    if (currentTextureRef.current !== texture && texture.image) {
+      const currentImage = currentTextureRef.current?.image as HTMLImageElement | undefined;
+      const currentImageSrc = currentImage?.src || currentImage?.currentSrc || "";
 
-      // If we have a pending URL, check if this texture matches it
-      if (pendingUrlRef.current) {
-        if (imageSrc && imageSrc.includes(pendingUrlRef.current)) {
-          const oldTexture = currentTextureRef.current;
-          if (oldTexture && oldTexture !== texture) {
-            previousTextureRef.current = oldTexture;
-            setPreviousTexture(oldTexture);
-          }
-
-          currentTextureRef.current = texture;
-          setCurrentTexture(texture);
-          transitionElapsedRef.current = 0;
-          setIsTransitionActive(true);
-          pendingUrlRef.current = null;
-          return;
+      // If image source is different, this is a new texture
+      if (imageSrc && imageSrc !== currentImageSrc) {
+        const oldTexture = currentTextureRef.current;
+        if (oldTexture) {
+          previousTextureRef.current = oldTexture;
+          setPreviousTexture(oldTexture);
         }
+
+        currentTextureRef.current = texture;
+        setCurrentTexture(texture);
+        transitionElapsedRef.current = 0;
+        setIsTransitionActive(true);
       }
+    }
+  }, [texture]);
 
-      // Also check if texture reference changed (useTexture returned new texture)
-      if (currentTextureRef.current !== texture && texture.image) {
-        const currentImage = currentTextureRef.current?.image as HTMLImageElement | undefined;
-        const currentImageSrc = currentImage?.src || currentImage?.currentSrc || "";
+  // Frame dimensions (inner dimensions for the painting)
+  // GLB model is 1m height, so inner painting should be slightly smaller
+  // Adjust size to fit both mobile and PC screens
+  const innerWidth = 0.7;
+  const innerHeight = 0.7;
 
-        // If image source is different, this is a new texture
-        if (imageSrc && imageSrc !== currentImageSrc) {
-          const oldTexture = currentTextureRef.current;
-          if (oldTexture) {
-            previousTextureRef.current = oldTexture;
-            setPreviousTexture(oldTexture);
-          }
+  // Calculate aspect ratio fit (contain) based on current texture
+  const activeTexture = currentTexture || texture;
+  const [planeWidth, planeHeight] = calculatePlaneDimensions(activeTexture, innerWidth, innerHeight);
 
-          currentTextureRef.current = texture;
-          setCurrentTexture(texture);
-          transitionElapsedRef.current = 0;
-          setIsTransitionActive(true);
-        }
+  const [pulseOutlineGeometry, setPulseOutlineGeometry] = useState<EdgesGeometry | null>(null);
+
+  useEffect(() => {
+    const plane = new PlaneGeometry(planeWidth, planeHeight);
+    const edges = new EdgesGeometry(plane, 1);
+    plane.dispose();
+
+    setTimeout(() => {
+      setPulseOutlineGeometry(edges);
+    }, 0);
+
+    return () => {
+      edges.dispose();
+    };
+  }, [planeWidth, planeHeight]);
+
+  // Cleanup textures on unmount
+  useEffect(() => {
+    return () => {
+      if (previousTextureRef.current) {
+        previousTextureRef.current.dispose();
       }
-    }, [texture]);
-
-    // Frame dimensions (inner dimensions for the painting)
-    // GLB model is 1m height, so inner painting should be slightly smaller
-    // Adjust size to fit both mobile and PC screens
-    const innerWidth = 0.7;
-    const innerHeight = 0.7;
-
-    // Calculate aspect ratio fit (contain) based on current texture
-    const activeTexture = currentTexture || texture;
-    const [planeWidth, planeHeight] = calculatePlaneDimensions(activeTexture, innerWidth, innerHeight);
-
-    const [pulseOutlineGeometry, setPulseOutlineGeometry] = useState<EdgesGeometry | null>(null);
-
-    useEffect(() => {
-      const plane = new PlaneGeometry(planeWidth, planeHeight);
-      const edges = new EdgesGeometry(plane, 1);
-      plane.dispose();
-
-      setTimeout(() => {
-        setPulseOutlineGeometry(edges);
-      }, 0);
-
-      return () => {
-        edges.dispose();
-      };
-    }, [planeWidth, planeHeight]);
-
-    // Cleanup textures on unmount
-    useEffect(() => {
-      return () => {
-        if (previousTextureRef.current) {
-          previousTextureRef.current.dispose();
-        }
-        if (currentTexture && currentTexture !== texture) {
-          currentTexture.dispose();
-        }
-      };
-    }, [currentTexture, texture]);
-
-    useFrame((_, delta) => {
-      // Handle pulse animation
-      if (isPulseActiveRef.current && pulseGroupRef.current) {
-        pulseElapsedRef.current += delta;
-        const progress = Math.min(pulseElapsedRef.current / PULSE_DURATION, 1);
-        const scale = 1 + progress * (PULSE_MAX_SCALE - 1);
-
-        pulseGroupRef.current.scale.set(scale, scale, 1);
-
-        const fillMaterial = pulseFillRef.current?.material;
-        if (fillMaterial instanceof MeshBasicMaterial) {
-          fillMaterial.opacity = INITIAL_PULSE_FILL_OPACITY * (1 - progress);
-        }
-
-        const outlineMaterial = pulseOutlineRef.current?.material;
-        if (outlineMaterial instanceof LineBasicMaterial) {
-          outlineMaterial.opacity = INITIAL_PULSE_OUTLINE_OPACITY * (1 - progress);
-        }
-
-        if (progress >= 1) {
-          pulseGroupRef.current.visible = false;
-          isPulseActiveRef.current = false;
-        }
-      }
-
-      // Handle texture transition animation
-      if (isTransitionActive && previousTextureRef.current) {
-        transitionElapsedRef.current += delta;
-        const progress = Math.min(transitionElapsedRef.current / TRANSITION_DURATION, 1);
-
-        // Ease-in-out curve for smooth transition
-        const easedProgress = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-        // Update current texture opacity (fade in)
-        const currentMaterial = paintingMeshRef.current?.material;
-        if (currentMaterial instanceof MeshStandardMaterial) {
-          currentMaterial.opacity = easedProgress;
-          currentMaterial.transparent = true;
-        }
-
-        // Update previous texture opacity (fade out)
-        const previousMaterial = previousPaintingMeshRef.current?.material;
-        if (previousMaterial instanceof MeshStandardMaterial) {
-          previousMaterial.opacity = 1 - easedProgress;
-          previousMaterial.transparent = true;
-        }
-
-        if (progress >= 1) {
-          // Transition complete
-          setIsTransitionActive(false);
-          const textureToDispose = previousTextureRef.current;
-          previousTextureRef.current = null;
-          setPreviousTexture(null);
-
-          // Clean up previous texture
-          if (textureToDispose) {
-            textureToDispose.dispose();
-          }
-
-          // Reset transparency
-          const finalMaterial = paintingMeshRef.current?.material;
-          if (finalMaterial instanceof MeshStandardMaterial) {
-            finalMaterial.transparent = false;
-          }
-        }
-      }
-    });
-
-    const triggerPulse = () => {
-      if (!pulseGroupRef.current) {
-        return;
-      }
-
-      pulseElapsedRef.current = 0;
-      isPulseActiveRef.current = true;
-      pulseGroupRef.current.visible = true;
-      pulseGroupRef.current.scale.set(1, 1, 1);
-
-      if (pulseFillRef.current?.material instanceof MeshBasicMaterial) {
-        pulseFillRef.current.material.opacity = INITIAL_PULSE_FILL_OPACITY;
-      }
-
-      if (pulseOutlineRef.current?.material instanceof LineBasicMaterial) {
-        pulseOutlineRef.current.material.opacity = INITIAL_PULSE_OUTLINE_OPACITY;
+      if (currentTexture && currentTexture !== texture) {
+        currentTexture.dispose();
       }
     };
+  }, [currentTexture, texture]);
 
-    const triggerHaptics = () => {
-      if (typeof window === "undefined") {
-        return;
+  useFrame((_, delta) => {
+    // Handle pulse animation
+    if (isPulseActiveRef.current && pulseGroupRef.current) {
+      pulseElapsedRef.current += delta;
+      const progress = Math.min(pulseElapsedRef.current / PULSE_DURATION, 1);
+      const scale = 1 + progress * (PULSE_MAX_SCALE - 1);
+
+      pulseGroupRef.current.scale.set(scale, scale, 1);
+
+      const fillMaterial = pulseFillRef.current?.material;
+      if (fillMaterial instanceof MeshBasicMaterial) {
+        fillMaterial.opacity = INITIAL_PULSE_FILL_OPACITY * (1 - progress);
       }
 
-      try {
-        window.navigator.vibrate?.(40);
-      } catch {
-        // ignore haptics failures
+      const outlineMaterial = pulseOutlineRef.current?.material;
+      if (outlineMaterial instanceof LineBasicMaterial) {
+        outlineMaterial.opacity = INITIAL_PULSE_OUTLINE_OPACITY * (1 - progress);
       }
-    };
 
-    const handlePointerUpWithPulse = (event: ThreeEvent<PointerEvent>) => {
-      const shouldTrigger = onPointerUp(event);
-      if (shouldTrigger) {
-        triggerPulse();
-        triggerHaptics();
+      if (progress >= 1) {
+        pulseGroupRef.current.visible = false;
+        isPulseActiveRef.current = false;
       }
-    };
+    }
 
-    // Calculate dimensions for previous texture if it exists
-    const [previousPlaneWidth, previousPlaneHeight] = calculatePlaneDimensions(
-      previousTexture,
-      innerWidth,
-      innerHeight,
-    );
+    // Handle texture transition animation
+    if (isTransitionActive && previousTextureRef.current) {
+      transitionElapsedRef.current += delta;
+      const progress = Math.min(transitionElapsedRef.current / TRANSITION_DURATION, 1);
 
-    const displayTexture = currentTexture || texture;
+      // Ease-in-out curve for smooth transition
+      const easedProgress = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
-    return (
-      <>
-        {/* Previous painting plane (shown during transition) */}
-        {previousTexture && (
-          <mesh ref={previousPaintingMeshRef} position={[0, 0, -0.026]} castShadow={false} receiveShadow={false}>
-            <planeGeometry args={[previousPlaneWidth, previousPlaneHeight]} />
-            <meshStandardMaterial
-              map={previousTexture}
-              roughness={PAINTING_MATERIAL_ROUGHNESS}
-              metalness={PAINTING_MATERIAL_METALNESS}
-              transparent
-              opacity={1}
-            />
-          </mesh>
-        )}
+      // Update current texture opacity (fade in)
+      const currentMaterial = paintingMeshRef.current?.material;
+      if (currentMaterial instanceof MeshStandardMaterial) {
+        currentMaterial.opacity = easedProgress;
+        currentMaterial.transparent = true;
+      }
 
-        {/* Current painting plane */}
-        <mesh
-          ref={paintingMeshRef}
-          position={[0, 0, -0.025]}
-          castShadow
-          receiveShadow
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={handlePointerUpWithPulse}
-          onPointerLeave={onPointerCancel}
-          onPointerOut={onPointerCancel}
-          onPointerCancel={onPointerCancel}
-        >
-          <planeGeometry args={[planeWidth, planeHeight]} />
+      // Update previous texture opacity (fade out)
+      const previousMaterial = previousPaintingMeshRef.current?.material;
+      if (previousMaterial instanceof MeshStandardMaterial) {
+        previousMaterial.opacity = 1 - easedProgress;
+        previousMaterial.transparent = true;
+      }
+
+      if (progress >= 1) {
+        // Transition complete
+        setIsTransitionActive(false);
+        const textureToDispose = previousTextureRef.current;
+        previousTextureRef.current = null;
+        setPreviousTexture(null);
+
+        // Clean up previous texture
+        if (textureToDispose) {
+          textureToDispose.dispose();
+        }
+
+        // Reset transparency
+        const finalMaterial = paintingMeshRef.current?.material;
+        if (finalMaterial instanceof MeshStandardMaterial) {
+          finalMaterial.transparent = false;
+        }
+      }
+    }
+  });
+
+  const triggerPulse = () => {
+    if (!pulseGroupRef.current) {
+      return;
+    }
+
+    pulseElapsedRef.current = 0;
+    isPulseActiveRef.current = true;
+    pulseGroupRef.current.visible = true;
+    pulseGroupRef.current.scale.set(1, 1, 1);
+
+    if (pulseFillRef.current?.material instanceof MeshBasicMaterial) {
+      pulseFillRef.current.material.opacity = INITIAL_PULSE_FILL_OPACITY;
+    }
+
+    if (pulseOutlineRef.current?.material instanceof LineBasicMaterial) {
+      pulseOutlineRef.current.material.opacity = INITIAL_PULSE_OUTLINE_OPACITY;
+    }
+  };
+
+  const triggerHaptics = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      window.navigator.vibrate?.(40);
+    } catch {
+      // ignore haptics failures
+    }
+  };
+
+  const handlePointerUpWithPulse = (event: ThreeEvent<PointerEvent>) => {
+    const shouldTrigger = onPointerUp(event);
+    if (shouldTrigger) {
+      triggerPulse();
+      triggerHaptics();
+    }
+  };
+
+  // Calculate dimensions for previous texture if it exists
+  const [previousPlaneWidth, previousPlaneHeight] = calculatePlaneDimensions(previousTexture, innerWidth, innerHeight);
+
+  const displayTexture = currentTexture || texture;
+
+  return (
+    <>
+      {/* Previous painting plane (shown during transition) */}
+      {previousTexture && (
+        <mesh ref={previousPaintingMeshRef} position={[0, 0, -0.026]} castShadow={false} receiveShadow={false}>
+          <planeGeometry args={[previousPlaneWidth, previousPlaneHeight]} />
           <meshStandardMaterial
-            map={displayTexture}
+            map={previousTexture}
             roughness={PAINTING_MATERIAL_ROUGHNESS}
             metalness={PAINTING_MATERIAL_METALNESS}
-            transparent={isTransitionActive}
-            opacity={isTransitionActive ? 0 : 1}
+            transparent
+            opacity={1}
           />
         </mesh>
+      )}
 
-        {/* Highlight pulse */}
-        <group ref={pulseGroupRef} position={[0, 0, -0.024]} visible={false}>
-          <mesh ref={pulseFillRef}>
-            <planeGeometry args={[planeWidth, planeHeight]} />
-            <meshBasicMaterial
-              map={displayTexture}
+      {/* Current painting plane */}
+      <mesh
+        ref={paintingMeshRef}
+        position={[0, 0, -0.025]}
+        castShadow
+        receiveShadow
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={handlePointerUpWithPulse}
+        onPointerLeave={onPointerCancel}
+        onPointerOut={onPointerCancel}
+        onPointerCancel={onPointerCancel}
+      >
+        <planeGeometry args={[planeWidth, planeHeight]} />
+        <meshStandardMaterial
+          map={displayTexture}
+          roughness={PAINTING_MATERIAL_ROUGHNESS}
+          metalness={PAINTING_MATERIAL_METALNESS}
+          transparent={isTransitionActive}
+          opacity={isTransitionActive ? 0 : 1}
+        />
+      </mesh>
+
+      {/* Highlight pulse */}
+      <group ref={pulseGroupRef} position={[0, 0, -0.024]} visible={false}>
+        <mesh ref={pulseFillRef}>
+          <planeGeometry args={[planeWidth, planeHeight]} />
+          <meshBasicMaterial
+            map={displayTexture}
+            color="#ffffff"
+            transparent
+            opacity={0}
+            blending={AdditiveBlending}
+            depthWrite={false}
+            depthTest={false}
+          />
+        </mesh>
+        {pulseOutlineGeometry && (
+          <lineSegments ref={pulseOutlineRef} geometry={pulseOutlineGeometry}>
+            <lineBasicMaterial
               color="#ffffff"
               transparent
               opacity={0}
-              blending={AdditiveBlending}
               depthWrite={false}
               depthTest={false}
+              blending={AdditiveBlending}
             />
-          </mesh>
-          {pulseOutlineGeometry && (
-            <lineSegments ref={pulseOutlineRef} geometry={pulseOutlineGeometry}>
-              <lineBasicMaterial
-                color="#ffffff"
-                transparent
-                opacity={0}
-                depthWrite={false}
-                depthTest={false}
-                blending={AdditiveBlending}
-              />
-            </lineSegments>
-          )}
-        </group>
-      </>
-    );
+          </lineSegments>
+        )}
+      </group>
+    </>
+  );
 };
 PaintingContent.displayName = "PaintingContent";
 

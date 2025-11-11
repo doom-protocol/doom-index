@@ -22,9 +22,6 @@ Create a `.env` file:
 # Image Generation Provider
 IMAGE_PROVIDER=smart  # Options: smart (recommended), ai-sdk, runware-sdk
 
-# Prompt Template
-PROMPT_TEMPLATE=default  # Options: default, experimental
-
 # Log Level (optional)
 # Options: ERROR, WARN, INFO, DEBUG, LOG
 # Default: DEBUG in development, INFO in production
@@ -189,7 +186,7 @@ bun run watch-cron --cron "0 * * * *"
 - **3D Rendering**: React Three Fiber + Three.js
 - **Data Fetching**: React Query
 - **Error Handling**: neverthrow (Result type)
-- **Image Generation**: Runware / Replicate / OpenAI (via AI SDK)
+- **Image Generation**: Runware (default) / OpenAI (via AI SDK)
 - **Runtime**: Bun (local), workerd (Cloudflare)
 
 ### Cloudflare R2 Storage
@@ -262,15 +259,7 @@ Prompt templates are defined in `src/constants/prompts.ts` and shared across all
 - **default**: Detailed surreal oil painting prompt with comprehensive visual parameters
 - **experimental**: Abstract expressionist style for testing new approaches
 
-### Using Custom Templates
-
-Set the `PROMPT_TEMPLATE` environment variable:
-
-```bash
-PROMPT_TEMPLATE=experimental
-```
-
-Or create your own template by adding it to `src/constants/prompts.ts`.
+You can create your own template by adding it to `src/constants/prompts.ts`.
 
 ## Deployment
 
@@ -318,20 +307,11 @@ IMAGE_PROVIDER=mock
 
 ### Runware
 
-Fast, Edge-compatible image generation.
+Fast, Edge-compatible image generation (default provider).
 
 ```bash
 IMAGE_PROVIDER=runware
 RUNWARE_API_KEY=your_key_here
-```
-
-### Replicate
-
-Stable Diffusion XL via Replicate API.
-
-```bash
-IMAGE_PROVIDER=replicate
-REPLICATE_API_KEY=your_key_here
 ```
 
 ### OpenAI
