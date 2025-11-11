@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Cinzel_Decorative } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/app/providers";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 import { env } from "@/env";
 
@@ -92,6 +93,7 @@ export default function RootLayout({
       >
         <Providers>{children}</Providers>
       </body>
+      <GoogleAnalytics gaId="G-RMLTMSSJ8T" />
     </html>
   );
 }
