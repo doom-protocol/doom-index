@@ -18,20 +18,14 @@ export async function POST(request: Request) {
       logger.error("viewer.api.error", {
         message: "VIEWER_KV binding is not configured",
       });
-      return NextResponse.json(
-        { success: false, error: "KV not configured" },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, error: "KV not configured" }, { status: 500 });
     }
 
     // parse request body
     const body: ViewerRequest = await request.json();
 
     if (!body.sessionId) {
-      return NextResponse.json(
-        { success: false, error: "sessionId is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "sessionId is required" }, { status: 400 });
     }
 
     // create ViewerService
@@ -45,10 +39,7 @@ export async function POST(request: Request) {
           error: result.error,
           sessionId: body.sessionId,
         });
-        return NextResponse.json(
-          { success: false, error: "Failed to remove viewer" },
-          { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: "Failed to remove viewer" }, { status: 500 });
       }
       logger.info("viewer.api.remove", { sessionId: body.sessionId });
     } else {
@@ -59,10 +50,7 @@ export async function POST(request: Request) {
           error: result.error,
           sessionId: body.sessionId,
         });
-        return NextResponse.json(
-          { success: false, error: "Failed to register viewer" },
-          { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: "Failed to register viewer" }, { status: 500 });
       }
       logger.debug("viewer.api.register", { sessionId: body.sessionId });
     }
@@ -71,9 +59,6 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     logger.error("viewer.api.error", { error: message });
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }

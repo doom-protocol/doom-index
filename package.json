@@ -17,7 +17,7 @@
     "generate": "bun --env-file=.dev.vars scripts/generate.ts",
     "watch-cron": "bun scripts/watch-cron.ts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview --test-scheduled",
-    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare versions upload",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
