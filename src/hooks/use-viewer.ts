@@ -8,7 +8,7 @@ export function useViewer() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    console.log("[useViewer] Starting viewer worker");
+    console.debug("[useViewer] Starting viewer worker");
 
     let w: Worker | null = null;
     try {
@@ -29,10 +29,10 @@ export function useViewer() {
 
       // Add message handler for debugging
       w.addEventListener("message", event => {
-        console.log("[useViewer] Worker message", event.data);
+        console.debug("[useViewer] Worker message", event.data);
       });
 
-      console.log("[useViewer] Worker started successfully");
+      console.debug("[useViewer] Worker started successfully");
     } catch (error) {
       console.error("[useViewer] Failed to start worker", error);
       return; // Early return if worker creation failed
@@ -42,7 +42,7 @@ export function useViewer() {
     const onUnload = () => {
       const worker = workerRef.current;
       if (worker) {
-        console.log("[useViewer] Terminating worker");
+        console.debug("[useViewer] Terminating worker");
         worker.terminate();
         workerRef.current = null;
       }

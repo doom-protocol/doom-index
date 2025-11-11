@@ -38,7 +38,7 @@ service = "doom-index"
 
 [vars]
 NODE_ENV = "production"
-LOG_LEVEL = "DEBUG"
+LOG_LEVEL = "INFO"
 NEXTJS_ENV = "production"
 NEXT_PUBLIC_BASE_URL = "https://doom-index.yamadaasuma.workers.dev"
 IMAGE_MODEL = "runware:100@1"
