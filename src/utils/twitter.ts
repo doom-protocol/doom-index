@@ -19,17 +19,32 @@ export const buildTweetIntentUrl = ({
   lines = DEFAULT_TWEET_LINES,
 }: TweetIntentOptions): string => {
   const url = new URL(TWITTER_INTENT_URL);
-  const tweetLines = [...lines];
+  const candidateLines = [...lines];
 
   if (shareUrl) {
-    tweetLines.push(shareUrl);
+    candidateLines.push(shareUrl);
   }
 
   if (assetUrl) {
-    tweetLines.push(assetUrl);
+    candidateLines.push(assetUrl);
   }
 
-  url.searchParams.set("text", tweetLines.join("\n"));
+  const deduplicatedLines = candidateLines.reduce<string[]>((acc, line) => {
+    const normalized = line.trim();
+    if (!normalized) {
+      return acc;
+    }
+
+    const alreadyExists = acc.some(existing => existing.trim() === normalized);
+    if (alreadyExists) {
+      return acc;
+    }
+
+    acc.push(line);
+    return acc;
+  }, []);
+
+  url.searchParams.set("text", deduplicatedLines.join("\n"));
   return url.toString();
 };
 

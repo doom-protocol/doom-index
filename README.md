@@ -40,9 +40,20 @@ For Cloudflare Workers, create a `.dev.vars` file:
 ```bash
 # Provider API Key for Cloudflare Workers
 PROVIDER_API_KEY=your_runware_api_key_here
+
+# R2 Batch Upload (optional, for faster OpenNext build/deploy)
+# These variables enable faster batch upload for remote R2 during build/deploy
+# Get these values from Cloudflare Dashboard:
+# 1. R2 API Tokens: https://dash.cloudflare.com/<account-id>/r2/api-tokens
+# 2. Account ID: Found in Cloudflare Dashboard URL or Workers overview
+# R2_ACCESS_KEY_ID="your_r2_access_key_id"
+# R2_SECRET_ACCESS_KEY="your_r2_secret_access_key"
+# CF_ACCOUNT_ID="your_cloudflare_account_id"
 ```
 
 **Note**: `mock` provider is for testing only and not available in production.
+
+**Note**: R2 batch upload environment variables are optional. If not set, OpenNext will use slower individual uploads but functionality will still work.
 
 ### Running the App
 
@@ -294,6 +305,16 @@ Set these in Cloudflare Dashboard:
 
 - **Pages**: `R2_PUBLIC_DOMAIN`
 - **Workers**: `PROVIDER_API_KEY` (via Secrets)
+
+**Optional - R2 Batch Upload (for faster builds)**:
+
+To enable faster batch uploads during OpenNext build/deploy, set these environment variables in your CI/CD or build environment:
+
+- `R2_ACCESS_KEY_ID`: R2 API Token Access Key ID (create at https://dash.cloudflare.com/<account-id>/r2/api-tokens)
+- `R2_SECRET_ACCESS_KEY`: R2 API Token Secret Access Key
+- `CF_ACCOUNT_ID`: Your Cloudflare Account ID (found in Dashboard URL or Workers overview)
+
+These are optional - builds will work without them but may be slower.
 
 ## Image Providers
 

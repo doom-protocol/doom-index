@@ -160,8 +160,6 @@ export default async function Image(): Promise<ImageResponse> {
 
   try {
     const { dataUrl, fallbackUsed } = await getArtworkDataUrl();
-
-    // Try to get frame, but don't fail if it's not available
     let frameDataUrl: string | null = null;
     try {
       frameDataUrl = await getFrameDataUrl();
@@ -227,33 +225,110 @@ export default async function Image(): Promise<ImageResponse> {
   } catch (error) {
     logger.error("ogp.error", {
       route: "/opengraph-image",
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
+      error:
+        error instanceof Error
+          ? { message: error.message, stack: error.stack }
+          : { message: String(error) },
       durationMs: Date.now() - startTime,
     });
 
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            display: "flex",
-            width: "100%",
-            height: "100%",
-            backgroundColor: "#000000",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#ffffff",
-            fontSize: 40,
-            fontWeight: "bold",
-          }}
-        >
-          DOOM INDEX
-        </div>
-      ),
-      {
-        ...size,
-        headers: { "Cache-Control": "public, max-age=60" },
-      },
-    );
+    try {
+      const placeholderDataUrl = await getPlaceholderDataUrl();
+
+      let frameDataUrl: string | null = null;
+      try {
+        frameDataUrl = await getFrameDataUrl();
+      } catch (frameError) {
+        logger.warn("ogp.frame-fetch-failed", {
+          error: frameError instanceof Error ? frameError.message : String(frameError),
+        });
+      }
+
+      logger.info("ogp.generated", {
+        route: "/opengraph-image",
+        fallbackUsed: true,
+        hasFrame: frameDataUrl !== null,
+        durationMs: Date.now() - startTime,
+        fallbackLevel: "placeholder",
+      });
+
+      return new ImageResponse(
+        (
+          <div
+            style={{
+              display: "flex",
+              width: "100%",
+              height: "100%",
+              backgroundColor: "#000000",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+            }}
+          >
+            <img
+              src={placeholderDataUrl}
+              style={{
+                position: "absolute",
+                height: "100%",
+                width: "auto",
+                objectFit: "contain",
+              }}
+              alt={alt}
+            />
+            {frameDataUrl && (
+              <img
+                src={frameDataUrl}
+                style={{
+                  position: "absolute",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+                alt="Frame"
+              />
+            )}
+          </div>
+        ),
+        {
+          ...size,
+          headers: {
+            "Cache-Control": "public, max-age=300",
+          },
+        },
+      );
+    } catch (placeholderError) {
+      logger.error("ogp.placeholder-fetch-failed", {
+        route: "/opengraph-image",
+        error:
+          placeholderError instanceof Error
+            ? { message: placeholderError.message, stack: placeholderError.stack }
+            : { message: String(placeholderError) },
+        durationMs: Date.now() - startTime,
+      });
+
+      return new ImageResponse(
+        (
+          <div
+            style={{
+              display: "flex",
+              width: "100%",
+              height: "100%",
+              backgroundColor: "#000000",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#ffffff",
+              fontSize: 40,
+              fontWeight: "bold",
+            }}
+          >
+            DOOM INDEX
+          </div>
+        ),
+        {
+          ...size,
+          headers: { "Cache-Control": "public, max-age=60" },
+        },
+      );
+    }
   }
 }
