@@ -87,12 +87,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" style={{ margin: 0, padding: 0, width: "100%", height: "100%" }}>
+      <head>
+        {/* for dev.fun verification */}
+        <meta name="devfun-verification" />
+      </head>
       <body
         className={`${cinzelDecorative.variable} antialiased`}
         style={{ margin: 0, padding: 0, width: "100%", height: "100%", overflow: "hidden" }}
       >
-        {/* for dev.fun verification */}
-        <meta name="devfun-verification" />
         <Providers>{children}</Providers>
       </body>
       <GoogleAnalytics gaId="G-RMLTMSSJ8T" />
