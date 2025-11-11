@@ -113,3 +113,53 @@ export const TOKEN_AXIS_MAP: Record<TokenTicker, TokenConfig["axes"]> = TOKEN_TI
 export type McMap = Record<TokenTicker, number>;
 export type NormalizedMcMap = Record<TokenTicker, number>;
 export type McMapRounded = McMap;
+
+export const TOKEN_DESCRIPTIONS: Record<
+  TokenTicker,
+  {
+    title: string;
+    description: string;
+    motif: string;
+  }
+> = {
+  CO2: {
+    title: "CO2 — Pollution and Heat",
+    description: "Changes the color of the sky and the density of the haze, veiling the entire city.",
+    motif: "Toxic haze thickens across the canvas.",
+  },
+  ICE: {
+    title: "ICE — Ice Sheets and Cooling",
+    description: "Increases reflective light and cool tones, turning the world pale blue and frozen.",
+    motif: "Glacial gleam fractures the ambient light.",
+  },
+  FOREST: {
+    title: "FOREST — Forests and Life",
+    description: "Enhances organic details and green density, reviving vitality.",
+    motif: "Verdant growth threads through the ruins.",
+  },
+  NUKE: {
+    title: "NUKE — Destruction and War",
+    description: "Scatters flashes and ash particles, heightening apocalyptic tension.",
+    motif: "Nuclear ash ignites the horizon.",
+  },
+  MACHINE: {
+    title: "MACHINE — Mechanical Rule",
+    description: "Intensifies mechanical lines and structures, depicting artificial dominance.",
+    motif: "Mechanical lattice tightens its grip.",
+  },
+  PANDEMIC: {
+    title: "PANDEMIC — Biological Threat",
+    description: "Spreads particle-like glowing effects, visualizing the expansion of infection.",
+    motif: "Bioluminescent spores continue to bloom.",
+  },
+  FEAR: {
+    title: "FEAR — Darkness and Surveillance",
+    description: "Emphasizes shadows and contrast, creating a suffocating sense of tension.",
+    motif: "Oppressive shadows watch from every corner.",
+  },
+  HOPE: {
+    title: "HOPE — Light and Regeneration",
+    description: "Increases warm colors and brightness, instilling signs of rebirth amid ruin.",
+    motif: "Resilient light seeps back into the void.",
+  },
+};

@@ -10,3 +10,7 @@ export function getBaseUrl(): string {
   const baseUrl = env.NEXT_PUBLIC_BASE_URL;
   return baseUrl;
 }
+
+export function getPumpFunUrl(address: string): string {
+  return `https://pump.fun/${address}`;
+}

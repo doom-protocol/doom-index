@@ -5,8 +5,9 @@ import { Html } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Quaternion, Vector3, type Group } from "three";
 import { useMc } from "@/hooks/use-mc";
-import { TOKEN_CONFIG_MAP, TOKEN_TICKERS } from "@/constants/token";
+import { TOKEN_CONFIG_MAP, TOKEN_TICKERS, TOKEN_DESCRIPTIONS } from "@/constants/token";
 import type { TokenTicker } from "@/types/domain";
+import { getPumpFunUrl } from "@/utils/url";
 
 type McResponse = {
   tokens: Record<TokenTicker, number>;
@@ -16,58 +17,6 @@ type McResponse = {
 const HELP_OVERLAY_DISTANCE = 0.75;
 const HELP_OVERLAY_LERP_FACTOR = 0.2;
 const HELP_OVERLAY_Y_OFFSET = -0.01;
-
-const getPumpFunUrl = (address: string) => `https://pump.fun/${address}`;
-
-const TOKEN_DESCRIPTIONS: Record<
-  TokenTicker,
-  {
-    title: string;
-    description: string;
-    motif: string;
-  }
-> = {
-  CO2: {
-    title: "CO2 — Pollution and Heat",
-    description: "Changes the color of the sky and the density of the haze, veiling the entire city.",
-    motif: "Toxic haze thickens across the canvas.",
-  },
-  ICE: {
-    title: "ICE — Ice Sheets and Cooling",
-    description: "Increases reflective light and cool tones, turning the world pale blue and frozen.",
-    motif: "Glacial gleam fractures the ambient light.",
-  },
-  FOREST: {
-    title: "FOREST — Forests and Life",
-    description: "Enhances organic details and green density, reviving vitality.",
-    motif: "Verdant growth threads through the ruins.",
-  },
-  NUKE: {
-    title: "NUKE — Destruction and War",
-    description: "Scatters flashes and ash particles, heightening apocalyptic tension.",
-    motif: "Nuclear ash ignites the horizon.",
-  },
-  MACHINE: {
-    title: "MACHINE — Mechanical Rule",
-    description: "Intensifies mechanical lines and structures, depicting artificial dominance.",
-    motif: "Mechanical lattice tightens its grip.",
-  },
-  PANDEMIC: {
-    title: "PANDEMIC — Biological Threat",
-    description: "Spreads particle-like glowing effects, visualizing the expansion of infection.",
-    motif: "Bioluminescent spores continue to bloom.",
-  },
-  FEAR: {
-    title: "FEAR — Darkness and Surveillance",
-    description: "Emphasizes shadows and contrast, creating a suffocating sense of tension.",
-    motif: "Oppressive shadows watch from every corner.",
-  },
-  HOPE: {
-    title: "HOPE — Light and Regeneration",
-    description: "Increases warm colors and brightness, instilling signs of rebirth amid ruin.",
-    motif: "Resilient light seeps back into the void.",
-  },
-};
 
 const createInitialHighlightState = () =>
   TOKEN_TICKERS.reduce(
