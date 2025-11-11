@@ -8,7 +8,7 @@ export type ExternalApiError = {
 
 export type StorageError = {
   type: "StorageError";
-  op: "get" | "put";
+  op: "get" | "put" | "delete" | "list";
   key: string;
   message: string;
 };

@@ -7,6 +7,8 @@
  */
 
 import { createServicesForWorkers } from "./services/container";
+import { createViewerService } from "./services/viewer";
+import { logger } from "./utils/logger";
 
 /**
  * Processing logic for Cron execution
@@ -24,10 +26,38 @@ export async function handleScheduledEvent(
   });
 
   try {
-    // Create service container
+    // check if there is an active viewer
+    const kvNamespace = env.VIEWER_KV;
+    if (kvNamespace) {
+      const viewerService = createViewerService({ kvNamespace });
+      const viewerResult = await viewerService.hasActiveViewer();
+
+      if (viewerResult.isErr()) {
+        logger.error("viewer.check.error", {
+          error: viewerResult.error,
+          durationMs: Date.now() - startTime,
+        });
+        // if an error occurs, continue with generation (fallback)
+      } else if (!viewerResult.value) {
+        // if there is no active viewer, skip generation
+        logger.info("Cron skipped: no viewer", {
+          durationMs: Date.now() - startTime,
+        });
+        return;
+      }
+      logger.debug("viewer.check.found", {
+        durationMs: Date.now() - startTime,
+      });
+    } else {
+      logger.warn("viewer.check.skip", {
+        message: "VIEWER_KV binding not configured, skipping viewer check",
+      });
+    }
+
+    // create service container
     const services = createServicesForWorkers(env.R2_BUCKET);
 
-    // Execute image generation
+    // execute image generation
     const result = await services.generationService.evaluateMinute();
 
     if (result.isErr()) {

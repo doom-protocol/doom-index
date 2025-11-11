@@ -22,6 +22,11 @@ bucket_name = "doom-index-storage"
 binding = "NEXT_INC_CACHE_R2_BUCKET"
 bucket_name = "doom-index-next-inc-cache"
 
+# KV Namespace Binding
+[[kv_namespaces]]
+binding = "VIEWER_KV"
+id = "8c588d03a8ab4cd19e0c458dcabf1bec"
+
 # Next.js on Cloudflare Pages is managed in open-next.config.ts
 [assets]
 directory = "./.open-next/assets"
@@ -30,14 +35,6 @@ binding = "ASSETS"
 [[services]]
 binding = "WORKER_SELF_REFERENCE"
 service = "doom-index"
-
-[vars]
-NODE_ENV = "development"
-NEXTJS_ENV = "development"
-NEXT_PUBLIC_BASE_URL = "http://localhost:8787"
-LOG_LEVEL = "DEBUG"
-IMAGE_MODEL = "runware:100@1"
-RUNWARE_API_KEY = "4S1GhBmUsGRINIadPAnEgJmKRQOrl4Hc"
 
 [observability]
 enabled = false

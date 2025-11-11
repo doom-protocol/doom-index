@@ -1,0 +1,13 @@
+{
+  "files.associations": {
+    "*.*.vars": "dotenv",
+    "*.mdc": "markdown"
+  },
+
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "typescript.suggest.autoImports": true
+}

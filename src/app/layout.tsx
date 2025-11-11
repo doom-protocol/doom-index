@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Cinzel_Decorative } from "next/font/google";
 import "./globals.css";
-import { QueryProvider } from "@/components/providers/query-provider";
+import { Providers } from "@/app/providers";
+
 import { env } from "@/env";
 
 const cinzelDecorative = Cinzel_Decorative({
@@ -89,7 +90,7 @@ export default function RootLayout({
         className={`${cinzelDecorative.variable} antialiased`}
         style={{ margin: 0, padding: 0, width: "100%", height: "100%", overflow: "hidden" }}
       >
-        <QueryProvider>{children}</QueryProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -97,7 +97,7 @@ export const TopBarProgress: FC = () => {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [playChime, refetchGlobalState, triggerHaptic]);
+  }, [refetchGlobalState]);
 
   const secondsLabel = displaySecond.toString().padStart(2, "0");
 

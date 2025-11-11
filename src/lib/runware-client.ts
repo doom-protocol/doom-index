@@ -104,7 +104,12 @@ export class RunwareClient {
       let data: RunwareImageInferenceResponse[];
       if (Array.isArray(responseData)) {
         data = responseData;
-      } else if (responseData && typeof responseData === "object" && "data" in responseData && Array.isArray(responseData.data)) {
+      } else if (
+        responseData &&
+        typeof responseData === "object" &&
+        "data" in responseData &&
+        Array.isArray(responseData.data)
+      ) {
         data = responseData.data;
       } else {
         logger.error("runware.requestImages.invalidResponse", {
