@@ -1,8 +1,8 @@
-import type { ImageProvider, ImageRequest, ImageResponse } from "@/types/domain";
+import type { ImageGenerationOptions, ImageProvider, ImageRequest, ImageResponse } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
 import type { Result } from "neverthrow";
 import { createAiSdkProvider } from "./ai-sdk";
-import { createRunwareSdkProvider } from "./runware-sdk";
+import { createRunwareProvider } from "./runware";
 import { createMockImageProvider } from "./mock";
 import { env } from "@/env";
 
@@ -78,12 +78,12 @@ const AI_SDK_MODELS = new Set([
 const getProviderForModel = (model?: string): ImageProvider => {
   if (!model) {
     // Default to runware-sdk if no model specified
-    return createRunwareSdkProvider();
+    return createRunwareProvider();
   }
 
   // Runware AIR format: runware:xxx@xxx or civitai:xxx@xxx
   if (model.startsWith("runware:") || /^civitai:\d+@\d+$/.test(model)) {
-    return createRunwareSdkProvider();
+    return createRunwareProvider();
   }
 
   // AI SDK supported models
@@ -92,7 +92,7 @@ const getProviderForModel = (model?: string): ImageProvider => {
   }
 
   // Default to runware-sdk (supports any model via AIR system)
-  return createRunwareSdkProvider();
+  return createRunwareProvider();
 };
 
 /**
@@ -115,9 +115,9 @@ export const resolveProviderForModel = (model?: string): ImageProvider => {
 export const createAutoResolveProvider = (): ImageProvider => ({
   name: "auto-resolve",
 
-  async generate(input: ImageRequest): Promise<Result<ImageResponse, AppError>> {
+  async generate(input: ImageRequest, options?: ImageGenerationOptions): Promise<Result<ImageResponse, AppError>> {
     const provider = resolveProviderForModel(input.model);
-    return provider.generate(input);
+    return provider.generate(input, options);
   },
 });
 

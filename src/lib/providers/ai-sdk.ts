@@ -2,7 +2,7 @@ import { ok, err } from "neverthrow";
 import { experimental_generateImage as generateImage } from "ai";
 import { openai } from "@ai-sdk/openai";
 import type { ImageModel } from "ai";
-import type { ImageProvider, ImageRequest } from "@/types/domain";
+import type { ImageGenerationOptions, ImageProvider, ImageRequest } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 
@@ -51,7 +51,8 @@ const resolveAiSdkModel = (modelName?: string): ImageModel => {
 export const createAiSdkProvider = (): ImageProvider => ({
   name: "ai-sdk",
 
-  async generate(input: ImageRequest) {
+  async generate(input: ImageRequest, options?: ImageGenerationOptions) {
+    const timeoutMs = options?.timeoutMs ?? 15_000;
     try {
       const model = input.model || "dall-e-3";
 
@@ -106,10 +107,17 @@ export const createAiSdkProvider = (): ImageProvider => ({
         },
       });
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
       const result = await generateImage({
         model: resolvedModel,
         prompt: input.prompt,
         size: requestedSize,
+        n: 1,
+        abortSignal: controller.signal,
+      }).finally(() => {
+        clearTimeout(timeoutId);
       });
 
       logger.info("ai-sdk.generate.success", {
@@ -137,6 +145,13 @@ export const createAiSdkProvider = (): ImageProvider => ({
       });
     } catch (error) {
       logger.error("ai-sdk.generate.error", { error });
+      if (error instanceof Error && error.name === "AbortError") {
+        return err({
+          type: "ExternalApiError",
+          provider: "ImageProvider",
+          message: `Image generation timeout after ${timeoutMs}ms`,
+        } as AppError);
+      }
       return err({
         type: "ExternalApiError",
         provider: "ImageProvider",

@@ -45,9 +45,13 @@ export type ImageResponse = {
   providerMeta: Record<string, unknown>;
 };
 
+export type ImageGenerationOptions = {
+  timeoutMs?: number;
+};
+
 export interface ImageProvider {
   name: string;
-  generate(input: ImageRequest): Promise<Result<ImageResponse, AppError>>;
+  generate(input: ImageRequest, options?: ImageGenerationOptions): Promise<Result<ImageResponse, AppError>>;
 }
 
 export interface StateService {

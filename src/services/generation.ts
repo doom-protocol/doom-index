@@ -140,15 +140,21 @@ export function createGenerationService({
       },
     });
 
-    const imageResult = await imageProvider.generate({
-      prompt: composition.prompt.text,
-      negative: composition.prompt.negative,
-      width: composition.prompt.size.w,
-      height: composition.prompt.size.h,
-      format: composition.prompt.format,
-      seed: composition.prompt.seed,
-      model: env.IMAGE_MODEL,
-    });
+    const generationTimeoutMs = 15_000;
+    const imageResult = await imageProvider.generate(
+      {
+        prompt: composition.prompt.text,
+        negative: composition.prompt.negative,
+        width: composition.prompt.size.w,
+        height: composition.prompt.size.h,
+        format: composition.prompt.format,
+        seed: composition.prompt.seed,
+        model: env.IMAGE_MODEL,
+      },
+      {
+        timeoutMs: generationTimeoutMs,
+      },
+    );
     if (imageResult.isErr()) return err(imageResult.error);
 
     const storedImageResult = await stateService.storeImage(composition.prompt.filename, imageResult.value.imageBuffer);

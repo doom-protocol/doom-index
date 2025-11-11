@@ -90,9 +90,9 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
           minDistance={0.5}
           maxDistance={5}
           target={[0, 0.8, 4.0]}
-          rotateSpeed={1.0}
-          zoomSpeed={1.0}
-          panSpeed={0.5}
+          rotateSpeed={0.5}
+          zoomSpeed={0.5}
+          panSpeed={0.25}
           enabled={!isDashboardHelpOpen}
           enableRotate
           mouseButtons={{ LEFT: 0, MIDDLE: 1, RIGHT: 2 }}
@@ -162,7 +162,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
           pointerEvents: "none",
         }}
       >
-        {(["painting", "dashboard"] as const).map(preset => (
+        {(["dashboard", "painting"] as const).map(preset => (
           <button
             key={preset}
             type="button"

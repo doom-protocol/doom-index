@@ -10,7 +10,8 @@
  *   bun scripts/generate.ts --model "dall-e-3" --w 1024 --h 1024
  */
 
-import { join } from "path";
+import { join } from "node:path";
+import { mkdir } from "node:fs/promises";
 import type { McMapRounded } from "@/constants/token";
 import { createPromptService } from "@/services/prompt";
 import { resolveProviderWithMock, createAutoResolveProvider } from "@/lib/providers";
@@ -27,8 +28,21 @@ type Args = {
   output: string;
 };
 
+type BunWithOptionalExit = typeof Bun & {
+  exit?: (code?: number) => never;
+};
+
+const safeExit = (code: number): never => {
+  const bunWithExit = Bun as BunWithOptionalExit;
+  if (typeof bunWithExit.exit === "function") {
+    return bunWithExit.exit(code);
+  }
+
+  return process.exit(code);
+};
+
 const parseArgs = (): Args => {
-  const args = process.argv.slice(2);
+  const args = Bun.argv.slice(2);
   const parsed: Partial<Args> = {
     mock: false,
     width: 1280,
@@ -98,7 +112,7 @@ Examples:
   bun scripts/generate.ts --model "dall-e-3" --mc "CO2=1300000,ICE=200000,FOREST=900000,NUKE=50000,MACHINE=1450000,PANDEMIC=700000,FEAR=1100000,HOPE=400000"
   bun scripts/generate.ts --model "dall-e-3" --seed custom123 --w 1024 --h 1024
         `);
-        process.exit(0);
+        safeExit(0);
     }
   }
 
@@ -151,7 +165,8 @@ const main = async () => {
 
   if (promptResult.isErr()) {
     logger.error("generate.prompt.error", promptResult.error);
-    process.exit(1);
+    safeExit(1);
+    return;
   }
 
   const composition = promptResult.value;
@@ -197,7 +212,8 @@ const main = async () => {
   if (generateResult.isErr()) {
     logger.error("generate.error", generateResult.error);
     console.error("\n❌ Generation failed:", generateResult.error);
-    process.exit(1);
+    safeExit(1);
+    return;
   }
 
   const imageResponse = generateResult.value;
@@ -211,7 +227,7 @@ const main = async () => {
   const folderName = `DOOM_${timestamp}_${composition.paramsHash}_${composition.seed.slice(0, 8)}`;
   const outputFolder = join(args.output, folderName);
 
-  await Bun.$`mkdir -p ${outputFolder}`;
+  await mkdir(outputFolder, { recursive: true });
 
   // Save image
   const imageFilename = `image.${args.format}`;
@@ -244,8 +260,12 @@ const main = async () => {
   console.log(`Size: ${(imageResponse.imageBuffer.byteLength / 1024).toFixed(2)} KB`);
 };
 
-main().catch(error => {
-  logger.error("generate.fatal", { error: error.message });
-  console.error("\n❌ Fatal error:", error);
-  process.exit(1);
-});
+main()
+  .then(() => {
+    safeExit(0);
+  })
+  .catch(error => {
+    logger.error("generate.fatal", { error: error.message });
+    console.error("\n❌ Fatal error:", error);
+    safeExit(1);
+  });

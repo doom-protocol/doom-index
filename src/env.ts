@@ -16,7 +16,7 @@ export const env = createEnv({
   server: {
     // Image Provider API Keys
     OPENAI_API_KEY: z.string().optional(),
-    RUNWARE_API_KEY: z.string().optional(),
+    RUNWARE_API_KEY: z.string().min(1),
 
     // Node Environment
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),

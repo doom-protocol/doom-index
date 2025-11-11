@@ -13,24 +13,24 @@ describe("Provider Resolution", () => {
       expect(provider.name).toBe("ai-sdk");
     });
 
-    it("should return runware-sdk provider for runware model", () => {
+    it("should return runware provider for runware model", () => {
       const provider = resolveProviderForModel("runware:100@1");
-      expect(provider.name).toBe("runware-sdk");
+      expect(provider.name).toBe("runware");
     });
 
-    it("should return runware-sdk provider for civitai model", () => {
+    it("should return runware provider for civitai model", () => {
       const provider = resolveProviderForModel("civitai:38784@44716");
-      expect(provider.name).toBe("runware-sdk");
+      expect(provider.name).toBe("runware");
     });
 
-    it("should return ai-sdk provider by default when no model specified", () => {
+    it("should return runware provider by default when no model specified", () => {
       const provider = resolveProviderForModel();
-      expect(provider.name).toBe("ai-sdk");
+      expect(provider.name).toBe("runware");
     });
 
-    it("should return runware-sdk provider for unknown model", () => {
+    it("should return runware provider for unknown model", () => {
       const provider = resolveProviderForModel("unknown-model");
-      expect(provider.name).toBe("runware-sdk");
+      expect(provider.name).toBe("runware");
     });
   });
 
@@ -62,10 +62,10 @@ describe("Provider Resolution", () => {
       expect(aiSdkProvider.name).toBe("ai-sdk");
 
       const runwareProvider = resolveProviderForModel("runware:100@1");
-      expect(runwareProvider.name).toBe("runware-sdk");
+      expect(runwareProvider.name).toBe("runware");
 
       const civitaiProvider = resolveProviderForModel("civitai:38784@44716");
-      expect(civitaiProvider.name).toBe("runware-sdk");
+      expect(civitaiProvider.name).toBe("runware");
     });
   });
 });
