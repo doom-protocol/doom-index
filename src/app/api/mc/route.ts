@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { roundMc4 } from "@/lib/round";
+import { roundMc } from "@/lib/round";
 import { createMarketCapService } from "@/services/market-cap";
 import { TOKEN_TICKERS } from "@/constants/token";
 import { logger } from "@/utils/logger";
@@ -25,7 +25,7 @@ export async function GET() {
       { status: 200 },
     );
   }
-  const rounded = roundMc4(result.value);
+  const rounded = roundMc(result.value);
   return NextResponse.json(
     {
       tokens: rounded,

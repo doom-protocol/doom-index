@@ -2,7 +2,7 @@ import { ok, Result } from "neverthrow";
 import { logger } from "@/utils/logger";
 import { TOKENS, type McMap, type TokenConfig, type TokenTicker } from "@/constants/token";
 import type { AppError, ExternalApiError } from "@/types/app-error";
-import { roundMc4 } from "@/lib/round";
+import { roundMc } from "@/lib/round";
 
 type DexPair = {
   liquidity?: { usd?: number };
@@ -175,7 +175,7 @@ export function createMarketCapService({
 
   async function getRoundedMcMap(): Promise<Result<McMap, AppError>> {
     const result = await getMcMap();
-    return result.map(mc => roundMc4(mc));
+    return result.map(mc => roundMc(mc));
   }
 
   return {

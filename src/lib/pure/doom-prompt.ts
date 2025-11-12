@@ -25,7 +25,7 @@ export type DominanceWeightConfig = {
 export const DEFAULT_DOMINANCE_CONFIG: DominanceWeightConfig = {
   minWeight: 0.1,
   maxWeight: 2.0,
-  exponent: 2.5,
+  exponent: 2.0,
   tokens: TOKEN_TICKERS,
 };
 
@@ -168,10 +168,18 @@ export function buildSDXLPrompt(mc: McMap): { prompt: string; negative: string }
 
   const weightedLines = fragments.map(f => `(${f.text}:${f.weight.toFixed(2)})`).join(",\n");
 
+  // Deterministic summary to increase sensitivity without changing weight formatting
+  const weightsOnly = fragments.map(f => f.weight);
+  const sum = weightsOnly.reduce((a, b) => a + b, 0);
+  const min = Math.min(...weightsOnly);
+  const max = Math.max(...weightsOnly);
+  const summary = `weights summary: sum=${sum.toFixed(3)}, min=${min.toFixed(3)}, max=${max.toFixed(3)}`;
+
   const prompt = [
     "a grand medieval allegorical oil painting of the world, all forces visible and weighted by real-time power,",
     weightedLines + ",",
     STYLE_BASE + ",",
+    summary + ",",
     `negative prompt: ${NEGATIVE_PROMPT}`,
   ].join("\n");
 

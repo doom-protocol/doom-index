@@ -1,5 +1,5 @@
 import { err, ok, Result } from "neverthrow";
-import { roundMc4 } from "@/lib/round";
+import { roundMc } from "@/lib/round";
 import { hashRoundedMap } from "@/lib/pure/hash";
 import { logger } from "@/utils/logger";
 import { env } from "@/env";
@@ -72,7 +72,7 @@ export function createGenerationService({
     if (mcResult.isErr()) return err(mcResult.error);
 
     const mcMap: McMap = mcResult.value;
-    const roundedMap = roundMc4(mcMap) as McMapRounded;
+    const roundedMap = roundMc(mcMap) as McMapRounded;
     const hash = await hashRoundedMap(roundedMap);
 
     // Log market cap values and calculated values
@@ -88,14 +88,16 @@ export function createGenerationService({
     const prevState = globalStateResult.value;
     const prevHash = prevState?.prevHash ?? null;
 
-    if (prevHash && prevHash === hash) {
-      log.info("generation.skip", { hash, prevHash });
-      return ok({
-        status: "skipped" as const,
-        hash,
-        roundedMap,
-      });
-    }
+    log.info("DISABLING SKIP RIGHT NOW EVEN IF THE HASH IS THE SAME", { hash, prevHash });
+
+    // if (prevHash && prevHash === hash) {
+    //   log.info("generation.skip", { hash, prevHash });
+    //   return ok({
+    //     status: "skipped" as const,
+    //     hash,
+    //     roundedMap,
+    //   });
+    // }
 
     log.info("generation.trigger", { hash, prevHash });
 

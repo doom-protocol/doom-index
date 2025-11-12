@@ -1,4 +1,4 @@
-import type { NormalizedMcMap } from "@/constants/token";
+import { QUANTIZE_DECIMALS, type NormalizedMcMap } from "@/constants/token";
 import type { VisualParams } from "@/lib/pure/mapping";
 
 const encoder = new TextEncoder();
@@ -27,8 +27,6 @@ export async function hashRoundedMap(map: NormalizedMcMap | Record<string, numbe
   const digest = await sha256Hex(serialized);
   return digest.slice(0, 16);
 }
-
-const QUANTIZE_DECIMALS = 3;
 
 const quantize = (value: number): number => {
   if (!Number.isFinite(value)) return 0;

@@ -7,7 +7,13 @@ export type TokenTicker = (typeof TOKEN_TICKERS)[number];
  * Increased from 4 to 6 to better detect small market cap changes
  * for tokens with large supply (e.g., 1B supply Solana tokens)
  */
-export const MARKET_CAP_ROUND_DECIMALS = 8;
+export const MARKET_CAP_ROUND_DECIMALS = 10;
+
+/**
+ * Number of decimal places to quantize visual parameters
+ * Used for hashing visual parameters to create a stable seed
+ */
+export const QUANTIZE_DECIMALS = 3;
 
 /**
  * Multiplier for rounding market cap values

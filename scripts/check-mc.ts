@@ -1,6 +1,6 @@
 import { createMarketCapService } from "../src/services/market-cap";
 import { TOKENS } from "../src/constants/token";
-import { roundMc4 } from "../src/lib/round";
+import { roundMc } from "../src/lib/round";
 
 const DEXSCREENER_BASE = "https://api.dexscreener.com/latest/dex/tokens";
 
@@ -109,7 +109,7 @@ async function checkMarketCap() {
         }
 
         if (bestMc !== null) {
-          const roundedMc = roundMc4({ [token.ticker]: bestMc })[token.ticker];
+          const roundedMc = roundMc({ [token.ticker]: bestMc })[token.ticker];
           console.log(`\n✅ Selected Market Cap: $${bestMc.toLocaleString()}`);
           console.log(`   Rounded MC: $${roundedMc.toLocaleString()}`);
         } else {
@@ -126,7 +126,7 @@ async function checkMarketCap() {
     const result = await marketCapService.getMcMap();
     if (result.isOk()) {
       const mc = result.value[token.ticker];
-      const rounded = roundMc4(result.value)[token.ticker];
+      const rounded = roundMc(result.value)[token.ticker];
       console.log(`\nService Result:`);
       console.log(`   Raw MC: $${mc.toLocaleString()}`);
       console.log(`   Rounded MC: $${rounded.toLocaleString()}`);
@@ -137,7 +137,7 @@ async function checkMarketCap() {
   console.log("\n\n=== Summary ===");
   const result = await marketCapService.getMcMap();
   if (result.isOk()) {
-    const rounded = roundMc4(result.value);
+    const rounded = roundMc(result.value);
     for (const [ticker, mc] of Object.entries(rounded)) {
       console.log(`${ticker}: $${mc.toLocaleString()}`);
     }

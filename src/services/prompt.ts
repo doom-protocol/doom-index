@@ -45,7 +45,8 @@ export function createPromptService({
       const seed = await seedForMinute(minuteBucket, paramsHash);
 
       // Build weighted prompt using doom-prompt
-      const { prompt: promptText, negative: negativePrompt } = buildSDXLPrompt(mcRounded);
+      const { prompt: promptTextBase, negative: negativePrompt } = buildSDXLPrompt(mcRounded);
+      const promptText = `${promptTextBase}\ncontrols: paramsHash=${paramsHash}, seed=${seed}`;
       const filename = buildGenerationFileName(minuteBucket, paramsHash, seed);
 
       const composition: PromptComposition = {

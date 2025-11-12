@@ -233,6 +233,21 @@ export async function getArtworkDataUrl(
     return { dataUrl, fallbackUsed: true };
   }
 }
+
+/**
+ * Test-facing helper: Fetch frame image (WEBP) from ASSETS and return as data URL.
+ * Returns null on failure (for tests expecting graceful fallback).
+ */
+export async function getFrameDataUrl(assetsFetcher: Fetcher): Promise<string | null> {
+  try {
+    const response = await assetsFetcher.fetch("/frame.webp");
+    if (!response.ok) return null;
+    const buffer = await response.arrayBuffer();
+    return arrayBufferToDataUrl(buffer, "image/webp");
+  } catch {
+    return null;
+  }
+}
 /**
  * Generate OGP image using ImageResponse
  */
