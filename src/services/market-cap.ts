@@ -7,6 +7,8 @@ import { roundMc4 } from "@/lib/round";
 type DexPair = {
   liquidity?: { usd?: number };
   priceUsd?: string;
+  marketCap?: number;
+  volume?: { h24?: number };
 };
 
 type DexResponse = { pairs?: DexPair[] };
@@ -20,7 +22,12 @@ const toExternalApiError = (overrides: Partial<ExternalApiError>): ExternalApiEr
   ...overrides,
 });
 
-const selectHighestLiquidityPrice = (payload: DexResponse, ticker: TokenTicker, log: typeof logger): number | null => {
+const selectBestMarketCap = (
+  payload: DexResponse,
+  ticker: TokenTicker,
+  supply: number,
+  log: typeof logger,
+): number | null => {
   const pairs = payload?.pairs ?? [];
 
   if (pairs.length === 0) {
@@ -31,43 +38,58 @@ const selectHighestLiquidityPrice = (payload: DexResponse, ticker: TokenTicker, 
     return null;
   }
 
-  let bestPrice: number | null = null;
-  let highestLiquidity = -1;
-  let pairsWithoutLiquidity = 0;
-  let pairsWithInvalidPrice = 0;
+  // 優先順位: 1. marketCapフィールド, 2. priceUsd * supply, 3. liquidityで選択したprice * supply
+  let bestMc: number | null = null;
+  let bestVolume = -1;
+  let pairsWithInvalidMc = 0;
+  let pairsWithoutPrice = 0;
 
   for (const pair of pairs) {
-    const liquidityUsd = pair?.liquidity?.usd;
-    if (typeof liquidityUsd !== "number") {
-      pairsWithoutLiquidity++;
-      continue;
-    }
-    if (liquidityUsd <= highestLiquidity) continue;
-
-    const price = Number(pair.priceUsd);
-    if (!Number.isFinite(price)) {
-      pairsWithInvalidPrice++;
+    // marketCapフィールドが直接提供されている場合はそれを使用
+    if (typeof pair.marketCap === "number" && Number.isFinite(pair.marketCap) && pair.marketCap > 0) {
+      const volume = pair.volume?.h24 || 0;
+      if (volume > bestVolume) {
+        bestVolume = volume;
+        bestMc = pair.marketCap;
+      }
       continue;
     }
 
-    highestLiquidity = liquidityUsd;
-    bestPrice = price;
+    // marketCapがない場合はpriceUsdから計算
+    const price = pair.priceUsd ? Number(pair.priceUsd) : null;
+    if (!price || !Number.isFinite(price)) {
+      pairsWithoutPrice++;
+      continue;
+    }
+
+    const calculatedMc = price * supply;
+    if (!Number.isFinite(calculatedMc) || calculatedMc <= 0) {
+      pairsWithInvalidMc++;
+      continue;
+    }
+
+    // volumeまたはliquidityで優先順位を決定
+    const volume = pair.volume?.h24 || pair.liquidity?.usd || 0;
+    if (volume > bestVolume || bestMc === null) {
+      bestVolume = volume;
+      bestMc = calculatedMc;
+    }
   }
 
-  if (bestPrice === null) {
+  if (bestMc === null) {
     log.warn("market-cap.price.no-valid-pair", {
       ticker,
-      reason: "No pairs with valid liquidity and price found",
+      reason: "No pairs with valid marketCap or price found",
     });
     log.debug("market-cap.price.pair-details", {
       ticker,
       totalPairs: pairs.length,
-      pairsWithoutLiquidity,
-      pairsWithInvalidPrice,
+      pairsWithInvalidMc,
+      pairsWithoutPrice,
     });
   }
 
-  return bestPrice;
+  return bestMc;
 };
 
 export type MarketCapService = {
@@ -86,7 +108,7 @@ export function createMarketCapService({
   log = logger,
   tokens = TOKENS,
 }: CreateMarketCapServiceDeps = {}): MarketCapService {
-  async function fetchTokenPrice(token: TokenConfig): Promise<number> {
+  async function fetchTokenMarketCap(token: TokenConfig): Promise<number> {
     const url = `${DEXSCREENER_BASE}/${token.address}`;
 
     try {
@@ -105,13 +127,6 @@ export function createMarketCapService({
         return 0;
       }
 
-      const json = (await response.json()) as DexResponse;
-      const price = selectHighestLiquidityPrice(json, token.ticker, log);
-
-      if (!price || !Number.isFinite(price)) {
-        return 0;
-      }
-
       if (!token.supply || token.supply <= 0) {
         log.warn("market-cap.supply.missing", {
           ticker: token.ticker,
@@ -124,7 +139,14 @@ export function createMarketCapService({
         return 0;
       }
 
-      return price * token.supply;
+      const json = (await response.json()) as DexResponse;
+      const marketCap = selectBestMarketCap(json, token.ticker, token.supply, log);
+
+      if (!marketCap || !Number.isFinite(marketCap)) {
+        return 0;
+      }
+
+      return marketCap;
     } catch (error) {
       const message = error instanceof Error ? error.message : "unknown";
       const stack = error instanceof Error ? error.stack : undefined;
@@ -144,7 +166,7 @@ export function createMarketCapService({
   async function getMcMap(): Promise<Result<McMap, AppError>> {
     const entries = await Promise.all(
       tokens.map(async token => {
-        const mc = await fetchTokenPrice(token);
+        const mc = await fetchTokenMarketCap(token);
         return [token.ticker, mc] as [TokenTicker, number];
       }),
     );
