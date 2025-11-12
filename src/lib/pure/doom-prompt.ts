@@ -94,11 +94,11 @@ const safeWeight = (w: number, minWeight: number = DEFAULT_DOMINANCE_CONFIG.minW
  */
 const TOKEN_PHRASE: Record<TokenTicker, string> = {
   CO2: "dense toxic smog in the sky",
-  ICE: "glittering blue glaciers and cold reflections",
-  FOREST: "lush emerald forests and living roots",
-  NUKE: "blinding nuclear flash on the horizon",
-  MACHINE: "colossal dystopian machine towers and metal grids",
-  PANDEMIC: "bioluminescent spores and organic clusters",
+  ICE: "melting glaciers submerging cities as rising oceans engulf skyscrapers and drown civilizations",
+  FOREST: "endless expanses of vibrant green canopies, intertwined roots reclaiming abandoned structures, and wildlife thriving in the untouched wilderness",
+  NUKE: "ashen wastelands under nuclear fallout, with radioactive winds sweeping through ruins and a towering mushroom cloud dominating the sky",
+  MACHINE: "towering cyberpunk megastructures, pulsating with neon lights and intricate mechanical networks",
+  PANDEMIC: "masked figures wandering through unsanitary streets filled with viral clouds, bio-contaminants, and microscopic pathogens dominating the air",
   FEAR: "oppressive darkness with many red eyes",
   HOPE: "radiant golden divine light breaking the clouds",
 };
