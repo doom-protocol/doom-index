@@ -13,7 +13,7 @@ import { ImageResponse } from "next/og";
 import { getJsonR2, getImageR2, resolveR2BucketAsync } from "@/lib/r2";
 import { logger } from "@/utils/logger";
 import { arrayBufferToDataUrl } from "@/utils/image";
-import { getBaseUrl } from "@/utils/url";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { GlobalState } from "@/types/domain";
 
 // Route Segment Config for ISR
@@ -27,13 +27,27 @@ export const alt = "DOOM INDEX - Current world state visualization";
  * Fetch placeholder image and convert to data URL
  * Exported for testing
  *
- * @param baseUrl - Optional base URL for testing (uses env-based URL if not provided)
+ * @param assetsFetcher - Optional ASSETS fetcher for testing (resolves from context if not provided)
  */
-export async function getPlaceholderDataUrl(baseUrl?: string): Promise<string> {
-  // public/ ディレクトリの画像は Next.js の静的アセットとして提供される
-  const base = baseUrl || getBaseUrl();
-  const placeholderUrl = new URL("/placeholder-painting.webp", base);
-  const response = await fetch(placeholderUrl.toString());
+export async function getPlaceholderDataUrl(assetsFetcher?: Fetcher): Promise<string> {
+  let fetcher: Fetcher | undefined = assetsFetcher;
+
+  // Resolve ASSETS binding from Cloudflare context if not provided
+  if (!fetcher) {
+    try {
+      const { env } = await getCloudflareContext({ async: true });
+      fetcher = (env as Cloudflare.Env | Record<string, unknown>).ASSETS as Fetcher | undefined;
+    } catch (error) {
+      throw new Error(`Failed to resolve ASSETS binding: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (!fetcher) {
+    throw new Error("ASSETS binding is not available");
+  }
+
+  // Use ASSETS fetcher to get static asset directly (avoids circular fetch)
+  const response = await fetcher.fetch("/placeholder-painting.webp");
 
   if (!response.ok) {
     throw new Error(`Failed to fetch placeholder: ${response.status}`);
@@ -47,13 +61,27 @@ export async function getPlaceholderDataUrl(baseUrl?: string): Promise<string> {
  * Fetch frame image and convert to data URL
  * Exported for testing
  *
- * @param baseUrl - Optional base URL for testing (uses env-based URL if not provided)
+ * @param assetsFetcher - Optional ASSETS fetcher for testing (resolves from context if not provided)
  */
-export async function getFrameDataUrl(baseUrl?: string): Promise<string> {
-  // public/ ディレクトリの画像は Next.js の静的アセットとして提供される
-  const base = baseUrl || getBaseUrl();
-  const frameUrl = new URL("/frame.webp", base);
-  const response = await fetch(frameUrl.toString());
+export async function getFrameDataUrl(assetsFetcher?: Fetcher): Promise<string> {
+  let fetcher: Fetcher | undefined = assetsFetcher;
+
+  // Resolve ASSETS binding from Cloudflare context if not provided
+  if (!fetcher) {
+    try {
+      const { env } = await getCloudflareContext({ async: true });
+      fetcher = (env as Cloudflare.Env | Record<string, unknown>).ASSETS as Fetcher | undefined;
+    } catch (error) {
+      throw new Error(`Failed to resolve ASSETS binding: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (!fetcher) {
+    throw new Error("ASSETS binding is not available");
+  }
+
+  // Use ASSETS fetcher to get static asset directly (avoids circular fetch)
+  const response = await fetcher.fetch("/frame.webp");
 
   if (!response.ok) {
     throw new Error(`Failed to fetch frame: ${response.status}`);
@@ -96,11 +124,11 @@ const decodeR2Key = (value: string): string | null => {
 };
 
 export async function getArtworkDataUrl(
-  baseUrl?: string,
+  assetsFetcher?: Fetcher,
   bucketOverride?: R2Bucket,
 ): Promise<{ dataUrl: string; fallbackUsed: boolean }> {
   const fallback = async () => {
-    const placeholderDataUrl = await getPlaceholderDataUrl(baseUrl);
+    const placeholderDataUrl = await getPlaceholderDataUrl(assetsFetcher);
     return { dataUrl: placeholderDataUrl, fallbackUsed: true };
   };
 
@@ -158,11 +186,22 @@ export async function getArtworkDataUrl(
 export default async function Image(): Promise<ImageResponse> {
   const startTime = Date.now();
 
+  // Resolve ASSETS fetcher once for reuse
+  let assetsFetcher: Fetcher | undefined;
   try {
-    const { dataUrl, fallbackUsed } = await getArtworkDataUrl();
+    const { env } = await getCloudflareContext({ async: true });
+    assetsFetcher = (env as Cloudflare.Env | Record<string, unknown>).ASSETS as Fetcher | undefined;
+  } catch (error) {
+    logger.warn("ogp.assets-resolution-failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  try {
+    const { dataUrl, fallbackUsed } = await getArtworkDataUrl(assetsFetcher);
     let frameDataUrl: string | null = null;
     try {
-      frameDataUrl = await getFrameDataUrl();
+      frameDataUrl = await getFrameDataUrl(assetsFetcher);
     } catch (frameError) {
       logger.warn("ogp.frame-fetch-failed", {
         error: frameError instanceof Error ? frameError.message : String(frameError),
@@ -230,11 +269,11 @@ export default async function Image(): Promise<ImageResponse> {
     });
 
     try {
-      const placeholderDataUrl = await getPlaceholderDataUrl();
+      const placeholderDataUrl = await getPlaceholderDataUrl(assetsFetcher);
 
       let frameDataUrl: string | null = null;
       try {
-        frameDataUrl = await getFrameDataUrl();
+        frameDataUrl = await getFrameDataUrl(assetsFetcher);
       } catch (frameError) {
         logger.warn("ogp.frame-fetch-failed", {
           error: frameError instanceof Error ? frameError.message : String(frameError),
