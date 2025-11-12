@@ -3,12 +3,17 @@
 
 name = "doom-index"
 main = "./src/worker.ts"
+
 compatibility_date = "2025-03-25"
 compatibility_flags = [
  "nodejs_compat",
  "nodejs_compat_populate_process_env",
  "global_fetch_strictly_public",
 ]
+
+# Custom build settings
+[build]
+command = "bun run build:cf"
 
 # Cron Triggers
 [triggers]
