@@ -2,7 +2,8 @@ import { describe, it, expect, mock } from "bun:test";
 import { ok, err } from "neverthrow";
 import { createGenerationService } from "@/services/generation";
 import { hashRoundedMap } from "@/lib/pure/hash";
-import { TOKEN_TICKERS, type McMap, type McMapRounded } from "@/constants/token";
+import { roundMc4 } from "@/lib/round";
+import { TOKEN_TICKERS, MARKET_CAP_ROUND_MULTIPLIER, type McMap, type McMapRounded } from "@/constants/token";
 import type { PromptComposition } from "@/services/prompt";
 import type { AppError } from "@/types/app-error";
 import type { RevenueReport, TradeSnapshot } from "@/types/domain";
@@ -10,15 +11,11 @@ import { LogLevel } from "@/utils/logger";
 
 const makeMap = (base: number): McMap =>
   TOKEN_TICKERS.reduce((acc, ticker, idx) => {
-    acc[ticker] = Math.round((base + idx * 10.5) * 10_000) / 10_000;
+    acc[ticker] = Math.round((base + idx * 10.5) * MARKET_CAP_ROUND_MULTIPLIER) / MARKET_CAP_ROUND_MULTIPLIER;
     return acc;
   }, {} as McMap);
 
-const toRounded = (map: McMap): McMapRounded =>
-  TOKEN_TICKERS.reduce((acc, ticker) => {
-    acc[ticker] = Math.round(map[ticker] * 10_000) / 10_000;
-    return acc;
-  }, {} as McMapRounded);
+const toRounded = (map: McMap): McMapRounded => roundMc4(map);
 
 const createPromptComposition = (): PromptComposition => ({
   seed: "abcdef123456",

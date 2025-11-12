@@ -1,9 +1,9 @@
-import { TOKEN_AXIS_MAP, TOKEN_TICKERS, type McMapRounded } from "@/constants/token";
+import { TOKEN_AXIS_MAP, TOKEN_TICKERS, MARKET_CAP_ROUND_DECIMALS, type McMapRounded } from "@/constants/token";
 import type { VisualParams } from "@/lib/pure/mapping";
 import type { PromptVersion } from "@/types/prompt";
 
 const formatTokenSnapshot = (mcRounded: McMapRounded): string =>
-  TOKEN_TICKERS.map(ticker => `${ticker}=${mcRounded[ticker].toFixed(6)}`).join(", ");
+  TOKEN_TICKERS.map(ticker => `${ticker}=${mcRounded[ticker].toFixed(MARKET_CAP_ROUND_DECIMALS)}`).join(", ");
 
 const formatVisualParams = (visualParams: VisualParams): string =>
   Object.entries(visualParams)
@@ -13,7 +13,7 @@ const formatVisualParams = (visualParams: VisualParams): string =>
 const formatInfluenceNarrative = (mcRounded: McMapRounded): string =>
   TOKEN_TICKERS.map(ticker => {
     const [primary, secondary] = TOKEN_AXIS_MAP[ticker];
-    return `${ticker.toLowerCase()}→${primary}/${secondary}=${mcRounded[ticker].toFixed(6)}`;
+    return `${ticker.toLowerCase()}→${primary}/${secondary}=${mcRounded[ticker].toFixed(MARKET_CAP_ROUND_DECIMALS)}`;
   }).join("; ");
 
 export type PromptContext = {

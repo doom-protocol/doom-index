@@ -2,6 +2,19 @@ export const TOKEN_TICKERS = ["CO2", "ICE", "FOREST", "NUKE", "MACHINE", "PANDEM
 
 export type TokenTicker = (typeof TOKEN_TICKERS)[number];
 
+/**
+ * Number of decimal places to round market cap values
+ * Increased from 4 to 6 to better detect small market cap changes
+ * for tokens with large supply (e.g., 1B supply Solana tokens)
+ */
+export const MARKET_CAP_ROUND_DECIMALS = 6;
+
+/**
+ * Multiplier for rounding market cap values
+ * Calculated as 10^MARKET_CAP_ROUND_DECIMALS
+ */
+export const MARKET_CAP_ROUND_MULTIPLIER = 10 ** MARKET_CAP_ROUND_DECIMALS;
+
 export type VisualParamKey =
   | "fogDensity"
   | "skyTint"
