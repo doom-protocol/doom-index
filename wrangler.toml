@@ -45,7 +45,7 @@ service = "doom-index"
 NODE_ENV = "production"
 LOG_LEVEL = "INFO"
 NEXTJS_ENV = "production"
-NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
+# NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
 IMAGE_MODEL = "runware:100@1"
 
 [observability]

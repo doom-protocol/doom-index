@@ -59,30 +59,35 @@ export function calculateDominanceWeights(
   }
 
   // Calculate relative ratios (0 to 1)
-  const ratios = tokens.reduce((acc, t) => {
-    const ratio = (mc[t] || 0) / maxMc;
-    acc[t] = ratio;
-    return acc;
-  }, {} as Record<TokenTicker, number>);
+  const ratios = tokens.reduce(
+    (acc, t) => {
+      const ratio = (mc[t] || 0) / maxMc;
+      acc[t] = ratio;
+      return acc;
+    },
+    {} as Record<TokenTicker, number>,
+  );
 
   // Apply non-linear transformation to emphasize dominance
   // Higher exponent makes dominant tokens stand out more
-  const transformed = tokens.reduce((acc, t) => {
-    const ratio = ratios[t];
-    // Apply power function: ratio^exponent
-    // This makes small differences more pronounced
-    const transformedRatio = Math.pow(ratio, exponent);
-    // Map to weight range: minWeight to maxWeight
-    const weight = minWeight + transformedRatio * (maxWeight - minWeight);
-    acc[t] = clamp(weight);
-    return acc;
-  }, {} as Record<TokenTicker, number>);
+  const transformed = tokens.reduce(
+    (acc, t) => {
+      const ratio = ratios[t];
+      // Apply power function: ratio^exponent
+      // This makes small differences more pronounced
+      const transformedRatio = Math.pow(ratio, exponent);
+      // Map to weight range: minWeight to maxWeight
+      const weight = minWeight + transformedRatio * (maxWeight - minWeight);
+      acc[t] = clamp(weight);
+      return acc;
+    },
+    {} as Record<TokenTicker, number>,
+  );
 
   return transformed;
 }
 
-const safeWeight = (w: number, minWeight: number = DEFAULT_DOMINANCE_CONFIG.minWeight) =>
-  (w === 0 ? minWeight : w);
+const safeWeight = (w: number, minWeight: number = DEFAULT_DOMINANCE_CONFIG.minWeight) => (w === 0 ? minWeight : w);
 
 /**
  * Token phrase mapping for allegorical elements

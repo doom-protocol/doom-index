@@ -3,329 +3,348 @@
  *
  * Generates Open Graph Protocol images for social media sharing.
  * - Fetches latest artwork from R2 storage
- * - Converts 1:1 square image to 1200×630 letterbox format
- * - Black background with centered image
- * - Falls back to placeholder on error
- * - ISR: Regenerates every 60 seconds
+ * - Resizes image to 1200×630 with black background
  */
 
 import { ImageResponse } from "next/og";
-import { getJsonR2, getImageR2, resolveR2BucketAsync } from "@/lib/r2";
-import { logger } from "@/utils/logger";
+import { getJsonR2, getImageR2 } from "@/lib/r2";
 import { arrayBufferToDataUrl } from "@/utils/image";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getBaseUrl } from "@/utils/url";
+import { logger } from "@/utils/logger";
 import type { GlobalState } from "@/types/domain";
 
-// Route Segment Config for ISR
-export const dynamic = "force-dynamic"; // Skip static generation at build time
-export const revalidate = 60; // Regenerate every 60 seconds
+// Route Segment Config
+export const dynamic = "force-dynamic";
+export const revalidate = 60;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "DOOM INDEX - Current world state visualization";
 
 /**
- * Fetch placeholder image and convert to data URL
- * Exported for testing
- * Never throws - always returns a valid data URL or empty string
- *
- * @param assetsFetcher - Optional ASSETS fetcher for testing (resolves from context if not provided)
+ * Fetch fallback image (og-fallback.png) and convert to data URL
  */
-export async function getPlaceholderDataUrl(assetsFetcher?: Fetcher, timeoutMs = 3000): Promise<string> {
+async function getFallbackImageDataUrl(assetsFetcher: Fetcher): Promise<string> {
+  logger.info("ogp.fallback-fetch-start");
   try {
-    // If assetsFetcher is not provided, return empty string immediately
-    // The caller should resolve ASSETS fetcher before calling this function
     if (!assetsFetcher) {
-      logger.warn("ogp.placeholder-assets-not-provided");
-      return "";
+      throw new Error("ASSETS fetcher not available");
     }
 
-    const fetcher = assetsFetcher;
+    // Get base URL from getBaseUrl()
+    const baseUrl = getBaseUrl();
+    const origin = new URL(baseUrl).origin;
+    const fullUrl = `${origin}/og-fallback.png`;
 
-    // Use ASSETS fetcher to get static asset directly (avoids circular fetch)
-    // Apply timeout to prevent hanging
-    const response = await withTimeout(
-      fetcher.fetch("/placeholder-painting.webp"),
-      timeoutMs,
-      () => new Response(null, { status: 408 }),
-      "getPlaceholderDataUrl.fetch",
-    );
+    logger.info("ogp.fallback-fetch-url", { fullUrl });
+
+    // Use Request object with full URL from getBaseUrl()
+    const request = new Request(fullUrl, { method: "GET" });
+    const response = await assetsFetcher.fetch(request);
 
     if (!response.ok) {
-      logger.warn("ogp.placeholder-fetch-failed", { status: response.status });
-      return "";
+      throw new Error(`Failed to fetch fallback image: ${response.status}`);
     }
 
-    const buffer = await withTimeout(
-      response.arrayBuffer(),
-      timeoutMs,
-      () => new ArrayBuffer(0),
-      "getPlaceholderDataUrl.arrayBuffer",
-    );
+    const buffer = await response.arrayBuffer();
+    logger.info("ogp.fallback-fetch-success", {
+      sizeBytes: buffer.byteLength,
+      sizeKB: (buffer.byteLength / 1024).toFixed(2),
+    });
 
-    if (buffer.byteLength === 0) {
-      return "";
-    }
-
-    return arrayBufferToDataUrl(buffer, "image/webp");
+    return arrayBufferToDataUrl(buffer, "image/png");
   } catch (error) {
-    logger.warn("ogp.placeholder-error", {
+    logger.warn("ogp.fallback-fetch-error", {
       error: error instanceof Error ? error.message : String(error),
     });
+    throw error;
+  }
+}
+
+/**
+ * Fetch artwork image from R2 and return an image src usable by <img>.
+ * - Prefer Cloudflare Image Transformations to get PNG (Satori-friendly)
+ * - If transformation not applied (e.g., local dev), return absolute URL to static fallback PNG
+ */
+async function getArtworkImageSrc(bucket: R2Bucket, requestUrl: string, assetsFetcher?: Fetcher): Promise<string> {
+  logger.info("ogp.step1-fetch-state");
+  // Step 1: Fetch global state
+  const stateResult = await getJsonR2<GlobalState>(bucket, "state/global.json");
+  if (stateResult.isErr() || !stateResult.value?.imageUrl) {
+    logger.warn("ogp.step1-state-failed", {
+      error: stateResult.isErr() ? stateResult.error.message : "No image URL",
+    });
+    throw new Error("Failed to fetch state or no image URL");
+  }
+
+  logger.info("ogp.step1-state-success", {
+    imageUrl: stateResult.value.imageUrl,
+  });
+
+  logger.info("ogp.step2-extract-key");
+  // Step 2: Extract R2 key from imageUrl
+  const imageUrl = stateResult.value.imageUrl;
+  let imageKey: string;
+  if (imageUrl.startsWith("/api/r2/")) {
+    imageKey = imageUrl.slice("/api/r2/".length);
+  } else if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+    const url = new URL(imageUrl);
+    imageKey = url.pathname.startsWith("/api/r2/") ? url.pathname.slice("/api/r2/".length) : imageUrl;
+  } else {
+    imageKey = imageUrl;
+  }
+
+  logger.info("ogp.step2-key-extracted", { imageKey });
+
+  logger.info("ogp.step3-fetch-image");
+  // Step 3: Fetch image from R2
+  const imageResult = await getImageR2(bucket, imageKey);
+  if (imageResult.isErr() || !imageResult.value) {
+    logger.warn("ogp.step3-image-failed", {
+      error: imageResult.isErr() ? imageResult.error.message : "No image data",
+    });
+    throw new Error("Failed to fetch image from R2");
+  }
+
+  logger.info("ogp.step3-image-success", {
+    imageSizeBytes: imageResult.value.byteLength,
+    imageSizeKB: (imageResult.value.byteLength / 1024).toFixed(2),
+  });
+
+  logger.info("ogp.step4-build-url");
+  // Step 4: Build image URL and fetch with Cloudflare Image Transformations
+  const origin = new URL(requestUrl).origin;
+  const baseImageUrl = `${origin}/api/r2/${imageKey
+    .split("/")
+    .map(segment => encodeURIComponent(segment))
+    .join("/")}`;
+
+  logger.info("ogp.step4-url-built", { baseImageUrl });
+
+  logger.info("ogp.step5-transform-image");
+  // Step 5: Convert WebP to PNG using Cloudflare Image Transformations
+  const imageResponse = await fetch(baseImageUrl, {
+    cf: {
+      image: {
+        width: 1200,
+        height: 630,
+        fit: "contain",
+        format: "png",
+      },
+    },
+  } as RequestInit);
+
+  if (!imageResponse.ok) {
+    logger.warn("ogp.step5-transform-failed", {
+      status: imageResponse.status,
+      statusText: imageResponse.statusText,
+      note: "Using fallback PNG image",
+    });
+    // Fallback: use fallback PNG image if transformation fails
+    // Satori doesn't support WebP, so we need PNG
+    if (assetsFetcher) {
+      return await getFallbackImageDataUrl(assetsFetcher);
+    }
+    throw new Error("Cannot use WebP image and ASSETS fetcher not available for fallback");
+  }
+
+  const transformedBuffer = await imageResponse.arrayBuffer();
+  const contentType = imageResponse.headers.get("Content-Type") || "";
+  const isPng = contentType.includes("image/png");
+  const sizeChanged = transformedBuffer.byteLength !== imageResult.value.byteLength;
+
+  // Verify that transformation actually worked
+  // In local dev, cf.image might not work, so check Content-Type and size
+  if (!isPng || !sizeChanged) {
+    logger.warn("ogp.step5-transform-not-applied", {
+      contentType,
+      isPng,
+      originalSize: imageResult.value.byteLength,
+      transformedSize: transformedBuffer.byteLength,
+      sizeChanged,
+      note: "cf.image may not work in local dev - using fallback PNG image",
+    });
+    // Fallback: prefer returning absolute URL to the static PNG to avoid huge data URLs in Satori
+    const origin = new URL(requestUrl).origin;
+    return `${origin}/og-fallback.png`;
+  }
+
+  logger.info("ogp.step5-transform-success", {
+    contentType,
+    pngSizeBytes: transformedBuffer.byteLength,
+    pngSizeKB: (transformedBuffer.byteLength / 1024).toFixed(2),
+  });
+
+  return arrayBufferToDataUrl(transformedBuffer, "image/png");
+}
+
+/**
+ * Test-facing helper: Fetch placeholder painting (WEBP) from ASSETS and return as data URL.
+ * Returns empty string on failure (for tests expecting graceful fallback).
+ */
+export async function getPlaceholderDataUrl(assetsFetcher: Fetcher): Promise<string> {
+  try {
+    const response = await assetsFetcher.fetch("/placeholder-painting.webp");
+    if (!response.ok) return "";
+    const buffer = await response.arrayBuffer();
+    return arrayBufferToDataUrl(buffer, "image/webp");
+  } catch {
     return "";
   }
 }
 
 /**
- * Fetch frame image and convert to data URL
- * Exported for testing
- * Never throws - always returns a valid data URL or null
- *
- * @param assetsFetcher - Optional ASSETS fetcher for testing (resolves from context if not provided)
+ * Test-facing helper: Read state and image from R2, return WEBP data URL, or fallback to placeholder via ASSETS.
  */
-export async function getFrameDataUrl(assetsFetcher?: Fetcher, timeoutMs = 3000): Promise<string | null> {
-  try {
-    // If assetsFetcher is not provided, return null immediately
-    // The caller should resolve ASSETS fetcher before calling this function
-    if (!assetsFetcher) {
-      logger.warn("ogp.frame-assets-not-provided");
-      return null;
-    }
-
-    const fetcher = assetsFetcher;
-
-    // Use ASSETS fetcher to get static asset directly (avoids circular fetch)
-    // Apply timeout to prevent hanging
-    const response = await withTimeout(
-      fetcher.fetch("/frame.webp"),
-      timeoutMs,
-      () => new Response(null, { status: 408 }),
-      "getFrameDataUrl.fetch",
-    );
-
-    if (!response.ok) {
-      logger.warn("ogp.frame-fetch-failed", { status: response.status });
-      return null;
-    }
-
-    const buffer = await withTimeout(
-      response.arrayBuffer(),
-      timeoutMs,
-      () => new ArrayBuffer(0),
-      "getFrameDataUrl.arrayBuffer",
-    );
-
-    if (buffer.byteLength === 0) {
-      return null;
-    }
-
-    return arrayBufferToDataUrl(buffer, "image/webp");
-  } catch (error) {
-    logger.warn("ogp.frame-error", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return null;
-  }
-}
-
-/**
- * Fetch latest artwork from R2 and convert to data URL
- * Exported for testing
- *
- * @param baseUrl - Optional base URL for testing (uses env-based URL if not provided)
- */
-const R2_ROUTE_PREFIX = "/api/r2/";
-
-/**
- * Timeout helper: wraps a promise with a timeout
- * Returns fallback value if timeout is reached
- */
-async function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  fallback: () => T,
-  operationName: string,
-): Promise<T> {
-  try {
-    const timeoutPromise = new Promise<T>((_, reject) => {
-      setTimeout(() => reject(new Error(`Timeout: ${operationName} exceeded ${timeoutMs}ms`)), timeoutMs);
-    });
-
-    return await Promise.race([promise, timeoutPromise]);
-  } catch (error) {
-    logger.warn("ogp.timeout", {
-      operation: operationName,
-      timeoutMs,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return fallback();
-  }
-}
-
-const decodeR2Key = (value: string): string | null => {
-  if (!value) return null;
-
-  let path = value;
-  if (value.startsWith("http://") || value.startsWith("https://")) {
-    try {
-      const parsed = new URL(value);
-      path = parsed.pathname;
-    } catch {
-      return null;
-    }
-  }
-
-  if (!path.startsWith(R2_ROUTE_PREFIX)) return null;
-
-  const encoded = path.slice(R2_ROUTE_PREFIX.length);
-  if (!encoded) return null;
-
-  return encoded
-    .split("/")
-    .map(segment => decodeURIComponent(segment))
-    .join("/");
-};
-
 export async function getArtworkDataUrl(
-  assetsFetcher?: Fetcher,
-  bucketOverride?: R2Bucket,
+  assetsFetcher: Fetcher,
+  bucket: R2Bucket,
 ): Promise<{ dataUrl: string; fallbackUsed: boolean }> {
-  const fallback = async () => {
-    try {
-      const placeholderDataUrl = await getPlaceholderDataUrl(assetsFetcher);
-      return { dataUrl: placeholderDataUrl || "", fallbackUsed: true };
-    } catch (error) {
-      logger.warn("ogp.artwork-fallback-error", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return { dataUrl: "", fallbackUsed: true };
-    }
-  };
-
-  let bucket: R2Bucket;
-  if (bucketOverride) {
-    bucket = bucketOverride;
-  } else {
-    const bucketResult = await resolveR2BucketAsync();
-    if (bucketResult.isErr()) {
-      logger.warn("ogp.bucket-resolution-failed", {
-        error: bucketResult.error.message,
-      });
-      return fallback();
-    }
-    bucket = bucketResult.value;
-  }
-
-  const stateResult = await getJsonR2<GlobalState>(bucket, "state/global.json");
-
-  if (stateResult.isErr()) {
-    logger.warn("ogp.state-fetch-failed", {
-      error: stateResult.error.message,
-    });
-    return fallback();
-  }
-
-  const state = stateResult.value;
-  if (!state || !state.imageUrl) {
-    logger.warn("ogp.state-no-image-url", { state });
-    return fallback();
-  }
-
-  const imageKey = decodeR2Key(state.imageUrl);
-  if (!imageKey) {
-    logger.warn("ogp.state-invalid-image-url", { imageUrl: state.imageUrl });
-    return fallback();
-  }
-
-  const imageResult = await getImageR2(bucket, imageKey);
-  if (imageResult.isErr() || !imageResult.value) {
-    logger.warn("ogp.image-fetch-failed", {
-      key: imageKey,
-      error: imageResult.isErr() ? imageResult.error.message : "Image not found",
-    });
-    return fallback();
-  }
-
-  const dataUrl = arrayBufferToDataUrl(imageResult.value, "image/webp");
-  return { dataUrl, fallbackUsed: false };
-}
-
-
-/**
- * Validate data URL format and size
- * Returns true if valid, false otherwise
- */
-function isValidDataUrl(dataUrl: string, maxSizeBytes = 5 * 1024 * 1024): boolean {
-  if (!dataUrl || typeof dataUrl !== "string") {
-    return false;
-  }
-
-  // Check format: data:image/xxx;base64,...
-  if (!dataUrl.startsWith("data:image/") || !dataUrl.includes(";base64,")) {
-    return false;
-  }
-
-  // Extract base64 part and estimate size
-  const base64Part = dataUrl.split(",", 2)[1];
-  if (!base64Part) {
-    return false;
-  }
-
-  // Base64 size estimation: base64 is ~33% larger than binary
-  // Rough estimate: base64Length * 3/4 gives approximate binary size
-  const estimatedSize = (base64Part.length * 3) / 4;
-  if (estimatedSize > maxSizeBytes) {
-    logger.warn("ogp.data-url-too-large", {
-      estimatedSizeBytes: estimatedSize,
-      maxSizeBytes,
-      dataUrlLength: dataUrl.length,
-    });
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * Render ImageResponse with artwork and optional frame
- * Never throws - always returns a valid ImageResponse
- */
-function renderImageResponse(
-  dataUrl: string,
-  frameDataUrl: string | null,
-  fallbackUsed: boolean,
-  startTime: number,
-  fallbackLevel?: string,
-): ImageResponse {
   try {
-    logger.info("ogp.generated", {
-      route: "/opengraph-image",
-      fallbackUsed,
-      hasFrame: frameDataUrl !== null,
-      durationMs: Date.now() - startTime,
-      ...(fallbackLevel && { fallbackLevel }),
+    const stateResult = await getJsonR2<GlobalState>(bucket, "state/global.json");
+    if (stateResult.isErr() || !stateResult.value?.imageUrl) {
+      const dataUrl = await getPlaceholderDataUrl(assetsFetcher);
+      return { dataUrl, fallbackUsed: true };
+    }
+
+    const imageUrl = stateResult.value.imageUrl;
+    // Extract key from possible "/api/r2/..." prefix
+    const imageKey = imageUrl.startsWith("/api/r2/")
+      ? imageUrl.slice("/api/r2/".length)
+      : imageUrl.startsWith("http://") || imageUrl.startsWith("https://")
+        ? (() => {
+            const url = new URL(imageUrl);
+            return url.pathname.startsWith("/api/r2/")
+              ? url.pathname.slice("/api/r2/".length)
+              : url.pathname.replace(/^\//, "");
+          })()
+        : imageUrl;
+
+    const imageResult = await getImageR2(bucket, imageKey);
+    if (imageResult.isErr() || !imageResult.value) {
+      const dataUrl = await getPlaceholderDataUrl(assetsFetcher);
+      return { dataUrl, fallbackUsed: true };
+    }
+
+    const dataUrl = arrayBufferToDataUrl(imageResult.value, "image/webp");
+    return { dataUrl, fallbackUsed: false };
+  } catch {
+    const dataUrl = await getPlaceholderDataUrl(assetsFetcher);
+    return { dataUrl, fallbackUsed: true };
+  }
+}
+/**
+ * Generate OGP image using ImageResponse
+ */
+export default async function Image(): Promise<ImageResponse> {
+  const startTime = Date.now();
+  logger.info("ogp.start");
+
+  try {
+    logger.info("ogp.step-init-context");
+    // Get Cloudflare context
+    const { env } = await getCloudflareContext({ async: true });
+    const cloudflareEnv = env as Cloudflare.Env;
+    const r2Bucket = cloudflareEnv.R2_BUCKET as R2Bucket | undefined;
+
+    if (!r2Bucket) {
+      logger.warn("ogp.step-init-no-bucket");
+      throw new Error("R2_BUCKET not available");
+    }
+
+    const assetsFetcher = cloudflareEnv.ASSETS as Fetcher | undefined;
+
+    logger.info("ogp.step-init-success", {
+      hasBucket: !!r2Bucket,
+      hasAssets: !!assetsFetcher,
     });
 
-    // Ensure dataUrl is valid - if empty or invalid, use text fallback
-    if (!dataUrl || !isValidDataUrl(dataUrl)) {
-      logger.warn("ogp.invalid-data-url", {
-        hasDataUrl: !!dataUrl,
-        dataUrlLength: dataUrl?.length || 0,
-      });
-      return renderTextFallback();
-    }
+    logger.info("ogp.step-init-url");
+    // Get request URL
+    const requestUrl = getBaseUrl();
+    logger.info("ogp.step-init-url-success", { requestUrl });
 
-    // Validate frameDataUrl if provided
-    if (frameDataUrl && !isValidDataUrl(frameDataUrl)) {
-      logger.warn("ogp.invalid-frame-data-url", {
-        frameDataUrlLength: frameDataUrl.length,
-      });
-      frameDataUrl = null; // Continue without frame
-    }
+    logger.info("ogp.step-fetch-artwork");
+    // Fetch artwork image
+    const dataUrl = await getArtworkImageSrc(r2Bucket, requestUrl, assetsFetcher);
+    logger.info("ogp.step-fetch-artwork-success", {
+      dataUrlLength: dataUrl.length,
+      dataUrlLengthKB: (dataUrl.length / 1024).toFixed(2),
+    });
 
-    // Create ImageResponse with error handling
+    logger.info("ogp.step-render");
+    // Render image with black background
+    const jsxElement = (
+      <div
+        style={{
+          display: "flex",
+          width: "100%",
+          height: "100%",
+          backgroundColor: "#000000",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <img
+          src={dataUrl}
+          alt=""
+          width={size.width}
+          height={size.height}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+          }}
+        />
+      </div>
+    );
+
+    const imageResponse = new ImageResponse(jsxElement, {
+      width: size.width,
+      height: size.height,
+    });
+
+    logger.info("ogp.step-render-success");
+    const arrayBuffer = await imageResponse.arrayBuffer();
+
+    logger.info("ogp.step-create-response", {
+      arrayBufferSize: arrayBuffer.byteLength,
+      arrayBufferSizeKB: (arrayBuffer.byteLength / 1024).toFixed(2),
+    });
+
+    const response = new Response(arrayBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=60, stale-while-revalidate=30",
+      },
+    }) as unknown as ImageResponse;
+
+    logger.info("ogp.completed", {
+      durationMs: Date.now() - startTime,
+    });
+
+    return response;
+  } catch (error) {
+    logger.warn("ogp.fallback", {
+      error: error instanceof Error ? error.message : String(error),
+      durationMs: Date.now() - startTime,
+    });
+
     try {
-      const response = new ImageResponse(
-        (
+      // Get ASSETS fetcher for fallback image
+      const { env } = await getCloudflareContext({ async: true });
+      const cloudflareEnv = env as Cloudflare.Env;
+      const assetsFetcher = cloudflareEnv.ASSETS as Fetcher | undefined;
+
+      if (assetsFetcher) {
+        logger.info("ogp.fallback-load-image");
+        // Use og-fallback.png (600x600 PNG)
+        const fallbackDataUrl = await getFallbackImageDataUrl(assetsFetcher);
+
+        logger.info("ogp.fallback-render");
+        // Render fallback image with black background
+        const fallbackJsx = (
           <div
             style={{
               display: "flex",
@@ -334,246 +353,81 @@ function renderImageResponse(
               backgroundColor: "#000000",
               alignItems: "center",
               justifyContent: "center",
-              position: "relative",
             }}
           >
-            {/* Artwork image (centered, behind frame) */}
             <img
-              src={dataUrl}
+              src={fallbackDataUrl}
+              alt=""
+              width={600}
+              height={600}
               style={{
-                position: "absolute",
                 height: "100%",
                 width: "auto",
                 objectFit: "contain",
               }}
-              alt={alt}
             />
-            {/* Frame overlay (on top) - only if available */}
-            {frameDataUrl && (
-              <img
-                src={frameDataUrl}
-                style={{
-                  position: "absolute",
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
-                alt="Frame"
-              />
-            )}
           </div>
-        ),
-        {
-          ...size,
-          headers: {
-            "Cache-Control": fallbackUsed ? "public, max-age=300" : "public, max-age=60, stale-while-revalidate=30",
-          },
-        },
-      );
-
-      // Verify response is valid
-      if (!response || !(response instanceof Response)) {
-        throw new Error("ImageResponse creation returned invalid response");
-      }
-
-      return response;
-    } catch (imageResponseError) {
-      logger.error("ogp.image-response-creation-error", {
-        error: imageResponseError instanceof Error
-          ? { message: imageResponseError.message, stack: imageResponseError.stack }
-          : { message: String(imageResponseError) },
-        dataUrlLength: dataUrl.length,
-        hasFrame: frameDataUrl !== null,
-      });
-      // Fallback to text-only response
-      return renderTextFallback();
-    }
-  } catch (error) {
-    logger.error("ogp.render-error", {
-      error: error instanceof Error ? { message: error.message, stack: error.stack } : { message: String(error) },
-    });
-    return renderTextFallback();
-  }
-}
-
-/**
- * Render text-only fallback ImageResponse
- * This is the absolute last resort - should always succeed
- */
-function renderTextFallback(): ImageResponse {
-  try {
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            display: "flex",
-            width: "100%",
-            height: "100%",
-            backgroundColor: "#000000",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#ffffff",
-            fontSize: 40,
-            fontWeight: "bold",
-          }}
-        >
-          DOOM INDEX
-        </div>
-      ),
-      {
-        ...size,
-        headers: { "Cache-Control": "public, max-age=60" },
-      },
-    );
-  } catch (error) {
-    // If even this fails, something is seriously wrong
-    // Return a minimal response
-    logger.error("ogp.text-fallback-error", {
-      error: error instanceof Error ? { message: error.message, stack: error.stack } : { message: String(error) },
-    });
-    // This should never happen, but if it does, we need to return something
-    return new ImageResponse(
-      <div style={{ display: "flex", width: "100%", height: "100%", backgroundColor: "#000000" }} />,
-      { ...size },
-    );
-  }
-}
-
-/**
- * Generate OGP image using ImageResponse
- */
-
-export default async function Image(): Promise<ImageResponse> {
-  const startTime = Date.now();
-  const MAX_TOTAL_TIME_MS = 20000; // 20 seconds total timeout
-  const CONTEXT_TIMEOUT_MS = 2000; // 2 seconds for context resolution
-  const ARTWORK_TIMEOUT_MS = 10000; // 10 seconds for artwork fetch
-  const FRAME_TIMEOUT_MS = 3000; // 3 seconds for frame fetch
-  const PLACEHOLDER_TIMEOUT_MS = 3000; // 3 seconds for placeholder fetch
-
-  logger.info("ogp.start", { route: "/opengraph-image" });
-
-  // Resolve Cloudflare context once and extract all needed bindings
-  // Apply timeout to prevent hanging
-  let assetsFetcher: Fetcher | undefined;
-  let r2Bucket: R2Bucket | undefined;
-  try {
-    const contextPromise = getCloudflareContext({ async: true });
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error("Context resolution timeout")), CONTEXT_TIMEOUT_MS);
-    });
-
-    const contextResult = await Promise.race([contextPromise, timeoutPromise]);
-    const { env } = contextResult;
-    const cloudflareEnv = env as Cloudflare.Env | Record<string, unknown>;
-    assetsFetcher = cloudflareEnv.ASSETS as Fetcher | undefined;
-    r2Bucket = cloudflareEnv.R2_BUCKET as R2Bucket | undefined;
-    logger.info("ogp.context-resolved", {
-      hasAssets: !!assetsFetcher,
-      hasR2Bucket: !!r2Bucket,
-      durationMs: Date.now() - startTime,
-    });
-  } catch (error) {
-    logger.warn("ogp.context-resolution-failed", {
-      error: error instanceof Error ? error.message : String(error),
-      durationMs: Date.now() - startTime,
-    });
-    // Continue with undefined values - fallbacks will handle it
-  }
-
-  // Check if we're running out of time
-  const elapsedMs = Date.now() - startTime;
-  if (elapsedMs > MAX_TOTAL_TIME_MS - 5000) {
-    // Less than 5 seconds remaining, skip to fallback immediately
-    logger.warn("ogp.time-remaining-low", { elapsedMs, remainingMs: MAX_TOTAL_TIME_MS - elapsedMs });
-    return renderTextFallback();
-  }
-
-  // Fetch artwork and frame in parallel, with proper error handling and timeouts
-  // Pass both assetsFetcher and r2Bucket to avoid nested getCloudflareContext calls
-  const remainingTimeMs = MAX_TOTAL_TIME_MS - elapsedMs;
-  const artworkTimeout = Math.min(ARTWORK_TIMEOUT_MS, remainingTimeMs - 2000); // Leave 2s buffer
-
-  const [artworkResult, frameResult] = await Promise.allSettled([
-    withTimeout(
-      getArtworkDataUrl(assetsFetcher, r2Bucket).catch(() => ({ dataUrl: "", fallbackUsed: true })),
-      artworkTimeout,
-      () => ({ dataUrl: "", fallbackUsed: true }),
-      "getArtworkDataUrl",
-    ),
-    withTimeout(
-      getFrameDataUrl(assetsFetcher, FRAME_TIMEOUT_MS).catch(() => null),
-      FRAME_TIMEOUT_MS,
-      () => null,
-      "getFrameDataUrl",
-    ),
-  ]);
-
-  logger.info("ogp.fetch-completed", {
-    artworkStatus: artworkResult.status,
-    frameStatus: frameResult.status,
-    durationMs: Date.now() - startTime,
-  });
-
-  // Extract results safely
-  let dataUrl = "";
-  let fallbackUsed = true;
-  let frameDataUrl: string | null = null;
-
-  if (artworkResult.status === "fulfilled") {
-    dataUrl = artworkResult.value.dataUrl || "";
-    fallbackUsed = artworkResult.value.fallbackUsed;
-    logger.info("ogp.artwork-extracted", { hasDataUrl: !!dataUrl, fallbackUsed });
-  } else if (artworkResult.status === "rejected") {
-    logger.warn("ogp.artwork-fetch-failed", {
-      error: artworkResult.reason instanceof Error ? artworkResult.reason.message : String(artworkResult.reason),
-    });
-  }
-
-  if (frameResult.status === "fulfilled") {
-    frameDataUrl = frameResult.value;
-    logger.info("ogp.frame-extracted", { hasFrame: frameDataUrl !== null });
-  }
-
-  // Check remaining time before fetching placeholder
-  const elapsedAfterFetch = Date.now() - startTime;
-  if (elapsedAfterFetch < MAX_TOTAL_TIME_MS - 2000) {
-    // If we don't have a valid dataUrl, try to fetch placeholder
-    if (!dataUrl) {
-      logger.info("ogp.fetching-placeholder");
-      try {
-        const placeholderDataUrl = await withTimeout(
-          getPlaceholderDataUrl(assetsFetcher, PLACEHOLDER_TIMEOUT_MS),
-          PLACEHOLDER_TIMEOUT_MS,
-          () => "",
-          "getPlaceholderDataUrl",
         );
 
-        if (placeholderDataUrl) {
-          dataUrl = placeholderDataUrl;
-          fallbackUsed = true;
-          logger.info("ogp.placeholder-fetched", { hasDataUrl: !!dataUrl });
-        }
-      } catch (placeholderError) {
-        logger.warn("ogp.placeholder-fetch-in-main-error", {
-          error: placeholderError instanceof Error ? placeholderError.message : String(placeholderError),
+        const fallbackResponse = new ImageResponse(fallbackJsx, {
+          width: size.width,
+          height: size.height,
         });
-      }
-    }
-  } else {
-    logger.warn("ogp.skip-placeholder-timeout", {
-      elapsedMs: elapsedAfterFetch,
-      remainingMs: MAX_TOTAL_TIME_MS - elapsedAfterFetch,
-    });
-  }
 
-  // Always render something - renderImageResponse handles empty dataUrl
-  logger.info("ogp.rendering", {
-    hasDataUrl: !!dataUrl,
-    hasFrame: frameDataUrl !== null,
-    durationMs: Date.now() - startTime,
-  });
-  const response = renderImageResponse(dataUrl, frameDataUrl, fallbackUsed, startTime);
-  logger.info("ogp.completed", { durationMs: Date.now() - startTime });
-  return response;
+        const fallbackBuffer = await fallbackResponse.arrayBuffer();
+        logger.info("ogp.fallback-completed", {
+          durationMs: Date.now() - startTime,
+        });
+
+        return new Response(fallbackBuffer, {
+          status: 200,
+          headers: {
+            "Content-Type": "image/png",
+            "Cache-Control": "public, max-age=60",
+          },
+        }) as unknown as ImageResponse;
+      }
+    } catch (fallbackError) {
+      logger.warn("ogp.fallback-image-error", {
+        error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+      });
+    }
+
+    // Last resort: return simple black image with text
+    const textFallbackJsx = (
+      <div
+        style={{
+          display: "flex",
+          width: "100%",
+          height: "100%",
+          backgroundColor: "#000000",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#ffffff",
+          fontSize: 40,
+          fontWeight: "bold",
+        }}
+      >
+        DOOM INDEX
+      </div>
+    );
+
+    const textFallbackResponse = new ImageResponse(textFallbackJsx, {
+      width: size.width,
+      height: size.height,
+    });
+
+    const textFallbackBuffer = await textFallbackResponse.arrayBuffer();
+    logger.info("ogp.fallback-text-completed", {
+      durationMs: Date.now() - startTime,
+    });
+
+    return new Response(textFallbackBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=60",
+      },
+    }) as unknown as ImageResponse;
+  }
 }
