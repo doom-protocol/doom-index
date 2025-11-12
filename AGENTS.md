@@ -27,6 +27,7 @@ Project memory keeps persistent guidance (steering, specs notes, component docs)
 - **doom-index**: DOOM Index - 時価総額連動型プロンプト生成システム
 - **dynamic-ogp**: Dynamic OGP - 動的OGP画像生成機能 (initialized)
 - **viewer-check**: Viewer Check - リアルタイム閲覧者チェック機能（プロジェクト初期のコスト最適化機能）
+- **cf-cache-helper**: Cloudflare Cache API を用いた任意データ/レスポンスのキャッシュ機能（initialized）
 - Use `/prompts:kiro-spec-status [feature-name]` to check progress
 
 ## Development Guidelines

@@ -27,10 +27,13 @@ custom_domain = true
 [[r2_buckets]]
 binding = "R2_BUCKET"
 bucket_name = "doom-index-storage"
+preview_bucket_name = "doom-index-storage"
+
 
 [[r2_buckets]]
 binding = "NEXT_INC_CACHE_R2_BUCKET"
 bucket_name = "doom-index-next-inc-cache"
+preview_bucket_name = "doom-index-next-inc-cache"
 
 # KV Namespace Binding
 [[kv_namespaces]]
