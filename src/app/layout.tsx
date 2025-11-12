@@ -67,7 +67,7 @@ export async function generateMetadata(): Promise<Metadata> {
       ],
     },
     other: {
-      "devfun-verification": "true",
+      "devfun-verification": "",
     },
   };
 }
