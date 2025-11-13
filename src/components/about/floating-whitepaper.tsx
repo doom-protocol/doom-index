@@ -82,7 +82,7 @@ export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
     // Width is narrower for better reading (max 700px, responsive)
     const { width } = size;
     const maxWidth = 700;
-    const minWidth = Math.min(width * 0.75, maxWidth);
+    const minWidth = Math.min(width * 1.0, maxWidth);
     return `${minWidth}px`;
   }, [size]);
 
@@ -133,7 +133,7 @@ export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
           }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          onWheel={(e) => {
+          onWheel={e => {
             // PCでのマウスホイールスクロールを優先するため、イベントの伝播を停止
             if (!isMobile) {
               e.stopPropagation();

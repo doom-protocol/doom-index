@@ -22,7 +22,8 @@ describe("WhitepaperViewer", () => {
     );
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper).toBeDefined();
-    expect(wrapper.style.background).toContain("linear-gradient");
-    expect(wrapper.style.borderRadius).toBe("2px");
+    expect(wrapper.style.background).toBe("#ffffff");
+    expect(wrapper.style.width).toBe("100%");
+    expect(wrapper.style.height).toBe("100%");
   });
 });

@@ -19,9 +19,9 @@ type NavLinkConfig = {
 
 const NAV_LINKS: NavLinkConfig[] = [
   {
-    href: GITHUB_URL,
-    label: "GitHub",
-    Icon: GitHubIcon,
+    href: "https://pump.fun/coin/AJfn5M1bWeSsZDq89TgkKXm7AdtAQCsqzkYRxYGoqdev",
+    label: "Pump.fun",
+    Icon: PumpFunIcon,
   },
   {
     href: X_URL,
@@ -29,9 +29,9 @@ const NAV_LINKS: NavLinkConfig[] = [
     Icon: XIcon,
   },
   {
-    href: "https://pump.fun/coin/AJfn5M1bWeSsZDq89TgkKXm7AdtAQCsqzkYRxYGoqdev",
-    label: "Pump.fun",
-    Icon: PumpFunIcon,
+    href: GITHUB_URL,
+    label: "GitHub",
+    Icon: GitHubIcon,
   },
 ];
 
@@ -158,11 +158,9 @@ export const TopBar: FC<TopBarProps> = ({ showProgress = true }) => {
               ) : null}
             </div>
           </div>
-          {showProgress && (
-            <div className="flex flex-col items-center gap-2 md:justify-self-center">
-              <TopBarProgress />
-            </div>
-          )}
+          <div className="flex flex-col items-center md:justify-self-center md:h-[68px]">
+            {showProgress ? <TopBarProgress /> : <div className="h-[68px]" aria-hidden="true" />}
+          </div>
           <div className="hidden justify-end md:flex">
             <nav className="flex items-center justify-end gap-3" aria-label="Navigation Links">
               <Link href="/about" aria-label="About" className={DESKTOP_LINK_CLASS}>

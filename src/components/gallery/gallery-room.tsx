@@ -29,12 +29,42 @@ export const GalleryRoom: React.FC = () => {
 
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow geometry={floorGeometry} material={floorMaterial} />
-      <mesh position={[0, 1.65, 5]} rotation={[0, Math.PI, 0]} receiveShadow geometry={wallGeometry} material={wallMaterial} />
-      <mesh rotation={[0, -Math.PI / 2, 0]} position={[5, 1.65, 0]} receiveShadow geometry={wallGeometry} material={sideWallMaterial} />
-      <mesh rotation={[0, Math.PI / 2, 0]} position={[-5, 1.65, 0]} receiveShadow geometry={wallGeometry} material={sideWallMaterial} />
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, -0.02, 0]}
+        receiveShadow
+        geometry={floorGeometry}
+        material={floorMaterial}
+      />
+      <mesh
+        position={[0, 1.65, 5]}
+        rotation={[0, Math.PI, 0]}
+        receiveShadow
+        geometry={wallGeometry}
+        material={wallMaterial}
+      />
+      <mesh
+        rotation={[0, -Math.PI / 2, 0]}
+        position={[5, 1.65, 0]}
+        receiveShadow
+        geometry={wallGeometry}
+        material={sideWallMaterial}
+      />
+      <mesh
+        rotation={[0, Math.PI / 2, 0]}
+        position={[-5, 1.65, 0]}
+        receiveShadow
+        geometry={wallGeometry}
+        material={sideWallMaterial}
+      />
       <mesh position={[0, 1.65, -5]} receiveShadow geometry={wallGeometry} material={sideWallMaterial} />
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 3.3, 0]} receiveShadow geometry={ceilingGeometry} material={ceilingMaterial} />
+      <mesh
+        rotation={[Math.PI / 2, 0, 0]}
+        position={[0, 3.3, 0]}
+        receiveShadow
+        geometry={ceilingGeometry}
+        material={ceilingMaterial}
+      />
     </group>
   );
 };

@@ -33,7 +33,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </code>
     ),
     pre: ({ children }: { children?: ReactNode }) => (
-      <pre className="bg-gray-50 p-4 rounded overflow-x-auto mb-6 text-sm leading-6 border border-gray-300 text-gray-900">
+      <pre className="mb-6" style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
         {children}
       </pre>
     ),
@@ -58,39 +58,14 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     table: ({ children }: { children?: ReactNode }) => (
       <div className="overflow-x-auto mb-6 my-6" style={{ width: "100%" }}>
-        <table
-          className="min-w-full border-collapse text-sm"
-          style={{
-            border: "1px solid #333",
-            width: "100%",
-            borderCollapse: "collapse",
-            margin: "1rem 0",
-          }}
-        >
-          {children}
-        </table>
+        <table className="min-w-full">{children}</table>
       </div>
     ),
-    thead: ({ children }: { children?: ReactNode }) => (
-      <thead style={{ background: "#e8e8e8", borderBottom: "2px solid #333" }}>{children}</thead>
-    ),
+    thead: ({ children }: { children?: ReactNode }) => <thead>{children}</thead>,
     tbody: ({ children }: { children?: ReactNode }) => <tbody>{children}</tbody>,
-    tr: ({ children }: { children?: ReactNode }) => (
-      <tr style={{ borderBottom: "1px solid #ddd" }}>{children}</tr>
-    ),
-    th: ({ children }: { children?: ReactNode }) => (
-      <th
-        className="px-3 py-2 text-left font-semibold"
-        style={{ border: "1px solid #333", padding: "0.5rem 0.75rem", textAlign: "left" }}
-      >
-        {children}
-      </th>
-    ),
-    td: ({ children }: { children?: ReactNode }) => (
-      <td className="px-3 py-2" style={{ border: "1px solid #ddd", padding: "0.5rem 0.75rem" }}>
-        {children}
-      </td>
-    ),
+    tr: ({ children }: { children?: ReactNode }) => <tr>{children}</tr>,
+    th: ({ children }: { children?: ReactNode }) => <th>{children}</th>,
+    td: ({ children }: { children?: ReactNode }) => <td>{children}</td>,
     img: ({ src, alt }: { src?: string; alt?: string }) => (
       <div className="my-6 flex flex-col items-center">
         <img src={src} alt={alt} className="max-w-xs h-auto" style={{ border: "1px solid #ddd" }} />

@@ -99,7 +99,7 @@ export const TopBarProgress: FC = () => {
   const secondsLabel = displaySecond.toString().padStart(2, "0");
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex h-[68px] flex-col items-center gap-2">
       <span className="text-white/60 text-sm font-cinzel-decorative tracking-wide">Next Generation</span>
       <span className="font-mono text-sm text-white/70 tabular-nums">{secondsLabel} s</span>
       <div className="h-1 w-32 overflow-hidden rounded-full bg-white/20">

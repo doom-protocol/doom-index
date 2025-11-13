@@ -79,8 +79,8 @@ export const AboutScene: React.FC<AboutSceneProps> = ({ children, initialCameraP
         <OrbitControls
           enableDamping
           dampingFactor={0.05}
-          enablePan={isMobile ? !isPaperHovered : true}
-          enableRotate={isMobile ? !isPaperHovered : true}
+          enablePan={false}
+          enableRotate={false}
           enableZoom={isMobile ? true : !isPaperHovered}
           minDistance={0.5}
           maxDistance={5}

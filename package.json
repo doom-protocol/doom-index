@@ -38,6 +38,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "rehype-mermaid": "^3.0.0",
+    "remark-gfm": "^4.0.1",
     "three": "^0.181.1",
     "use-haptic": "^1.1.11",
     "use-sound": "^5.0.0",

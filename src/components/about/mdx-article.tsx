@@ -1,8 +1,9 @@
-import Article from "@/components/about/whitepaper/doom-index-v1.mdx";
+import Article from "@/assets/whitepaper/v1.mdx";
+import styles from "./whitepaper-viewer.module.css";
 
 const MDXArticle = () => {
   return (
-    <article className="whitepaper-article">
+    <article className={styles.whitepaperArticle}>
       <Article />
     </article>
   );
