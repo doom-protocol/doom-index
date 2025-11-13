@@ -46,7 +46,7 @@ body {
   border-width: 0;
 }
 
-/* リーダーモードや印刷時は通常のHTMLを表示 */
+/* when reader mode or print is enabled, show the normal HTML */
 @media print, (prefers-reduced-motion: reduce) {
   .sr-only {
     position: static;

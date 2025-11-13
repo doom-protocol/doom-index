@@ -9,11 +9,10 @@
   line-height: 1.7;
 }
 
-/* MDXファイル内で使われるクラス名は:global()でグローバルスコープとして扱う */
+/* classes used in the MDX file are treated as global scope with :global() */
 .whitepaperArticle :global(.paper-header) {
   margin-bottom: 3rem;
   padding-bottom: 2rem;
-  border-bottom: 2px solid #333;
 }
 
 .whitepaperArticle :global(.paper-metadata) {
@@ -96,7 +95,7 @@
   line-height: 1.8;
 }
 
-/* Code block styling - 改行を保持 */
+/* Code block styling - keep line breaks */
 .whitepaperArticle :global(pre) {
   background: #f6f8fa;
   color: #24292e;

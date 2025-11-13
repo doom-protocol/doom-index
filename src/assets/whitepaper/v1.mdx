@@ -23,8 +23,6 @@ export const metadata = {
   </div>
 </div>
 
----
-
 ## 1. Motivation
 
 Markets are emotional. Behind every price movement lives fear, hope, greed, anxiety, euphoria—the full spectrum of human feeling compressed into numbers.
@@ -61,14 +59,7 @@ These 8 tokens—launched on pump.fun, the Solana memecoin launchpad—represent
 
 Every minute, the system captures the 8 tokens' market caps and translates them into a painting through a weighted composition algorithm:
 
-```mermaid
-graph TD
-    A[Fetch Market Caps] --> B[Calculate Relative Dominance]
-    B --> C[Apply Non-Linear Weighting]
-    C --> D[Build Weighted Prompt]
-    D --> E[AI Generation Medieval Style]
-    E --> F[Store & Display]
-```
+![Painting generation pipeline](/diagrams/painting-pipeline.svg)
 
 ### The Algorithm
 

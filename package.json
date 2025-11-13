@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "postinstall": "bun x playwright install",
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "build:cf": "opennextjs-cloudflare build",
@@ -46,7 +45,6 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@cloudflare/playwright": "^1.0.0",
     "@cloudflare/workers-types": "^4.20251113.0",
     "@happy-dom/global-registrator": "^20.0.10",
     "@opennextjs/cloudflare": "^1.12.0",

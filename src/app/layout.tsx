@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/app/providers";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { getBaseUrl } from "@/utils/url";
+import { ViewTransition } from "react";
 
 const cinzelDecorative = Cinzel_Decorative({
   variable: "--font-cinzel-decorative",
@@ -88,14 +89,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" style={{ margin: 0, padding: 0, width: "100%", height: "100%" }}>
-      <body
-        className={`${cinzelDecorative.variable} antialiased`}
-        style={{ margin: 0, padding: 0, width: "100%", height: "100%", overflow: "hidden" }}
-      >
-        <Providers>{children}</Providers>
-      </body>
-      <GoogleAnalytics gaId="G-RMLTMSSJ8T" />
-    </html>
+    <ViewTransition>
+      <html lang="en" style={{ margin: 0, padding: 0, width: "100%", height: "100%" }}>
+        <body
+          className={`${cinzelDecorative.variable} antialiased`}
+          style={{ margin: 0, padding: 0, width: "100%", height: "100%", overflow: "hidden" }}
+        >
+          <Providers>{children}</Providers>
+        </body>
+        <GoogleAnalytics gaId="G-RMLTMSSJ8T" />
+      </html>
+    </ViewTransition>
   );
 }
