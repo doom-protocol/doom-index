@@ -25,12 +25,12 @@ const cinzelDecorative = Cinzel_Decorative({
  */
 export async function generateMetadata(): Promise<Metadata> {
   const description =
-    "8 global indicators ($CO2, $ICE, $FOREST, $NUKE, $MACHINE, $PANDEMIC, $FEAR, $HOPE) visualized as generative art in real-time.";
+    "A decentralized archive of financial emotions. AI generates one painting every minute, translating the collective psychology of 8 pump.fun tokens ($CO2, $ICE, $FOREST, $NUKE, $MACHINE, $PANDEMIC, $FEAR, $HOPE) into visual art.";
   const title = "DOOM INDEX - Every buy paints the apocalypse.";
   // Use environment-based URL
   const metadataBase = new URL(getBaseUrl());
   const ogImageUrl = new URL("/opengraph-image", metadataBase).toString();
-  const ogImageAlt = "DOOM INDEX - Current Every buy paints the apocalypse.";
+  const ogImageAlt = "DOOM INDEX - A decentralized archive of financial emotions.";
 
   return {
     metadataBase,

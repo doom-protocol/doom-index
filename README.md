@@ -1,6 +1,6 @@
 # DOOM INDEX
 
-Real-time visualization of world indicators through generative art on Solana.
+A decentralized archive of financial emotions. AI generates one painting every minute, translating the collective psychology of 8 pump.fun tokens into visual art.
 
 ## Overview
 

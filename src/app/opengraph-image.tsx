@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 60;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "DOOM INDEX - Current world state visualization";
+export const alt = "DOOM INDEX - A decentralized archive of financial emotions.";
 
 /**
  * Fetch fallback image (og-fallback.png) and convert to data URL
