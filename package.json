@@ -46,6 +46,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@cloudflare/playwright": "^1.0.0",
     "@cloudflare/workers-types": "^4.20251113.0",
     "@happy-dom/global-registrator": "^20.0.10",
     "@opennextjs/cloudflare": "^1.12.0",

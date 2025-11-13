@@ -42,6 +42,10 @@ id = "8c588d03a8ab4cd19e0c458dcabf1bec"
 directory = "./.open-next/assets"
 binding = "ASSETS"
 
+
+[browser]
+binding = "PLAYWRIGHT_BROWSER"
+
 [[services]]
 binding = "WORKER_SELF_REFERENCE"
 service = "doom-index"
