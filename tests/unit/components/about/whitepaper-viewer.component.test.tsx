@@ -14,7 +14,7 @@ describe("WhitepaperViewer", () => {
     expect(container.textContent).toContain("Test content");
   });
 
-  it("should render container with paper styling", () => {
+  it("should render container with CSS module class", () => {
     const { container } = render(
       <WhitepaperViewer>
         <div>Test content</div>
@@ -22,8 +22,7 @@ describe("WhitepaperViewer", () => {
     );
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper).toBeDefined();
-    expect(wrapper.style.background).toBe("#ffffff");
-    expect(wrapper.style.width).toBe("100%");
-    expect(wrapper.style.height).toBe("100%");
+    expect(wrapper.className).toContain("container");
+    expect(wrapper.getAttribute("data-scrollable")).toBe("true");
   });
 });
