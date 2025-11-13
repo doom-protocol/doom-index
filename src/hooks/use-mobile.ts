@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
  * @returns {boolean} モバイルデバイスの場合true、それ以外はfalse
  */
 export const useMobile = (): boolean => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -28,5 +28,5 @@ export const useMobile = (): boolean => {
     };
   }, []);
 
-  return isMobile;
+  return isMobile ?? false;
 };

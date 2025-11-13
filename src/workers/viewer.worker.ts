@@ -53,7 +53,3 @@ if (isValidBrowserRequest()) {
     clearInterval(timer);
   });
 }
-
-const viewerWorker: null = null;
-
-export default viewerWorker;

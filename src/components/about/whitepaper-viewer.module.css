@@ -200,7 +200,7 @@
   margin: 0;
   font-family: "Times New Roman", Times, serif;
   line-height: 1.6;
-  overflow: visible;
+  overflow: auto;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -325,5 +325,6 @@
     padding: 1in;
     box-shadow: none;
     background: white;
+    overflow: auto;
   }
 }
