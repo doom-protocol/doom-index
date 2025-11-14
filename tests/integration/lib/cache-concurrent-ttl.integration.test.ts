@@ -1,49 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { getOrSet } from "@/lib/cache";
+import { createMockCache, setupCacheMock, restoreCacheMock, type CachedResponseData } from "./cache-test-helpers";
 
 describe("Cache Integration - Concurrent Requests and TTL", () => {
   let originalCaches: CacheStorage | undefined;
-  let cacheMap: Map<string, { body: string; headers: Headers; status: number; statusText: string }>;
+  let cacheMap: Map<string, CachedResponseData>;
 
   beforeEach(() => {
-    cacheMap = new Map<string, { body: string; headers: Headers; status: number; statusText: string }>();
-    const mockCache = {
-      match: async (key: string | Request) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        const cached = cacheMap.get(keyStr);
-        if (!cached) return undefined;
-        return new Response(cached.body, {
-          status: cached.status,
-          statusText: cached.statusText,
-          headers: cached.headers,
-        });
-      },
-      put: async (key: string | Request, response: Response) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        const body = await response.clone().text();
-        const headers = new Headers(response.headers);
-        cacheMap.set(keyStr, {
-          body,
-          headers,
-          status: response.status,
-          statusText: response.statusText,
-        });
-      },
-      delete: async (key: string | Request) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        return cacheMap.delete(keyStr);
-      },
-    } as unknown as Cache;
-
-    originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
-    (globalThis as unknown as { caches?: CacheStorage }).caches = {
-      default: mockCache,
-    } as unknown as CacheStorage;
+    const { cacheMap: map, mockCache } = createMockCache();
+    cacheMap = map;
+    originalCaches = setupCacheMock(mockCache);
   });
 
   afterEach(() => {
     cacheMap.clear();
-    (globalThis as unknown as { caches?: CacheStorage }).caches = originalCaches;
+    restoreCacheMock(originalCaches);
   });
 
   it("should deduplicate concurrent requests for same key", async () => {
@@ -58,9 +29,7 @@ describe("Cache Integration - Concurrent Requests and TTL", () => {
     };
 
     // Make 5 concurrent requests
-    const promises = Array.from({ length: 5 }, () =>
-      getOrSet(testKey, computeFn, { ttlSeconds: 60 }),
-    );
+    const promises = Array.from({ length: 5 }, () => getOrSet(testKey, computeFn, { ttlSeconds: 60 }));
 
     const results = await Promise.all(promises);
 

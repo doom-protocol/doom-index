@@ -86,7 +86,7 @@ graph TB
 
 1. **Decision**: グレースフルフォールバック戦略（キャッシュ不可時もエラーを投げずに計算結果を返す）
    - **Context**: Cloudflare 環境外（ローカル開発、テスト環境）でも動作する必要がある
-   - **Alternatives**: 
+   - **Alternatives**:
      - エラーを投げる（環境依存が強くなる）
      - KV ストレージにフォールバック（複雑性が増す）
    - **Selected Approach**: キャッシュが利用できない場合は計算関数を実行して結果を返す。ログで警告を出力するが、エラーは発生させない
@@ -196,43 +196,43 @@ flowchart TD
 
 ## Requirements Traceability
 
-| Requirement | Requirement Summary | Components | Interfaces | Flows |
-|-------------|-------------------|------------|------------|-------|
-| 1.1 | update returns cached or computed value | CacheHelper | update<T>() | Key-Value Cache Flow |
-| 1.2 | Graceful fallback when Cache API unavailable | CacheHelper | resolveCache() | Error Handling Flow |
-| 1.3 | Cache hit skips compute function | CacheHelper | update<T>() | Key-Value Cache Flow |
-| 1.4 | Independent cache entries per key | CacheHelper | get<T>(), set<T>(), update<T>() | Key-Value Cache Flow |
-| 1.5 | Deduplication for concurrent requests | CacheHelper | update<T>() | Key-Value Cache Flow |
-| 2.1 | withRequestCache caches HTTP responses | CacheHelper | withRequestCache() | Request-Level Cache Flow |
-| 2.2 | Set-Cookie header handling | CacheHelper | withRequestCache() | Request-Level Cache Flow |
-| 2.3 | Cached response served within TTL | CacheHelper | withRequestCache() | Request-Level Cache Flow |
-| 2.4 | Cache-Tag support for future purge | CacheHelper | withRequestCache() | Request-Level Cache Flow |
-| 3.1 | Safe environment resolution | CacheHelper | resolveCache() | Error Handling Flow |
-| 3.2 | Graceful degradation outside Cloudflare | CacheHelper | resolveCache() | Error Handling Flow |
-| 3.3 | Next.js Route Handler support | CacheHelper | withRequestCache() | Request-Level Cache Flow |
-| 3.4 | Cache-Control header setting | CacheHelper | set<T>(), update<T>(), withRequestCache() | Key-Value Cache Flow, Request-Level Cache Flow |
-| 4.1 | Error logging and fallback | CacheHelper | get<T>(), set<T>(), update<T>(), withRequestCache() | Error Handling Flow |
-| 4.2 | Compute error propagation | CacheHelper | update<T>(), withRequestCache() | Error Handling Flow |
-| 4.3 | Debug logging for cache operations | CacheHelper | get<T>(), set<T>(), update<T>(), remove(), withRequestCache() | Key-Value Cache Flow, Request-Level Cache Flow |
-| 4.4 | Extensible design for metrics | CacheHelper | Interface design | N/A |
-| 5.1 | Application to trpc.mc.getMarketCaps | Integration | mcRouter.getMarketCaps | Key-Value Cache Flow |
-| 5.2 | Application to trpc.mc.getRoundedMcMap | Integration | mcRouter.getRoundedMcMap | Key-Value Cache Flow |
-| 5.3 | Application to trpc.token.getState | Integration | tokenRouter.getState | Key-Value Cache Flow |
-| 5.4 | Application to trpc.r2.getJson | Integration | r2Router.getJson | Key-Value Cache Flow |
-| 5.5 | Internal service memoization | Integration | Service layer usage | Key-Value Cache Flow |
-| 5.6 | Latency improvement | CacheHelper | All interfaces | All flows |
-| 5.7 | tRPC Context logger integration | CacheHelper | update<T>() with logger param | Key-Value Cache Flow |
-| 2.5 | tRPC HTTP adapter caching | CacheHelper | Procedure-level caching | Key-Value Cache Flow |
-| 3.3 | tRPC procedure execution | CacheHelper | resolveCache() | Error Handling Flow |
-| 3.6 | tRPC context creation failure | CacheHelper | resolveCache() | Error Handling Flow |
-| 7.4 | tRPC return type preservation | CacheHelper | get<T>(), set<T>(), update<T>() | Key-Value Cache Flow |
-| 7.5 | tRPC Context logger parameter | CacheHelper | get<T>(), set<T>(), update<T>(), remove() with logger | Key-Value Cache Flow |
-| 6.1 | Set-Cookie header compliance | CacheHelper | withRequestCache() | Request-Level Cache Flow |
-| 6.2 | Cache-Control header setting | CacheHelper | set<T>(), update<T>(), withRequestCache() | Key-Value Cache Flow, Request-Level Cache Flow |
-| 6.3 | ETag/Last-Modified compatibility | CacheHelper | withRequestCache() | Request-Level Cache Flow |
-| 7.1 | Type-safe API in src/lib/cache.ts | CacheHelper | All interfaces | All flows |
-| 7.2 | Text and binary variants | CacheHelper | getText(), setText(), updateText(), getBinary(), setBinary(), updateBinary() | Key-Value Cache Flow |
-| 7.3 | Minimal dependencies | CacheHelper | Implementation | N/A |
+| Requirement | Requirement Summary                          | Components  | Interfaces                                                                   | Flows                                          |
+| ----------- | -------------------------------------------- | ----------- | ---------------------------------------------------------------------------- | ---------------------------------------------- |
+| 1.1         | update returns cached or computed value      | CacheHelper | update<T>()                                                                  | Key-Value Cache Flow                           |
+| 1.2         | Graceful fallback when Cache API unavailable | CacheHelper | resolveCache()                                                               | Error Handling Flow                            |
+| 1.3         | Cache hit skips compute function             | CacheHelper | update<T>()                                                                  | Key-Value Cache Flow                           |
+| 1.4         | Independent cache entries per key            | CacheHelper | get<T>(), set<T>(), update<T>()                                              | Key-Value Cache Flow                           |
+| 1.5         | Deduplication for concurrent requests        | CacheHelper | update<T>()                                                                  | Key-Value Cache Flow                           |
+| 2.1         | withRequestCache caches HTTP responses       | CacheHelper | withRequestCache()                                                           | Request-Level Cache Flow                       |
+| 2.2         | Set-Cookie header handling                   | CacheHelper | withRequestCache()                                                           | Request-Level Cache Flow                       |
+| 2.3         | Cached response served within TTL            | CacheHelper | withRequestCache()                                                           | Request-Level Cache Flow                       |
+| 2.4         | Cache-Tag support for future purge           | CacheHelper | withRequestCache()                                                           | Request-Level Cache Flow                       |
+| 3.1         | Safe environment resolution                  | CacheHelper | resolveCache()                                                               | Error Handling Flow                            |
+| 3.2         | Graceful degradation outside Cloudflare      | CacheHelper | resolveCache()                                                               | Error Handling Flow                            |
+| 3.3         | Next.js Route Handler support                | CacheHelper | withRequestCache()                                                           | Request-Level Cache Flow                       |
+| 3.4         | Cache-Control header setting                 | CacheHelper | set<T>(), update<T>(), withRequestCache()                                    | Key-Value Cache Flow, Request-Level Cache Flow |
+| 4.1         | Error logging and fallback                   | CacheHelper | get<T>(), set<T>(), update<T>(), withRequestCache()                          | Error Handling Flow                            |
+| 4.2         | Compute error propagation                    | CacheHelper | update<T>(), withRequestCache()                                              | Error Handling Flow                            |
+| 4.3         | Debug logging for cache operations           | CacheHelper | get<T>(), set<T>(), update<T>(), remove(), withRequestCache()                | Key-Value Cache Flow, Request-Level Cache Flow |
+| 4.4         | Extensible design for metrics                | CacheHelper | Interface design                                                             | N/A                                            |
+| 5.1         | Application to trpc.mc.getMarketCaps         | Integration | mcRouter.getMarketCaps                                                       | Key-Value Cache Flow                           |
+| 5.2         | Application to trpc.mc.getRoundedMcMap       | Integration | mcRouter.getRoundedMcMap                                                     | Key-Value Cache Flow                           |
+| 5.3         | Application to trpc.token.getState           | Integration | tokenRouter.getState                                                         | Key-Value Cache Flow                           |
+| 5.4         | Application to trpc.r2.getJson               | Integration | r2Router.getJson                                                             | Key-Value Cache Flow                           |
+| 5.5         | Internal service memoization                 | Integration | Service layer usage                                                          | Key-Value Cache Flow                           |
+| 5.6         | Latency improvement                          | CacheHelper | All interfaces                                                               | All flows                                      |
+| 5.7         | tRPC Context logger integration              | CacheHelper | update<T>() with logger param                                                | Key-Value Cache Flow                           |
+| 2.5         | tRPC HTTP adapter caching                    | CacheHelper | Procedure-level caching                                                      | Key-Value Cache Flow                           |
+| 3.3         | tRPC procedure execution                     | CacheHelper | resolveCache()                                                               | Error Handling Flow                            |
+| 3.6         | tRPC context creation failure                | CacheHelper | resolveCache()                                                               | Error Handling Flow                            |
+| 7.4         | tRPC return type preservation                | CacheHelper | get<T>(), set<T>(), update<T>()                                              | Key-Value Cache Flow                           |
+| 7.5         | tRPC Context logger parameter                | CacheHelper | get<T>(), set<T>(), update<T>(), remove() with logger                        | Key-Value Cache Flow                           |
+| 6.1         | Set-Cookie header compliance                 | CacheHelper | withRequestCache()                                                           | Request-Level Cache Flow                       |
+| 6.2         | Cache-Control header setting                 | CacheHelper | set<T>(), update<T>(), withRequestCache()                                    | Key-Value Cache Flow, Request-Level Cache Flow |
+| 6.3         | ETag/Last-Modified compatibility             | CacheHelper | withRequestCache()                                                           | Request-Level Cache Flow                       |
+| 7.1         | Type-safe API in src/lib/cache.ts            | CacheHelper | All interfaces                                                               | All flows                                      |
+| 7.2         | Text and binary variants                     | CacheHelper | getText(), setText(), updateText(), getBinary(), setBinary(), updateBinary() | Key-Value Cache Flow                           |
+| 7.3         | Minimal dependencies                         | CacheHelper | Implementation                                                               | N/A                                            |
 
 ## Components and Interfaces
 
@@ -273,19 +273,19 @@ type CacheOptions = {
 
 /**
  * Get a cached value by key
- * 
+ *
  * @template T - The type of value to retrieve (preserves tRPC procedure return types)
  * @param key - Cache key (will be prefixed with namespace if provided)
  * @param options - Optional cache options
  * @returns Promise resolving to the cached value or null if not found/expired
- * 
+ *
  * Preconditions:
  * - key must be a non-empty string
- * 
+ *
  * Postconditions:
  * - Returns cached value of type T if found and valid, otherwise null
  * - Never throws (returns null on cache miss or error)
- * 
+ *
  * Invariants:
  * - Returns null if cache is unavailable
  * - Type safety is preserved for tRPC procedure return types
@@ -294,22 +294,22 @@ function get<T>(key: string, options?: Omit<CacheOptions, "ttlSeconds">): Promis
 
 /**
  * Set a value in cache with TTL
- * 
+ *
  * @template T - The type of value to cache
  * @param key - Cache key (will be prefixed with namespace if provided)
  * @param value - Value to cache (must be JSON-serializable for generic version)
  * @param options - Cache options including TTL
  * @returns Promise resolving to void
- * 
+ *
  * Preconditions:
  * - key must be a non-empty string
  * - ttlSeconds must be a positive number
  * - value must be JSON-serializable (for generic version)
- * 
+ *
  * Postconditions:
  * - Value is stored in cache with specified TTL if cache is available
  * - If cache is unavailable, operation is silently skipped (no error thrown)
- * 
+ *
  * Invariants:
  * - Never throws (gracefully degrades if cache unavailable)
  */
@@ -317,52 +317,48 @@ function set<T>(key: string, value: T, options: CacheOptions): Promise<void>;
 
 /**
  * Update a cached value, computing it if not present
- * 
+ *
  * This is the recommended method for caching expensive operations (external API calls,
  * heavy computations, paid data reads). It combines get + set with deduplication.
- * 
+ *
  * @template T - The type of value to cache (preserves tRPC procedure return types)
  * @param key - Cache key (will be prefixed with namespace if provided)
  * @param compute - Function that computes the value if not cached or expired
  * @param options - Cache options including TTL
  * @returns Promise resolving to the cached or computed value
- * 
+ *
  * Preconditions:
  * - key must be a non-empty string
  * - ttlSeconds must be a positive number
  * - compute function should handle errors internally or propagate them appropriately
- * 
+ *
  * Postconditions:
  * - Returns a value of type T (either from cache or computed)
  * - If cache is available, value is stored with specified TTL
  * - If cache is unavailable, computed value is returned without caching
  * - Type safety is preserved for tRPC procedure return types
- * 
+ *
  * Invariants:
  * - Same key with same options always returns same cache entry
  * - Concurrent requests for same key are deduplicated (single computation per key)
  * - Logger is used if provided, otherwise falls back to default logger
  */
-function update<T>(
-  key: string,
-  compute: () => Promise<T>,
-  options: CacheOptions
-): Promise<T>;
+function update<T>(key: string, compute: () => Promise<T>, options: CacheOptions): Promise<T>;
 
 /**
  * Remove a cached value by key
- * 
+ *
  * @param key - Cache key to remove (will be prefixed with namespace if provided)
  * @param options - Optional cache options
  * @returns Promise resolving to boolean (true if removed, false if not found)
- * 
+ *
  * Preconditions:
  * - key must be a non-empty string
- * 
+ *
  * Postconditions:
  * - Returns true if value was removed, false if not found or cache unavailable
  * - Never throws (gracefully degrades if cache unavailable)
- * 
+ *
  * Invariants:
  * - Returns false if cache is unavailable
  */
@@ -374,11 +370,7 @@ function remove(key: string, options?: Omit<CacheOptions, "ttlSeconds">): Promis
  */
 function getText(key: string, options?: Omit<CacheOptions, "ttlSeconds">): Promise<string | null>;
 function setText(key: string, value: string, options: CacheOptions): Promise<void>;
-function updateText(
-  key: string,
-  compute: () => Promise<string>,
-  options: CacheOptions
-): Promise<string>;
+function updateText(key: string, compute: () => Promise<string>, options: CacheOptions): Promise<string>;
 
 /**
  * Binary cache helpers (for ArrayBuffer values)
@@ -386,31 +378,27 @@ function updateText(
  */
 function getBinary(key: string, options?: Omit<CacheOptions, "ttlSeconds">): Promise<ArrayBuffer | null>;
 function setBinary(key: string, value: ArrayBuffer, options: CacheOptions): Promise<void>;
-function updateBinary(
-  key: string,
-  compute: () => Promise<ArrayBuffer>,
-  options: CacheOptions
-): Promise<ArrayBuffer>;
+function updateBinary(key: string, compute: () => Promise<ArrayBuffer>, options: CacheOptions): Promise<ArrayBuffer>;
 
 /**
  * Request-level cache wrapper for HTTP responses
- * 
+ *
  * @param request - The incoming Request object
  * @param ttlSeconds - Time-to-live in seconds
  * @param buildResponse - Function that builds the Response if not cached
  * @returns Promise resolving to cached or newly built Response
- * 
+ *
  * Preconditions:
  * - request must be a valid Request object
  * - ttlSeconds must be a positive number
  * - buildResponse must return a Response object
- * 
+ *
  * Postconditions:
  * - Returns a Response (either from cache or newly built)
  * - If cache is available, Response is stored with specified TTL
  * - Set-Cookie headers are stripped before caching
  * - Cache-Control header is set appropriately
- * 
+ *
  * Invariants:
  * - Same request URL returns same cached Response within TTL
  * - Response headers are properly sanitized before caching
@@ -418,21 +406,21 @@ function updateBinary(
 function withRequestCache(
   request: Request,
   ttlSeconds: number,
-  buildResponse: () => Promise<Response>
+  buildResponse: () => Promise<Response>,
 ): Promise<Response>;
 
 /**
  * Resolve Cloudflare Cache API instance
- * 
+ *
  * @returns Cache instance or null if unavailable
- * 
+ *
  * Preconditions:
  * - Must be called in context where getCloudflareContext() is available
- * 
+ *
  * Postconditions:
  * - Returns Cache instance if Cloudflare context is available
  * - Returns null if context is unavailable (graceful degradation)
- * 
+ *
  * Invariants:
  * - Never throws (always returns Cache or null)
  */
@@ -460,6 +448,7 @@ function resolveCache(): Cache | null;
 - **Migration Path**: 段階的に適用可能。まず `mcRouter.getMarketCaps` と `mcRouter.getRoundedMcMap` に `update<T>()` を適用し、その後 `tokenRouter.getState`、`r2Router.getJson` に拡張。各プロシージャ内で `ctx.logger` を渡すことで、統一されたロギングパターンを維持
 - **実行環境の制約**: このヘルパーは Cloudflare Workers Edge Runtime でのみ動作する。クライアント側（ブラウザ）では使用できない（Cloudflare Cache API がサーバー側でのみ利用可能なため）
 - **使用例**:
+
   ```typescript
   // 外部APIレスポンスのキャッシュ（頻繁なアクセス）
   const result = await update(
@@ -468,7 +457,7 @@ function resolveCache(): Cache | null;
       const service = createMarketCapService({ log: ctx.logger });
       return await service.getMcMap();
     },
-    { ttlSeconds: 60, logger: ctx.logger }
+    { ttlSeconds: 60, logger: ctx.logger },
   );
 
   // 画像などの重いファイルのキャッシュ
@@ -478,7 +467,7 @@ function resolveCache(): Cache | null;
       const response = await fetch(imageUrl);
       return await response.arrayBuffer();
     },
-    { ttlSeconds: 3600, logger: ctx.logger }
+    { ttlSeconds: 3600, logger: ctx.logger },
   );
 
   // 有料データ読み取りの最適化
@@ -488,7 +477,7 @@ function resolveCache(): Cache | null;
       // 有料APIへのアクセス
       return await fetchPaidData(dataId);
     },
-    { ttlSeconds: 300, logger: ctx.logger }
+    { ttlSeconds: 300, logger: ctx.logger },
   );
   ```
 
@@ -607,7 +596,7 @@ export const mcRouter = router({
         }
         return roundMc(result.value);
       },
-      { ttlSeconds: 60, logger: ctx.logger }
+      { ttlSeconds: 60, logger: ctx.logger },
     );
   }),
 });
@@ -623,7 +612,7 @@ export async function getCachedImage(imageId: string, logger?: typeof logger): P
       }
       return await response.arrayBuffer();
     },
-    { ttlSeconds: 3600, logger }
+    { ttlSeconds: 3600, logger },
   );
 }
 
@@ -635,7 +624,7 @@ export async function getCachedPaidData(dataId: string, logger?: typeof logger):
       // 有料APIへのアクセス（料金がかかる）
       return await fetchPaidData(dataId);
     },
-    { ttlSeconds: 300, logger }
+    { ttlSeconds: 300, logger },
   );
 }
 
@@ -646,13 +635,13 @@ export async function getOrComputeData(key: string, logger?: typeof logger): Pro
   if (cached !== null) {
     return cached;
   }
-  
+
   // キャッシュにない場合は計算
   const computed = await computeData();
-  
+
   // キャッシュに保存
   await set(key, computed, { ttlSeconds: 60, logger });
-  
+
   return computed;
 }
 ```
@@ -679,7 +668,7 @@ export async function getOrComputeData(key: string, logger?: typeof logger): Pro
 
 ### Integration Tests
 
-- **tRPC Router Integration**: 
+- **tRPC Router Integration**:
   - `mcRouter.getMarketCaps` に `update<T>()` を適用し、キャッシュヒット時の動作確認、`ctx.logger` の使用確認
   - `mcRouter.getRoundedMcMap` に `update<T>()` を適用し、計算結果のキャッシュ動作確認
   - `tokenRouter.getState` に `update<T>()` を適用し、入力パラメータ（ticker）を含むキー生成の動作確認
@@ -730,7 +719,7 @@ export async function getOrComputeData(key: string, logger?: typeof logger): Pro
 
 ### Caching Strategies
 
-- **TTL Selection**: 
+- **TTL Selection**:
   - 外部 API レスポンス: 60秒（`trpc.mc.getMarketCaps`、`trpc.mc.getRoundedMcMap`）
   - トークン情報: 30-120秒（`trpc.token.getState`）
   - R2 オブジェクト: データの揮発性に応じて 60-300秒（`trpc.r2.getJson`）

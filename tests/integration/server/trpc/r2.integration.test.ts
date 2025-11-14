@@ -2,52 +2,27 @@ import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { createMockContext } from "../../../unit/server/trpc/helpers";
 import { get } from "@/lib/cache";
+import {
+  createMockCache,
+  setupCacheMock,
+  restoreCacheMock,
+  type CachedResponseData,
+} from "../../lib/cache-test-helpers";
 
 describe("R2 Integration", () => {
   let originalCaches: CacheStorage | undefined;
-  let cacheMap: Map<string, { body: string; headers: Headers; status: number; statusText: string }>;
+  let cacheMap: Map<string, CachedResponseData>;
 
   beforeEach(() => {
     mock.restore();
-    // Mock cache for integration tests
-    cacheMap = new Map<string, { body: string; headers: Headers; status: number; statusText: string }>();
-    const mockCache = {
-      match: async (key: string | Request) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        const cached = cacheMap.get(keyStr);
-        if (!cached) return undefined;
-        return new Response(cached.body, {
-          status: cached.status,
-          statusText: cached.statusText,
-          headers: cached.headers,
-        });
-      },
-      put: async (key: string | Request, response: Response) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        const body = await response.clone().text();
-        const headers = new Headers(response.headers);
-        cacheMap.set(keyStr, {
-          body,
-          headers,
-          status: response.status,
-          statusText: response.statusText,
-        });
-      },
-      delete: async (key: string | Request) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        return cacheMap.delete(keyStr);
-      },
-    } as unknown as Cache;
-
-    originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
-    (globalThis as unknown as { caches?: CacheStorage }).caches = {
-      default: mockCache,
-    } as unknown as CacheStorage;
+    const { cacheMap: map, mockCache } = createMockCache();
+    cacheMap = map;
+    originalCaches = setupCacheMock(mockCache);
   });
 
   afterEach(() => {
     cacheMap.clear();
-    (globalThis as unknown as { caches?: CacheStorage }).caches = originalCaches;
+    restoreCacheMock(originalCaches);
   });
 
   describe("Cache Integration", () => {

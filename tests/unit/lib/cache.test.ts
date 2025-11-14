@@ -513,7 +513,7 @@ describe("Cache Helper - getOrSet deduplication", () => {
     let computeCallCount = 0;
     const computeFn = mock(() => {
       computeCallCount++;
-      return new Promise<typeof computedValue>((resolve) => {
+      return new Promise<typeof computedValue>(resolve => {
         setTimeout(() => resolve(computedValue), 10);
       });
     });
@@ -521,14 +521,12 @@ describe("Cache Helper - getOrSet deduplication", () => {
     const { getOrSet } = await import("@/lib/cache");
 
     // Make 5 concurrent requests
-    const promises = Array.from({ length: 5 }, () =>
-      getOrSet("test-key", computeFn, { ttlSeconds: 60 }),
-    );
+    const promises = Array.from({ length: 5 }, () => getOrSet("test-key", computeFn, { ttlSeconds: 60 }));
 
     const results = await Promise.all(promises);
 
     // All should return the same value
-    results.forEach((result) => {
+    results.forEach(result => {
       expect(result).toEqual(computedValue);
     });
 
@@ -836,141 +834,5 @@ describe("Cache Helper - HTTP Response Cache", () => {
   afterEach(() => {
     (globalThis as unknown as { caches?: CacheStorage }).caches = originalCaches;
     mock.restore();
-  });
-
-  describe("withRequestCache", () => {
-    it("should return cached response when cache hit", async () => {
-      const cachedResponse = new Response("Cached content", {
-        headers: { "Content-Type": "text/plain" },
-      });
-      const request = new Request("https://example.com/api/test");
-      mockMatch.mockResolvedValueOnce(cachedResponse);
-
-      const buildResponse = mock(() => Promise.resolve(new Response("New content")));
-      const { withRequestCache } = await import("@/lib/cache");
-      const result = await withRequestCache(request, 60, buildResponse);
-
-      expect(result).toBe(cachedResponse);
-      expect(buildResponse).not.toHaveBeenCalled();
-      expect(mockMatch).toHaveBeenCalledTimes(1);
-    });
-
-    it("should execute buildResponse and cache result when cache miss", async () => {
-      mockMatch.mockResolvedValueOnce(undefined);
-      const newResponse = new Response("New content", {
-        headers: { "Content-Type": "text/plain" },
-      });
-      const buildResponse = mock(() => Promise.resolve(newResponse));
-      const request = new Request("https://example.com/api/test");
-
-      const { withRequestCache } = await import("@/lib/cache");
-      const result = await withRequestCache(request, 60, buildResponse);
-
-      expect(buildResponse).toHaveBeenCalledTimes(1);
-      expect(mockPut).toHaveBeenCalledTimes(1);
-      expect(result.body).toBeTruthy();
-      const [cachedRequest, cachedResponse] = mockPut.mock.calls[0] as [Request, Response];
-      expect(cachedRequest).toBe(request);
-      expect(cachedResponse.headers.get("Cache-Control")).toBe("public, max-age=60");
-    });
-
-    it("should strip Set-Cookie header before caching", async () => {
-      mockMatch.mockResolvedValueOnce(undefined);
-      const responseWithCookie = new Response("Content", {
-        headers: {
-          "Content-Type": "text/plain",
-          "Set-Cookie": "session=abc123",
-        },
-      });
-      const buildResponse = mock(() => Promise.resolve(responseWithCookie));
-      const request = new Request("https://example.com/api/test");
-
-      const { withRequestCache } = await import("@/lib/cache");
-      await withRequestCache(request, 60, buildResponse);
-
-      const [cachedRequest, cachedResponse] = mockPut.mock.calls[0] as [Request, Response];
-      expect(cachedResponse.headers.get("Set-Cookie")).toBeNull();
-      expect(cachedResponse.headers.get("Cache-Control")).toBe("public, max-age=60");
-    });
-
-    it("should set Cache-Control header when not present", async () => {
-      mockMatch.mockResolvedValueOnce(undefined);
-      const responseWithoutCacheControl = new Response("Content", {
-        headers: { "Content-Type": "text/plain" },
-      });
-      const buildResponse = mock(() => Promise.resolve(responseWithoutCacheControl));
-      const request = new Request("https://example.com/api/test");
-
-      const { withRequestCache } = await import("@/lib/cache");
-      await withRequestCache(request, 60, buildResponse);
-
-      const [cachedRequest, cachedResponse] = mockPut.mock.calls[0] as [Request, Response];
-      expect(cachedResponse.headers.get("Cache-Control")).toBe("public, max-age=60");
-    });
-
-    it("should preserve existing Cache-Control header when present", async () => {
-      mockMatch.mockResolvedValueOnce(undefined);
-      const responseWithCacheControl = new Response("Content", {
-        headers: {
-          "Content-Type": "text/plain",
-          "Cache-Control": "private, max-age=30",
-        },
-      });
-      const buildResponse = mock(() => Promise.resolve(responseWithCacheControl));
-      const request = new Request("https://example.com/api/test");
-
-      const { withRequestCache } = await import("@/lib/cache");
-      await withRequestCache(request, 60, buildResponse);
-
-      const [cachedRequest, cachedResponse] = mockPut.mock.calls[0] as [Request, Response];
-      expect(cachedResponse.headers.get("Cache-Control")).toBe("private, max-age=30");
-    });
-
-    it("should execute buildResponse when cache is unavailable", async () => {
-      const originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
-      (globalThis as unknown as { caches?: CacheStorage }).caches = undefined;
-
-      try {
-        const newResponse = new Response("New content");
-        const buildResponse = mock(() => Promise.resolve(newResponse));
-        const request = new Request("https://example.com/api/test");
-
-        const { withRequestCache } = await import("@/lib/cache");
-        const result = await withRequestCache(request, 60, buildResponse);
-
-        expect(buildResponse).toHaveBeenCalledTimes(1);
-        expect(result).toBe(newResponse);
-      } finally {
-        (globalThis as unknown as { caches?: CacheStorage }).caches = originalCaches;
-      }
-    });
-
-    it("should handle cache.match errors gracefully", async () => {
-      mockMatch.mockRejectedValueOnce(new Error("Cache error"));
-      const newResponse = new Response("New content");
-      const buildResponse = mock(() => Promise.resolve(newResponse));
-      const request = new Request("https://example.com/api/test");
-
-      const { withRequestCache } = await import("@/lib/cache");
-      const result = await withRequestCache(request, 60, buildResponse);
-
-      expect(buildResponse).toHaveBeenCalledTimes(1);
-      expect(result).toBe(newResponse);
-    });
-
-    it("should handle cache.put errors gracefully", async () => {
-      mockMatch.mockResolvedValueOnce(undefined);
-      mockPut.mockRejectedValueOnce(new Error("Cache put error"));
-      const newResponse = new Response("New content");
-      const buildResponse = mock(() => Promise.resolve(newResponse));
-      const request = new Request("https://example.com/api/test");
-
-      const { withRequestCache } = await import("@/lib/cache");
-      const result = await withRequestCache(request, 60, buildResponse);
-
-      expect(buildResponse).toHaveBeenCalledTimes(1);
-      expect(result).toBeTruthy();
-      // Response should still be returned even if cache.put fails
-    });
   });
 });

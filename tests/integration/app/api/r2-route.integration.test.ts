@@ -1,57 +1,33 @@
 import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import { GET } from "@/app/api/r2/[...key]/route";
 import { NextRequest } from "next/server";
+import {
+  createMockCache,
+  setupCacheMock,
+  restoreCacheMock,
+  type CachedResponseData,
+} from "../../lib/cache-test-helpers";
 
 describe("R2 Route Handler Integration - Cache", () => {
   let originalCaches: CacheStorage | undefined;
-  let cacheMap: Map<string, { body: string; headers: Headers; status: number; statusText: string }>;
+  let cacheMap: Map<string, CachedResponseData>;
   let mockCache: Cache;
 
   beforeEach(() => {
     mock.restore();
-    // Mock cache for integration tests
-    cacheMap = new Map<string, { body: string; headers: Headers; status: number; statusText: string }>();
-    mockCache = {
-      match: async (key: string | Request) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        const cached = cacheMap.get(keyStr);
-        if (!cached) return undefined;
-        return new Response(cached.body, {
-          status: cached.status,
-          statusText: cached.statusText,
-          headers: cached.headers,
-        });
-      },
-      put: async (key: string | Request, response: Response) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        const body = await response.clone().text();
-        const headers = new Headers(response.headers);
-        cacheMap.set(keyStr, {
-          body,
-          headers,
-          status: response.status,
-          statusText: response.statusText,
-        });
-      },
-      delete: async (key: string | Request) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        return cacheMap.delete(keyStr);
-      },
-    } as unknown as Cache;
-
-    originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
-    (globalThis as unknown as { caches?: CacheStorage }).caches = {
-      default: mockCache,
-    } as unknown as CacheStorage;
+    const { cacheMap: map, mockCache: cache } = createMockCache();
+    cacheMap = map;
+    mockCache = cache;
+    originalCaches = setupCacheMock(mockCache);
   });
 
   afterEach(() => {
     cacheMap.clear();
-    (globalThis as unknown as { caches?: CacheStorage }).caches = originalCaches;
+    restoreCacheMock(originalCaches);
     mock.restore();
   });
 
-  it("should cache HTTP response using withRequestCache", async () => {
+  it("should cache HTTP response using get and set", async () => {
     const mockObject = {
       get: async () => ({
         writeHttpMetadata: (headers: Headers) => {
@@ -82,9 +58,13 @@ describe("R2 Route Handler Integration - Cache", () => {
     expect(response1.status).toBe(200);
     expect(response1.headers.get("Content-Type")).toBe("image/webp");
 
-    // Verify cache was set
-    const cachedResponse = await mockCache.match(request1);
-    expect(cachedResponse).not.toBeUndefined();
+    // Verify cache was set using get
+    const { get } = await import("@/lib/cache");
+    const cached = await get<{ body: string; headers: Record<string, string>; status: number; statusText: string }>(
+      "r2:route:test/image.webp",
+    );
+    expect(cached).not.toBeNull();
+    expect(cached?.headers["content-type"]).toBe("image/webp");
 
     // Second call - should return cached response
     const request2 = new NextRequest("https://example.com/api/r2/test/image.webp");

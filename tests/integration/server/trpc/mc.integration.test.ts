@@ -4,54 +4,27 @@ import { createMockContext } from "../../../unit/server/trpc/helpers";
 import { ok } from "neverthrow";
 import { TOKEN_TICKERS } from "@/constants/token";
 import { get } from "@/lib/cache";
+import {
+  createMockCache,
+  setupCacheMock,
+  restoreCacheMock,
+  type CachedResponseData,
+} from "../../lib/cache-test-helpers";
 
 describe("MC Integration", () => {
   let originalCaches: CacheStorage | undefined;
-  let cacheMap: Map<string, { body: string; headers: Headers; status: number; statusText: string }>;
+  let cacheMap: Map<string, CachedResponseData>;
 
   beforeEach(() => {
     mock.restore();
-    // Mock cache for integration tests
-    cacheMap = new Map<string, { body: string; headers: Headers; status: number; statusText: string }>();
-    const mockCache = {
-      match: async (key: string | Request) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        const cached = cacheMap.get(keyStr);
-        if (!cached) return undefined;
-        // Recreate Response from cached data
-        return new Response(cached.body, {
-          status: cached.status,
-          statusText: cached.statusText,
-          headers: cached.headers,
-        });
-      },
-      put: async (key: string | Request, response: Response) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        // Store response data (body, headers, etc.) to avoid body consumption
-        const body = await response.clone().text();
-        const headers = new Headers(response.headers);
-        cacheMap.set(keyStr, {
-          body,
-          headers,
-          status: response.status,
-          statusText: response.statusText,
-        });
-      },
-      delete: async (key: string | Request) => {
-        const keyStr = typeof key === "string" ? key : key.url;
-        return cacheMap.delete(keyStr);
-      },
-    } as unknown as Cache;
-
-    originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
-    (globalThis as unknown as { caches?: CacheStorage }).caches = {
-      default: mockCache,
-    } as unknown as CacheStorage;
+    const { cacheMap: map, mockCache } = createMockCache();
+    cacheMap = map;
+    originalCaches = setupCacheMock(mockCache);
   });
 
   afterEach(() => {
     cacheMap.clear();
-    (globalThis as unknown as { caches?: CacheStorage }).caches = originalCaches;
+    restoreCacheMock(originalCaches);
   });
 
   it("should fetch market caps from mocked service", async () => {
@@ -181,7 +154,6 @@ describe("MC Integration", () => {
       expect(cached?.tokens).toEqual(mockMcMap);
 
       // Reset call count before second call
-      const callCountBeforeSecondCall = serviceCallCount;
       serviceCallCount = 0;
 
       // Second call - should return cached value
@@ -205,10 +177,13 @@ describe("MC Integration", () => {
       );
 
       const loggerSpy = {
+        log: mock(() => {}),
         debug: mock(() => {}),
         info: mock(() => {}),
         warn: mock(() => {}),
         error: mock(() => {}),
+        getCurrentLevel: mock(() => "DEBUG" as "DEBUG" | "INFO" | "WARN" | "ERROR"),
+        getLevels: mock(() => ["DEBUG", "INFO", "WARN", "ERROR"] as Array<"DEBUG" | "INFO" | "WARN" | "ERROR">),
       };
 
       mock.module("@/services/market-cap", () => ({
