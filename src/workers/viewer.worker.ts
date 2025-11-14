@@ -1,9 +1,11 @@
 import { isBotUserAgent } from "@/utils/user-agent";
-
-const endpoint = "/api/viewer";
+import { createVanillaTRPCClient } from "@/lib/trpc/vanilla-client";
 
 // generate sessionId when Worker starts
 const sessionId = crypto.randomUUID();
+
+// Initialize tRPC client
+const trpc = createVanillaTRPCClient();
 
 /**
  * Check if this is a valid browser request
@@ -27,16 +29,28 @@ async function ping(): Promise<void> {
 
   try {
     const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : undefined;
-    const body = JSON.stringify({ sessionId, userAgent });
 
-    await fetch(endpoint, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body,
-      keepalive: true,
+    await trpc.viewer.register.mutate({
+      sessionId,
+      userAgent,
     });
   } catch {
     // ignore error (will retry in next heartbeat)
+  }
+}
+
+async function remove(): Promise<void> {
+  // Skip remove if this is not a valid browser request
+  if (!isValidBrowserRequest()) {
+    return;
+  }
+
+  try {
+    await trpc.viewer.remove.mutate({
+      sessionId,
+    });
+  } catch {
+    // ignore error
   }
 }
 
@@ -48,8 +62,12 @@ if (isValidBrowserRequest()) {
   // send heartbeat every 30 seconds
   const timer = setInterval(ping, 30_000);
 
-  // clean up timer when Worker ends (usually not needed, but just in case)
-  self.addEventListener("beforeunload", () => {
+  // clean up timer and remove viewer when Worker ends
+  const cleanup = () => {
     clearInterval(timer);
-  });
+    remove();
+  };
+
+  self.addEventListener("beforeunload", cleanup);
+  self.addEventListener("pagehide", cleanup);
 }

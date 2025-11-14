@@ -159,7 +159,7 @@ export const TopBar: FC<TopBarProps> = ({ showProgress = true }) => {
             </div>
           </div>
           <div className="flex flex-col items-center md:justify-self-center">
-            {showProgress ? <TopBarProgress /> : null}
+            {showProgress ? <TopBarProgress /> : <div className="h-0 md:h-[68px]" aria-hidden="true" />}
           </div>
           <div className="hidden justify-end md:flex">
             <nav className="flex items-center justify-end gap-3" aria-label="Navigation Links">

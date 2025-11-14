@@ -1,6 +1,6 @@
 /**
  * Doom Index Prompt Generation
- * Medieval allegorical painting with weighted elements based on market cap
+ * Baroque allegorical painting with weighted elements based on market cap
  */
 
 import { TOKEN_TICKERS, type TokenTicker, type McMap } from "@/constants/token";
@@ -95,10 +95,13 @@ const safeWeight = (w: number, minWeight: number = DEFAULT_DOMINANCE_CONFIG.minW
 const TOKEN_PHRASE: Record<TokenTicker, string> = {
   CO2: "dense toxic smog in the sky",
   ICE: "melting glaciers submerging cities as rising oceans engulf skyscrapers and drown civilizations",
-  FOREST: "endless expanses of vibrant green canopies, intertwined roots reclaiming abandoned structures, and wildlife thriving in the untouched wilderness",
+  FOREST:
+    "endless expanses of vibrant green canopies, intertwined roots reclaiming abandoned structures, and wildlife thriving in the untouched wilderness",
   NUKE: "ashen wastelands under nuclear fallout, with radioactive winds sweeping through ruins and a towering mushroom cloud dominating the sky",
-  MACHINE: "towering cyberpunk megastructures, pulsating with neon lights and intricate mechanical networks",
-  PANDEMIC: "masked figures wandering through unsanitary streets filled with viral clouds, bio-contaminants, and microscopic pathogens dominating the air",
+  MACHINE:
+    "cold robotic automatons marching in formation, towering AI surveillance systems with glowing electronic eyes, automated factories with mechanical arms and assembly lines, cybernetic beings fused with technology, dystopian machinery controlling and monitoring everything",
+  PANDEMIC:
+    "masked figures wandering through unsanitary streets filled with viral clouds, bio-contaminants, and microscopic pathogens dominating the air",
   FEAR: "oppressive darkness with many red eyes",
   HOPE: "radiant golden divine light breaking the clouds",
 };
@@ -107,12 +110,12 @@ const TOKEN_PHRASE: Record<TokenTicker, string> = {
  * Fixed style elements
  */
 const STYLE_BASE =
-  "medieval renaissance allegorical oil painting, Bosch and Bruegel influence, chiaroscuro lighting, thick oil texture, symbolic architecture, detailed human figures, cohesive single landscape";
+  "baroque allegorical oil painting, Caravaggio and Rubens influence, dramatic tenebrism with intense chiaroscuro, dynamic composition with diagonal movement, rich vibrant colors, emotional expression, thick impasto oil texture, theatrical lighting, detailed human figures, cohesive single landscape";
 
 const NEGATIVE_PROMPT = "watermark, text, logo, oversaturated colors, low detail hands, extra limbs";
 
 const HUMAN_ELEMENT = {
-  text: "medieval figures praying, trading, recording the scene",
+  text: "figures praying, trading, recording the scene",
   weight: 1.0,
 };
 
@@ -176,7 +179,7 @@ export function buildSDXLPrompt(mc: McMap): { prompt: string; negative: string }
   const summary = `weights summary: sum=${sum.toFixed(3)}, min=${min.toFixed(3)}, max=${max.toFixed(3)}`;
 
   const prompt = [
-    "a grand medieval allegorical oil painting of the world, all forces visible and weighted by real-time power,",
+    "a grand baroque allegorical oil painting of the world, all forces visible and weighted by real-time power,",
     weightedLines + ",",
     STYLE_BASE + ",",
     summary + ",",
@@ -232,7 +235,7 @@ export function buildSimplePrompt(mc: McMap): { prompt: string; negative: string
     .join(", ");
 
   const prompt = [
-    "a grand medieval allegorical oil painting of the world, all forces visible and weighted by real-time power,",
+    "a grand baroque allegorical oil painting of the world, all forces visible and weighted by real-time power,",
     weightedPhrases + ",",
     STYLE_BASE,
   ].join(" ");

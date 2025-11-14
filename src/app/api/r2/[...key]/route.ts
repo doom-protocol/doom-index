@@ -1,39 +1,63 @@
+import { resolveR2BucketAsync } from "@/lib/r2";
 import { NextResponse } from "next/server";
-import { resolveR2Bucket } from "@/lib/r2";
+import { get, set } from "@/lib/cache";
 
-type RouteContext = {
-  params: Promise<{
-    key: string[];
-  }>;
+type CachedResponse = {
+  body: string; // Base64 encoded for binary data
+  headers: Record<string, string>;
+  status: number;
+  statusText: string;
 };
 
-const joinKey = (segments: string[]): string =>
-  segments
+/**
+ * Direct R2 object access endpoint for binary data (images, etc.)
+ * This endpoint is used by browsers directly via <img src> tags,
+ * so it cannot use tRPC streaming which requires tRPC client.
+ *
+ * URL format: /api/r2/key1/key2/file.webp
+ */
+export async function GET(req: Request, { params }: { params: Promise<{ key: string[] }> }): Promise<Response> {
+  const { key } = await params;
+
+  if (!key || key.length === 0) {
+    return NextResponse.json({ error: "Invalid R2 object key" }, { status: 400 });
+  }
+
+  // Join key segments and normalize
+  const objectKey = key
     .map(segment => segment.replace(/^\/*|\/*$/g, ""))
     .filter(Boolean)
     .join("/");
 
-export async function GET(_request: Request, { params }: RouteContext) {
-  const { key } = await params;
-  if (!Array.isArray(key) || key.length === 0) {
-    return NextResponse.json({ error: "Missing R2 object key" }, { status: 400 });
-  }
-
-  const objectKey = joinKey(key);
   if (!objectKey) {
     return NextResponse.json({ error: "Invalid R2 object key" }, { status: 400 });
   }
 
-  const bucketResult = resolveR2Bucket();
+  const cacheKey = `r2:route:${objectKey}`;
+  const cached = await get<CachedResponse>(cacheKey);
+
+  if (cached !== null) {
+    // Reconstruct Response from cached data
+    const headers = new Headers(cached.headers);
+    const body = Uint8Array.from(atob(cached.body), c => c.charCodeAt(0));
+    return new Response(body, {
+      status: cached.status,
+      statusText: cached.statusText,
+      headers,
+    });
+  }
+
+  const bucketResult = await resolveR2BucketAsync();
+
   if (bucketResult.isErr()) {
-    return NextResponse.json({ error: bucketResult.error }, { status: 500 });
+    return NextResponse.json({ error: bucketResult.error.message }, { status: 500 });
   }
 
   const bucket = bucketResult.value;
   const object = await bucket.get(objectKey);
 
   if (!object) {
-    return new NextResponse(null, { status: 404 });
+    return NextResponse.json({ error: "Object not found" }, { status: 404 });
   }
 
   const headers = new Headers();
@@ -61,7 +85,31 @@ export async function GET(_request: Request, { params }: RouteContext) {
   }
 
   const bodyStream = (object as R2ObjectBody).body;
-  return new Response(bodyStream, {
+  const bodyArrayBuffer = await new Response(bodyStream).arrayBuffer();
+
+  // Convert ArrayBuffer to Base64 safely
+  const uint8Array = new Uint8Array(bodyArrayBuffer);
+  let binaryString = "";
+  for (let i = 0; i < uint8Array.length; i++) {
+    binaryString += String.fromCharCode(uint8Array[i]!);
+  }
+  const bodyBase64 = btoa(binaryString);
+
+  // Cache the response
+  // Normalize header keys to lowercase for consistent retrieval
+  const normalizedHeaders: Record<string, string> = {};
+  for (const [key, value] of headers.entries()) {
+    normalizedHeaders[key.toLowerCase()] = value;
+  }
+  const cachedResponse: CachedResponse = {
+    body: bodyBase64,
+    headers: normalizedHeaders,
+    status: 200,
+    statusText: "OK",
+  };
+  await set(cacheKey, cachedResponse, { ttlSeconds: 60 });
+
+  return new Response(bodyArrayBuffer, {
     status: 200,
     headers,
   });

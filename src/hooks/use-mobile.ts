@@ -9,10 +9,7 @@ import { useEffect, useState } from "react";
  * @param deps - useEffect の依存配列（リスナー登録が必要な場合に使用）
  * @returns {boolean} detector が true を返す場合 true、それ以外は false
  */
-function useBrowserDetection(
-  detector: () => boolean,
-  deps: React.DependencyList = []
-): boolean {
+function useBrowserDetection(detector: () => boolean, deps: React.DependencyList = []): boolean {
   const [result, setResult] = useState<boolean | undefined>(undefined);
 
   useEffect(() => {
@@ -47,7 +44,7 @@ function useBrowserDetection(
 export const useMobile = (): boolean => {
   return useBrowserDetection(
     () => window.innerWidth < 768 || "ontouchstart" in window,
-    [] // resize イベントを監視するため空配列を渡す（deps.length チェックで判定）
+    [], // resize イベントを監視するため空配列を渡す（deps.length チェックで判定）
   );
 };
 

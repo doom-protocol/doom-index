@@ -8,6 +8,7 @@ import { useMc } from "@/hooks/use-mc";
 import { TOKEN_CONFIG_MAP, TOKEN_TICKERS, TOKEN_DESCRIPTIONS } from "@/constants/token";
 import type { TokenTicker } from "@/types/domain";
 import { getPumpFunUrl } from "@/utils/url";
+import { env } from "@/env";
 
 type McResponse = {
   tokens: Record<TokenTicker, number>;
@@ -113,7 +114,7 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
   }, [isHelpOpen, updateHelpAnchor]);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== "development") {
+    if (env.NEXT_PUBLIC_NODE_ENV !== "development") {
       return;
     }
 

@@ -51,7 +51,7 @@ export const AboutScene: React.FC<AboutSceneProps> = ({ children, initialCameraP
   }
 
   return (
-    <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <Canvas
         frameloop="demand"
         shadows
@@ -65,9 +65,12 @@ export const AboutScene: React.FC<AboutSceneProps> = ({ children, initialCameraP
         gl={{ antialias: true }}
         style={{
           position: "fixed",
-          inset: 0,
-          width: "100vw",
-          height: "100vh",
+          top: `${HEADER_HEIGHT}px`,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: "100%",
+          height: `calc(100% - ${HEADER_HEIGHT}px)`,
           background: "#000000",
         }}
         onCreated={({ gl }) => {

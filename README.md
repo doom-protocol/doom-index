@@ -22,10 +22,10 @@ Create a `.env` file:
 # Image Generation Provider
 IMAGE_PROVIDER=smart  # Options: smart (recommended), ai-sdk, runware-sdk
 
-# Log Level (optional)
+# Log Level (optional, exposed to client)
 # Options: ERROR, WARN, INFO, DEBUG, LOG
 # Default: DEBUG in development, INFO in production
-# LOG_LEVEL=DEBUG
+# NEXT_PUBLIC_LOG_LEVEL=DEBUG
 
 # Cloudflare R2 Storage (required for production)
 R2_PUBLIC_DOMAIN=https://doom-index-storage.r2.dev
@@ -195,7 +195,8 @@ bun run watch-cron --cron "0 * * * *"
 - **Scheduling**: Cloudflare Cron Triggers (every minute)
 - **Storage**: Cloudflare R2 (S3-compatible object storage)
 - **3D Rendering**: React Three Fiber + Three.js
-- **Data Fetching**: React Query
+- **Data Fetching**: TanStack Query + tRPC (end-to-end type safety)
+- **API**: tRPC v11 (type-safe RPC framework)
 - **Error Handling**: neverthrow (Result type)
 - **Image Generation**: Runware (default) / OpenAI (via AI SDK)
 - **Runtime**: Bun (local), workerd (Cloudflare)
@@ -234,16 +235,24 @@ r2://doom-index-storage/
 ```
 src/
 ├── app/              # Next.js App Router
-│   ├── api/          # API routes (read-only, Edge)
+│   ├── api/          # API routes
+│   │   └── trpc/     # tRPC HTTP endpoint
 │   └── page.tsx      # Main gallery page
 ├── components/       # React components
 │   ├── gallery/      # 3D scene components
 │   ├── ui/           # UI components
 │   └── providers/    # Context providers
-├── hooks/            # Custom React hooks
+├── hooks/            # Custom React hooks (tRPC integrated)
 ├── lib/              # External integrations
+│   ├── trpc/         # tRPC clients (React, Server, Vanilla)
 │   ├── providers/    # Image generation providers
 │   └── r2.ts         # Cloudflare R2 client
+├── server/           # Server-side code
+│   └── trpc/         # tRPC routers and schemas
+│       ├── context.ts      # Context creation
+│       ├── trpc.ts         # tRPC initialization
+│       ├── schemas/        # zod schemas
+│       └── routers/        # Domain routers
 ├── services/         # Business logic
 │   └── container.ts  # Service factory (Workers/Next.js)
 ├── constants/        # Configuration
@@ -260,6 +269,17 @@ scripts/
 wrangler.toml         # Cloudflare Workers configuration
 open-next.config.ts   # Next.js on Cloudflare Pages configuration
 ```
+
+### tRPC API
+
+The project uses tRPC v11 for end-to-end type safety. All API endpoints are exposed as type-safe procedures:
+
+- **Market Cap**: `trpc.mc.getMarketCaps.useQuery()`
+- **Viewer**: `trpc.viewer.register.mutate()`, `trpc.viewer.remove.mutate()`
+- **Token State**: `trpc.token.getState.useQuery({ ticker })`
+- **R2 Objects**: `trpc.r2.getObject.useQuery({ key })`
+
+See [tRPC Architecture Documentation](./docs/trpc-architecture.md) and [Migration Guide](./docs/trpc-migration.md) for details.
 
 ## Prompt Templates
 

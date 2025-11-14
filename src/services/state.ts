@@ -15,11 +15,13 @@ const stateKeys = {
 
 const buildPublicPath = (key: string): string => {
   const normalized = key.replace(/^\/+/, "");
-  const encoded = normalized
+  const keySegments = normalized
     .split("/")
-    .map(segment => encodeURIComponent(segment))
-    .join("/");
-  return `/api/r2/${encoded}`;
+    .filter(Boolean)
+    .map(segment => encodeURIComponent(segment));
+  // Use direct API route for binary data (images) since browsers make direct HTTP requests
+  // tRPC streaming cannot be used with <img src> tags
+  return `/api/r2/${keySegments.join("/")}`;
 };
 
 /**

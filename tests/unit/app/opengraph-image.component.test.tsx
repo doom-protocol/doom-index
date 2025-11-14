@@ -203,7 +203,7 @@ describe("OGP Image Generation Components", () => {
     });
 
     test("should have correct alt text", () => {
-      expect(alt).toBe("DOOM INDEX - Current world state visualization");
+      expect(alt).toBe("DOOM INDEX - A decentralized archive of financial emotions.");
     });
   });
 

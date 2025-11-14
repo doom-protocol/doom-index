@@ -1,42 +1,48 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
+import { z } from "zod";
 import type { GlobalState } from "@/types/domain";
 import { logger } from "@/utils/logger";
+import { useTRPC } from "@/lib/trpc/client";
 
-const fetchGlobalState = async (): Promise<GlobalState | null> => {
-  logger.debug("use-global-state.fetchGlobalState.start");
-
-  const response = await fetch("/api/r2/state/global.json");
-
-  if (!response.ok) {
-    if (response.status === 404) {
-      logger.debug("use-global-state.fetchGlobalState.notFound", { response: response.status });
-      return null;
-    }
-
-    logger.error("use-global-state.fetchGlobalState.error", { response: response.status });
-    throw new Error(`Failed to fetch global state: ${response.status}`);
-  }
-
-  const data = (await response.json()) as GlobalState;
-  logger.debug("use-global-state.fetchGlobalState.success", {
-    imageUrl: data?.imageUrl ?? null,
-    lastTs: data?.lastTs ?? null,
-    prevHash: data?.prevHash ?? null,
-  });
-
-  return data;
-};
+/**
+ * Zod schema for GlobalState validation
+ * Mirrors the GlobalState type definition
+ */
+const globalStateSchema = z.object({
+  prevHash: z.string().nullable(),
+  lastTs: z.string().nullable(),
+  imageUrl: z.string().nullable().optional(),
+  revenueMinute: z.string().nullable().optional(),
+});
 
 export const useGlobalState = () => {
   const previousImageUrlRef = useRef<string | null | undefined>(undefined);
+  const trpc = useTRPC();
 
-  const queryResult = useQuery<GlobalState | null, Error>({
-    queryKey: ["global-state"],
-    queryFn: fetchGlobalState,
-    staleTime: 0, // Always consider data stale to allow refetchInterval to work
-    refetchInterval: 60000, // Refetch every minute
-    retry: 5,
+  const queryResult = useQuery({
+    ...trpc.r2.getJson.queryOptions(
+      { key: ["state", "global.json"] },
+      {
+        staleTime: 0, // Always consider data stale to allow refetchInterval to work
+        refetchInterval: 60000, // Refetch every minute
+        retry: 5,
+      },
+    ),
+    select: (data: unknown): GlobalState | null => {
+      if (data === null || data === undefined) {
+        return null;
+      }
+      const parseResult = globalStateSchema.safeParse(data);
+      if (parseResult.success) {
+        return parseResult.data;
+      }
+      logger.error("use-global-state.validationFailed", {
+        error: parseResult.error.message,
+        data,
+      });
+      return null;
+    },
   });
 
   // log data updates

@@ -89,9 +89,15 @@ async function getArtworkImageSrc(bucket: R2Bucket, requestUrl: string, assetsFe
     imageKey = imageUrl.slice("/api/r2/".length);
   } else if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
     const url = new URL(imageUrl);
-    imageKey = url.pathname.startsWith("/api/r2/") ? url.pathname.slice("/api/r2/".length) : imageUrl;
+    if (url.pathname.startsWith("/api/r2/")) {
+      imageKey = url.pathname.slice("/api/r2/".length);
+    } else {
+      // Assume it's a direct R2 key if it doesn't match our API route pattern
+      imageKey = url.pathname.replace(/^\//, "");
+    }
   } else {
-    imageKey = imageUrl;
+    // Assume it's a direct R2 key
+    imageKey = imageUrl.replace(/^\//, "");
   }
 
   logger.info("ogp.step2-key-extracted", { imageKey });
@@ -114,10 +120,8 @@ async function getArtworkImageSrc(bucket: R2Bucket, requestUrl: string, assetsFe
   logger.info("ogp.step4-build-url");
   // Step 4: Build image URL and fetch with Cloudflare Image Transformations
   const origin = new URL(requestUrl).origin;
-  const baseImageUrl = `${origin}/api/r2/${imageKey
-    .split("/")
-    .map(segment => encodeURIComponent(segment))
-    .join("/")}`;
+  const keySegments = imageKey.split("/").map(segment => encodeURIComponent(segment));
+  const baseImageUrl = `${origin}/api/r2/${keySegments.join("/")}`;
 
   logger.info("ogp.step4-url-built", { baseImageUrl });
 
@@ -208,17 +212,22 @@ export async function getArtworkDataUrl(
     }
 
     const imageUrl = stateResult.value.imageUrl;
-    // Extract key from possible "/api/r2/..." prefix
-    const imageKey = imageUrl.startsWith("/api/r2/")
-      ? imageUrl.slice("/api/r2/".length)
-      : imageUrl.startsWith("http://") || imageUrl.startsWith("https://")
-        ? (() => {
-            const url = new URL(imageUrl);
-            return url.pathname.startsWith("/api/r2/")
-              ? url.pathname.slice("/api/r2/".length)
-              : url.pathname.replace(/^\//, "");
-          })()
-        : imageUrl;
+    // Extract key from possible "/api/r2/..." prefix or direct R2 key
+    let imageKey: string;
+    if (imageUrl.startsWith("/api/r2/")) {
+      imageKey = imageUrl.slice("/api/r2/".length);
+    } else if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+      const url = new URL(imageUrl);
+      if (url.pathname.startsWith("/api/r2/")) {
+        imageKey = url.pathname.slice("/api/r2/".length);
+      } else {
+        // Assume it's a direct R2 key if it doesn't match our API route pattern
+        imageKey = url.pathname.replace(/^\//, "");
+      }
+    } else {
+      // Assume it's a direct R2 key
+      imageKey = imageUrl.replace(/^\//, "");
+    }
 
     const imageResult = await getImageR2(bucket, imageKey);
     if (imageResult.isErr() || !imageResult.value) {

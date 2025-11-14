@@ -6,13 +6,14 @@ import type { NextPage } from "next";
 
 export const metadata: Metadata = {
   title: "About - DOOM INDEX",
-  description: "Learn about the DOOM INDEX project and its mission to visualize global indicators through generative art",
+  description:
+    "Learn about the DOOM INDEX project and its mission to visualize global indicators through generative art",
 };
 
 const AboutPage: NextPage = async () => {
   return (
     <>
-      <main style={{ width: "100vw", height: "100vh", margin: 0, padding: 0, overflow: "hidden" }}>
+      <main style={{ width: "100%", height: "100%", margin: 0, padding: 0, overflow: "hidden" }}>
         <TopBar showProgress={false} />
         <AboutScene>
           <MDXArticle />

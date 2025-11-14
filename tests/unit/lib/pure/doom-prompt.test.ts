@@ -114,7 +114,7 @@ describe("Doom Prompt Generation", () => {
       const fragments = toWeightedFragments(testMc);
 
       expect(fragments.length).toBe(9); // 8 tokens + humans
-      expect(fragments[fragments.length - 1].text).toContain("medieval figures");
+      expect(fragments[fragments.length - 1].text).toContain("figures praying");
       expect(fragments[fragments.length - 1].weight).toBe(1.0);
 
       // Check sorting (descending by weight)
@@ -124,15 +124,17 @@ describe("Doom Prompt Generation", () => {
 
       // Check dominance-based weighting
       // MACHINE has highest MC (1,450,000), so it should have highest weight (close to MAX_WEIGHT = 2.0)
-      const machineFragment = fragments.find(f => f.text.includes("machine"));
-      expect(machineFragment?.weight).toBeGreaterThan(1.5); // Should be close to 2.0
+      const machineFragment = fragments.find(f => f.text.includes("robotic automatons"));
+      expect(machineFragment).toBeDefined();
+      expect(machineFragment!.weight).toBeGreaterThan(1.5); // Should be close to 2.0
 
       // ICE has lowest MC (200,000), so it should have lowest weight (close to MIN_WEIGHT = 0.1)
       const iceFragment = fragments.find(f => f.text.includes("glaciers"));
-      expect(iceFragment?.weight).toBeLessThan(0.5); // Should be close to 0.1
+      expect(iceFragment).toBeDefined();
+      expect(iceFragment!.weight).toBeLessThan(0.5); // Should be close to 0.1
 
       // Verify dominance: MACHINE weight should be significantly higher than ICE
-      expect(machineFragment?.weight).toBeGreaterThan((iceFragment?.weight || 0) * 3);
+      expect(machineFragment!.weight).toBeGreaterThan(iceFragment!.weight * 3);
     });
 
     it("handles zero values with minimum weight", () => {
@@ -161,9 +163,9 @@ describe("Doom Prompt Generation", () => {
     it("generates SDXL-style prompt with bracket weights", () => {
       const { prompt, negative } = buildSDXLPrompt(testMc);
 
-      expect(prompt).toContain("medieval allegorical oil painting");
-      expect(prompt).toContain("Bosch and Bruegel");
-      expect(prompt).toContain("chiaroscuro lighting");
+      expect(prompt).toContain("baroque allegorical oil painting");
+      expect(prompt).toContain("Caravaggio and Rubens");
+      expect(prompt).toContain("chiaroscuro");
 
       // Check weighted format: (phrase:weight)
       expect(prompt).toMatch(/\([^:]+:\d+\.\d{2}\)/);
@@ -176,15 +178,15 @@ describe("Doom Prompt Generation", () => {
     it("includes all token elements in the prompt", () => {
       const { prompt } = buildSDXLPrompt(testMc);
 
-      expect(prompt).toContain("smog");
-      expect(prompt).toContain("glaciers");
-      expect(prompt).toContain("forests");
-      expect(prompt).toContain("nuclear");
-      expect(prompt).toContain("machine");
-      expect(prompt).toContain("spores");
-      expect(prompt).toContain("darkness");
-      expect(prompt).toContain("light");
-      expect(prompt).toContain("medieval figures");
+      expect(prompt).toContain("smog"); // CO2
+      expect(prompt).toContain("glaciers"); // ICE
+      expect(prompt).toContain("canopies"); // FOREST phrase contains "canopies"
+      expect(prompt).toContain("nuclear"); // NUKE
+      expect(prompt).toContain("robotic automatons"); // MACHINE phrase contains "robotic automatons"
+      expect(prompt).toContain("viral"); // PANDEMIC phrase contains "viral"
+      expect(prompt).toContain("darkness"); // FEAR
+      expect(prompt).toContain("light"); // HOPE
+      expect(prompt).toContain("figures praying");
     });
   });
 
@@ -192,7 +194,7 @@ describe("Doom Prompt Generation", () => {
     it("generates structured payload with fragments", () => {
       const payload = buildGenericPayload(testMc);
 
-      expect(payload.style).toContain("medieval renaissance");
+      expect(payload.style).toContain("baroque allegorical");
       expect(payload.negatives).toContain("watermark");
       expect(payload.fragments).toHaveLength(9);
       expect(payload.width).toBe(1024);
