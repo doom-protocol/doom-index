@@ -1,5 +1,13 @@
 import { resolveR2BucketAsync } from "@/lib/r2";
 import { NextResponse } from "next/server";
+import { get, set } from "@/lib/cache";
+
+type CachedResponse = {
+  body: string; // Base64 encoded for binary data
+  headers: Record<string, string>;
+  status: number;
+  statusText: string;
+};
 
 /**
  * Direct R2 object access endpoint for binary data (images, etc.)
@@ -8,7 +16,7 @@ import { NextResponse } from "next/server";
  *
  * URL format: /api/r2/key1/key2/file.webp
  */
-export async function GET(_req: Request, { params }: { params: Promise<{ key: string[] }> }): Promise<Response> {
+export async function GET(req: Request, { params }: { params: Promise<{ key: string[] }> }): Promise<Response> {
   const { key } = await params;
 
   if (!key || key.length === 0) {
@@ -23,6 +31,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ key: st
 
   if (!objectKey) {
     return NextResponse.json({ error: "Invalid R2 object key" }, { status: 400 });
+  }
+
+  const cacheKey = `r2:route:${objectKey}`;
+  const cached = await get<CachedResponse>(cacheKey);
+
+  if (cached !== null) {
+    // Reconstruct Response from cached data
+    const headers = new Headers(cached.headers);
+    const body = Uint8Array.from(atob(cached.body), c => c.charCodeAt(0));
+    return new Response(body, {
+      status: cached.status,
+      statusText: cached.statusText,
+      headers,
+    });
   }
 
   const bucketResult = await resolveR2BucketAsync();
@@ -63,7 +85,31 @@ export async function GET(_req: Request, { params }: { params: Promise<{ key: st
   }
 
   const bodyStream = (object as R2ObjectBody).body;
-  return new Response(bodyStream, {
+  const bodyArrayBuffer = await new Response(bodyStream).arrayBuffer();
+
+  // Convert ArrayBuffer to Base64 safely
+  const uint8Array = new Uint8Array(bodyArrayBuffer);
+  let binaryString = "";
+  for (let i = 0; i < uint8Array.length; i++) {
+    binaryString += String.fromCharCode(uint8Array[i]!);
+  }
+  const bodyBase64 = btoa(binaryString);
+
+  // Cache the response
+  // Normalize header keys to lowercase for consistent retrieval
+  const normalizedHeaders: Record<string, string> = {};
+  for (const [key, value] of headers.entries()) {
+    normalizedHeaders[key.toLowerCase()] = value;
+  }
+  const cachedResponse: CachedResponse = {
+    body: bodyBase64,
+    headers: normalizedHeaders,
+    status: 200,
+    statusText: "OK",
+  };
+  await set(cacheKey, cachedResponse, { ttlSeconds: 60 });
+
+  return new Response(bodyArrayBuffer, {
     status: 200,
     headers,
   });

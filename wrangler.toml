@@ -27,10 +27,13 @@ custom_domain = true
 [[r2_buckets]]
 binding = "R2_BUCKET"
 bucket_name = "doom-index-storage"
+preview_bucket_name = "doom-index-storage"
+
 
 [[r2_buckets]]
 binding = "NEXT_INC_CACHE_R2_BUCKET"
 bucket_name = "doom-index-next-inc-cache"
+preview_bucket_name = "doom-index-next-inc-cache"
 
 # KV Namespace Binding
 [[kv_namespaces]]
@@ -52,6 +55,7 @@ NODE_ENV = "production"
 LOG_LEVEL = "DEBUG"
 NEXTJS_ENV = "production"
 # NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
+NEXT_PRIVATE_DEBUG_CACHE=1
 IMAGE_MODEL = "runware:100@1"
 
 [observability]

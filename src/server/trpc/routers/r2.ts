@@ -2,6 +2,7 @@ import { router, publicProcedure } from "../trpc";
 import { resolveR2Bucket, getJsonR2 } from "@/lib/r2";
 import { r2GetObjectSchema } from "../schemas";
 import { TRPCError } from "@trpc/server";
+import { get, set } from "@/lib/cache";
 
 const joinKey = (segments: string[]): string =>
   segments
@@ -18,6 +19,13 @@ export const r2Router = router({
         code: "BAD_REQUEST",
         message: "Invalid R2 object key",
       });
+    }
+
+    const cacheKey = `r2:getJson:${objectKey}`;
+    const cached = await get<unknown>(cacheKey, { logger: ctx.logger });
+
+    if (cached !== null) {
+      return cached;
     }
 
     const bucketResult = resolveR2Bucket();
@@ -49,6 +57,9 @@ export const r2Router = router({
       });
     }
 
-    return result.value;
+    const value = result.value;
+    await set(cacheKey, value, { ttlSeconds: 60, logger: ctx.logger });
+
+    return value;
   }),
 });
