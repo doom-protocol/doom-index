@@ -21,7 +21,7 @@ interface GallerySceneProps {
   onHelpToggle?: (open: boolean) => void;
 }
 
-const isDevelopment = env.NODE_ENV === "development";
+const isDevelopment = env.NEXT_PUBLIC_NODE_ENV === "development";
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 
 export const GalleryScene: React.FC<GallerySceneProps> = ({

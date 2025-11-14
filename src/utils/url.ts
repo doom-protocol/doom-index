@@ -20,7 +20,7 @@ export function getBaseUrl(): string {
   }
 
   // Fallback for server-side rendering
-  const isProduction = env.NODE_ENV === "production";
+  const isProduction = env.NEXT_PUBLIC_NODE_ENV === "production";
   return isProduction ? "https://doomindex.fun" : "http://localhost:8787";
 }
 

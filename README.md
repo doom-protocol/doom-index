@@ -22,10 +22,10 @@ Create a `.env` file:
 # Image Generation Provider
 IMAGE_PROVIDER=smart  # Options: smart (recommended), ai-sdk, runware-sdk
 
-# Log Level (optional)
+# Log Level (optional, exposed to client)
 # Options: ERROR, WARN, INFO, DEBUG, LOG
 # Default: DEBUG in development, INFO in production
-# LOG_LEVEL=DEBUG
+# NEXT_PUBLIC_LOG_LEVEL=DEBUG
 
 # Cloudflare R2 Storage (required for production)
 R2_PUBLIC_DOMAIN=https://doom-index-storage.r2.dev

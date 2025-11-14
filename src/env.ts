@@ -24,8 +24,11 @@ export const env = createEnv({
    * These must be prefixed with NEXT_PUBLIC_ and will be bundled to the client
    */
   client: {
-    // Currently no client-side env vars
     NEXT_PUBLIC_BASE_URL: z.string().min(1),
+    // Node Environment - exposed to client for conditional rendering and debugging
+    NEXT_PUBLIC_NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    // Log Level - exposed to client for conditional logging
+    NEXT_PUBLIC_LOG_LEVEL: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]).default("DEBUG"),
   },
 
   /**
@@ -38,9 +41,6 @@ export const env = createEnv({
     // If not specified, defaults to "runware:100@1"
     // The provider will be automatically resolved based on the model
     IMAGE_MODEL: z.string().optional(),
-    // Node Environment
-    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-    LOG_LEVEL: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]).default("DEBUG"),
   },
 
   /**
@@ -51,9 +51,10 @@ export const env = createEnv({
     // Server
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     RUNWARE_API_KEY: process.env.RUNWARE_API_KEY,
-    NODE_ENV: process.env.NODE_ENV,
-    LOG_LEVEL: process.env.LOG_LEVEL,
+    // Client
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+    NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_LOG_LEVEL: process.env.LOG_LEVEL,
     // Shared
     IMAGE_MODEL: process.env.IMAGE_MODEL,
   },

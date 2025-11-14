@@ -24,7 +24,7 @@ const getTimestamp = () => {
 };
 
 const getCurrentLogLevel = (): LogLevel => {
-  const envLevel = env.LOG_LEVEL;
+  const envLevel = env.NEXT_PUBLIC_LOG_LEVEL;
   if (envLevel && LOG_LEVELS.includes(envLevel as LogLevel)) {
     return envLevel as LogLevel;
   }

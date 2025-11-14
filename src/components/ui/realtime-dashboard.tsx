@@ -114,7 +114,7 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
   }, [isHelpOpen, updateHelpAnchor]);
 
   useEffect(() => {
-    if (env.NODE_ENV !== "development") {
+    if (env.NEXT_PUBLIC_NODE_ENV !== "development") {
       return;
     }
 
