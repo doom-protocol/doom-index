@@ -20,7 +20,7 @@ Cloudflare Workers の Cache API を用い、`getCloudflareContext()` 等で環�
 
 ### Requirement 2: Request/Response レベルのキャッシュ
 
-**Objective:** As an API developer, I want to cache full HTTP responses by request URL, so that repeated requests within TTL are served from edge without recomputation.
+**Objective:** As an API developer, I want to cache full HTTP responses by request URL, so that repeated requests within TTL are served from edge without recomputation. This is primarily for Next.js Route Handlers that are not migrated to tRPC yet.
 
 #### Acceptance Criteria
 
@@ -28,17 +28,20 @@ Cloudflare Workers の Cache API を用い、`getCloudflareContext()` 等で環�
 2. IF a Response contains Set-Cookie header THEN the system SHALL avoid caching or strip that header before cache.put to comply with Cache API constraints.
 3. WHILE TTL has not elapsed THE system SHALL serve the cached Response for the same request URL without executing buildResponse again.
 4. WHERE Cache-Tag is present on the Response THE system SHALL store it to enable future tag-based purge (if adopted later).
+5. WHERE tRPC HTTP adapter route (/api/trpc/[trpc]) is used THE system SHALL allow caching at the tRPC procedure level rather than HTTP response level for better type safety and granularity.
 
 ### Requirement 3: 環境解決と互換性（getCloudflareContext）
 
-**Objective:** As a platform engineer, I want robust environment resolution, so that caching gracefully degrades outside of Cloudflare while fully leveraging edge cache on Cloudflare.
+**Objective:** As a platform engineer, I want robust environment resolution, so that caching gracefully degrades outside of Cloudflare while fully leveraging edge cache on Cloudflare. The helper SHALL work seamlessly within tRPC procedures that use Context with Cloudflare Bindings.
 
 #### Acceptance Criteria
 
 1. WHEN resolving environment via getCloudflareContext() THEN the Cache Helper SHALL safely access caches.default and Worker context without throwing.
 2. IF the code is executed outside Cloudflare Workers (for example, local dev without Miniflare) THEN the Cache Helper SHALL gracefully skip cache operations and still return correct values.
-3. WHERE Next.js Route Handlers are used on Cloudflare runtime THE helper SHALL accept the platform Request object for request-level caching.
-4. WHILE running in supported Cloudflare environments THE helper SHALL set Cache-Control with max-age=TTL to control edge TTL as per platform spec.
+3. WHERE tRPC procedures are executed THE helper SHALL work with tRPC Context that may or may not have Cloudflare Bindings available.
+4. WHERE Next.js Route Handlers are used on Cloudflare runtime THE helper SHALL accept the platform Request object for request-level caching.
+5. WHILE running in supported Cloudflare environments THE helper SHALL set Cache-Control with max-age=TTL to control edge TTL as per platform spec.
+6. WHERE tRPC context creation fails to resolve Cloudflare Bindings THE helper SHALL gracefully degrade without affecting tRPC procedure execution.
 
 ### Requirement 4: 可観測性と失敗時のフォールバック
 
@@ -53,14 +56,17 @@ Cloudflare Workers の Cache API を用い、`getCloudflareContext()` 等で環�
 
 ### Requirement 5: 適用対象（外部アクセス削減・UX向上）
 
-**Objective:** As a product engineer, I want to apply caching to high-traffic or heavy endpoints, so that external API calls are reduced and latency is improved.
+**Objective:** As a product engineer, I want to apply caching to high-traffic or heavy tRPC procedures, so that external API calls are reduced and latency is improved.
 
 #### Acceptance Criteria
 
-1. WHEN applying cache to /api/mc THEN the system SHALL cache the JSON response for approximately 60 seconds, reducing upstream Dex Screener calls within that window.
-2. WHEN applying cache to /api/tokens/[ticker] THEN the system SHALL allow a short TTL (for example, 30–120 seconds) to improve client latency with acceptable staleness.
-3. WHERE internal services compute stable summaries (for example, market-cap aggregation) THE system SHALL allow using the key-value cache helper to memoize results per minute.
-4. WHILE cache is effective THE client-observed latency for cached endpoints SHALL decrease compared to the uncached baseline under typical conditions.
+1. WHEN applying cache to trpc.mc.getMarketCaps procedure THEN the system SHALL cache the computed market cap map for approximately 60 seconds, reducing upstream Dex Screener API calls within that window.
+2. WHEN applying cache to trpc.mc.getRoundedMcMap procedure THEN the system SHALL cache the rounded market cap map for approximately 60 seconds, reducing redundant calculations and external API calls.
+3. WHEN applying cache to trpc.token.getState procedure THEN the system SHALL allow a short TTL (for example, 30–120 seconds) to improve client latency with acceptable staleness for token state data.
+4. WHEN applying cache to trpc.r2.getJson procedure THEN the system SHALL allow caching R2 object JSON responses with appropriate TTL based on data volatility.
+5. WHERE internal services compute stable summaries (for example, market-cap aggregation via MarketCapService) THE system SHALL allow using the key-value cache helper within tRPC procedures to memoize results per minute.
+6. WHILE cache is effective THE client-observed latency for cached tRPC procedures SHALL decrease compared to the uncached baseline under typical conditions.
+7. WHERE tRPC context (ctx) is available THE cache helper SHALL utilize ctx.logger for consistent logging with other tRPC procedures.
 
 ### Requirement 6: セキュリティ・HTTP ヘッダ制約
 
@@ -74,20 +80,12 @@ Cloudflare Workers の Cache API を用い、`getCloudflareContext()` 等で環�
 
 ### Requirement 7: 型安全 API と配置
 
-**Objective:** As a developer, I want a clear and type-safe API surface, so that adoption is easy and safe.
+**Objective:** As a developer, I want a clear and type-safe API surface, so that adoption is easy and safe. The API SHALL integrate seamlessly with tRPC procedures and their return types.
 
 #### Acceptance Criteria
 
 1. WHEN creating the helper THE system SHALL provide a type-safe getOrSet<T>(...) API and a withRequestCache(...) wrapper in src/lib/cache.ts.
 2. WHERE text and binary content are required THE system SHALL provide getOrSetText and a binary-friendly variant (for example, ArrayBuffer) without breaking the JSON path.
 3. WHILE maintaining minimal footprint THE helper SHALL avoid framework-specific dependencies beyond getCloudflareContext and Web Platform APIs.
-
-# Requirements Document
-
-## Project Description (Input)
-
-cahce
-
-## Requirements
-
-<!-- Will be generated in /kiro/spec-requirements phase -->
+4. WHERE tRPC procedure return types are cached THE helper SHALL preserve type safety and allow TypeScript to infer correct types from cached values.
+5. WHEN using getOrSet within tRPC procedures THE helper SHALL accept tRPC Context logger (ctx.logger) as an optional parameter for consistent logging patterns.

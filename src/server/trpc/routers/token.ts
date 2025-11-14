@@ -3,9 +3,17 @@ import { resolveR2Bucket, getJsonR2 } from "@/lib/r2";
 import { tokenGetStateSchema } from "../schemas";
 import type { TokenState } from "@/types/domain";
 import { TRPCError } from "@trpc/server";
+import { get, set } from "@/lib/cache";
 
 export const tokenRouter = router({
   getState: publicProcedure.input(tokenGetStateSchema).query(async ({ input, ctx }) => {
+    const cacheKey = `token:getState:${input.ticker}`;
+    const cached = await get<TokenState>(cacheKey, { logger: ctx.logger });
+
+    if (cached !== null) {
+      return cached;
+    }
+
     const bucketResult = resolveR2Bucket();
 
     if (bucketResult.isErr()) {
@@ -42,6 +50,8 @@ export const tokenRouter = router({
     if (!value) {
       return null;
     }
+
+    await set(cacheKey, value, { ttlSeconds: 60, logger: ctx.logger });
 
     return value;
   }),

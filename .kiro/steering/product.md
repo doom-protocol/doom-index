@@ -1,7 +1,7 @@
 ---
 title: DOOM INDEX - プロダクト概要
 includes: always
-updated: 2025-11-13
+updated: 2025-01-27
 ---
 
 ## プロダクト概要
@@ -16,8 +16,10 @@ DOOM INDEX は、Solana 上の8種のインジケーター・トークン（`CO2
 - ストレージ永続化（Cloudflare R2／公開 URL 読み取り）
 - 画像生成プロバイダ切り替え（Runware／OpenAI／モック）
 - 状態・指標の取得と集約（サービス層）
+- **型安全な API 通信（tRPC v11）** - エンドツーエンドの型安全性を実現
 - CLI ツールによるローカル生成・検証（`scripts/generate.ts`）
 - ローカル開発用のスケジュール実行・プレビュー（Workers Preview + Cron）
+- **Cloudflare Cache API 統合（開発中）** - Edge キャッシュによるレイテンシ低減とコスト最適化
 
 ## 代表的なユースケース
 
@@ -32,6 +34,8 @@ DOOM INDEX は、Solana 上の8種のインジケーター・トークン（`CO2
 - エッジ実行と R2 による高速・安定配信
 - Provider 抽象化によりモデルや実行環境を柔軟に切替
 - 型安全（TypeScript）と結果型（neverthrow）で堅牢なエラーハンドリング
+- **tRPC によるエンドツーエンド型安全性** - 開発時の型補完と実行時エラー削減
+- **Edge キャッシュによる最適化** - 外部 API 呼び出し削減と UX 向上
 
 ## 主要制約・前提
 
