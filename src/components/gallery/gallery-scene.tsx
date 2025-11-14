@@ -23,6 +23,7 @@ interface GallerySceneProps {
 
 const isDevelopment = env.NEXT_PUBLIC_NODE_ENV === "development";
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
+const HEADER_HEIGHT = 56;
 
 export const GalleryScene: React.FC<GallerySceneProps> = ({
   cameraPreset: initialCameraPreset = "painting",
@@ -84,10 +85,12 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         }}
         style={{
           position: "fixed",
-          top: 0,
+          top: `${HEADER_HEIGHT}px`,
           left: 0,
-          width: "100vw",
-          height: "100vh",
+          right: 0,
+          bottom: 0,
+          width: "100%",
+          height: `calc(100% - ${HEADER_HEIGHT}px)`,
           margin: 0,
           padding: 0,
           display: "block",
