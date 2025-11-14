@@ -1,83 +1,204 @@
 "use client";
 
 import { useArchive } from "@/hooks/use-archive";
-import { useImagePreload } from "@/hooks/use-image-preload";
 import { PaginationControls } from "./pagination-controls";
 import { ArchiveGrid } from "./archive-grid";
-import { ArchiveScene } from "./archive-scene";
-import { ArchivePaintingsGrid } from "./archive-paintings-grid";
-import { ArchiveZoomView } from "./archive-zoom-view";
+import { ArchiveDetailView } from "./archive-detail-view";
 import { DateFilter } from "./date-filter";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState, useEffect } from "react";
 import type { ArchiveItem } from "@/types/archive";
+import { useTRPCClient } from "@/lib/trpc/client";
+import { logger } from "@/utils/logger";
 
 interface ArchiveContentProps {
-  initialCursor?: string;
   startDate?: string;
   endDate?: string;
 }
 
-export const ArchiveContent: React.FC<ArchiveContentProps> = ({ initialCursor, startDate, endDate }) => {
+export const ArchiveContent: React.FC<ArchiveContentProps> = ({ startDate, endDate }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const client = useTRPCClient();
   const [selectedItem, setSelectedItem] = useState<ArchiveItem | null>(null);
-  const currentCursor = searchParams.get("cursor") || initialCursor;
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const { data, error, isLoading, refetch, isError, fetchNextPage, hasNextPage, isFetchingNextPage } = useArchive({
+  // Page number from URL (1-indexed)
+  const currentPageNumber = parseInt(searchParams.get("page") || "1", 10);
+  const pageNumber = Math.max(1, currentPageNumber);
+
+  // Store cursor for each page (page number → cursor mapping)
+  // page N's cursor is stored at index N, and is used to fetch page N+1
+  const [pageCursors, setPageCursors] = useState<Map<number, string>>(new Map());
+  const [loadingCursors, setLoadingCursors] = useState(false);
+
+  const itemsPerPage = 24;
+
+  // Get cursor for current page (page N uses cursor from page N-1)
+  // pageCursors stores: page N's cursor at index N (used to fetch page N+1)
+  // So to fetch page N, we need cursor from page N-1
+  const currentCursor = useMemo(() => {
+    if (pageNumber === 1) {
+      return undefined; // First page has no cursor
+    }
+    const cursor = pageCursors.get(pageNumber - 1);
+    logger.debug("archive-content.current-cursor", {
+      pageNumber,
+      cursor: cursor || "undefined",
+      pageCursorsSize: pageCursors.size,
+      allCursors: Array.from(pageCursors.entries()).map(([k, v]) => `page${k}=${v.substring(0, 20)}...`),
+    });
+    return cursor;
+  }, [pageNumber, pageCursors]);
+
+  // Load pages sequentially to get cursor for target page if needed
+  useEffect(() => {
+    if (pageNumber === 1 || currentCursor || loadingCursors) return;
+
+    logger.debug("archive-content.loading-cursors", {
+      pageNumber,
+      currentCursor: currentCursor || "undefined",
+    });
+
+    const loadPagesSequentially = async () => {
+      setLoadingCursors(true);
+      let cursor: string | undefined = undefined;
+
+      // Load pages from 1 to pageNumber - 1 to get the cursor
+      for (let page = 1; page < pageNumber; page++) {
+        try {
+          logger.debug("archive-content.loading-page", { page, cursor: cursor || "undefined" });
+          const pageData = await client.archive.list.query({
+            limit: itemsPerPage,
+            cursor,
+            startDate,
+            endDate,
+          });
+
+          if (pageData.cursor) {
+            setPageCursors(prev => {
+              // Skip if already stored
+              if (prev.has(page)) return prev;
+              const next = new Map(prev);
+              next.set(page, pageData.cursor!);
+              logger.debug("archive-content.cursor-stored", { page, cursor: pageData.cursor });
+              return next;
+            });
+            cursor = pageData.cursor;
+          } else {
+            // No more pages, break
+            logger.debug("archive-content.no-more-pages", { page });
+            break;
+          }
+        } catch (error) {
+          logger.error("Failed to load page for cursor", { page, error });
+          break;
+        }
+      }
+
+      setLoadingCursors(false);
+    };
+
+    loadPagesSequentially();
+  }, [pageNumber, currentCursor, loadingCursors, client, itemsPerPage, startDate, endDate]);
+
+  const { data, error, isLoading, refetch, isError } = useArchive({
     cursor: currentCursor,
+    limit: itemsPerPage,
     startDate,
     endDate,
   });
 
-  // Reset scroll position when filters change
+  // Store cursor for current page when data is received
+  useEffect(() => {
+    if (!data || pageNumber <= 0) return;
+
+    logger.debug("archive-content.checking-cursor", {
+      pageNumber,
+      hasCursor: !!data.cursor,
+      cursor: data.cursor || "none",
+      hasMore: data.hasMore,
+    });
+
+    if (data.cursor) {
+      setPageCursors(prev => {
+        // Skip if already stored with the same cursor
+        const existingCursor = prev.get(pageNumber);
+        if (existingCursor === data.cursor) {
+          logger.debug("archive-content.cursor-already-stored", {
+            pageNumber,
+            cursor: data.cursor,
+            existingCursor,
+          });
+          return prev;
+        }
+        const next = new Map(prev);
+        // Store cursor for current page (used to fetch next page)
+        // page N's cursor is stored at index N, and is used to fetch page N+1
+        next.set(pageNumber, data.cursor!);
+        logger.debug("archive-content.page-cursor-stored", {
+          pageNumber,
+          cursor: data.cursor,
+          allCursors: Array.from(next.entries()).map(([k, v]) => `page${k}=${v.substring(0, 20)}...`),
+        });
+        return next;
+      });
+    } else if (data.hasMore) {
+      logger.warn("archive-content.no-cursor-but-has-more", {
+        pageNumber,
+        hasMore: data.hasMore,
+        itemsCount: data.items.length,
+      });
+    }
+  }, [data, pageNumber]);
+
+  // Reset scroll position when page or filters change
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, [pageNumber, startDate, endDate]);
+
+  // Reset page cursors when filters change
+  useEffect(() => {
+    setPageCursors(new Map());
   }, [startDate, endDate]);
 
-  // Calculate pagination state (must be before early returns)
-  const allItems = data?.pages.flatMap(page => page.items) ?? [];
-  const itemsPerPage = 20; // Default limit
-  const currentPage = data?.pages.length ?? 1;
-  const totalItems = allItems.length + (hasNextPage ? 1 : 0); // Approximate total
-  const hasPreviousPage = useMemo(() => {
-    return (data?.pages.length ?? 0) > 1;
-  }, [data?.pages.length]);
+  const displayedItems = useMemo(() => data?.items ?? [], [data?.items]);
 
-  // Prefetch next page data when current page is fully loaded
-  useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage && data?.pages.length) {
-      const lastPage = data.pages[data.pages.length - 1];
-      if (lastPage?.cursor) {
-        // Prefetch next page data in background
-        // This uses React Query's cache, so when user clicks "next", data is already cached
-        const timeoutId = setTimeout(() => {
-          fetchNextPage();
-        }, 1000); // Delay to avoid interfering with current page rendering
+  // hasNextPage: true if current page has more items
+  const hasNextPage = data?.hasMore ?? false;
+  const hasPreviousPage = pageNumber > 1;
 
-        return () => clearTimeout(timeoutId);
-      }
-    }
-  }, [hasNextPage, isFetchingNextPage, data?.pages, fetchNextPage]);
+  logger.debug("archive-content.pagination-state", {
+    pageNumber,
+    hasNextPage,
+    hasPreviousPage,
+    currentCursor: currentCursor || "undefined",
+    pageCursorsSize: pageCursors.size,
+    dataHasMore: data?.hasMore ?? false,
+    itemsCount: displayedItems.length,
+  });
 
-  // Preload next page images once next page data is available
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  const nextPageImageUrls = useMemo(() => {
-    // If we have more than one page, preload images from the last page (next page)
-    if (data?.pages.length && data.pages.length > 1) {
-      const nextPage = data.pages[data.pages.length - 1];
-      return nextPage.items.map(item => item.imageUrl);
-    }
-    // If we only have one page but there's a next page, preload current page images
-    // (they'll be shown when user scrolls or navigates)
-    if (data?.pages.length === 1 && hasNextPage) {
-      return data.pages[0]?.items.map(item => item.imageUrl) ?? [];
-    }
-    return [];
-  }, [data?.pages, hasNextPage]);
+  // Calculate date range for display (must be before early returns)
+  const dateRange = useMemo(() => {
+    if (displayedItems.length === 0) return null;
 
-  // Preload images in background
-  useImagePreload(nextPageImageUrls);
+    const dates = displayedItems.map(item => new Date(item.timestamp));
+    const earliest = new Date(Math.min(...dates.map(d => d.getTime())));
+    const latest = new Date(Math.max(...dates.map(d => d.getTime())));
+
+    const formatDate = (date: Date) => {
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const m = monthNames[date.getMonth()];
+      const d = date.getDate();
+      return `${m} ${d}`;
+    };
+
+    return {
+      start: formatDate(earliest),
+      end: formatDate(latest),
+      isSameDay: earliest.toDateString() === latest.toDateString(),
+    };
+  }, [displayedItems]);
 
   // Error state
   if (isError) {
@@ -109,64 +230,92 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ initialCursor, s
     );
   }
 
-  // Success state
-
-  const updateURL = (cursor?: string) => {
+  const updateURL = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (cursor) {
-      params.set("cursor", cursor);
+    if (page === 1) {
+      params.delete("page");
     } else {
-      params.delete("cursor");
+      params.set("page", page.toString());
     }
     router.push(`/archive?${params.toString()}`, { scroll: false });
   };
 
   const handleNext = () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      const nextCursor = data?.pages[data.pages.length - 1]?.cursor;
-      if (nextCursor) {
-        updateURL(nextCursor);
-      }
-      fetchNextPage();
+    if (hasNextPage) {
+      updateURL(pageNumber + 1);
     }
   };
 
   const handlePrevious = () => {
-    if (hasPreviousPage && data && data.pages.length > 1) {
-      // Go back to previous page by removing the last page's cursor
-      const previousPageIndex = data.pages.length - 2;
-      const previousCursor = previousPageIndex >= 0 ? data.pages[previousPageIndex]?.cursor : undefined;
-      updateURL(previousCursor);
-      // Note: Infinite query doesn't support going back easily, so we refetch
-      // In a real implementation, you might want to use regular pagination instead
-      refetch();
+    if (hasPreviousPage) {
+      updateURL(pageNumber - 1);
     }
   };
 
+  const handleItemClick = (item: ArchiveItem) => {
+    setIsTransitioning(true);
+    // Wait for fade out animation to complete before showing detail view
+    setTimeout(() => {
+      setSelectedItem(item);
+    }, 300); // Match CSS transition duration
+  };
+
+  const handleClose = () => {
+    setSelectedItem(null);
+    setIsTransitioning(false);
+  };
+
+  // Show detail view if item is selected (after all hooks)
+  if (selectedItem) {
+    return <ArchiveDetailView item={selectedItem} onClose={handleClose} />;
+  }
+
   return (
     <>
-      <div className="relative w-full">
-        <ArchiveScene totalItems={totalItems}>
-          <ArchivePaintingsGrid items={allItems} onItemClick={setSelectedItem} selectedItem={selectedItem} />
-        </ArchiveScene>
+      <div
+        className={`h-screen overflow-y-auto pb-[200px] p-8 transition-opacity duration-300 font-sans ${
+          isTransitioning ? "opacity-0" : "opacity-100"
+        }`}
+        style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+      >
+        <h1 className="mb-4 normal-case" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+          Archive
+        </h1>
+        <div className="mb-6 flex items-center gap-4">
+          <p className="text-white/70 normal-case" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+            Items: {displayedItems.length}
+          </p>
+          {dateRange && (
+            <p
+              className="text-sm text-white/50 normal-case"
+              style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+            >
+              {dateRange.isSameDay ? dateRange.start : `${dateRange.start} - ${dateRange.end}`}
+            </p>
+          )}
+        </div>
+        <ArchiveGrid
+          items={displayedItems}
+          isLoading={isLoading}
+          skeletonCount={itemsPerPage}
+          onItemClick={handleItemClick}
+        />
       </div>
-      <div className="pb-[200px] p-8">
-        <h1 className="mb-4">Archive</h1>
-        <p className="mb-6 text-white/70">Items: {allItems.length}</p>
-        <ArchiveGrid items={allItems} isLoading={isFetchingNextPage} skeletonCount={itemsPerPage} />
+      <div className={`transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
+        <PaginationControls
+          currentPage={pageNumber}
+          itemsPerPage={itemsPerPage}
+          totalItems={displayedItems.length}
+          hasNextPage={hasNextPage}
+          hasPreviousPage={hasPreviousPage}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          isLoading={isLoading}
+        />
       </div>
-      <PaginationControls
-        currentPage={currentPage}
-        itemsPerPage={itemsPerPage}
-        totalItems={totalItems}
-        hasNextPage={hasNextPage ?? false}
-        hasPreviousPage={hasPreviousPage}
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        isLoading={isFetchingNextPage}
-      />
-      <ArchiveZoomView item={selectedItem} onClose={() => setSelectedItem(null)} />
-      <DateFilter />
+      <div className={`transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
+        <DateFilter />
+      </div>
     </>
   );
 };

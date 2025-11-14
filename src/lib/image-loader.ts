@@ -11,9 +11,7 @@ export default function cloudflareLoader({ src, width, quality }: ImageLoaderPro
   const params = [`width=${width}`];
   if (quality) params.push(`quality=${quality}`);
 
-  const absolute = src.startsWith("http://") || src.startsWith("https://")
-    ? src
-    : `${base}/${normalizeSrc(src)}`;
+  const absolute = src.startsWith("http://") || src.startsWith("https://") ? src : `${base}/${normalizeSrc(src)}`;
 
   return `/cdn-cgi/image/${params.join(",")}/${absolute}`;
 }

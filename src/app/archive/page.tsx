@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 interface ArchivePageProps {
   searchParams: Promise<{
-    cursor?: string;
+    page?: string;
     startDate?: string;
     endDate?: string;
   }>;
@@ -18,13 +18,13 @@ interface ArchivePageProps {
 
 const ArchivePage: NextPage<ArchivePageProps> = async ({ searchParams }) => {
   const params = await searchParams;
-  const { cursor, startDate, endDate } = params;
+  const { startDate, endDate } = params;
 
   return (
     <>
       <main className="relative h-screen w-full overflow-hidden">
         <Header showProgress={false} />
-        <ArchiveContent initialCursor={cursor} startDate={startDate} endDate={endDate} />
+        <ArchiveContent startDate={startDate} endDate={endDate} />
       </main>
     </>
   );

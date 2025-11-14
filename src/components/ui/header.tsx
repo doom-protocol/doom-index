@@ -132,7 +132,7 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
                 <nav
                   id="header-mobile-menu"
                   aria-label="Navigation Links"
-                  className="absolute right-0 top-full mt-3 flex w-48 flex-col gap-1 rounded-xl border border-white/20 bg-white/10 p-3 text-white/90 shadow-2xl backdrop-blur-lg"
+                  className="absolute right-0 top-full mt-3 flex w-48 flex-col gap-1 rounded-xl border border-white/20 bg-black/70 p-3 text-white/90 shadow-2xl backdrop-blur-xl"
                 >
                   <Link
                     href="/about"
@@ -172,11 +172,19 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
           </div>
           <div className="hidden justify-end md:flex">
             <nav className="flex items-center justify-end gap-3" aria-label="Navigation Links">
-              <Link href="/about" aria-label="About" className={DESKTOP_LINK_CLASS}>
-                <InfoIcon className="h-3 w-3" />
+              <Link
+                href="/about"
+                aria-label="About"
+                className="group flex items-center justify-center px-4 py-1.5 text-sm text-white/70 transition-colors hover:text-white"
+              >
+                About
               </Link>
-              <Link href="/archive" aria-label="Archive" className={DESKTOP_LINK_CLASS}>
-                <ArchiveIcon className="h-3 w-3" />
+              <Link
+                href="/archive"
+                aria-label="Archive"
+                className="group flex items-center justify-center px-4 py-1.5 text-sm text-white/70 transition-colors hover:text-white"
+              >
+                Archive
               </Link>
               {NAV_LINKS.map(({ href, label, Icon }) => (
                 <Link

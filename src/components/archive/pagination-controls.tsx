@@ -24,40 +24,40 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   isLoading = false,
 }) => {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-  const rangeText = totalItems > 0 ? `${startItem}-${endItem} of ${totalItems}` : "0 of 0";
+  const endItem = startItem + totalItems - 1;
+  const rangeText = totalItems > 0 ? `${startItem}-${endItem}` : "0 of 0";
 
   const isPreviousDisabled = !hasPreviousPage || isLoading;
   const isNextDisabled = !hasNextPage || isLoading;
 
   return (
-    <div className="fixed bottom-[120px] left-1/2 z-[1000] flex -translate-x-1/2 items-center gap-4 rounded-xl border border-white/10 bg-black/80 px-6 py-3 backdrop-blur-xl">
+    <div className="fixed bottom-[120px] left-1/2 z-[1000] flex -translate-x-1/2 items-center gap-2 rounded-lg border border-white/10 bg-black/80 px-3 py-1.5 backdrop-blur-xl">
       <button
         type="button"
         onClick={onPrevious}
         disabled={isPreviousDisabled}
-        className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
+        className={`rounded border px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
           isPreviousDisabled
             ? "cursor-not-allowed border-white/20 bg-white/5 text-white/40 opacity-50"
             : "border-white/20 bg-white/10 text-white hover:border-white/30 hover:bg-white/15"
         }`}
       >
-        Previous
+        PREV
       </button>
 
-      <span className="min-w-[120px] text-center text-sm text-white/80">{rangeText}</span>
+      <span className="min-w-[80px] text-center text-xs text-white/80">{rangeText}</span>
 
       <button
         type="button"
         onClick={onNext}
         disabled={isNextDisabled}
-        className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
+        className={`rounded border px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
           isNextDisabled
             ? "cursor-not-allowed border-white/20 bg-white/5 text-white/40 opacity-50"
             : "border-white/20 bg-white/10 text-white hover:border-white/30 hover:bg-white/15"
         }`}
       >
-        Next
+        NEXT
       </button>
     </div>
   );

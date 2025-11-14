@@ -43,25 +43,25 @@ export const DateFilter: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-black/40 p-4 backdrop-blur-md md:p-6">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 flex-col gap-4 md:flex-row md:items-center">
-          <div className="flex flex-1 items-center gap-2">
-            <label htmlFor="startDate" className="text-sm text-white/70 md:text-base">
-              Start Date:
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-black/40 p-2 backdrop-blur-md md:p-3">
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-2 md:flex-row md:justify-center">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+          <div className="flex items-center gap-2">
+            <label htmlFor="startDate" className="text-xs text-white/70 md:text-sm whitespace-nowrap">
+              Start:
             </label>
             <input
               id="startDate"
               type="date"
               value={startDate}
               onChange={handleStartDateChange}
-              className="flex-1 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none"
+              className="w-36 rounded border border-white/20 bg-white/10 px-2 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none"
             />
           </div>
 
-          <div className="flex flex-1 items-center gap-2">
-            <label htmlFor="endDate" className="text-sm text-white/70 md:text-base">
-              End Date:
+          <div className="flex items-center gap-2">
+            <label htmlFor="endDate" className="text-xs text-white/70 md:text-sm whitespace-nowrap">
+              End:
             </label>
             <input
               id="endDate"
@@ -69,7 +69,7 @@ export const DateFilter: React.FC = () => {
               value={endDate}
               onChange={handleEndDateChange}
               min={startDate || undefined}
-              className="flex-1 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none"
+              className="w-36 rounded border border-white/20 bg-white/10 px-2 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none"
             />
           </div>
         </div>
@@ -77,9 +77,9 @@ export const DateFilter: React.FC = () => {
         {(startDate || endDate) && (
           <button
             onClick={handleClear}
-            className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm text-white transition-colors hover:bg-white/20 md:text-base"
+            className="rounded border border-white/20 bg-white/10 px-3 py-1 text-xs text-white transition-colors hover:bg-white/20 md:text-sm"
           >
-            Clear Filters
+            Clear
           </button>
         )}
       </div>
