@@ -1,11 +1,11 @@
 import { describe, it, expect } from "bun:test";
 import { createStateService } from "@/services/state";
-import { createMemoryR2Client } from "@/lib/r2";
+import { createTestR2Bucket } from "@/testing/memory-r2";
 import type { GlobalState, TokenState, RevenueReport } from "@/types/domain";
 
 describe("StateService (5.1)", () => {
   it("reads and writes global state JSON", async () => {
-    const { bucket } = createMemoryR2Client();
+    const { bucket } = createTestR2Bucket();
     const service = createStateService({ r2Bucket: bucket });
     const initial = await service.readGlobalState();
     expect(initial.isOk()).toBe(true);
@@ -25,7 +25,7 @@ describe("StateService (5.1)", () => {
   });
 
   it("writes token states individually", async () => {
-    const { bucket, store } = createMemoryR2Client();
+    const { bucket, store } = createTestR2Bucket();
     const service = createStateService({ r2Bucket: bucket });
     const states: TokenState[] = [
       { ticker: "CO2", thumbnailUrl: "https://img", updatedAt: "2025-11-09T12:34:00Z" },
@@ -46,22 +46,8 @@ describe("StateService (5.1)", () => {
     }
   });
 
-  it("stores image binaries and returns URL", async () => {
-    const { bucket } = createMemoryR2Client();
-    const service = createStateService({ r2Bucket: bucket });
-    const buffer = new ArrayBuffer(8);
-    const storeResult = await service.storeImage("images/test.webp", buffer);
-    expect(storeResult.isOk()).toBe(true);
-    if (storeResult.isOk()) {
-      // Direct API route format: /api/r2/images/test.webp
-      expect(storeResult.value).toContain("/api/r2");
-      expect(storeResult.value).toContain("images");
-      expect(storeResult.value).toContain("test.webp");
-    }
-  });
-
   it("persists revenue reports", async () => {
-    const { bucket, store } = createMemoryR2Client();
+    const { bucket, store } = createTestR2Bucket();
     const service = createStateService({ r2Bucket: bucket });
     const report: RevenueReport = {
       perTokenFee: { CO2: 1, ICE: 1, FOREST: 1, NUKE: 1, MACHINE: 1, PANDEMIC: 1, FEAR: 1, HOPE: 1 },

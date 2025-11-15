@@ -18,6 +18,7 @@ import {
 } from "three";
 import type { GLTF } from "three-stdlib";
 import { openTweetIntent } from "@/utils/twitter";
+import { calculatePlaneDimensions, handlePointerMoveForDrag, isValidPointerEvent } from "@/utils/three";
 
 interface FramedPaintingProps {
   thumbnailUrl: string;
@@ -36,7 +37,6 @@ const PULSE_DURATION = 0.6;
 const PULSE_MAX_SCALE = 1.45;
 const INITIAL_PULSE_FILL_OPACITY = 0.45;
 const INITIAL_PULSE_OUTLINE_OPACITY = 0.85;
-const POINTER_DRAG_THRESHOLD = 6;
 const TRANSITION_DURATION = 0.8;
 const DEFAULT_FRAME_POSITION: [number, number, number] = [0, 0.8, 4.0];
 const FRAME_ROTATION: [number, number, number] = [0, Math.PI, 0];
@@ -44,41 +44,6 @@ const FRAME_ROTATION: [number, number, number] = [0, Math.PI, 0];
 // Material properties constants
 const PAINTING_MATERIAL_ROUGHNESS = 0.25;
 const PAINTING_MATERIAL_METALNESS = 0.05;
-
-// Helper function to validate pointer event
-const isValidPointerEvent = (event: ThreeEvent<PointerEvent>, activePointerId: number | null): boolean => {
-  if (!event.isPrimary) {
-    return false;
-  }
-  if (activePointerId !== null && event.pointerId !== activePointerId) {
-    return false;
-  }
-  return true;
-};
-
-// Helper function to calculate plane dimensions from texture aspect ratio
-const calculatePlaneDimensions = (
-  texture: Texture | null,
-  innerWidth: number,
-  innerHeight: number,
-): [number, number] => {
-  const image = texture?.image as HTMLImageElement | undefined;
-  const imageAspect = image && image.width && image.height ? image.width / image.height : 1;
-  const frameAspect = innerWidth / innerHeight;
-
-  let planeWidth = innerWidth;
-  let planeHeight = innerHeight;
-
-  if (imageAspect > frameAspect) {
-    // Image is wider than frame
-    planeHeight = innerWidth / imageAspect;
-  } else {
-    // Image is taller than frame
-    planeWidth = innerHeight * imageAspect;
-  }
-
-  return [planeWidth, planeHeight];
-};
 
 const FrameModel: React.FC = () => {
   const { scene: frameModel } = useGLTF("/frame.glb") as GLTF;
@@ -533,22 +498,7 @@ export const FramedPainting: React.FC<FramedPaintingProps> = ({
   };
 
   const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
-    if (!isValidPointerEvent(event, activePointerIdRef.current)) {
-      return;
-    }
-
-    const start = pointerDownPositionRef.current;
-    if (!start) {
-      return;
-    }
-
-    event.stopPropagation();
-
-    const deltaX = event.clientX - start.x;
-    const deltaY = event.clientY - start.y;
-    if (Math.hypot(deltaX, deltaY) > POINTER_DRAG_THRESHOLD) {
-      hasPointerMovedRef.current = true;
-    }
+    handlePointerMoveForDrag(event, pointerDownPositionRef, hasPointerMovedRef, activePointerIdRef);
   };
 
   const handlePointerUp = (event: ThreeEvent<PointerEvent>): boolean => {

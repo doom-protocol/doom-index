@@ -1,0 +1,17 @@
+import { getBaseUrl } from "@/utils/url";
+import type { ImageLoaderProps } from "next/image";
+
+const normalizeSrc = (src: string) => (src.startsWith("/") ? src.slice(1) : src);
+
+export default function cloudflareLoader({ src, width, quality }: ImageLoaderProps) {
+  const base = getBaseUrl();
+  const isLocal = base.includes("localhost") || base.includes("127.0.0.1");
+  if (isLocal) return src;
+
+  const params = [`width=${width}`];
+  if (quality) params.push(`quality=${quality}`);
+
+  const absolute = src.startsWith("http://") || src.startsWith("https://") ? src : `${base}/${normalizeSrc(src)}`;
+
+  return `/cdn-cgi/image/${params.join(",")}/${absolute}`;
+}

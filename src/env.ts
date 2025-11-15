@@ -25,10 +25,6 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_BASE_URL: z.string().min(1),
-    // Node Environment - exposed to client for conditional rendering and debugging
-    NEXT_PUBLIC_NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-    // Log Level - exposed to client for conditional logging
-    NEXT_PUBLIC_LOG_LEVEL: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]).default("DEBUG"),
   },
 
   /**
@@ -41,6 +37,8 @@ export const env = createEnv({
     // If not specified, defaults to "runware:100@1"
     // The provider will be automatically resolved based on the model
     IMAGE_MODEL: z.string().optional(),
+    LOG_LEVEL: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]).default("DEBUG"),
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   },
 
   /**
@@ -53,10 +51,10 @@ export const env = createEnv({
     RUNWARE_API_KEY: process.env.RUNWARE_API_KEY,
     // Client
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
-    NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_LOG_LEVEL: process.env.LOG_LEVEL,
     // Shared
     IMAGE_MODEL: process.env.IMAGE_MODEL,
+    NODE_ENV: process.env.NODE_ENV,
+    LOG_LEVEL: process.env.LOG_LEVEL,
   },
 
   /**

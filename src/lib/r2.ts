@@ -25,6 +25,15 @@ export type R2GetResult = {
   arrayBuffer: () => Promise<ArrayBuffer>;
 };
 
+export type R2ListParams = {
+  limit?: number;
+  cursor?: string;
+  prefix?: string;
+  delimiter?: string;
+  include?: Array<"httpMetadata" | "customMetadata">;
+  startAfter?: string;
+};
+
 const contextError = (message: string, cause?: unknown): AppError => ({
   type: "InternalError",
   message,
@@ -64,6 +73,29 @@ export async function resolveR2BucketAsync(): Promise<Result<R2Bucket, AppError>
   } catch (error) {
     return err(contextError(`Failed to resolve Cloudflare context asynchronously: ${getErrorMessage(error)}`, error));
   }
+}
+
+type ResolveBucketOrThrowParams = {
+  r2Bucket?: R2Bucket;
+  errorContext?: string;
+};
+
+/**
+ * Resolve an R2 bucket, preferring a provided instance when available.
+ * Throws when automatic resolution fails to keep existing service APIs synchronous.
+ */
+export function resolveBucketOrThrow({ r2Bucket, errorContext }: ResolveBucketOrThrowParams = {}): R2Bucket {
+  if (r2Bucket) {
+    return r2Bucket;
+  }
+
+  const bucketResult = resolveR2Bucket();
+  if (bucketResult.isErr()) {
+    const prefix = errorContext ?? "Failed to resolve R2 bucket";
+    throw new Error(`${prefix}: ${bucketResult.error.message}`);
+  }
+
+  return bucketResult.value;
 }
 
 /**
@@ -154,54 +186,48 @@ export async function getImageR2(bucket: R2Bucket, key: string): Promise<Result<
 }
 
 /**
- * In-memory R2 client for development and testing
+ * List R2 objects with safe defaults and error handling
  */
-type StoredValue = {
-  content: ArrayBuffer | string;
-  contentType?: string;
-};
+export async function listR2Objects(
+  bucket: R2Bucket,
+  options: R2ListParams = {},
+): Promise<Result<R2Objects, AppError>> {
+  try {
+    const listOptions: R2ListOptions = {};
 
-const cloneBuffer = (buffer: ArrayBuffer): ArrayBuffer => buffer.slice(0);
+    if (typeof options.limit === "number") {
+      const clamped = Math.max(1, Math.min(1000, Math.floor(options.limit)));
+      listOptions.limit = clamped;
+    }
 
-export function createMemoryR2Client(): {
-  bucket: R2Bucket;
-  store: Map<string, StoredValue>;
-} {
-  const store = new Map<string, StoredValue>();
+    if (options.prefix) {
+      listOptions.prefix = options.prefix;
+    }
 
-  const bucket = {
-    async put(key: string, value: ArrayBuffer | string, options?: R2PutOptions): Promise<void> {
-      const content = value instanceof ArrayBuffer ? cloneBuffer(value) : value;
-      store.set(key, {
-        content,
-        contentType: options?.httpMetadata?.contentType,
-      });
-    },
+    if (options.cursor) {
+      listOptions.cursor = options.cursor;
+    }
 
-    async get(key: string): Promise<R2GetResult | null> {
-      const entry = store.get(key);
-      if (!entry) return null;
+    if (options.startAfter) {
+      listOptions.startAfter = options.startAfter;
+    }
 
-      const { content } = entry;
+    if (options.delimiter) {
+      listOptions.delimiter = options.delimiter;
+    }
 
-      return {
-        async text() {
-          if (typeof content === "string") {
-            return content;
-          }
-          const decoder = new TextDecoder();
-          return decoder.decode(content);
-        },
-        async arrayBuffer() {
-          if (content instanceof ArrayBuffer) {
-            return cloneBuffer(content);
-          }
-          const encoder = new TextEncoder();
-          return encoder.encode(content).buffer;
-        },
-      };
-    },
-  } as unknown as R2Bucket;
+    if (options.include && options.include.length > 0) {
+      listOptions.include = options.include;
+    }
 
-  return { bucket, store };
+    const result = await bucket.list(listOptions);
+    return ok(result);
+  } catch (error) {
+    return err({
+      type: "StorageError",
+      op: "list",
+      key: options.prefix ?? "unknown",
+      message: `R2 list failed: ${getErrorMessage(error)}`,
+    });
+  }
 }

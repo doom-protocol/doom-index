@@ -17,12 +17,15 @@
     "cf-typegen": "wrangler types src/types/worker-configuration.d.ts --env-interface CloudflareBindings",
     "generate": "bun --env-file=.dev.vars scripts/generate.ts",
     "watch-cron": "bun scripts/watch-cron.ts",
+    "cleanup-r2": "bun --env-file=.dev.vars scripts/cleanup-old-r2-objects.ts",
+    "cleanup-r2:dry-run": "bun --env-file=.dev.vars scripts/cleanup-old-r2-objects.ts --dry-run",
     "preview": "opennextjs-cloudflare preview --test-scheduled",
     "upload": "opennextjs-cloudflare upload",
     "deploy": "opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.65",
+    "@aws-sdk/client-s3": "^3.932.0",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
     "@next/mdx": "^16.0.3",

@@ -13,7 +13,6 @@ const globalStateSchema = z.object({
   prevHash: z.string().nullable(),
   lastTs: z.string().nullable(),
   imageUrl: z.string().nullable().optional(),
-  revenueMinute: z.string().nullable().optional(),
 });
 
 export const useGlobalState = () => {

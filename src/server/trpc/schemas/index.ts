@@ -24,9 +24,39 @@ export const r2GetObjectSchema = z.object({
   key: z.array(z.string().min(1)).min(1, "At least one key segment is required"),
 });
 
+// Archive Schemas
+export const archiveListSchema = z
+  .object({
+    limit: z.number().int().min(1).max(100).optional(),
+    cursor: z.string().optional(),
+    startDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD")
+      .optional(),
+    endDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD")
+      .optional(),
+  })
+  .refine(
+    data => {
+      if (data.startDate && data.endDate) {
+        const start = new Date(data.startDate);
+        const end = new Date(data.endDate);
+        return start <= end;
+      }
+      return true;
+    },
+    {
+      message: "startDate must be before or equal to endDate",
+      path: ["startDate"],
+    },
+  );
+
 // 型推論ヘルパー
 export type TokenTicker = z.infer<typeof tokenTickerSchema>;
 export type ViewerRegisterInput = z.infer<typeof viewerRegisterSchema>;
 export type ViewerRemoveInput = z.infer<typeof viewerRemoveSchema>;
 export type TokenGetStateInput = z.infer<typeof tokenGetStateSchema>;
 export type R2GetObjectInput = z.infer<typeof r2GetObjectSchema>;
+export type ArchiveListInput = z.infer<typeof archiveListSchema>;

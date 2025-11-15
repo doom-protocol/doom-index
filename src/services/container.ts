@@ -4,8 +4,8 @@ import { createPromptService } from "@/services/prompt";
 import { createStateService } from "@/services/state";
 import { createGenerationService } from "@/services/generation";
 import { createAutoResolveProvider } from "@/lib/providers";
-import { createRevenueEngine } from "@/services/revenue";
-import { resolveR2Bucket } from "@/lib/r2";
+import { createArchiveStorageService } from "@/services/archive-storage";
+import { resolveBucketOrThrow } from "@/lib/r2";
 
 /**
  * Create service container for Cloudflare Workers environment
@@ -13,33 +13,21 @@ import { resolveR2Bucket } from "@/lib/r2";
  * @param r2Bucket - Optional R2 bucket. If not provided, resolves from Cloudflare context
  */
 export function createServicesForWorkers(r2Bucket?: R2Bucket) {
-  let bucket: R2Bucket;
-  if (r2Bucket) {
-    bucket = r2Bucket;
-  } else {
-    const bucketResult = resolveR2Bucket();
-    if (bucketResult.isErr()) {
-      throw new Error(`Failed to resolve R2 bucket: ${bucketResult.error.message}`);
-    }
-    bucket = bucketResult.value;
-  }
+  const bucket = resolveBucketOrThrow({ r2Bucket });
 
   const marketCapService = createMarketCapService({ fetch, log: logger });
   const promptService = createPromptService();
   const stateService = createStateService({ r2Bucket: bucket });
+  const archiveStorageService = createArchiveStorageService({ r2Bucket: bucket });
   // Provider automatically resolves based on model in ImageRequest
   const imageProvider = createAutoResolveProvider();
-  const revenueEngine = createRevenueEngine();
-
-  const fetchTradeSnapshots = async () => [];
 
   const generationService = createGenerationService({
     marketCapService,
     promptService,
     imageProvider,
     stateService,
-    revenueEngine,
-    fetchTradeSnapshots,
+    archiveStorageService,
     log: logger,
   });
 
@@ -47,9 +35,9 @@ export function createServicesForWorkers(r2Bucket?: R2Bucket) {
     marketCapService,
     promptService,
     stateService,
+    archiveStorageService,
     generationService,
     imageProvider,
-    revenueEngine,
   };
 }
 

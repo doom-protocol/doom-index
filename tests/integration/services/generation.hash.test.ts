@@ -7,6 +7,7 @@ import { TOKEN_TICKERS, MARKET_CAP_ROUND_MULTIPLIER, type McMap, type McMapRound
 import type { PromptComposition } from "@/services/prompt";
 import type { AppError } from "@/types/app-error";
 import type { RevenueReport, TradeSnapshot } from "@/types/domain";
+import type { ArchiveStorageService } from "@/services/archive-storage";
 import { LogLevel } from "@/utils/logger";
 
 const makeMap = (base: number): McMap =>
@@ -88,9 +89,11 @@ describe("GenerationService orchestration (4.x)", () => {
       writeGlobalState: mock(async () => ok(undefined)),
       readTokenState: mock(async () => ok(null)),
       writeTokenStates: mock(async () => ok(undefined)),
-      storeImage: mock(async () => ok("https://new-image")),
       writeRevenue: mock(async () => ok(undefined)),
       readRevenue: mock(async () => ok(null)),
+    };
+    const archiveStorageService: ArchiveStorageService = {
+      storeImageWithMetadata: mock(async () => ok({ imageUrl: "https://new-image", metadataUrl: "https://metadata" })),
     };
     const revenueEngine = {
       calculateMinuteRevenue: mock(() => ok(createRevenueReport())),
@@ -153,9 +156,14 @@ describe("GenerationService orchestration (4.x)", () => {
       writeGlobalState: mock(async () => ok(undefined)),
       readTokenState: mock(async () => ok(null)),
       writeTokenStates: mock(async () => ok(undefined)),
-      storeImage: mock(async () => ok("https://cdn/new-image.webp")),
       writeRevenue: mock(async () => ok(undefined)),
       readRevenue: mock(async () => ok(null)),
+    };
+    const storeImageWithMetadataMock = mock(async () =>
+      ok({ imageUrl: "https://cdn/new-image.webp", metadataUrl: "https://metadata" }),
+    );
+    const archiveStorageService: ArchiveStorageService = {
+      storeImageWithMetadata: storeImageWithMetadataMock,
     };
     const revenueEngine = {
       calculateMinuteRevenue: mock(() => ok(createRevenueReport())),
@@ -182,6 +190,7 @@ describe("GenerationService orchestration (4.x)", () => {
       imageProvider,
       stateService,
       revenueEngine,
+      archiveStorageService,
       fetchTradeSnapshots: tradeFetcher,
       log: logger,
     });
@@ -200,7 +209,7 @@ describe("GenerationService orchestration (4.x)", () => {
 
     expect(promptService.composePrompt.mock.calls.length).toBe(1);
     expect(imageProvider.generate.mock.calls.length).toBe(1);
-    expect(stateService.storeImage.mock.calls.length).toBe(1);
+    expect(storeImageWithMetadataMock.mock.calls.length).toBe(1);
     expect(stateService.writeGlobalState.mock.calls.length).toBe(1);
     expect(stateService.writeTokenStates.mock.calls.length).toBe(1);
     expect(stateService.writeRevenue.mock.calls.length).toBe(1);
@@ -229,9 +238,14 @@ describe("GenerationService orchestration (4.x)", () => {
       writeGlobalState: mock(async () => ok(undefined)),
       readTokenState: mock(async () => ok(null)),
       writeTokenStates: mock(async () => ok(undefined)),
-      storeImage: mock(async () => ok("https://cdn/new-image.webp")),
       writeRevenue: mock(async () => ok(undefined)),
       readRevenue: mock(async () => ok(null)),
+    };
+    const storeImageWithMetadataMock2 = mock(async () =>
+      ok({ imageUrl: "https://cdn/new-image.webp", metadataUrl: "https://metadata" }),
+    );
+    const archiveStorageService: ArchiveStorageService = {
+      storeImageWithMetadata: storeImageWithMetadataMock2,
     };
     const revenueEngine = {
       calculateMinuteRevenue: mock(() => ok(createRevenueReport())),
@@ -253,6 +267,7 @@ describe("GenerationService orchestration (4.x)", () => {
       imageProvider,
       stateService,
       revenueEngine,
+      archiveStorageService,
       fetchTradeSnapshots: tradeFetcher,
       log: logger,
     });
@@ -262,7 +277,7 @@ describe("GenerationService orchestration (4.x)", () => {
     if (result.isErr()) {
       expect(result.error).toEqual(providerError);
     }
-    expect(stateService.storeImage.mock.calls.length).toBe(0);
+    expect(storeImageWithMetadataMock2.mock.calls.length).toBe(0);
     expect(stateService.writeGlobalState.mock.calls.length).toBe(0);
   });
 });

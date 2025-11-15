@@ -7,8 +7,11 @@ import MDXArticle from "@/components/about/mdx-article";
 describe("MDXArticle", () => {
   it("should render article element with MDX content", () => {
     const { container } = render(<MDXArticle />);
-    const article = container.querySelector("article.whitepaper-article");
+    const article = container.querySelector("article");
     expect(article).toBeDefined();
+    // Check for Tailwind classes
+    expect(article?.className).toContain("max-w-full");
+    expect(article?.className).toContain("bg-transparent");
   });
 
   it("should render semantic HTML elements from MDX", () => {

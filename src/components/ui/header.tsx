@@ -7,9 +7,10 @@ import { PumpFunIcon } from "@/components/icons/pump-fun-icon";
 import { GitHubIcon } from "@/components/icons/github-icon";
 import { XIcon } from "@/components/icons/x-icon";
 import { InfoIcon } from "@/components/icons/info-icon";
+import { ArchiveIcon } from "@/components/icons/archive-icon";
 import { GITHUB_URL, X_URL } from "@/constants";
 
-import { TopBarProgress } from "./top-bar-progress";
+import { HeaderProgress } from "./header-progress";
 
 type NavLinkConfig = {
   href: string;
@@ -38,11 +39,11 @@ const NAV_LINKS: NavLinkConfig[] = [
 const DESKTOP_LINK_CLASS =
   "group flex h-7 w-7 items-center justify-center rounded-full border border-white/15 text-white/70 transition-colors hover:border-white/40 hover:text-white";
 
-interface TopBarProps {
+interface HeaderProps {
   showProgress?: boolean;
 }
 
-export const TopBar: FC<TopBarProps> = ({ showProgress = true }) => {
+export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -111,7 +112,7 @@ export const TopBar: FC<TopBarProps> = ({ showProgress = true }) => {
                 type="button"
                 onClick={toggleMenu}
                 aria-expanded={isMenuOpen}
-                aria-controls="topbar-mobile-menu"
+                aria-controls="header-mobile-menu"
                 className="flex h-10 w-10 items-center justify-center rounded-md text-white/70 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
               >
                 <span className="sr-only">Open Navigation Menu</span>
@@ -129,9 +130,9 @@ export const TopBar: FC<TopBarProps> = ({ showProgress = true }) => {
               </button>
               {isMenuOpen ? (
                 <nav
-                  id="topbar-mobile-menu"
+                  id="header-mobile-menu"
                   aria-label="Navigation Links"
-                  className="absolute right-0 top-full mt-3 flex w-48 flex-col gap-1 rounded-xl border border-white/20 bg-white/10 p-3 text-white/90 shadow-2xl backdrop-blur-lg"
+                  className="absolute right-0 top-full mt-3 flex w-48 flex-col gap-1 rounded-xl border border-white/20 bg-black/70 p-3 text-white/90 shadow-2xl backdrop-blur-xl"
                 >
                   <Link
                     href="/about"
@@ -140,6 +141,14 @@ export const TopBar: FC<TopBarProps> = ({ showProgress = true }) => {
                   >
                     <InfoIcon className="h-4 w-4" />
                     <span>About</span>
+                  </Link>
+                  <Link
+                    href="/archive"
+                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-white/10 hover:text-white"
+                    onClick={closeMenu}
+                  >
+                    <ArchiveIcon className="h-4 w-4" />
+                    <span>Archive</span>
                   </Link>
                   {NAV_LINKS.map(({ href, label, Icon }) => (
                     <Link
@@ -159,12 +168,23 @@ export const TopBar: FC<TopBarProps> = ({ showProgress = true }) => {
             </div>
           </div>
           <div className="flex flex-col items-center md:justify-self-center">
-            {showProgress ? <TopBarProgress /> : <div className="h-0 md:h-[68px]" aria-hidden="true" />}
+            {showProgress ? <HeaderProgress /> : <div className="h-0 md:h-[68px]" aria-hidden="true" />}
           </div>
           <div className="hidden justify-end md:flex">
             <nav className="flex items-center justify-end gap-3" aria-label="Navigation Links">
-              <Link href="/about" aria-label="About" className={DESKTOP_LINK_CLASS}>
-                <InfoIcon className="h-3 w-3" />
+              <Link
+                href="/about"
+                aria-label="About"
+                className="group flex items-center justify-center px-4 py-1.5 text-sm text-white/70 transition-colors hover:text-white"
+              >
+                About
+              </Link>
+              <Link
+                href="/archive"
+                aria-label="Archive"
+                className="group flex items-center justify-center px-4 py-1.5 text-sm text-white/70 transition-colors hover:text-white"
+              >
+                Archive
               </Link>
               {NAV_LINKS.map(({ href, label, Icon }) => (
                 <Link

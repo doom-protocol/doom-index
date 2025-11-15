@@ -13,6 +13,8 @@ interface FloatingWhitepaperProps extends PropsWithChildren {
   onHoverChange?: (isHovered: boolean) => void;
 }
 
+const ENTRANCE_DURATION = 0.5;
+
 export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
   children,
   position = [0, 0.8, 4.0],
@@ -24,6 +26,8 @@ export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const { size } = useThree();
+  const entranceElapsedRef = useRef(0);
+  const isEntranceActiveRef = useRef(true);
 
   useEffect(() => {
     basePositionRef.current = position;
@@ -32,7 +36,7 @@ export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
     }
   }, [position]);
 
-  useFrame(({ invalidate }) => {
+  useFrame(({ invalidate }, delta) => {
     if (!groupRef.current) {
       return;
     }
@@ -47,11 +51,33 @@ export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
     // Paper is at [0, 0.8, 4.0], so it needs to face back towards camera
     groupRef.current.rotation.set(0, Math.PI, 0);
 
-    // Invalidate for demand mode
-    invalidate();
+    // Entrance animation: fade in from 0 to 1
+    if (isEntranceActiveRef.current && scrollContainerRef.current) {
+      entranceElapsedRef.current += delta;
+      const progress = Math.min(entranceElapsedRef.current / ENTRANCE_DURATION, 1);
+      const opacity = progress;
+
+      scrollContainerRef.current.style.opacity = opacity.toString();
+
+      if (progress >= 1) {
+        isEntranceActiveRef.current = false;
+        // Ensure final opacity is 1
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.style.opacity = "1";
+        }
+      }
+
+      invalidate();
+    } else {
+      // Invalidate for demand mode
+      invalidate();
+    }
   });
 
-  // Calculate paper size based on viewport: height 90% of viewport, width for comfortable reading
+  // Fixed aspect ratio (A4 paper ratio: 210:297 ≈ 0.707)
+  const PAPER_ASPECT_RATIO = 210 / 297; // width / height
+
+  // Calculate paper size maintaining fixed aspect ratio
   const distanceFactor = useMemo(() => {
     const { width } = size;
 
@@ -71,20 +97,48 @@ export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
     return 0.65;
   }, [size]);
 
-  const paperHeight = useMemo(() => {
-    // Height is viewport height minus header height (approximately 60px)
-    const { height } = size;
+  const { paperWidth, paperHeight } = useMemo(() => {
+    const { width, height } = size;
     const headerHeight = 60;
-    return `${height - headerHeight}px`;
-  }, [size]);
+    const availableHeight = height - headerHeight;
+    const availableWidth = width;
 
-  const paperWidth = useMemo(() => {
-    // Width is narrower for better reading (max 700px, responsive)
-    const { width } = size;
-    const maxWidth = 700;
-    const minWidth = Math.min(width * 1.0, maxWidth);
-    return `${minWidth}px`;
-  }, [size]);
+    // Calculate maximum size maintaining aspect ratio
+    // Try fitting by width first
+    let calculatedWidth = availableWidth * 0.9; // Use 90% of available width
+    let calculatedHeight = calculatedWidth / PAPER_ASPECT_RATIO;
+
+    // If height exceeds available space, fit by height instead
+    if (calculatedHeight > availableHeight * 0.9) {
+      calculatedHeight = availableHeight * 0.9;
+      calculatedWidth = calculatedHeight * PAPER_ASPECT_RATIO;
+    }
+
+    // Set reasonable min/max constraints
+    const minWidth = 320; // Minimum readable width
+    const maxWidth = 800; // Maximum comfortable reading width
+    const minHeight = minWidth / PAPER_ASPECT_RATIO;
+    const maxHeight = maxWidth / PAPER_ASPECT_RATIO;
+
+    // Apply constraints while maintaining aspect ratio
+    let finalWidth = Math.max(minWidth, Math.min(maxWidth, calculatedWidth));
+    let finalHeight = finalWidth / PAPER_ASPECT_RATIO;
+
+    // Ensure height also fits within constraints
+    if (finalHeight > maxHeight) {
+      finalHeight = maxHeight;
+      finalWidth = finalHeight * PAPER_ASPECT_RATIO;
+    }
+    if (finalHeight < minHeight) {
+      finalHeight = minHeight;
+      finalWidth = finalHeight * PAPER_ASPECT_RATIO;
+    }
+
+    return {
+      paperWidth: `${finalWidth}px`,
+      paperHeight: `${finalHeight}px`,
+    };
+  }, [size, PAPER_ASPECT_RATIO]);
 
   useEffect(() => {
     if (onHoverChange) {
@@ -107,23 +161,15 @@ export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
       >
         <div
           ref={scrollContainerRef}
+          className="w-full h-full overflow-y-auto overflow-x-hidden relative bg-white m-0 p-0 rounded-sm border border-[rgba(200,200,200,0.3)]"
           style={{
-            width: "100%",
-            height: "100%",
-            overflowY: "auto",
-            overflowX: "hidden",
-            position: "relative",
-            backgroundColor: "#ffffff",
-            margin: 0,
-            padding: 0,
+            opacity: 0, // Start with opacity 0, will be animated to 1
             boxShadow: `
               0 0 0 1px rgba(0, 0, 0, 0.05),
               0 2px 8px rgba(0, 0, 0, 0.1),
               0 8px 24px rgba(0, 0, 0, 0.15),
               0 16px 48px rgba(0, 0, 0, 0.2)
             `,
-            borderRadius: "2px",
-            border: "1px solid rgba(200, 200, 200, 0.3)",
             ...(isMobile
               ? {
                   WebkitOverflowScrolling: "touch",

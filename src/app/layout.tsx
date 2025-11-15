@@ -90,7 +90,7 @@ export default function RootLayout({
 }>) {
   return (
     <ViewTransition>
-      <html lang="en" style={{ margin: 0, padding: 0, width: "100%", height: "100%" }}>
+      <html lang="en" style={{ margin: 0, padding: 0, width: "100%", height: "100%", backgroundColor: "#000000" }}>
         <body
           className={`${cinzelDecorative.variable} antialiased`}
           style={{ margin: 0, padding: 0, width: "100%", height: "100%", overflow: "hidden" }}

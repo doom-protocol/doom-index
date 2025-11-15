@@ -9,12 +9,11 @@ import { logger } from "@/utils/logger";
 const MINUTE_MS = 60000;
 const HAPTIC_WINDOW_START_REMAINING_SECOND = 10;
 
-export const TopBarProgress: FC = () => {
-  // Hydrationエラーを防ぐため初期値は0にしてクライアント側で実際の値に同期する
+export const HeaderProgress: FC = () => {
   const [displaySecond, setDisplaySecond] = useState<number>(0);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
 
-  const { triggerHaptic } = useHaptic(5);
+  const { triggerHaptic } = useHaptic();
   const [playChime] = useSound("/clock-chime.mp3", { interrupt: true });
   const refetchGlobalState = useGlobalStateRefetch();
 
@@ -48,7 +47,7 @@ export const TopBarProgress: FC = () => {
       }
       playChime();
       refetchGlobalState().catch(error => {
-        logger.error("top-bar-progress.refetchGlobalState.failed", { error });
+        logger.error("header-progress.refetchGlobalState.failed", { error });
       });
     };
 

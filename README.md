@@ -214,13 +214,23 @@ The application uses Cloudflare R2 for persistent storage:
 ```
 r2://doom-index-storage/
 ├── state/
-│   ├── global.json           # Global state (prevHash, lastTs, imageUrl)
-│   └── {ticker}.json         # Per-token state (thumbnailUrl, updatedAt)
-├── images/
-│   └── DOOM_*.webp           # Generated images
-└── revenue/
-    └── {minuteIso}.json      # Revenue reports
+│   ├── global.json                              # Global state (prevHash, lastTs, imageUrl)
+│   └── {ticker}.json                            # Per-token state (thumbnailUrl, updatedAt)
+└── images/
+    └── {YYYY}/
+        └── {MM}/
+            └── {DD}/
+                ├── DOOM_{YYYYMMDDHHmm}_{paramsHash}_{seed}.webp
+                └── DOOM_{YYYYMMDDHHmm}_{paramsHash}_{seed}.json
 ```
+
+**Key Points**:
+
+- **Date-based prefix structure**: Images are organized by date (`images/{YYYY}/{MM}/{DD}/`) for efficient querying
+- **Atomic storage**: Images and metadata are always saved together as pairs
+- **Unique filenames**: Each file is uniquely identified by timestamp, params hash, and seed
+
+For detailed documentation, see [R2 Storage Structure](docs/r2-storage-structure.md).
 
 #### Key Features
 

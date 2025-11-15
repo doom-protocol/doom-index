@@ -2,19 +2,16 @@ import { err, ok, Result } from "neverthrow";
 import { roundMc } from "@/lib/round";
 import { hashRoundedMap } from "@/lib/pure/hash";
 import { logger } from "@/utils/logger";
+import { estimateTokenCount } from "@/utils/text";
 import { env } from "@/env";
 import { TOKEN_TICKERS, type McMap, type McMapRounded } from "@/constants/token";
 import type { MarketCapService } from "@/services/market-cap";
 import type { PromptService, PromptComposition } from "@/services/prompt";
-import type {
-  ImageProvider,
-  StateService,
-  RevenueEngine,
-  TradeSnapshot,
-  RevenueReport,
-  TokenState,
-} from "@/types/domain";
+import type { ImageProvider, StateService, TokenState } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
+import type { ArchiveStorageService } from "@/services/archive-storage";
+import type { ArchiveMetadata } from "@/types/archive";
+import { extractIdFromFilename } from "@/lib/pure/archive";
 
 export type MinuteEvaluation = {
   status: "skipped" | "generated";
@@ -23,7 +20,6 @@ export type MinuteEvaluation = {
   imageUrl?: string;
   paramsHash?: string;
   seed?: string;
-  revenue?: RevenueReport;
 };
 
 export type GenerationService = {
@@ -35,9 +31,7 @@ type GenerationDeps = {
   promptService: PromptService;
   imageProvider: ImageProvider;
   stateService: StateService;
-  revenueEngine: RevenueEngine;
-  fetchTradeSnapshots?: () => Promise<TradeSnapshot[]>;
-  generationRate?: number;
+  archiveStorageService: ArchiveStorageService; // Required: uses archive storage for images and metadata
   log?: typeof logger;
 };
 
@@ -55,9 +49,7 @@ export function createGenerationService({
   promptService,
   imageProvider,
   stateService,
-  revenueEngine,
-  fetchTradeSnapshots = async () => [],
-  generationRate = 1,
+  archiveStorageService,
   log = logger,
 }: GenerationDeps): GenerationService {
   /**
@@ -114,20 +106,6 @@ export function createGenerationService({
     });
 
     // Estimate token count from prompt
-    const estimateTokenCount = (text: string): { charBased: number; wordBased: number } => {
-      const charCount = text.length;
-      const wordCount = text
-        .trim()
-        .split(/\s+/)
-        .filter(w => w.length > 0).length;
-      // 1 token ≈ 4 characters (English)
-      // 1 token ≈ 0.75 words (English)
-      return {
-        charBased: Math.ceil(charCount / 4),
-        wordBased: Math.ceil(wordCount / 0.75),
-      };
-    };
-
     const promptTokens = estimateTokenCount(composition.prompt.text);
     const negativeTokens = estimateTokenCount(composition.prompt.negative);
     const totalTokens = {
@@ -166,20 +144,31 @@ export function createGenerationService({
     );
     if (imageResult.isErr()) return err(imageResult.error);
 
-    const storedImageResult = await stateService.storeImage(composition.prompt.filename, imageResult.value.imageBuffer);
-    if (storedImageResult.isErr()) return err(storedImageResult.error);
-    const imageUrl = storedImageResult.value;
+    // Build archive metadata
+    const metadataId = extractIdFromFilename(composition.prompt.filename);
+    const timestamp = minuteBucketToIso(composition.minuteBucket);
+    const metadata: ArchiveMetadata = {
+      id: metadataId,
+      timestamp,
+      minuteBucket: timestamp,
+      paramsHash: composition.paramsHash,
+      seed: composition.seed,
+      mcRounded: roundedMap,
+      visualParams: composition.vp,
+      imageUrl: "", // Will be set by archiveStorageService
+      fileSize: imageResult.value.imageBuffer.byteLength,
+      prompt: composition.prompt.text,
+      negative: composition.prompt.negative,
+    };
 
-    const revenueSnapshots = await fetchTradeSnapshots();
-    const revenueCalculation = revenueEngine.calculateMinuteRevenue(revenueSnapshots, generationRate);
-    let revenueReport: RevenueReport | undefined;
-    if (revenueCalculation.isOk()) {
-      revenueReport = revenueCalculation.value;
-      const revenueWrite = await stateService.writeRevenue(revenueReport, composition.minuteBucket);
-      if (revenueWrite.isErr()) return err(revenueWrite.error);
-    } else {
-      log.warn("generation.revenue.skip", { cause: revenueCalculation.error });
-    }
+    const archiveResult = await archiveStorageService.storeImageWithMetadata(
+      composition.minuteBucket,
+      composition.prompt.filename,
+      imageResult.value.imageBuffer,
+      metadata,
+    );
+    if (archiveResult.isErr()) return err(archiveResult.error);
+    const imageUrl = archiveResult.value.imageUrl;
 
     const globalWrite = await stateService.writeGlobalState({
       prevHash: hash,
@@ -202,7 +191,6 @@ export function createGenerationService({
       imageUrl,
       paramsHash: composition.paramsHash,
       seed: composition.seed,
-      revenue: revenueReport,
     });
   }
 

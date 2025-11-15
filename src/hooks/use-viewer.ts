@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { logger } from "@/utils/logger";
 
 export function useViewer() {
   const workerRef = useRef<Worker | null>(null);
@@ -8,7 +9,7 @@ export function useViewer() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    console.debug("[useViewer] Starting viewer worker");
+    logger.debug("viewer.start");
 
     let w: Worker | null = null;
     try {
@@ -18,7 +19,7 @@ export function useViewer() {
 
       // Add error handler to catch Worker errors
       w.addEventListener("error", event => {
-        console.error("[useViewer] Worker error", {
+        logger.debug("viewer.worker.error", {
           message: event.message,
           filename: event.filename,
           lineno: event.lineno,
@@ -29,12 +30,12 @@ export function useViewer() {
 
       // Add message handler for debugging
       w.addEventListener("message", event => {
-        console.debug("[useViewer] Worker message", event.data);
+        logger.debug("viewer.worker.message", event.data);
       });
 
-      console.debug("[useViewer] Worker started successfully");
+      logger.debug("viewer.started");
     } catch (error) {
-      console.error("[useViewer] Failed to start worker", error);
+      logger.debug("viewer.start.failed", { error });
       return; // Early return if worker creation failed
     }
 
@@ -42,7 +43,7 @@ export function useViewer() {
     const onUnload = () => {
       const worker = workerRef.current;
       if (worker) {
-        console.debug("[useViewer] Terminating worker");
+        logger.debug("viewer.terminate");
         worker.terminate();
         workerRef.current = null;
       }

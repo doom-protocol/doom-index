@@ -9,9 +9,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       <h1 className="text-4xl font-bold mb-6 mt-8 text-center">{children}</h1>
     ),
     h2: ({ children }: { children?: ReactNode }) => (
-      <h2 className="text-2xl font-bold mt-12 mb-4 pb-2" style={{ borderBottom: "2px solid #333" }}>
-        {children}
-      </h2>
+      <h2 className="text-2xl font-bold mt-12 mb-4 pb-2 border-b-2 border-[#333]">{children}</h2>
     ),
     h3: ({ children }: { children?: ReactNode }) => <h3 className="text-xl font-semibold mt-8 mb-3">{children}</h3>,
     h4: ({ children }: { children?: ReactNode }) => (
@@ -33,23 +31,15 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </code>
     ),
     pre: ({ children }: { children?: ReactNode }) => (
-      <pre className="mb-6" style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
-        {children}
-      </pre>
+      <pre className="mb-6 whitespace-pre-wrap break-words">{children}</pre>
     ),
     blockquote: ({ children }: { children?: ReactNode }) => (
-      <blockquote
-        className="pl-6 pr-4 py-2 italic mb-6"
-        style={{ borderLeft: "4px solid #666", background: "#f5f5f5" }}
-      >
-        {children}
-      </blockquote>
+      <blockquote className="pl-6 pr-4 py-2 italic mb-6 border-l-4 border-[#666] bg-[#f5f5f5]">{children}</blockquote>
     ),
     a: ({ children, href }: { children?: ReactNode; href?: string }) => (
       <a
         href={href}
-        className="underline decoration-1 underline-offset-2"
-        style={{ color: "#0066cc" }}
+        className="underline decoration-1 underline-offset-2 text-[#0066cc]"
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -57,7 +47,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </a>
     ),
     table: ({ children }: { children?: ReactNode }) => (
-      <div className="overflow-x-auto mb-6 my-6" style={{ width: "100%" }}>
+      <div className="overflow-x-auto mb-6 my-6 w-full">
         <table className="min-w-full">{children}</table>
       </div>
     ),
@@ -68,15 +58,11 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     td: ({ children }: { children?: ReactNode }) => <td>{children}</td>,
     img: ({ src, alt }: { src?: string; alt?: string }) => (
       <div className="my-6 flex flex-col items-center">
-        <img src={src} alt={alt} className="max-w-xs h-auto" style={{ border: "1px solid #ddd" }} />
-        {alt && (
-          <p className="text-sm mt-2 italic text-center" style={{ color: "#666" }}>
-            {alt}
-          </p>
-        )}
+        <img src={src} alt={alt} className="max-w-xs h-auto border border-[#ddd]" />
+        {alt && <p className="text-sm mt-2 italic text-center text-[#666]">{alt}</p>}
       </div>
     ),
-    hr: () => <hr className="my-8" style={{ borderTop: "1px solid #ccc" }} />,
+    hr: () => <hr className="my-8 border-t border-[#ccc]" />,
     ...components,
   };
 }

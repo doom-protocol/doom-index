@@ -114,7 +114,7 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
   }, [isHelpOpen, updateHelpAnchor]);
 
   useEffect(() => {
-    if (env.NEXT_PUBLIC_NODE_ENV !== "development") {
+    if (env.NODE_ENV !== "development") {
       return;
     }
 
@@ -247,36 +247,17 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
         position={[1.8, 0.5, 2.2]}
         rotation={[0, -Math.PI / 4 + Math.PI, 0]}
         distanceFactor={0.6}
+        className="w-[400px] p-5 bg-[rgba(0,0,0,0.8)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white font-mono relative"
         style={{
-          width: "400px",
-          padding: "20px",
-          background: "rgba(0, 0, 0, 0.8)",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          borderRadius: "8px",
-          color: "white",
-          fontFamily: "monospace",
-          position: "relative",
         }}
       >
         <button
           type="button"
           onClick={() => onHelpToggle(!isHelpOpen)}
+          className="absolute top-4 right-4 w-7 h-7 rounded-full border border-[rgba(255,255,255,0.25)] bg-[rgba(255,255,255,0.08)] text-white text-base font-bold cursor-pointer touch-manipulation"
           style={{
-            position: "absolute",
-            top: "16px",
-            right: "16px",
-            width: "28px",
-            height: "28px",
-            borderRadius: "9999px",
-            border: "1px solid rgba(255, 255, 255, 0.25)",
-            background: "rgba(255, 255, 255, 0.08)",
-            color: "#ffffff",
-            fontSize: "16px",
-            fontWeight: 700,
-            cursor: "pointer",
             transition: "transform 0.2s ease, background 0.2s ease",
-            touchAction: "manipulation",
           }}
           onPointerEnter={e => {
             e.currentTarget.style.transform = "scale(1.08)";
@@ -298,13 +279,13 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
           ?
         </button>
         <div>
-          <h2 style={{ fontSize: "16px", marginBottom: "14px", fontWeight: "bold" }}>Elements of the World</h2>
+          <h2 className="text-base mb-[14px] font-bold">Elements of the World</h2>
 
-          {isLoading && <p style={{ fontSize: "11px", opacity: 0.6 }}>Loading...</p>}
-          {isError && <p style={{ fontSize: "11px", color: "#ff6b6b" }}>Error loading data</p>}
+          {isLoading && <p className="text-[11px] opacity-60">Loading...</p>}
+          {isError && <p className="text-[11px] text-[#ff6b6b]">Error loading data</p>}
 
           {data && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div className="flex flex-col gap-3">
               <div
                 style={{
                   display: "flex",
@@ -317,20 +298,9 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
                   boxShadow: "inset 0 0 18px rgba(0, 0, 0, 0.65)",
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      letterSpacing: "0.16em",
-                      textTransform: "uppercase",
-                      opacity: 0.6,
-                    }}
-                  >
-                    Global Resonance
-                  </span>
-                  <span style={{ fontSize: "18px", fontWeight: "bold" }}>
-                    ${numberFormatter.format(totalMarketCap)}
-                  </span>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-[11px] tracking-[0.16em] uppercase opacity-60">Global Resonance</span>
+                  <span className="text-lg font-bold">${numberFormatter.format(totalMarketCap)}</span>
                 </div>
                 {dominantDescription && dominantEntry && (
                   <div
@@ -344,23 +314,14 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
                       border: "1px solid rgba(255, 255, 255, 0.08)",
                     }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            letterSpacing: "0.16em",
-                            textTransform: "uppercase",
-                            opacity: 0.58,
-                          }}
-                        >
-                          Dominant Motif
-                        </span>
-                        <span style={{ fontSize: "14px", fontWeight: 700 }}>{dominantDescription.title}</span>
+                    <div className="flex justify-between items-baseline">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[11px] tracking-[0.16em] uppercase opacity-[0.58]">Dominant Motif</span>
+                        <span className="text-sm font-bold">{dominantDescription.title}</span>
                       </div>
-                      <span style={{ fontSize: "12px", opacity: 0.7 }}>{dominantShareLabel}</span>
+                      <span className="text-xs opacity-70">{dominantShareLabel}</span>
                     </div>
-                    <p style={{ fontSize: "11px", lineHeight: 1.6, opacity: 0.7 }}>{dominantDescription.motif}</p>
+                    <p className="text-[11px] leading-[1.6] opacity-70">{dominantDescription.motif}</p>
                     <div
                       style={{
                         width: "100%",
@@ -414,14 +375,9 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
                       href={pumpFunUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      className="text-sm font-bold text-[#4ade80] no-underline cursor-pointer touch-manipulation"
                       style={{
-                        fontSize: "14px",
-                        fontWeight: "bold",
-                        color: "#4ade80",
-                        textDecoration: "none",
-                        cursor: "pointer",
                         transition: "color 0.2s",
-                        touchAction: "manipulation",
                       }}
                       onPointerEnter={e => (e.currentTarget.style.color = "#22c55e")}
                       onPointerLeave={e => (e.currentTarget.style.color = "#4ade80")}
@@ -430,18 +386,17 @@ export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen
                     >
                       ${ticker}
                     </a>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                    <div className="flex flex-col items-end gap-1">
                       <span
+                        className="text-sm font-bold"
                         style={{
-                          fontSize: "14px",
-                          fontWeight: "bold",
                           transform: isHighlighted ? "translateY(-2px)" : "translateY(0)",
                           transition: "transform 0.6s ease",
                         }}
                       >
                         ${numberFormatter.format(currentValue)}
                       </span>
-                      <span style={{ fontSize: "10px", opacity: 0.65, letterSpacing: "0.05em" }}>{shareLabel}</span>
+                      <span className="text-[10px] opacity-65 tracking-[0.05em]">{shareLabel}</span>
                     </div>
                   </div>
                 );

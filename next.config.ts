@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
     viewTransition: true,
   },
   pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
+  images: {
+    loader: "custom",
+    loaderFile: "./src/lib/image-loader.ts",
+  },
 };
 
 const withMDX = createMDX({

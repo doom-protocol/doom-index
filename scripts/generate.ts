@@ -16,6 +16,10 @@ import type { McMapRounded } from "@/constants/token";
 import { createPromptService } from "@/services/prompt";
 import { resolveProviderWithMock, createAutoResolveProvider } from "@/lib/providers";
 import { logger } from "@/utils/logger";
+import { createArchiveStorageService } from "@/services/archive-storage";
+import { createTestR2Bucket } from "@/testing/memory-r2";
+import { extractIdFromFilename } from "@/lib/pure/archive";
+import type { ArchiveMetadata } from "@/types/archive";
 
 type Args = {
   mock?: boolean;
@@ -229,35 +233,139 @@ const main = async () => {
 
   await mkdir(outputFolder, { recursive: true });
 
-  // Save image
-  const imageFilename = `image.${args.format}`;
-  const imagePath = join(outputFolder, imageFilename);
-  await Bun.write(imagePath, imageResponse.imageBuffer);
+  // Use archive storage service (same method as archive)
+  // In script environment, use memory R2 client
+  const { bucket } = createTestR2Bucket();
+  const archiveStorageService = createArchiveStorageService({ r2Bucket: bucket });
 
-  // Save metadata
-  const metadataPath = join(outputFolder, "params.json");
-  const metadata = {
-    timestamp,
-    provider: provider.name,
-    seed: composition.seed,
+  // Build archive metadata (same structure as archive)
+  const metadataId = extractIdFromFilename(composition.prompt.filename);
+  const minuteBucketIso = `${composition.minuteBucket}:00Z`;
+  const archiveMetadata: ArchiveMetadata = {
+    id: metadataId,
+    timestamp: minuteBucketIso,
+    minuteBucket: minuteBucketIso,
     paramsHash: composition.paramsHash,
+    seed: composition.seed,
     mcRounded,
     visualParams: composition.vp,
+    imageUrl: "", // Will be set by archiveStorageService
+    fileSize: imageResponse.imageBuffer.byteLength,
     prompt: composition.prompt.text,
     negative: composition.prompt.negative,
+  };
+
+  // Store image and metadata using archive storage service
+  const archiveResult = await archiveStorageService.storeImageWithMetadata(
+    composition.minuteBucket,
+    composition.prompt.filename,
+    imageResponse.imageBuffer,
+    archiveMetadata,
+  );
+
+  if (archiveResult.isErr()) {
+    logger.error("generate.archive.error", archiveResult.error);
+    console.error("\n⚠️ Archive storage failed:", archiveResult.error.message);
+    console.error("Continuing with local file save...");
+  } else {
+    logger.info("generate.archive.success", {
+      imageUrl: archiveResult.value.imageUrl,
+      metadataUrl: archiveResult.value.metadataUrl,
+    });
+  }
+
+  // Save image locally (as binary)
+  const imageFilename = `image.${args.format}`;
+  const imagePath = join(outputFolder, imageFilename);
+
+  // Ensure we have a proper ArrayBuffer slice (handle byteOffset/byteLength if needed)
+  // This matches the approach used in ai-sdk provider
+  let imageBufferToWrite: ArrayBuffer;
+  if (imageResponse.imageBuffer instanceof ArrayBuffer) {
+    imageBufferToWrite = imageResponse.imageBuffer;
+  } else {
+    // Fallback: create a new ArrayBuffer from the data
+    const uint8Array = new Uint8Array(imageResponse.imageBuffer);
+    imageBufferToWrite = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength);
+  }
+
+  // Convert to Uint8Array for reliable binary write
+  const imageBytes = new Uint8Array(imageBufferToWrite);
+  await Bun.write(imagePath, imageBytes);
+
+  // Save metadata locally (with additional script-specific fields)
+  const metadataPath = join(outputFolder, "params.json");
+  const localMetadata = {
+    ...archiveMetadata,
+    timestamp: timestamp,
+    provider: provider.name,
     dimensions: { width: args.width, height: args.height },
     format: args.format,
     providerMeta: imageResponse.providerMeta,
-    fileSize: imageResponse.imageBuffer.byteLength,
   };
 
-  await Bun.write(metadataPath, JSON.stringify(metadata, null, 2));
+  await Bun.write(metadataPath, JSON.stringify(localMetadata, null, 2));
+
+  // Verify image file was written correctly
+  const imageFile = Bun.file(imagePath);
+  const imageFileExists = await imageFile.exists();
+  let imageFileSize = 0;
+  let imageFileType = "unknown";
+  let imageFileBuffer: ArrayBuffer | null = null;
+
+  if (imageFileExists) {
+    imageFileBuffer = await imageFile.arrayBuffer();
+    imageFileSize = imageFileBuffer.byteLength;
+    imageFileType = imageFile.type || "unknown";
+  }
+
+  // Verify image file header (for webp: should start with "RIFF" and contain "WEBP")
+  let isValidImage = false;
+  if (imageFileBuffer && imageFileSize > 0) {
+    const header = new Uint8Array(imageFileBuffer.slice(0, Math.min(12, imageFileSize)));
+    const headerText = Array.from(header.slice(0, 4))
+      .map(b => String.fromCharCode(b))
+      .join("");
+    const hasWebpMarker = Array.from(header.slice(8, 12))
+      .map(b => String.fromCharCode(b))
+      .join("")
+      .includes("WEBP");
+    isValidImage = headerText === "RIFF" && hasWebpMarker;
+  }
 
   console.log("\n✅ Generation complete!");
   console.log(`Folder: ${outputFolder}`);
   console.log(`Image: ${imagePath}`);
   console.log(`Metadata: ${metadataPath}`);
   console.log(`Size: ${(imageResponse.imageBuffer.byteLength / 1024).toFixed(2)} KB`);
+  console.log(`\n=== File Verification ===`);
+  console.log(`Image file exists: ${imageFileExists}`);
+  console.log(`Image file size: ${(imageFileSize / 1024).toFixed(2)} KB`);
+  console.log(`Image file type: ${imageFileType}`);
+  console.log(`Buffer size matches file size: ${imageResponse.imageBuffer.byteLength === imageFileSize}`);
+  if (imageFileSize > 0) {
+    console.log(`Image file header valid: ${isValidImage ? "✅" : "❌"}`);
+    if (!isValidImage) {
+      const headerPreview = imageFileBuffer
+        ? Array.from(new Uint8Array(imageFileBuffer.slice(0, Math.min(20, imageFileSize))))
+            .map(b => b.toString(16).padStart(2, "0"))
+            .join(" ")
+        : "N/A";
+      console.log(`File header (hex): ${headerPreview}`);
+    }
+  }
+
+  if (archiveResult.isOk()) {
+    console.log(`\n=== Archive Storage ===`);
+    console.log(`Archive Image URL: ${archiveResult.value.imageUrl}`);
+    console.log(`Archive Metadata URL: ${archiveResult.value.metadataUrl}`);
+  }
+
+  // Warn if image buffer is empty (mock provider)
+  if (imageResponse.imageBuffer.byteLength === 0) {
+    console.log(`\n⚠️ Warning: Image buffer is empty (likely using mock provider)`);
+    console.log(`   To generate actual images, use a real provider like --model "dall-e-3"`);
+  }
 };
 
 main()

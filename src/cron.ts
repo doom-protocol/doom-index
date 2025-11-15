@@ -8,7 +8,7 @@
 
 import { createServicesForWorkers } from "./services/container";
 // import { createViewerService } from "./services/viewer";
-// import { logger } from "./utils/logger";
+import { logger } from "./utils/logger";
 import { getErrorMessage, getErrorStack } from "./utils/error";
 
 /**
@@ -21,7 +21,7 @@ export async function handleScheduledEvent(
 ): Promise<void> {
   const startTime = Date.now();
 
-  console.info("Cron triggered", {
+  logger.debug("cron.triggered", {
     scheduledTime: new Date(event.scheduledTime).toISOString(),
     cron: event.cron,
   });
@@ -32,7 +32,7 @@ export async function handleScheduledEvent(
     // if (kvNamespace) {
     //   const viewerService = createViewerService({ kvNamespace });
     //   const viewerResult = await viewerService.hasActiveViewer();
-
+    //
     //   if (viewerResult.isErr()) {
     //     logger.error("viewer.check.error", {
     //       error: viewerResult.error,
@@ -62,7 +62,7 @@ export async function handleScheduledEvent(
     const result = await services.generationService.evaluateMinute();
 
     if (result.isErr()) {
-      console.error("Generation failed", {
+      logger.debug("cron.generation.failed", {
         error: result.error,
         durationMs: Date.now() - startTime,
       });
@@ -71,14 +71,14 @@ export async function handleScheduledEvent(
 
     const { status, hash, imageUrl } = result.value;
 
-    console.info("Cron success", {
+    logger.debug("cron.success", {
       status,
       hash,
       imageUrl,
       durationMs: Date.now() - startTime,
     });
   } catch (error) {
-    console.error("Cron failed", {
+    logger.debug("cron.failed", {
       error: getErrorMessage(error),
       stack: getErrorStack(error),
       durationMs: Date.now() - startTime,

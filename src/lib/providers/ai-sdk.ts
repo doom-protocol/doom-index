@@ -6,6 +6,7 @@ import type { ImageGenerationOptions, ImageProvider, ImageRequest } from "@/type
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 import { getErrorMessage } from "@/utils/error";
+import { estimateTokenCount } from "@/utils/text";
 
 type OpenAiProviderMetadata = {
   images?: Array<{
@@ -73,20 +74,6 @@ export const createAiSdkProvider = (): ImageProvider => ({
       const resolvedModel = resolveAiSdkModel(model);
 
       // Estimate token count from prompt
-      const estimateTokenCount = (text: string): { charBased: number; wordBased: number } => {
-        const charCount = text.length;
-        const wordCount = text
-          .trim()
-          .split(/\s+/)
-          .filter(w => w.length > 0).length;
-        // 1 token ≈ 4 characters (English)
-        // 1 token ≈ 0.75 words (English)
-        return {
-          charBased: Math.ceil(charCount / 4),
-          wordBased: Math.ceil(wordCount / 0.75),
-        };
-      };
-
       const promptTokens = estimateTokenCount(input.prompt);
       const negativeTokens = estimateTokenCount(input.negative);
       const totalTokens = {
