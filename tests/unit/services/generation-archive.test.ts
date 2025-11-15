@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach } from "bun:test";
 import { createGenerationService } from "@/services/generation";
 import { createArchiveStorageService } from "@/services/archive-storage";
-import { createMemoryR2Client } from "@/lib/r2";
+import { createTestR2Bucket } from "@/testing/memory-r2";
 import { createPromptService } from "@/services/prompt";
 import type { MarketCapService } from "@/services/market-cap";
 import type { ImageProvider } from "@/types/domain";
@@ -13,7 +13,7 @@ describe("Generation Service with Archive Integration", () => {
   let store: Map<string, { content: ArrayBuffer | string; contentType?: string }>;
 
   beforeEach(() => {
-    const client = createMemoryR2Client();
+    const client = createTestR2Bucket();
     bucket = client.bucket;
     store = client.store;
   });

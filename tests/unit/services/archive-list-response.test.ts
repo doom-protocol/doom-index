@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from "bun:test";
 import { createArchiveListService } from "@/services/archive-list";
-import { createMemoryR2Client } from "@/lib/r2";
+import { createTestR2Bucket } from "@/testing/memory-r2";
 import type { ArchiveMetadata } from "@/types/archive";
 
 function createTestMetadata(id: string, imageKey: string, timestamp: string): ArchiveMetadata {
@@ -50,13 +50,13 @@ describe("Archive List Service - Response Construction", () => {
   let store: Map<string, { content: ArrayBuffer | string; contentType?: string }>;
 
   beforeEach(() => {
-    const client = createMemoryR2Client();
+    const client = createTestR2Bucket();
     bucket = client.bucket;
     store = client.store;
   });
 
   describe("response construction", () => {
-    it("should sort items by timestamp descending (newest first)", async () => {
+    it("should return items in the order provided by R2 (lexicographic ascending)", async () => {
       // Setup images with different timestamps
       const images = [
         {
@@ -98,10 +98,10 @@ describe("Archive List Service - Response Construction", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.items.length).toBe(3);
-        // Should be sorted descending (newest first)
-        expect(result.value.items[0].timestamp).toBe("2025-11-14T12:02:00Z");
+        // Should preserve lexicographic order from R2
+        expect(result.value.items[0].timestamp).toBe("2025-11-14T12:00:00Z");
         expect(result.value.items[1].timestamp).toBe("2025-11-14T12:01:00Z");
-        expect(result.value.items[2].timestamp).toBe("2025-11-14T12:00:00Z");
+        expect(result.value.items[2].timestamp).toBe("2025-11-14T12:02:00Z");
       }
     });
 

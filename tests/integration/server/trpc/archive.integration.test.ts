@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, mock } from "bun:test";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { createMockContext } from "../../../unit/server/trpc/helpers";
-import { createMemoryR2Client } from "@/lib/r2";
+import { createTestR2Bucket } from "@/testing/memory-r2";
 import type { ArchiveMetadata } from "@/types/archive";
 
 function createTestMetadata(id: string, imageKey: string, timestamp: string): ArchiveMetadata {
@@ -51,7 +51,7 @@ describe("Archive tRPC Router Integration", () => {
 
   beforeEach(() => {
     mock.restore();
-    const client = createMemoryR2Client();
+    const client = createTestR2Bucket();
     store = client.store;
 
     // Setup test data with metadata

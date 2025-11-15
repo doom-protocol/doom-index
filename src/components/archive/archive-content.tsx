@@ -102,11 +102,14 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ startDate, endDa
     loadPagesSequentially();
   }, [pageNumber, currentCursor, loadingCursors, client, itemsPerPage, startDate, endDate]);
 
+  const awaitingCursor = pageNumber > 1 && !currentCursor;
+
   const { data, error, isLoading, refetch, isError } = useArchive({
     cursor: currentCursor,
     limit: itemsPerPage,
     startDate,
     endDate,
+    enabled: !awaitingCursor,
   });
 
   // Store cursor for current page when data is received
@@ -222,7 +225,7 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ startDate, endDa
   }
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || awaitingCursor) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center p-8">
         <p className="text-white/70">Loading archive...</p>

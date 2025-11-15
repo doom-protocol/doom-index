@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from "bun:test";
 import { createArchiveListService } from "@/services/archive-list";
-import { createMemoryR2Client } from "@/lib/r2";
+import { createTestR2Bucket } from "@/testing/memory-r2";
 import type { ArchiveMetadata } from "@/types/archive";
 
 function createTestMetadata(id: string, imageKey: string, timestamp?: string): ArchiveMetadata {
@@ -50,7 +50,7 @@ describe("Archive List Service - Date Filtering", () => {
   let store: Map<string, { content: ArrayBuffer | string; contentType?: string }>;
 
   beforeEach(() => {
-    const client = createMemoryR2Client();
+    const client = createTestR2Bucket();
     bucket = client.bucket;
     store = client.store;
 

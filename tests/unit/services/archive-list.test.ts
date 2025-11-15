@@ -1,7 +1,15 @@
 import { describe, expect, it, beforeEach } from "bun:test";
 import { createArchiveListService } from "@/services/archive-list";
-import { createMemoryR2Client } from "@/lib/r2";
+import { createTestR2Bucket } from "@/testing/memory-r2";
 import type { ArchiveMetadata } from "@/types/archive";
+
+const TEST_IMAGE_KEYS = [
+  "images/2025/11/14/DOOM_202511141200_abc12345_def456789012.webp",
+  "images/2025/11/14/DOOM_202511141201_abc12345_def456789012.webp",
+  "images/2025/11/14/DOOM_202511141202_abc12345_def456789012.webp",
+  "images/2025/11/14/DOOM_202511141203_abc12345_def456789012.webp",
+  "images/2025/11/14/DOOM_202511141204_abc12345_def456789012.webp",
+];
 
 function createTestMetadata(id: string, imageKey: string): ArchiveMetadata {
   return {
@@ -50,21 +58,13 @@ describe("Archive List Service", () => {
   let store: Map<string, { content: ArrayBuffer | string; contentType?: string }>;
 
   beforeEach(() => {
-    const client = createMemoryR2Client();
+    const client = createTestR2Bucket();
     bucket = client.bucket;
     store = client.store;
 
     // Setup test data with metadata
-    const testImages = [
-      "images/2025/11/14/DOOM_202511141200_abc12345_def456789012.webp",
-      "images/2025/11/14/DOOM_202511141201_abc12345_def456789012.webp",
-      "images/2025/11/14/DOOM_202511141202_abc12345_def456789012.webp",
-      "images/2025/11/14/DOOM_202511141203_abc12345_def456789012.webp",
-      "images/2025/11/14/DOOM_202511141204_abc12345_def456789012.webp",
-    ];
-
     // Store test images and metadata
-    for (const imageKey of testImages) {
+    for (const imageKey of TEST_IMAGE_KEYS) {
       const id =
         imageKey
           .split("/")
@@ -134,19 +134,20 @@ describe("Archive List Service", () => {
       }
     });
 
-    it("should support cursor-based pagination", async () => {
+    it("should support cursor-based pagination with key-based cursor", async () => {
       const service = createArchiveListService({ r2Bucket: bucket });
       const firstPage = await service.listImages({ limit: 2 });
 
       expect(firstPage.isOk()).toBe(true);
       if (firstPage.isOk() && firstPage.value.cursor) {
+        expect(firstPage.value.cursor).toBe(TEST_IMAGE_KEYS[1]);
         const secondPage = await service.listImages({ limit: 2, cursor: firstPage.value.cursor });
         expect(secondPage.isOk()).toBe(true);
         if (secondPage.isOk()) {
-          // Should get different items
-          const firstPageKeys = firstPage.value.items.map(item => item.id);
-          const secondPageKeys = secondPage.value.items.map(item => item.id);
+          const firstPageKeys = firstPage.value.items.map(item => item.imageUrl.replace("/api/r2/", ""));
+          const secondPageKeys = secondPage.value.items.map(item => item.imageUrl.replace("/api/r2/", ""));
           expect(firstPageKeys).not.toEqual(secondPageKeys);
+          expect(secondPageKeys[0]).toBe(TEST_IMAGE_KEYS[2]);
         }
       }
     });

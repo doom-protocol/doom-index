@@ -11,7 +11,7 @@
 
 import { describe, expect, test, mock, beforeEach } from "bun:test";
 import { getArtworkDataUrl, getPlaceholderDataUrl, getFrameDataUrl } from "@/app/opengraph-image";
-import { createMemoryR2Client } from "@/lib/r2";
+import { createTestR2Bucket } from "@/testing/memory-r2";
 
 describe("OGP Image Generation (Integration Tests)", () => {
   const createMockFetcher = (shouldSucceed: boolean, imageData?: string): Fetcher => {
@@ -79,7 +79,7 @@ describe("OGP Image Generation (Integration Tests)", () => {
 
   describe("getArtworkDataUrl", () => {
     test("should return artwork data URL when state and image exist", async () => {
-      const { bucket } = createMemoryR2Client();
+      const { bucket } = createTestR2Bucket();
       const mockFetcher = createMockFetcher(true, "placeholder");
 
       await bucket.put(
@@ -112,7 +112,7 @@ describe("OGP Image Generation (Integration Tests)", () => {
     test("should use fallback when state retrieval throws", async () => {
       const mockFetcher = createMockFetcher(true, "placeholder");
 
-      const { bucket } = createMemoryR2Client();
+      const { bucket } = createTestR2Bucket();
       const failingBucket = {
         ...bucket,
         get: mock(async () => {
@@ -129,7 +129,7 @@ describe("OGP Image Generation (Integration Tests)", () => {
     test("should use fallback when state has no imageUrl", async () => {
       const mockFetcher = createMockFetcher(true, "placeholder");
 
-      const { bucket } = createMemoryR2Client();
+      const { bucket } = createTestR2Bucket();
       await bucket.put(
         "state/global.json",
         JSON.stringify({
@@ -153,7 +153,7 @@ describe("OGP Image Generation (Integration Tests)", () => {
     test("should use fallback when image fetch returns null", async () => {
       const mockFetcher = createMockFetcher(true, "placeholder");
 
-      const { bucket } = createMemoryR2Client();
+      const { bucket } = createTestR2Bucket();
       await bucket.put(
         "state/global.json",
         JSON.stringify({

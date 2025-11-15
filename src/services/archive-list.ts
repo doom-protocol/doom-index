@@ -1,14 +1,8 @@
 import { err, ok, Result } from "neverthrow";
 import type { AppError } from "@/types/app-error";
-import { resolveR2Bucket, getJsonR2 } from "@/lib/r2";
+import { resolveBucketOrThrow, getJsonR2, listR2Objects } from "@/lib/r2";
 import type { ArchiveItem, ArchiveMetadata } from "@/types/archive";
-import {
-  isValidArchiveFilename,
-  parseDatePrefix,
-  isArchiveMetadata,
-  buildPublicR2Path,
-  extractIdFromFilename,
-} from "@/lib/pure/archive";
+import { isValidArchiveFilename, parseDatePrefix, isArchiveMetadata, buildPublicR2Path } from "@/lib/pure/archive";
 import { logger } from "@/utils/logger";
 
 type ArchiveListServiceDeps = {
@@ -17,8 +11,14 @@ type ArchiveListServiceDeps = {
 
 export type ArchiveListOptions = {
   limit?: number;
+  /**
+   * R2 object key to continue listing after (cursor returned from previous response).
+   */
   cursor?: string;
   prefix?: string;
+  /**
+   * Explicit R2 object key to start after. Takes precedence over cursor when provided.
+   */
   startAfter?: string;
   startDate?: string; // YYYY-MM-DD format
   endDate?: string; // YYYY-MM-DD format
@@ -26,6 +26,9 @@ export type ArchiveListOptions = {
 
 export type ArchiveListResponse = {
   items: ArchiveItem[];
+  /**
+   * R2 object key for the last item in the current page.
+   */
   cursor?: string;
   hasMore: boolean;
 };
@@ -37,8 +40,15 @@ export type ArchiveListService = {
   listImages(options: ArchiveListOptions): Promise<Result<ArchiveListResponse, AppError>>;
 };
 
+type ArchiveItemWithKey = {
+  key: string;
+  item: ArchiveItem;
+};
+
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
+const R2_MAX_LIST_LIMIT = 1000;
+const R2_FETCH_MULTIPLIER = 2;
 
 /**
  * Filter R2 objects to only include valid .webp archive files
@@ -50,25 +60,18 @@ function filterWebpObjects(objects: R2Object[]): R2Object[] {
   });
 }
 
-/**
- * Apply limit and build pagination response
- */
-function buildPaginatedResponse(items: ArchiveItem[], limit: number, r2Truncated: boolean): ArchiveListResponse {
-  const limitedItems = items.slice(0, limit);
-  const hasMore = items.length > limit || r2Truncated;
-  const cursor = hasMore && limitedItems.length > 0 ? limitedItems[limitedItems.length - 1]?.id : undefined;
-
-  return {
-    items: limitedItems,
-    cursor,
-    hasMore,
-  };
-}
+type BuildMetadataOptions = {
+  sortOrder?: "asc" | "desc";
+};
 
 /**
  * Build ArchiveItem array from R2Object array with metadata loading
  */
-async function buildArchiveItemsWithMetadata(webpObjects: R2Object[], bucket: R2Bucket): Promise<ArchiveItem[]> {
+async function buildArchiveItemsWithMetadata(
+  webpObjects: R2Object[],
+  bucket: R2Bucket,
+  options: BuildMetadataOptions = {},
+): Promise<ArchiveItemWithKey[]> {
   const metadataPromises = webpObjects.map(async obj => {
     const metadataKey = obj.key.replace(/\.webp$/, ".json");
     const metadataResult = await getJsonR2<ArchiveMetadata>(bucket, metadataKey);
@@ -95,7 +98,7 @@ async function buildArchiveItemsWithMetadata(webpObjects: R2Object[], bucket: R2
   });
 
   const metadataResults = await Promise.allSettled(metadataPromises);
-  const items: ArchiveItem[] = [];
+  const items: ArchiveItemWithKey[] = [];
 
   for (const result of metadataResults) {
     if (result.status === "rejected") {
@@ -125,13 +128,86 @@ async function buildArchiveItemsWithMetadata(webpObjects: R2Object[], bucket: R2
       fileSize: obj.size ?? metadata.fileSize,
     };
 
-    items.push(item);
+    items.push({
+      key: obj.key,
+      item,
+    });
+  }
+
+  if (!options.sortOrder) {
+    return items;
   }
 
   return items.sort((a, b) => {
-    const timestampA = a.timestamp || "";
-    const timestampB = b.timestamp || "";
-    return timestampB.localeCompare(timestampA); // Descending order
+    const timestampA = a.item.timestamp || "";
+    const timestampB = b.item.timestamp || "";
+    return options.sortOrder === "desc" ? timestampB.localeCompare(timestampA) : timestampA.localeCompare(timestampB);
+  });
+}
+
+type PaginatedCollectionResult = {
+  entries: ArchiveItemWithKey[];
+  cursor?: string;
+  hasMore: boolean;
+};
+
+async function collectPaginatedArchiveItems({
+  bucket,
+  prefix,
+  limit,
+  startAfter,
+}: {
+  bucket: R2Bucket;
+  prefix: string;
+  limit: number;
+  startAfter?: string;
+}): Promise<Result<PaginatedCollectionResult, AppError>> {
+  const collected: ArchiveItemWithKey[] = [];
+  let pendingStartAfter = startAfter;
+  let continuationCursor: string | undefined;
+  let sawAdditionalPages = false;
+
+  while (collected.length < limit) {
+    const remaining = limit - collected.length;
+    const requestLimit = Math.min(Math.max(remaining * R2_FETCH_MULTIPLIER, remaining), R2_MAX_LIST_LIMIT);
+
+    const listOptions = {
+      prefix,
+      limit: Math.max(requestLimit, 1),
+      startAfter: pendingStartAfter,
+      cursor: pendingStartAfter ? undefined : continuationCursor,
+    };
+
+    pendingStartAfter = undefined;
+
+    const listResult = await listR2Objects(bucket, listOptions);
+    if (listResult.isErr()) {
+      return err(listResult.error);
+    }
+
+    const webpObjects = filterWebpObjects(listResult.value.objects);
+    const builtItems = await buildArchiveItemsWithMetadata(webpObjects, bucket);
+    collected.push(...builtItems);
+
+    if (listResult.value.truncated && listResult.value.cursor) {
+      continuationCursor = listResult.value.cursor;
+      sawAdditionalPages = true;
+    } else {
+      continuationCursor = undefined;
+      sawAdditionalPages = false;
+      break;
+    }
+  }
+
+  const limitedItems = collected.slice(0, limit);
+  const extraItems = collected.length > limitedItems.length;
+  const hasMore = limitedItems.length > 0 && (extraItems || sawAdditionalPages || Boolean(continuationCursor));
+  const cursor = hasMore ? limitedItems[limitedItems.length - 1]?.key : undefined;
+
+  return ok({
+    entries: limitedItems,
+    cursor,
+    hasMore,
   });
 }
 
@@ -139,16 +215,7 @@ async function buildArchiveItemsWithMetadata(webpObjects: R2Object[], bucket: R2
  * Create archive list service for R2 list operations
  */
 export function createArchiveListService({ r2Bucket }: ArchiveListServiceDeps = {}): ArchiveListService {
-  let bucket: R2Bucket;
-  if (r2Bucket) {
-    bucket = r2Bucket;
-  } else {
-    const bucketResult = resolveR2Bucket();
-    if (bucketResult.isErr()) {
-      throw new Error(`Failed to resolve R2 bucket: ${bucketResult.error.message}`);
-    }
-    bucket = bucketResult.value;
-  }
+  const bucket = resolveBucketOrThrow({ r2Bucket });
 
   /**
    * Generate date prefixes for a date range
@@ -193,126 +260,81 @@ export function createArchiveListService({ r2Bucket }: ArchiveListServiceDeps = 
       if (options.startDate && options.endDate) {
         const datePrefixes = generateDatePrefixes(options.startDate, options.endDate);
 
-        const listPromises = datePrefixes.map(async prefix => {
-          const listOptions: R2ListOptions = {
-            limit: limit * datePrefixes.length,
-            prefix,
-          };
+        if (options.cursor) {
+          logger.warn("archive-list.cursor-ignored-for-date-range", {
+            cursor: options.cursor,
+            startDate: options.startDate,
+            endDate: options.endDate,
+          });
+        }
 
-          if (options.cursor) {
-            listOptions.cursor = options.cursor;
-          }
+        const listResults = await Promise.all(
+          datePrefixes.map(prefix => listR2Objects(bucket, { limit, prefix })),
+        );
 
-          return bucket.list(listOptions);
-        });
+        const failedResult = listResults.find(result => result.isErr());
+        if (failedResult && failedResult.isErr()) {
+          return err(failedResult.error);
+        }
 
-        const listResults = await Promise.all(listPromises);
-        const allObjects = listResults.flatMap(result => result.objects);
+        const allObjects = listResults.flatMap(result => (result.isOk() ? result.value.objects : []));
         const webpObjects = filterWebpObjects(allObjects);
 
         const endDateStartAfter = calculateStartAfterForEndDate(options.endDate);
         const filteredObjects = webpObjects.filter(obj => obj.key < endDateStartAfter);
 
-        const items = await buildArchiveItemsWithMetadata(filteredObjects, bucket);
-        const response = buildPaginatedResponse(items, limit, false);
+        const items = await buildArchiveItemsWithMetadata(filteredObjects, bucket, { sortOrder: "desc" });
+        const limitedItems = items.slice(0, limit).map(entry => entry.item);
+        // Date-range queries span multiple prefixes and currently do not support pagination.
+        const response: ArchiveListResponse = {
+          items: limitedItems,
+          hasMore: false,
+          cursor: undefined,
+        };
 
         return ok(response);
       }
 
-      const r2ListLimit = limit * 2;
-      const maxObjects = 1000;
-      const collectedWebpObjects: R2Object[] = [];
-      let totalR2Objects = 0;
-      let totalWebpObjects = 0;
-      let r2Cursor: string | undefined;
-      let cursorFound = !options.cursor;
-      let moreObjectsAvailable = false;
+      let listPrefix = options.prefix ?? "images/";
 
-      do {
-        const listOptions: R2ListOptions = {
-          limit: r2ListLimit,
-          prefix: options.prefix ?? "images/",
-        };
-
-        if (r2Cursor) {
-          listOptions.cursor = r2Cursor;
-        }
-
-        if (options.startDate && !options.endDate) {
-          try {
-            const datePrefix = parseDatePrefix(options.startDate);
-            listOptions.prefix = datePrefix.prefix;
-          } catch (error) {
-            return err({
-              type: "ValidationError",
-              message: `Invalid startDate format: ${error instanceof Error ? error.message : "Unknown error"}`,
-            });
-          }
-        }
-
-        const listResult = await bucket.list(listOptions);
-        totalR2Objects += listResult.objects.length;
-        const webpObjects = filterWebpObjects(listResult.objects);
-        totalWebpObjects += webpObjects.length;
-
-        if (options.cursor && !cursorFound) {
-          // Determine if cursor is within this batch
-          const cursorIndex = webpObjects.findIndex(
-            obj => extractIdFromFilename(obj.key.split("/").pop() || "") === options.cursor,
-          );
-          if (cursorIndex >= 0) {
-            cursorFound = true;
-            collectedWebpObjects.push(...webpObjects.slice(cursorIndex + 1));
-          } else {
-            collectedWebpObjects.push(...webpObjects);
-          }
-        } else {
-          collectedWebpObjects.push(...webpObjects);
-        }
-
-        if (listResult.truncated && listResult.cursor) {
-          r2Cursor = listResult.cursor;
-          moreObjectsAvailable = true;
-        } else {
-          r2Cursor = undefined;
-          moreObjectsAvailable = false;
-        }
-
-        // Stop if we have collected enough objects
-        if (collectedWebpObjects.length >= maxObjects) {
-          moreObjectsAvailable = true;
-          break;
-        }
-      } while (r2Cursor);
-
-      if (options.cursor && !cursorFound) {
-        logger.warn("archive-list.cursor-not-found", {
-          cursor: options.cursor,
-        });
-      }
-
-      let items = await buildArchiveItemsWithMetadata(collectedWebpObjects, bucket);
-
-      if (options.cursor) {
-        const cursorIndex = items.findIndex(item => item.id === options.cursor);
-        if (cursorIndex >= 0) {
-          items = items.slice(cursorIndex + 1);
-        } else {
-          items = items.filter(item => item.id < options.cursor!);
+      if (options.startDate && !options.endDate) {
+        try {
+          const datePrefix = parseDatePrefix(options.startDate);
+          listPrefix = datePrefix.prefix;
+        } catch (error) {
+          return err({
+            type: "ValidationError",
+            message: `Invalid startDate format: ${error instanceof Error ? error.message : "Unknown error"}`,
+          });
         }
       }
 
-      const response = buildPaginatedResponse(items, limit, moreObjectsAvailable || items.length > limit);
+      const pageResult = await collectPaginatedArchiveItems({
+        bucket,
+        prefix: listPrefix,
+        limit,
+        startAfter: options.startAfter ?? options.cursor,
+      });
+
+      if (pageResult.isErr()) {
+        return err(pageResult.error);
+      }
 
       logger.debug("archive-list.query-completed", {
         requestedLimit: limit,
-        r2ObjectsCount: totalR2Objects,
-        webpObjectsCount: totalWebpObjects,
-        finalItemsCount: response.items.length,
-        hasMore: response.hasMore,
+        returnedItems: pageResult.value.entries.length,
+        hasMore: pageResult.value.hasMore,
+        prefix: listPrefix,
+        providedCursor: options.cursor ?? "none",
+        providedStartAfter: options.startAfter ?? "none",
+        nextCursor: pageResult.value.cursor ?? "none",
       });
 
-      return ok(response);
+      return ok({
+        items: pageResult.value.entries.map(entry => entry.item),
+        cursor: pageResult.value.cursor,
+        hasMore: pageResult.value.hasMore,
+      });
     } catch (error) {
       return err({
         type: "StorageError",

@@ -1,7 +1,7 @@
 import { err, ok, Result } from "neverthrow";
 import type { StateService, GlobalState, TokenState, RevenueReport } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
-import { putJsonR2, getJsonR2, resolveR2Bucket } from "@/lib/r2";
+import { putJsonR2, getJsonR2, resolveBucketOrThrow } from "@/lib/r2";
 
 type StateServiceDeps = {
   r2Bucket?: R2Bucket;
@@ -19,16 +19,7 @@ const stateKeys = {
  * @param r2Bucket - Optional R2 bucket. If not provided, resolves from Cloudflare context
  */
 export function createStateService({ r2Bucket }: StateServiceDeps = {}): StateService {
-  let bucket: R2Bucket;
-  if (r2Bucket) {
-    bucket = r2Bucket;
-  } else {
-    const bucketResult = resolveR2Bucket();
-    if (bucketResult.isErr()) {
-      throw new Error(`Failed to resolve R2 bucket: ${bucketResult.error.message}`);
-    }
-    bucket = bucketResult.value;
-  }
+  const bucket = resolveBucketOrThrow({ r2Bucket });
 
   async function readGlobalState(): Promise<Result<GlobalState | null, AppError>> {
     return getJsonR2<GlobalState>(bucket, stateKeys.globalState());

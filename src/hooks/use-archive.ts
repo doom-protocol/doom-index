@@ -8,10 +8,11 @@ interface UseArchiveOptions {
   cursor?: string;
   startDate?: string;
   endDate?: string;
+  enabled?: boolean;
 }
 
 export const useArchive = (options: UseArchiveOptions = {}) => {
-  const { limit = 20, cursor, startDate, endDate } = options;
+  const { limit = 20, cursor, startDate, endDate, enabled = true } = options;
 
   const trpc = useTRPC();
   const client = useTRPCClient();
@@ -62,6 +63,7 @@ export const useArchive = (options: UseArchiveOptions = {}) => {
 
       return typedResult;
     },
+    enabled,
     staleTime: 0, // Always refetch to ensure correct cursor
     refetchOnWindowFocus: false,
     retry: 1,

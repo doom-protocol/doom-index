@@ -17,7 +17,7 @@ import { createPromptService } from "@/services/prompt";
 import { resolveProviderWithMock, createAutoResolveProvider } from "@/lib/providers";
 import { logger } from "@/utils/logger";
 import { createArchiveStorageService } from "@/services/archive-storage";
-import { createMemoryR2Client } from "@/lib/r2";
+import { createTestR2Bucket } from "@/testing/memory-r2";
 import { extractIdFromFilename } from "@/lib/pure/archive";
 import type { ArchiveMetadata } from "@/types/archive";
 
@@ -235,7 +235,7 @@ const main = async () => {
 
   // Use archive storage service (same method as archive)
   // In script environment, use memory R2 client
-  const { bucket } = createMemoryR2Client();
+  const { bucket } = createTestR2Bucket();
   const archiveStorageService = createArchiveStorageService({ r2Bucket: bucket });
 
   // Build archive metadata (same structure as archive)

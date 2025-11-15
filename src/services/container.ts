@@ -6,7 +6,7 @@ import { createGenerationService } from "@/services/generation";
 import { createAutoResolveProvider } from "@/lib/providers";
 import { createRevenueEngine } from "@/services/revenue";
 import { createArchiveStorageService } from "@/services/archive-storage";
-import { resolveR2Bucket } from "@/lib/r2";
+import { resolveBucketOrThrow } from "@/lib/r2";
 
 /**
  * Create service container for Cloudflare Workers environment
@@ -14,16 +14,7 @@ import { resolveR2Bucket } from "@/lib/r2";
  * @param r2Bucket - Optional R2 bucket. If not provided, resolves from Cloudflare context
  */
 export function createServicesForWorkers(r2Bucket?: R2Bucket) {
-  let bucket: R2Bucket;
-  if (r2Bucket) {
-    bucket = r2Bucket;
-  } else {
-    const bucketResult = resolveR2Bucket();
-    if (bucketResult.isErr()) {
-      throw new Error(`Failed to resolve R2 bucket: ${bucketResult.error.message}`);
-    }
-    bucket = bucketResult.value;
-  }
+  const bucket = resolveBucketOrThrow({ r2Bucket });
 
   const marketCapService = createMarketCapService({ fetch, log: logger });
   const promptService = createPromptService();

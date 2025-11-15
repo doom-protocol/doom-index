@@ -1,7 +1,7 @@
 import { err, ok, Result } from "neverthrow";
 import type { ArchiveMetadata } from "@/types/archive";
 import type { AppError } from "@/types/app-error";
-import { putImageR2, putJsonR2, resolveR2Bucket } from "@/lib/r2";
+import { putImageR2, putJsonR2, resolveBucketOrThrow } from "@/lib/r2";
 import { buildArchiveKey, extractIdFromFilename, isArchiveMetadata, buildPublicR2Path } from "@/lib/pure/archive";
 import { logger } from "@/utils/logger";
 
@@ -31,16 +31,7 @@ export type ArchiveStorageService = {
  * Create archive storage service for R2 operations
  */
 export function createArchiveStorageService({ r2Bucket }: ArchiveStorageServiceDeps = {}): ArchiveStorageService {
-  let bucket: R2Bucket;
-  if (r2Bucket) {
-    bucket = r2Bucket;
-  } else {
-    const bucketResult = resolveR2Bucket();
-    if (bucketResult.isErr()) {
-      throw new Error(`Failed to resolve R2 bucket: ${bucketResult.error.message}`);
-    }
-    bucket = bucketResult.value;
-  }
+  const bucket = resolveBucketOrThrow({ r2Bucket });
 
   async function storeImageWithMetadata(
     minuteBucket: string,
