@@ -112,7 +112,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
     headers.set("Content-Length", object.size.toString());
   }
 
-  headers.set("Cache-Control", "public, max-age=60");
+  // Images are immutable (filename includes timestamp, hash, and seed)
+  // Cache for 1 year with immutable directive
+  headers.set("Cache-Control", "public, max-age=31536000, immutable");
 
   if (object.etag) {
     headers.set("ETag", object.etag);
@@ -157,7 +159,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
       objectKey,
       cacheKey,
     });
-    await set(cacheKey, cachedResponse, { ttlSeconds: 60 });
+    // Cache for 1 year since images never change
+    await set(cacheKey, cachedResponse, { ttlSeconds: 31536000 });
 
     const duration = Date.now() - startTime;
     logger.info("[R2 Route] Success", {
