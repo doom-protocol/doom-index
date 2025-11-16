@@ -35,6 +35,12 @@ binding = "NEXT_INC_CACHE_R2_BUCKET"
 bucket_name = "doom-index-next-inc-cache"
 preview_bucket_name = "doom-index-next-inc-cache"
 
+# D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "doom-index-archive"
+database_id = "placeholder" # Will be created with: wrangler d1 create doom-index-archive
+
 # KV Namespace Binding
 [[kv_namespaces]]
 binding = "VIEWER_KV"

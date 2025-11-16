@@ -4,9 +4,12 @@ import { resolveBucketOrThrow, getJsonR2, listR2Objects } from "@/lib/r2";
 import type { ArchiveItem, ArchiveMetadata } from "@/types/archive";
 import { isValidArchiveFilename, parseDatePrefix, isArchiveMetadata, buildPublicR2Path } from "@/lib/pure/archive";
 import { logger } from "@/utils/logger";
+import { createArchiveIndexService, type ArchiveIndexService } from "@/services/archive-index";
 
 type ArchiveListServiceDeps = {
   r2Bucket?: R2Bucket;
+  d1Binding?: D1Database;
+  archiveIndexService?: ArchiveIndexService;
 };
 
 export type ArchiveListOptions = {
@@ -212,10 +215,13 @@ async function collectPaginatedArchiveItems({
 }
 
 /**
- * Create archive list service for R2 list operations
+ * Create archive list service
+ * Now uses D1 for efficient listing with DESC sorting
+ * Falls back to R2 for date-range queries (temporary until D1 is fully populated)
  */
-export function createArchiveListService({ r2Bucket }: ArchiveListServiceDeps = {}): ArchiveListService {
+export function createArchiveListService({ r2Bucket, d1Binding, archiveIndexService }: ArchiveListServiceDeps = {}): ArchiveListService {
   const bucket = resolveBucketOrThrow({ r2Bucket });
+  const indexService = archiveIndexService ?? createArchiveIndexService({ d1Binding });
 
   /**
    * Generate date prefixes for a date range
@@ -256,6 +262,47 @@ export function createArchiveListService({ r2Bucket }: ArchiveListServiceDeps = 
   async function listImages(options: ArchiveListOptions): Promise<Result<ArchiveListResponse, AppError>> {
     try {
       const limit = Math.min(options.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
+
+      const d1Result = await indexService.listArchive({
+        limit,
+        cursor: options.cursor,
+        startDate: options.startDate,
+        endDate: options.endDate,
+      });
+
+      if (d1Result.isOk()) {
+        const d1Data = d1Result.value;
+        
+        const items: ArchiveItem[] = d1Data.items.map(item => ({
+          id: item.id,
+          timestamp: item.timestamp,
+          minuteBucket: item.minuteBucket,
+          paramsHash: item.paramsHash,
+          seed: item.seed,
+          imageUrl: item.imageUrl,
+          fileSize: item.fileSize,
+          mcRounded: {},
+          visualParams: {},
+          prompt: "",
+          negative: "",
+        }));
+
+        logger.debug("archive-list.d1-query-completed", {
+          requestedLimit: limit,
+          returnedItems: items.length,
+          hasMore: d1Data.hasMore,
+          cursor: options.cursor ?? "none",
+          nextCursor: d1Data.cursor ?? "none",
+        });
+
+        return ok({
+          items,
+          cursor: d1Data.cursor,
+          hasMore: d1Data.hasMore,
+        });
+      }
+
+      logger.warn("archive-list.d1-fallback", { error: d1Result.error });
 
       if (options.startDate && options.endDate) {
         const datePrefixes = generateDatePrefixes(options.startDate, options.endDate);

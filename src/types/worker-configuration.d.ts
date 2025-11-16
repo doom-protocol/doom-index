@@ -6,6 +6,7 @@ declare namespace Cloudflare {
     mainModule: typeof import("../worker");
   }
   interface Env {
+    DB: D1Database;
     VIEWER_KV: KVNamespace;
     NODE_ENV: string;
     NEXTJS_ENV: string;
