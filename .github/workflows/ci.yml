@@ -45,6 +45,7 @@ jobs:
 
       - name: Cache Bun dependencies
         uses: actions/cache@v4
+        id: bun-cache
         with:
           path: |
             ~/.bun/install/cache
@@ -54,6 +55,7 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Install dependencies
+        if: steps.bun-cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
       - name: Run ESLint
@@ -73,6 +75,7 @@ jobs:
 
       - name: Cache Bun dependencies
         uses: actions/cache@v4
+        id: bun-cache
         with:
           path: |
             ~/.bun/install/cache
@@ -82,6 +85,7 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Install dependencies
+        if: steps.bun-cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
       - name: Run type check
@@ -101,6 +105,7 @@ jobs:
 
       - name: Cache Bun dependencies
         uses: actions/cache@v4
+        id: bun-cache
         with:
           path: |
             ~/.bun/install/cache
@@ -110,6 +115,7 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Install dependencies
+        if: steps.bun-cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
       - name: Copy .example.vars to .dev.vars
@@ -120,11 +126,12 @@ jobs:
           sed -i 's/^NODE_ENV=.*/NODE_ENV="test"/' .dev.vars
 
       - name: Run tests
-        run: bun run test
+        run: bun test --env-file=.dev.vars --preload=./tests/preload.ts --bail
 
   build:
     name: Build
     runs-on: ubuntu-latest
+    needs: [lint, typecheck, test]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -136,6 +143,7 @@ jobs:
 
       - name: Cache Bun dependencies
         uses: actions/cache@v4
+        id: bun-cache
         with:
           path: |
             ~/.bun/install/cache
@@ -145,10 +153,23 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Install dependencies
+        if: steps.bun-cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
       - name: Copy .example.vars to .dev.vars
         run: cp .example.vars .dev.vars
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        id: nextjs-cache
+        with:
+          path: |
+            .next/cache
+            .next/standalone
+            .next/static
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-${{ hashFiles('**/next.config.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-
 
       - name: Build project
         run: bun run build
