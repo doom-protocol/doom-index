@@ -56,7 +56,7 @@ export async function handleScheduledEvent(
     // }
 
     // create service container
-    const services = createServicesForWorkers(env.R2_BUCKET);
+    const services = createServicesForWorkers(env.R2_BUCKET, env.DB);
 
     // execute image generation
     const result = await services.generationService.evaluateMinute();

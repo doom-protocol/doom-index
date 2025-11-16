@@ -1,5 +1,4 @@
 import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { logger } from "@/utils/logger";
 import * as schema from "./schema";
 
@@ -21,6 +20,7 @@ export async function getDB(d1Binding?: D1Database): Promise<DrizzleD1Database<t
   let binding = d1Binding;
   if (!binding) {
     try {
+      const { getCloudflareContext } = await import("@opennextjs/cloudflare");
       const { env } = await getCloudflareContext({ async: true });
       binding = (env as Cloudflare.Env).DB;
     } catch (error) {
