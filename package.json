@@ -4,10 +4,10 @@
   "description": "A decentralized archive of financial emotions. AI generates one painting every minute, translating the collective psychology of 8 pump.fun tokens into visual art.",
   "private": false,
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "dev": "next dev",
+    "build": "next build",
     "build:cf": "opennextjs-cloudflare build",
-    "start": "next start --webpack",
+    "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
     "test": "bun test --env-file=.dev.vars --preload=./tests/preload.ts",
