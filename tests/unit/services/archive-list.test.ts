@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from "bun:test";
 import { createArchiveListService } from "@/services/archive-list";
-import { createTestR2Bucket } from "@/testing/memory-r2";
+import { createTestR2Bucket } from "../../lib/memory-r2";
 import type { ArchiveMetadata } from "@/types/archive";
 
 const TEST_IMAGE_KEYS = [

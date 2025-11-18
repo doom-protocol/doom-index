@@ -35,6 +35,7 @@ r2://doom-index-storage/
 グローバル状態を保存するファイルです。
 
 **構造**:
+
 ```typescript
 {
   prevHash: string | null;        // 前回のハッシュ値
@@ -45,6 +46,7 @@ r2://doom-index-storage/
 ```
 
 **例**:
+
 ```json
 {
   "prevHash": "abc123def456",
@@ -59,15 +61,17 @@ r2://doom-index-storage/
 各トークンの状態を保存するファイルです。`{ticker}` はトークンのティッカーシンボル（例: `co2`, `fear`, `hope`）です。
 
 **構造**:
+
 ```typescript
 {
-  ticker: TokenTicker;      // トークンのティッカーシンボル
-  thumbnailUrl: string;     // サムネイル画像のURL
-  updatedAt: string;        // 更新日時（ISO 8601形式）
+  ticker: TokenTicker; // トークンのティッカーシンボル
+  thumbnailUrl: string; // サムネイル画像のURL
+  updatedAt: string; // 更新日時（ISO 8601形式）
 }
 ```
 
 **例** (`state/co2.json`):
+
 ```json
 {
   "ticker": "co2",
@@ -102,6 +106,7 @@ images/{YYYY}/{MM}/{DD}/DOOM_{YYYYMMDDHHmm}_{paramsHash}_{seed}.json
 ```
 
 **例**:
+
 ```
 images/2025/11/14/DOOM_202511141234_abc12345_def456789012.webp
 images/2025/11/14/DOOM_202511141234_abc12345_def456789012.json
@@ -112,23 +117,25 @@ images/2025/11/14/DOOM_202511141234_abc12345_def456789012.json
 メタデータJSONファイルには、画像生成時のパラメータと状態が保存されます。
 
 **構造**:
+
 ```typescript
 {
-  id: string;                    // ファイル名ベースのID（拡張子なし）
-  timestamp: string;              // ISO 8601形式のタイムスタンプ
-  minuteBucket: string;           // 分バケット（例: "2025-11-14T12:34:00Z"）
-  paramsHash: string;             // 視覚パラメータのハッシュ（8文字）
-  seed: string;                   // シード値（12文字）
-  mcRounded: McMapRounded;        // 各トークンのMC値（丸め済み）
-  visualParams: VisualParams;     // 視覚パラメータ
-  imageUrl: string;                // 公開URL（/api/r2/...）
-  fileSize: number;               // バイト数
-  prompt: string;                  // プロンプトテキスト
-  negative: string;                // ネガティブプロンプト
+  id: string; // ファイル名ベースのID（拡張子なし）
+  timestamp: string; // ISO 8601形式のタイムスタンプ
+  minuteBucket: string; // 分バケット（例: "2025-11-14T12:34:00Z"）
+  paramsHash: string; // 視覚パラメータのハッシュ（8文字）
+  seed: string; // シード値（12文字）
+  mcRounded: McMapRounded; // 各トークンのMC値（丸め済み）
+  visualParams: VisualParams; // 視覚パラメータ
+  imageUrl: string; // 公開URL（/api/r2/...）
+  fileSize: number; // バイト数
+  prompt: string; // プロンプトテキスト
+  negative: string; // ネガティブプロンプト
 }
 ```
 
 **例**:
+
 ```json
 {
   "id": "DOOM_202511141234_abc12345_def456789012",
@@ -194,6 +201,7 @@ R2に保存されたファイルは、以下のURL形式でアクセスできま
 ```
 
 **例**:
+
 ```
 /api/r2/images/2025/11/14/DOOM_202511141234_abc12345_def456789012.webp
 /api/r2/state/global.json

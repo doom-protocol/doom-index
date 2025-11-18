@@ -1,5 +1,5 @@
 /**
- * In-memory R2 bucket implementation for tests and local scripts.
+ * In-memory R2 bucket implementation for tests.
  * Not included in production builds.
  */
 export type StoredValue = {

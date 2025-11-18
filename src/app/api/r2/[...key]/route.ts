@@ -1,4 +1,4 @@
-import { resolveR2BucketAsync } from "@/lib/r2";
+import { resolveR2BucketAsync, joinR2Key } from "@/lib/r2";
 import { NextResponse } from "next/server";
 import { get, set } from "@/lib/cache";
 import { logger } from "@/utils/logger";
@@ -34,10 +34,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   }
 
   // Join key segments and normalize
-  const objectKey = key
-    .map(segment => segment.replace(/^\/*|\/*$/g, ""))
-    .filter(Boolean)
-    .join("/");
+  const objectKey = joinR2Key(key);
 
   logger.debug("[R2 Route] Parsed object key", {
     keySegments: key,

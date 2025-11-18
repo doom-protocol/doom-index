@@ -1,7 +1,8 @@
 import { describe, expect, it, beforeEach } from "bun:test";
 import { createGenerationService } from "@/services/generation";
 import { createArchiveStorageService } from "@/services/archive-storage";
-import { createTestR2Bucket } from "@/testing/memory-r2";
+import { createArchiveIndexService } from "@/services/archive-index";
+import { createTestR2Bucket } from "../../lib/memory-r2";
 import { createPromptService } from "@/services/prompt";
 import type { MarketCapService } from "@/services/market-cap";
 import type { ImageProvider } from "@/types/domain";
@@ -20,6 +21,8 @@ describe("Generation Service with Archive Integration", () => {
 
   it("should save metadata when generating image", async () => {
     const archiveStorage = createArchiveStorageService({ r2Bucket: bucket });
+    // Create archive index service with mock D1 (will fail but won't break the test)
+    const archiveIndexService = createArchiveIndexService({ d1Binding: undefined });
     const mockMarketCapService: MarketCapService = {
       getMcMap: async () =>
         ok({
@@ -64,7 +67,7 @@ describe("Generation Service with Archive Integration", () => {
       readRevenue: async () => ok(null),
     };
 
-    const revenueEngine = {
+    const _revenueEngine = {
       calculateMinuteRevenue: () =>
         ok({
           perTokenFee: {
@@ -89,8 +92,8 @@ describe("Generation Service with Archive Integration", () => {
       promptService,
       imageProvider: mockImageProvider,
       stateService,
-      revenueEngine,
       archiveStorageService: archiveStorage,
+      archiveIndexService,
     });
 
     const result = await generationService.evaluateMinute();

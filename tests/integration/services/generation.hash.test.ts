@@ -6,9 +6,17 @@ import { roundMc4 } from "@/lib/round";
 import { TOKEN_TICKERS, MARKET_CAP_ROUND_MULTIPLIER, type McMap, type McMapRounded } from "@/constants/token";
 import type { PromptComposition } from "@/services/prompt";
 import type { AppError } from "@/types/app-error";
-import type { RevenueReport, TradeSnapshot } from "@/types/domain";
 import type { ArchiveStorageService } from "@/services/archive-storage";
+import { createArchiveIndexService } from "@/services/archive-index";
 import { LogLevel } from "@/utils/logger";
+
+// Local type definitions for test-only types
+type RevenueReport = {
+  perTokenFee: Record<(typeof TOKEN_TICKERS)[number], number>;
+  totalFee: number;
+  monthlyCost: number;
+  netProfit: number;
+};
 
 const makeMap = (base: number): McMap =>
   TOKEN_TICKERS.reduce((acc, ticker, idx) => {
@@ -50,7 +58,7 @@ const createPromptComposition = (): PromptComposition => ({
   paramsHash: "abcd1234",
 });
 
-const createRevenueReport = (): RevenueReport => ({
+const _createRevenueReport = (): RevenueReport => ({
   perTokenFee: TOKEN_TICKERS.reduce(
     (acc, ticker) => {
       acc[ticker] = 1;
@@ -165,15 +173,7 @@ describe("GenerationService orchestration (4.x)", () => {
     const archiveStorageService: ArchiveStorageService = {
       storeImageWithMetadata: storeImageWithMetadataMock,
     };
-    const revenueEngine = {
-      calculateMinuteRevenue: mock(() => ok(createRevenueReport())),
-    };
-    const tradeSnapshots: TradeSnapshot[] = TOKEN_TICKERS.map(ticker => ({
-      ticker,
-      tradesPerMinute: 10,
-      averageTradeUsd: 5,
-    }));
-    const tradeFetcher = mock(async () => tradeSnapshots);
+    const archiveIndexService = createArchiveIndexService({ d1Binding: undefined });
     const logger = {
       log: mock(() => undefined),
       debug: mock(() => undefined),
@@ -189,9 +189,8 @@ describe("GenerationService orchestration (4.x)", () => {
       promptService,
       imageProvider,
       stateService,
-      revenueEngine,
       archiveStorageService,
-      fetchTradeSnapshots: tradeFetcher,
+      archiveIndexService,
       log: logger,
     });
 
@@ -204,7 +203,6 @@ describe("GenerationService orchestration (4.x)", () => {
       expect(result.value.imageUrl).toBe("https://cdn/new-image.webp");
       expect(result.value.paramsHash).toBe(promptComposition.paramsHash);
       expect(result.value.seed).toBe(promptComposition.seed);
-      expect(result.value.revenue?.totalFee).toBe(8);
     }
 
     expect(promptService.composePrompt.mock.calls.length).toBe(1);
@@ -212,8 +210,6 @@ describe("GenerationService orchestration (4.x)", () => {
     expect(storeImageWithMetadataMock.mock.calls.length).toBe(1);
     expect(stateService.writeGlobalState.mock.calls.length).toBe(1);
     expect(stateService.writeTokenStates.mock.calls.length).toBe(1);
-    expect(stateService.writeRevenue.mock.calls.length).toBe(1);
-    expect(revenueEngine.calculateMinuteRevenue.mock.calls.length).toBe(1);
   });
 
   it("propagates provider failures as Result.err", async () => {
@@ -247,10 +243,7 @@ describe("GenerationService orchestration (4.x)", () => {
     const archiveStorageService: ArchiveStorageService = {
       storeImageWithMetadata: storeImageWithMetadataMock2,
     };
-    const revenueEngine = {
-      calculateMinuteRevenue: mock(() => ok(createRevenueReport())),
-    };
-    const tradeFetcher = mock(async () => [] as TradeSnapshot[]);
+    const archiveIndexService = createArchiveIndexService({ d1Binding: undefined });
     const logger = {
       log: mock(() => undefined),
       debug: mock(() => undefined),
@@ -266,9 +259,8 @@ describe("GenerationService orchestration (4.x)", () => {
       promptService,
       imageProvider,
       stateService,
-      revenueEngine,
       archiveStorageService,
-      fetchTradeSnapshots: tradeFetcher,
+      archiveIndexService,
       log: logger,
     });
 

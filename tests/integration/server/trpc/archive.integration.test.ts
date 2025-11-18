@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, mock } from "bun:test";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { createMockContext } from "../../../unit/server/trpc/helpers";
-import { createTestR2Bucket } from "@/testing/memory-r2";
+import { createTestR2Bucket } from "../../../lib/memory-r2";
 import type { ArchiveMetadata } from "@/types/archive";
 
 function createTestMetadata(id: string, imageKey: string, timestamp: string): ArchiveMetadata {

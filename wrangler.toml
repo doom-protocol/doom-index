@@ -35,6 +35,11 @@ binding = "NEXT_INC_CACHE_R2_BUCKET"
 bucket_name = "doom-index-next-inc-cache"
 preview_bucket_name = "doom-index-next-inc-cache"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "doom-index"
+database_id = "f953738f-09c7-47bd-8235-2affa996db8e"
+
 # KV Namespace Binding
 [[kv_namespaces]]
 binding = "VIEWER_KV"
@@ -50,12 +55,13 @@ binding = "ASSETS"
 binding = "WORKER_SELF_REFERENCE"
 service = "doom-index"
 
-# [vars]
-# NODE_ENV = "development"
-# LOG_LEVEL = "DEBUG"
-# NEXTJS_ENV = "development"
-# NEXT_PUBLIC_BASE_URL = "http://localhost:8787"
-# IMAGE_MODEL = "runware:100@1"
+# Production environment (default/top-level - used when deploying without --env flag)
+[vars]
+NODE_ENV = "production"
+LOG_LEVEL = "INFO"
+NEXTJS_ENV = "production"
+NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
+IMAGE_MODEL = "runware:100@1"
 
 [observability]
 enabled = false
@@ -71,3 +77,40 @@ invocation_logs = true
 enabled = false
 persist = true
 head_sampling_rate = 1
+
+# Development environment (local development - use with --env dev flag)
+[env.dev]
+
+# R2 Bucket Bindings (same resources as production for dev)
+[[env.dev.r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "doom-index-storage"
+preview_bucket_name = "doom-index-storage"
+
+[[env.dev.r2_buckets]]
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "doom-index-next-inc-cache"
+preview_bucket_name = "doom-index-next-inc-cache"
+
+# D1 Database Binding (same database as production for dev)
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "doom-index"
+database_id = "f953738f-09c7-47bd-8235-2affa996db8e"
+
+# KV Namespace Binding (same KV as production for dev)
+[[env.dev.kv_namespaces]]
+binding = "VIEWER_KV"
+id = "8c588d03a8ab4cd19e0c458dcabf1bec"
+
+# Service Binding
+[[env.dev.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "doom-index-dev"
+
+[env.dev.vars]
+NODE_ENV = "development"
+LOG_LEVEL = "DEBUG"
+NEXTJS_ENV = "development"
+NEXT_PUBLIC_BASE_URL = "http://localhost:8787"
+IMAGE_MODEL = "runware:100@1"

@@ -16,8 +16,6 @@ import type { McMapRounded } from "@/constants/token";
 import { createPromptService } from "@/services/prompt";
 import { resolveProviderWithMock, createAutoResolveProvider } from "@/lib/providers";
 import { logger } from "@/utils/logger";
-import { createArchiveStorageService } from "@/services/archive-storage";
-import { createTestR2Bucket } from "@/testing/memory-r2";
 import { extractIdFromFilename } from "@/lib/pure/archive";
 import type { ArchiveMetadata } from "@/types/archive";
 
@@ -233,11 +231,6 @@ const main = async () => {
 
   await mkdir(outputFolder, { recursive: true });
 
-  // Use archive storage service (same method as archive)
-  // In script environment, use memory R2 client
-  const { bucket } = createTestR2Bucket();
-  const archiveStorageService = createArchiveStorageService({ r2Bucket: bucket });
-
   // Build archive metadata (same structure as archive)
   const metadataId = extractIdFromFilename(composition.prompt.filename);
   const minuteBucketIso = `${composition.minuteBucket}:00Z`;
@@ -249,30 +242,11 @@ const main = async () => {
     seed: composition.seed,
     mcRounded,
     visualParams: composition.vp,
-    imageUrl: "", // Will be set by archiveStorageService
+    imageUrl: "", // Not used in script mode
     fileSize: imageResponse.imageBuffer.byteLength,
     prompt: composition.prompt.text,
     negative: composition.prompt.negative,
   };
-
-  // Store image and metadata using archive storage service
-  const archiveResult = await archiveStorageService.storeImageWithMetadata(
-    composition.minuteBucket,
-    composition.prompt.filename,
-    imageResponse.imageBuffer,
-    archiveMetadata,
-  );
-
-  if (archiveResult.isErr()) {
-    logger.error("generate.archive.error", archiveResult.error);
-    console.error("\n⚠️ Archive storage failed:", archiveResult.error.message);
-    console.error("Continuing with local file save...");
-  } else {
-    logger.info("generate.archive.success", {
-      imageUrl: archiveResult.value.imageUrl,
-      metadataUrl: archiveResult.value.metadataUrl,
-    });
-  }
 
   // Save image locally (as binary)
   const imageFilename = `image.${args.format}`;
@@ -353,12 +327,6 @@ const main = async () => {
         : "N/A";
       console.log(`File header (hex): ${headerPreview}`);
     }
-  }
-
-  if (archiveResult.isOk()) {
-    console.log(`\n=== Archive Storage ===`);
-    console.log(`Archive Image URL: ${archiveResult.value.imageUrl}`);
-    console.log(`Archive Metadata URL: ${archiveResult.value.metadataUrl}`);
   }
 
   // Warn if image buffer is empty (mock provider)

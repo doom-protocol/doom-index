@@ -9,6 +9,9 @@
  * Based on: https://natt.sh/blog/2024-12-09-testing-react-components-bun
  */
 
+// Ensure DOM environment is initialized (preload may not be executed in time)
+import "../../preload";
+
 import { describe, expect, test } from "bun:test";
 import { render } from "@testing-library/react";
 import { size, alt } from "@/app/opengraph-image";

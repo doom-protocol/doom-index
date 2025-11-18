@@ -11,7 +11,7 @@
 
 import { describe, expect, test, mock, beforeEach } from "bun:test";
 import { getArtworkDataUrl, getPlaceholderDataUrl, getFrameDataUrl } from "@/app/opengraph-image";
-import { createTestR2Bucket } from "@/testing/memory-r2";
+import { createTestR2Bucket } from "../../lib/memory-r2";
 
 describe("OGP Image Generation (Integration Tests)", () => {
   const createMockFetcher = (shouldSucceed: boolean, imageData?: string): Fetcher => {

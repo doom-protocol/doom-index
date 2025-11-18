@@ -23,8 +23,12 @@ describe("Provider Resolution", () => {
       expect(provider.name).toBe("runware");
     });
 
-    it("should return runware provider by default when no model specified", () => {
+    it("should return provider based on env.IMAGE_MODEL when no model specified", () => {
+      // When no model is specified, resolveProviderForModel uses env.IMAGE_MODEL || "dall-e-3"
+      // In test environment, .dev.vars sets IMAGE_MODEL="runware:100@1", so runware provider is returned
+      // If env.IMAGE_MODEL is undefined, it would default to "dall-e-3" which resolves to ai-sdk provider
       const provider = resolveProviderForModel();
+      // Test environment has IMAGE_MODEL="runware:100@1" in .dev.vars
       expect(provider.name).toBe("runware");
     });
 

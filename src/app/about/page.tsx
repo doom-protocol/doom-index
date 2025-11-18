@@ -16,18 +16,16 @@ export const metadata: Metadata = {
 
 const AboutPage: NextPage = async () => {
   return (
-    <>
-      <main style={{ width: "100%", height: "100%", margin: 0, padding: 0, overflow: "hidden" }}>
-        <Header showProgress={false} />
-        <AboutScene>
-          <MDXArticle />
-        </AboutScene>
-      </main>
+    <main style={{ width: "100%", height: "100%", margin: 0, padding: 0, overflow: "hidden" }}>
+      <Header showProgress={false} />
+      <AboutScene>
+        <MDXArticle />
+      </AboutScene>
       {/* リーダーモード用の通常HTML（視覚的には非表示） */}
       <article className="sr-only" aria-label="About DOOM INDEX">
         <MDXArticle />
       </article>
-    </>
+    </main>
   );
 };
 

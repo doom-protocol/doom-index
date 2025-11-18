@@ -1,9 +1,8 @@
 import { router, publicProcedure } from "../trpc";
-import { resolveR2Bucket } from "@/lib/r2";
 import { archiveListSchema } from "../schemas";
-import { TRPCError } from "@trpc/server";
 import { createArchiveListService } from "@/services/archive-list";
 import { get, set } from "@/lib/cache";
+import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
 
 export const archiveRouter = router({
   list: publicProcedure.input(archiveListSchema).query(async ({ input, ctx }) => {
@@ -22,21 +21,13 @@ export const archiveRouter = router({
       return cached;
     }
 
-    // Resolve R2 bucket
-    const bucketResult = resolveR2Bucket();
-    if (bucketResult.isErr()) {
-      ctx.logger.error("trpc.archive.list.resolve-bucket.error", {
-        error: bucketResult.error,
-      });
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: bucketResult.error.message,
-        cause: bucketResult.error,
-      });
-    }
-
-    // Create archive list service
-    const archiveService = createArchiveListService({ r2Bucket: bucketResult.value });
+    // Resolve R2 bucket and create archive list service with D1 binding
+    const bucket = resolveR2BucketOrThrow(ctx);
+    const d1Binding = ctx.env?.DB;
+    const archiveService = createArchiveListService({
+      r2Bucket: bucket,
+      d1Binding,
+    });
 
     // List images
     const listResult = await archiveService.listImages({
@@ -46,18 +37,7 @@ export const archiveRouter = router({
       endDate,
     });
 
-    if (listResult.isErr()) {
-      ctx.logger.error("trpc.archive.list.error", {
-        error: listResult.error,
-      });
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: listResult.error.message,
-        cause: listResult.error,
-      });
-    }
-
-    const result = listResult.value;
+    const result = resultOrThrow(listResult, ctx);
 
     await set(cacheKey, result, { ttlSeconds: 60, logger: ctx.logger });
 

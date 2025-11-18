@@ -1,9 +1,17 @@
 /// <reference lib="dom" />
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, mock } from "bun:test";
 import { render } from "@testing-library/react";
 import type { JSX } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Mock getBaseUrl before importing page to ensure it returns valid URL
+// This must be done at module level, before importing Page
+mock.module("@/utils/url", () => ({
+  getBaseUrl: () => "http://localhost:8787",
+  getPumpFunUrl: (address: string) => `https://pump.fun/${address}`,
+}));
+
 import Page from "@/app/about/page";
 
 const renderAboutPage = async () => {

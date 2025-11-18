@@ -12,6 +12,20 @@ import { err, ok, Result } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import { getErrorMessage } from "@/utils/error";
 
+/**
+ * Join and normalize R2 key segments
+ * Removes leading/trailing slashes from each segment and filters empty strings
+ *
+ * @param segments - Array of key segments
+ * @returns Normalized key string
+ */
+export function joinR2Key(segments: string[]): string {
+  return segments
+    .map(segment => segment.replace(/^\/*|\/*$/g, ""))
+    .filter(Boolean)
+    .join("/");
+}
+
 export type R2PutOptions = {
   contentType?: string;
   httpMetadata?: {

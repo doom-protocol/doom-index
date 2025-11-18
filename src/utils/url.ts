@@ -1,5 +1,3 @@
-import { env } from "@/env";
-
 /**
  * Get base URL for static asset access
  * In browser/client: uses window.location.origin (current page origin)
@@ -11,16 +9,20 @@ export function getBaseUrl(): string {
   // In browser/client context, always use the current page origin
   // This ensures requests go to the same origin as the page
   if (typeof window !== "undefined") {
-    return window.location.origin;
+    const origin = window.location.origin;
+    // Fallback if origin is empty or invalid (e.g., in test environments)
+    if (origin && origin !== "null" && origin !== "undefined") {
+      return origin;
+    }
   }
 
   // On server side, use env variable or fallback
-  if (env.NEXT_PUBLIC_BASE_URL) {
-    return env.NEXT_PUBLIC_BASE_URL;
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    return process.env.NEXT_PUBLIC_BASE_URL;
   }
 
   // Fallback for server-side rendering
-  const isProduction = env.NODE_ENV === "production";
+  const isProduction = process.env.NODE_ENV === "production";
   return isProduction ? "https://doomindex.fun" : "http://localhost:8787";
 }
 

@@ -10,8 +10,10 @@ import type { PromptService, PromptComposition } from "@/services/prompt";
 import type { ImageProvider, StateService, TokenState } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
 import type { ArchiveStorageService } from "@/services/archive-storage";
+import type { ArchiveIndexService } from "@/services/archive-index";
 import type { ArchiveMetadata } from "@/types/archive";
 import { extractIdFromFilename } from "@/lib/pure/archive";
+import { buildArchiveKey } from "@/lib/pure/archive";
 
 export type MinuteEvaluation = {
   status: "skipped" | "generated";
@@ -32,6 +34,7 @@ type GenerationDeps = {
   imageProvider: ImageProvider;
   stateService: StateService;
   archiveStorageService: ArchiveStorageService; // Required: uses archive storage for images and metadata
+  archiveIndexService: ArchiveIndexService; // Required: uses D1 for archive indexing
   log?: typeof logger;
 };
 
@@ -50,6 +53,7 @@ export function createGenerationService({
   imageProvider,
   stateService,
   archiveStorageService,
+  archiveIndexService,
   log = logger,
 }: GenerationDeps): GenerationService {
   /**
@@ -169,6 +173,17 @@ export function createGenerationService({
     );
     if (archiveResult.isErr()) return err(archiveResult.error);
     const imageUrl = archiveResult.value.imageUrl;
+
+    const finalMetadata: ArchiveMetadata = {
+      ...metadata,
+      imageUrl,
+    };
+
+    const r2Key = buildArchiveKey(composition.minuteBucket, composition.prompt.filename);
+    const indexResult = await archiveIndexService.insertArchiveItem(finalMetadata, r2Key);
+    if (indexResult.isErr()) {
+      log.error("generation.d1-index.error", { error: indexResult.error, id: finalMetadata.id });
+    }
 
     const globalWrite = await stateService.writeGlobalState({
       prevHash: hash,
