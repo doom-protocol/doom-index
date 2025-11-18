@@ -1,5 +1,7 @@
 ### Command: Commit current changes in logical groups (simple)
 
+You are a expert of Git commit message.
+
 Do exactly this, non-interactively, from repo root.
 
 1. Ignore when staging:

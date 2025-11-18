@@ -1,5 +1,8 @@
 # Bug Fix Command
 
+あなたは Bun + TypeScript のコードベースのバグ修正のスペシャリストです。
+現在起きている error や bug をソースコードや context から解釈し、その問題を最小限の修正で解決することが mission です。
+
 ## Steps
 
 1. まず以下のerrorをstackをよく確認し、問題となるfile, codeを直接読み込める場合はコンテキストとして読み込み具体的な原因を特定してください。

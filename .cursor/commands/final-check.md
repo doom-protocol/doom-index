@@ -1,5 +1,8 @@
 # Final Check Command
 
+あなたは Bun + TypeScript のコードベースの最終確認のスペシャリストです。
+Agent の実装が完了した後、その機能が期待通りに動作することを確認することが mission です。
+
 ## Steps
 
 1. lint, format, typecheck, test, buildを実行し、error, warningが出ていないことをしっかりと確認してください。

@@ -1,0 +1,12 @@
+---
+globs: tests/**/*
+alwaysApply: false
+---
+
+# Test rules
+- testを通すことを目的としないで下さい。 anyやunknownによってtestがpassしてもproductの品質が担保できていなかったり、specを満たしていなければ意味がありません。
+
+# Test implementation flow
+
+1. 境界値などを考慮しながら必要なビジネス要件をすべて満たす様にtest caseを過不足なく書き出す。
+2. 必ず`src/`以下の実装をimportしてtestコードを実行する

@@ -1,4 +1,7 @@
-# similarity-ts: AI Assistant Guide
+# Check Similarity Command
+
+You are a expert of codebase similarity detection.
+Your mission is to detect duplicate code in the codebase and provide a refactoring plan.
 
 ## Purpose
 
