@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, mock } from "bun:test";
 import { createTokenContextRepository } from "@/repositories/token-context-repository";
-import type { TokenContextRow } from "@/db/schema/token-contexts";
+import type { Token } from "@/db/schema/tokens";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "@/db/schema";
 
@@ -13,12 +13,12 @@ describe.skip("TokenContextRepository", () => {
     mock.restore();
 
     // Mock database with test data
-    const testData: TokenContextRow[] = [
+    const testData: Token[] = [
       {
         tokenId: "test-token-1",
-        name: "Test Token 1",
-        symbol: "TEST1",
-        chainId: "ethereum",
+        tokenName: "Test Token 1",
+        tokenSymbol: "TEST1",
+        tokenChain: "ethereum",
         contractAddress: "0x123",
         category: "meme",
         tags: '["tag1","tag2"]',
@@ -28,9 +28,9 @@ describe.skip("TokenContextRepository", () => {
       },
       {
         tokenId: "test-token-2",
-        name: "Test Token 2",
-        symbol: "TEST2",
-        chainId: "solana",
+        tokenName: "Test Token 2",
+        tokenSymbol: "TEST2",
+        tokenChain: "solana",
         contractAddress: null,
         category: null,
         tags: null,
@@ -66,9 +66,9 @@ describe.skip("TokenContextRepository", () => {
             limit: mock(() => [
               {
                 tokenId: "test-token-1",
-                name: "Test Token 1",
-                symbol: "TEST1",
-                chainId: "ethereum",
+                tokenName: "Test Token 1",
+                tokenSymbol: "TEST1",
+                tokenChain: "ethereum",
                 contractAddress: "0x123",
                 category: "meme",
                 tags: '["tag1","tag2"]',
@@ -89,9 +89,9 @@ describe.skip("TokenContextRepository", () => {
       if (result.isOk()) {
         expect(result.value).not.toBeNull();
         expect(result.value?.id).toBe("test-token-1");
-        expect(result.value?.name).toBe("Test Token 1");
-        expect(result.value?.symbol).toBe("TEST1");
-        expect(result.value?.chainId).toBe("ethereum");
+        expect(result.value?.tokenName).toBe("Test Token 1");
+        expect(result.value?.tokenSymbol).toBe("TEST1");
+        expect(result.value?.tokenChain).toBe("ethereum");
         expect(result.value?.contractAddress).toBe("0x123");
         expect(result.value?.category).toBe("meme");
         expect(result.value?.tags).toEqual(["tag1", "tag2"]);
@@ -125,9 +125,9 @@ describe.skip("TokenContextRepository", () => {
             limit: mock(() => [
               {
                 tokenId: "test-token-2",
-                name: "Test Token 2",
-                symbol: "TEST2",
-                chainId: "solana",
+                tokenName: "Test Token 2",
+                tokenSymbol: "TEST2",
+                tokenChain: "solana",
                 contractAddress: null,
                 category: null,
                 tags: null,
@@ -158,9 +158,9 @@ describe.skip("TokenContextRepository", () => {
             limit: mock(() => [
               {
                 tokenId: "test-token-2",
-                name: "Test Token 2",
-                symbol: "TEST2",
-                chainId: "solana",
+                tokenName: "Test Token 2",
+                tokenSymbol: "TEST2",
+                tokenChain: "solana",
                 contractAddress: null,
                 category: null,
                 tags: null,
@@ -192,9 +192,9 @@ describe.skip("TokenContextRepository", () => {
             limit: mock(() => [
               {
                 tokenId: "test-token-1",
-                name: "Test Token 1",
-                symbol: "TEST1",
-                chainId: "ethereum",
+                tokenName: "Test Token 1",
+                tokenSymbol: "TEST1",
+                tokenChain: "ethereum",
                 contractAddress: "0x123",
                 category: "meme",
                 tags: '["tag1","tag2"]',

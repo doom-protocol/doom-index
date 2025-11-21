@@ -81,28 +81,25 @@ describe("TavilyClient Integration (External API)", () => {
       },
     );
 
-    it.skipIf(!ENABLE_EXTERNAL_API_TESTS || !TAVILY_API_KEY)(
-      "should handle timeout correctly",
-      async () => {
-        // Use a very short timeout to test timeout handling
-        const client = createTavilyClient({ timeoutMs: 1 });
-        const input: TavilyQueryInput = {
-          id: "timeout-test",
-          name: "Bitcoin",
-          symbol: "BTC",
-          chainId: "bitcoin",
-          contractAddress: null,
-        };
+    it.skipIf(!ENABLE_EXTERNAL_API_TESTS || !TAVILY_API_KEY)("should handle timeout correctly", async () => {
+      // Use a very short timeout to test timeout handling
+      const client = createTavilyClient({ timeoutMs: 1 });
+      const input: TavilyQueryInput = {
+        id: "timeout-test",
+        name: "Bitcoin",
+        symbol: "BTC",
+        chainId: "bitcoin",
+        contractAddress: null,
+      };
 
-        const result = await client.searchToken(input);
+      const result = await client.searchToken(input);
 
-        // Should return timeout error
-        expect(result.isErr()).toBe(true);
-        if (result.isErr()) {
-          expect(result.error.type).toBe("TimeoutError");
-        }
-      },
-    );
+      // Should return timeout error
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) {
+        expect(result.error.type).toBe("TimeoutError");
+      }
+    });
 
     it.skipIf(!ENABLE_EXTERNAL_API_TESTS || !TAVILY_API_KEY)(
       "should truncate combinedText to 6000 characters",

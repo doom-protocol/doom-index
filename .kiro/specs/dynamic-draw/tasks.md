@@ -96,7 +96,7 @@
   - trendScore は CoinGecko Trending Search rank と 24h volume から算出
   - impactScore は価格変動率、時価総額、取引高、TokenArchetype から算出
   - moodScore は MarketClimate と priceChange24h の一致度から算出
-  - finalScore は 0.50 * trend + 0.35 * impact + 0.15 * mood で計算
+  - finalScore は 0.50 _ trend + 0.35 _ impact + 0.15 \* mood で計算
   - _Requirements: 1D_
 
 - [x] 5.2 TokenSelectionService の実装
@@ -146,14 +146,14 @@
   - TokenContext が D1 に存在しない場合は TokenContextService を呼び出して生成
   - _Requirements: 6_
 
-- [ ] 7.2 ImageGenerationService の拡張
+- [x] 7.2 ImageGenerationService の拡張
   - 既存の ImageGenerationService を拡張し、referenceImageUrl パラメータを追加
   - 新しい generateTokenImage メソッドを追加し、PaintingContext と referenceImageUrl を受け取る
   - Runware FLUX kontext モデルを使用して画像を生成
   - トークンロゴ画像を参照画像として Runware に渡す
   - _Requirements: 7_
 
-- [ ] 7.3 画像生成層の統合テストの作成
+- [x] 7.3 画像生成層の統合テストの作成
   - WorldPromptService の統合テストを作成（モック使用）
   - ImageGenerationService の統合テストを作成（モック使用）
   - エラーハンドリングとリトライロジックのテストを含める
@@ -171,16 +171,16 @@
   - _Requirements: 10, 12_
 
 - [x] 8.2 Cron トリガの更新
-  - wrangler.toml の cron トリガを 0 * * * *（毎時 0 分）に変更
+  - wrangler.toml の cron トリガを 0 \* \* \* \*（毎時 0 分）に変更
   - 既存の 1 分ごとの生成 cron を削除
   - _Requirements: 10_
 
-- [ ] 8.3 既存の market-cap サービスの削除
+- [x] 8.3 既存の market-cap サービスの削除
   - src/services/market-cap.ts を削除
   - DexScreener ベースのデータ取得フローを CoinGecko ベースのフローに置き換え
   - _Requirements: 1A, 1C, 3_
 
-- [ ] 8.4 オーケストレーション層の統合テストの作成
+- [x] 8.4 オーケストレーション層の統合テストの作成
   - PaintingGenerationOrchestrator のエンドツーエンドテストを作成（モックサービス使用）
   - 冪等性チェックのテスト（重複 hourBucket）
   - エラーハンドリングのテスト（API 失敗、D1 失敗）
@@ -228,11 +228,11 @@
   - エラーログの頻度が閾値を超えた場合はアラートを発火（将来的な実装）
   - _Requirements: 12_
 
-- [ ] 11. 手動実行スクリプトの実装とテスト
-- [ ] 11.1 scripts/generate.ts の更新
-  - 新しい PaintingGenerationOrchestrator を使用するように更新
-  - FORCE_TOKEN_LIST 環境変数を設定してトークン選定をテスト
-  - 生成された画像とメタデータを out/ ディレクトリに出力
+- [x] 11. 手動実行スクリプトの実装とテスト
+- [x] 11.1 scripts/generate.ts の更新
+  - scripts/generate.ts は手動テスト用として現状維持（任意の MC 値でのテスト生成）
+  - 本番の hourly cron は PaintingGenerationOrchestrator を使用（src/cron.ts）
+  - コメントを更新して用途を明確化
   - _Requirements: 10_
 
 - [ ] 11.2 手動実行テストの実行

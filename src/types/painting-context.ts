@@ -5,28 +5,26 @@
  * Based on dynamic-draw requirements specification.
  */
 
-export type MarketClimate = "bullish" | "bearish" | "neutral" | "volatile" | "graveyard" | "unknown";
+export type MarketClimate = "euphoria" | "cooling" | "despair" | "panic" | "transition";
 
 export type TokenArchetype =
-  | "blue-chip"
-  | "meme"
-  | "utility"
-  | "governance"
-  | "nft"
-  | "defi"
-  | "layer1"
-  | "layer2"
+  | "perp-liquidity"
+  | "meme-ascendant"
+  | "l1-sovereign"
+  | "privacy"
+  | "ai-oracle"
+  | "political"
   | "unknown";
 
-export type EventKind = "launch" | "pump" | "dump" | "consolidation" | "breakout" | "none";
+export type EventKind = "rally" | "collapse" | "ritual";
 
-export type EventIntensity = "low" | "medium" | "high" | "extreme";
+export type EventIntensity = 1 | 2 | 3;
 
-export type Composition = "portrait" | "landscape" | "still-life" | "abstract" | "narrative";
+export type Composition = "citadel-panorama" | "procession" | "central-altar" | "storm-battlefield" | "cosmic-horizon";
 
-export type Palette = "warm" | "cool" | "monochrome" | "vibrant" | "muted" | "high-contrast";
+export type Palette = "solar-gold" | "ashen-blue" | "infernal-red" | "ivory-marble";
 
-export type TrendDirection = "up" | "down" | "sideways";
+export type TrendDirection = "up" | "down" | "flat";
 
 export type VolatilityLevel = "low" | "medium" | "high" | "extreme";
 

@@ -1,4 +1,4 @@
-import type { GridConfig } from "./archive-grid";
+import type { GridConfig } from "./painting-grid";
 
 export interface VisibleRange {
   start: number;

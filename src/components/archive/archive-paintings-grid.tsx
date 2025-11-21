@@ -5,23 +5,23 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { ArchiveFramedPainting } from "./archive-framed-painting";
 import { ArchivePaintingSkeleton } from "./archive-painting-skeleton";
 import { useMobile } from "@/hooks/use-mobile";
-import { getGridConfig, calculateGridPosition, type GridConfig } from "@/lib/pure/archive-grid";
-import { calculateVisibleRange, type VisibleRange } from "@/lib/pure/archive-viewport";
-import type { ArchiveItem } from "@/types/archive";
+import { getGridConfig, calculateGridPosition, type GridConfig } from "@/lib/pure/painting-grid";
+import { calculateVisibleRange, type VisibleRange } from "@/lib/pure/painting-viewport";
+import type { Painting } from "@/types/paintings";
 
 interface ArchivePaintingsGridProps {
-  items: ArchiveItem[];
-  onItemClick?: (item: ArchiveItem) => void;
-  selectedItem?: ArchiveItem | null;
+  items: Painting[];
+  onItemClick?: (item: Painting) => void;
+  selectedItem?: Painting | null;
 }
 
 const INITIAL_CAMERA_Z = 0.8;
 const BUFFER_ROWS = 3;
 
 const PaintingWithSkeleton: React.FC<{
-  item: ArchiveItem;
+  item: Painting;
   position: [number, number, number];
-  onItemClick?: (item: ArchiveItem) => void;
+  onItemClick?: (item: Painting) => void;
 }> = ({ item, position, onItemClick }) => {
   return (
     <Suspense fallback={<ArchivePaintingSkeleton position={position} />}>

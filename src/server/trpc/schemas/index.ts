@@ -24,8 +24,8 @@ export const r2GetObjectSchema = z.object({
   key: z.array(z.string().min(1)).min(1, "At least one key segment is required"),
 });
 
-// Archive Schemas
-export const archiveListSchema = z
+// Paintings Schemas
+export const paintingsListSchema = z
   .object({
     limit: z.number().int().min(1).max(100).optional(),
     cursor: z.string().optional(),
@@ -59,4 +59,4 @@ export type ViewerRegisterInput = z.infer<typeof viewerRegisterSchema>;
 export type ViewerRemoveInput = z.infer<typeof viewerRemoveSchema>;
 export type TokenGetStateInput = z.infer<typeof tokenGetStateSchema>;
 export type R2GetObjectInput = z.infer<typeof r2GetObjectSchema>;
-export type ArchiveListInput = z.infer<typeof archiveListSchema>;
+export type PaintingsListInput = z.infer<typeof paintingsListSchema>;

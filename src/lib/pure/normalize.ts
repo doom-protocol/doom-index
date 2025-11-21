@@ -1,6 +1,9 @@
 import { TOKEN_CONFIG_MAP, TOKEN_TICKERS, type NormalizedMcMap, type TokenTicker } from "@/constants/token";
 
-const clamp01 = (value: number): number => {
+/**
+ * Clamp value to [0, 1] range
+ */
+export const clamp01 = (value: number): number => {
   if (!Number.isFinite(value)) return 0;
   if (value <= 0) return 0;
   if (value >= 1) return 1;

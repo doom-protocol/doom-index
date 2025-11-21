@@ -1,24 +1,24 @@
 import { and, or, lt, eq, desc, sql } from "drizzle-orm";
 import { err, ok, Result } from "neverthrow";
-import { archiveItems } from "@/db/schema/archive";
+import { paintings } from "@/db/schema/paintings";
 import { getDB } from "@/db";
-import type { ArchiveMetadata } from "@/types/archive";
+import type { PaintingMetadata } from "@/types/paintings";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 
-export type ArchiveCursor = { ts: number; id: string };
+export type PaintingCursor = { ts: number; id: string };
 
 /**
  * Encode cursor to base64 string
  */
-export const encodeCursor = (c: ArchiveCursor): string => {
+export const encodeCursor = (c: PaintingCursor): string => {
   return btoa(JSON.stringify(c));
 };
 
 /**
  * Decode cursor from base64 string
  */
-export const decodeCursor = (s: string): ArchiveCursor => {
+export const decodeCursor = (s: string): PaintingCursor => {
   return JSON.parse(atob(s));
 };
 
@@ -65,13 +65,13 @@ export type ListArchiveResult = {
 /**
  * Archive repository interface
  */
-export interface ArchiveRepository {
+export interface PaintingsRepository {
   list(options: ListArchiveOptions): Promise<Result<ListArchiveResult, AppError>>;
-  insert(metadata: ArchiveMetadata, r2Key: string): Promise<Result<void, AppError>>;
-  findById(id: string): Promise<Result<ArchiveMetadata | null, AppError>>;
+  insert(metadata: PaintingMetadata, r2Key: string): Promise<Result<void, AppError>>;
+  findById(id: string): Promise<Result<PaintingMetadata | null, AppError>>;
 }
 
-type CreateArchiveRepositoryDeps = {
+type CreatePaintingsRepositoryDeps = {
   d1Binding?: D1Database;
   log?: typeof logger;
 };
@@ -82,10 +82,10 @@ type CreateArchiveRepositoryDeps = {
  * @param deps - Dependencies including D1 binding
  * @returns Archive repository instance
  */
-export function createArchiveRepository({
+export function createPaintingsRepository({
   d1Binding,
   log = logger,
-}: CreateArchiveRepositoryDeps = {}): ArchiveRepository {
+}: CreatePaintingsRepositoryDeps = {}): PaintingsRepository {
   async function list(options: ListArchiveOptions): Promise<Result<ListArchiveResult, AppError>> {
     try {
       const db = await getDB(d1Binding);
@@ -94,35 +94,35 @@ export function createArchiveRepository({
 
       const whereParts = [];
       if (typeof startTs === "number") {
-        whereParts.push(sql`${archiveItems.ts} >= ${startTs}`);
+        whereParts.push(sql`${paintings.ts} >= ${startTs}`);
       }
       if (typeof endExclusiveTs === "number") {
-        whereParts.push(sql`${archiveItems.ts} < ${endExclusiveTs}`);
+        whereParts.push(sql`${paintings.ts} < ${endExclusiveTs}`);
       }
 
       if (cursor) {
         const c = decodeCursor(cursor);
-        whereParts.push(or(lt(archiveItems.ts, c.ts), and(eq(archiveItems.ts, c.ts), lt(archiveItems.id, c.id))));
+        whereParts.push(or(lt(paintings.ts, c.ts), and(eq(paintings.ts, c.ts), lt(paintings.id, c.id))));
       }
 
       const rows = await db
         .select({
-          id: archiveItems.id,
-          timestamp: archiveItems.timestamp,
-          minuteBucket: archiveItems.minuteBucket,
-          paramsHash: archiveItems.paramsHash,
-          seed: archiveItems.seed,
-          imageUrl: archiveItems.imageUrl,
-          fileSize: archiveItems.fileSize,
-          ts: archiveItems.ts,
-          mcRoundedJson: archiveItems.mcRoundedJson,
-          visualParamsJson: archiveItems.visualParamsJson,
-          prompt: archiveItems.prompt,
-          negative: archiveItems.negative,
+          id: paintings.id,
+          timestamp: paintings.timestamp,
+          minuteBucket: paintings.minuteBucket,
+          paramsHash: paintings.paramsHash,
+          seed: paintings.seed,
+          imageUrl: paintings.imageUrl,
+          fileSize: paintings.fileSize,
+          ts: paintings.ts,
+          mcRoundedJson: paintings.mcRoundedJson,
+          visualParamsJson: paintings.visualParamsJson,
+          prompt: paintings.prompt,
+          negative: paintings.negative,
         })
-        .from(archiveItems)
+        .from(paintings)
         .where(whereParts.length ? and(...whereParts) : undefined)
-        .orderBy(desc(archiveItems.ts), desc(archiveItems.id))
+        .orderBy(desc(paintings.ts), desc(paintings.id))
         .limit(limit)
         .all();
 
@@ -154,13 +154,13 @@ export function createArchiveRepository({
     }
   }
 
-  async function insert(metadata: ArchiveMetadata, r2Key: string): Promise<Result<void, AppError>> {
+  async function insert(metadata: PaintingMetadata, r2Key: string): Promise<Result<void, AppError>> {
     try {
       const db = await getDB(d1Binding);
       const ts = Math.floor(new Date(metadata.timestamp).getTime() / 1000);
 
       await db
-        .insert(archiveItems)
+        .insert(paintings)
         .values({
           id: metadata.id,
           ts,
@@ -192,18 +192,18 @@ export function createArchiveRepository({
     }
   }
 
-  async function findById(id: string): Promise<Result<ArchiveMetadata | null, AppError>> {
+  async function findById(id: string): Promise<Result<PaintingMetadata | null, AppError>> {
     try {
       const db = await getDB(d1Binding);
 
-      const row = await db.select().from(archiveItems).where(eq(archiveItems.id, id)).get();
+      const row = await db.select().from(paintings).where(eq(paintings.id, id)).get();
 
       if (!row) {
         log.debug("archive-repo.find-by-id.not-found", { id });
         return ok(null);
       }
 
-      const metadata: ArchiveMetadata = {
+      const metadata: PaintingMetadata = {
         id: row.id,
         timestamp: row.timestamp,
         minuteBucket: row.minuteBucket,

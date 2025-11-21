@@ -1,92 +1,45 @@
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { describe, it, expect } from "bun:test";
 import { mcRouter } from "@/server/trpc/routers/mc";
 import { createMockContext } from "../helpers";
-import { ok, err } from "neverthrow";
-import type { AppError } from "@/types/app-error";
 import { TOKEN_TICKERS } from "@/constants/token";
 
+const ZERO_MAP = TOKEN_TICKERS.reduce(
+  (acc, ticker) => {
+    acc[ticker] = 0;
+    return acc;
+  },
+  {} as Record<(typeof TOKEN_TICKERS)[number], number>,
+);
+
 describe("MC Router", () => {
-  beforeEach(() => {
-    mock.restore();
-  });
-
-  it("should return market caps successfully", async () => {
-    const mockMcMap = TOKEN_TICKERS.reduce(
-      (acc, ticker) => {
-        acc[ticker] = 1000000;
-        return acc;
-      },
-      {} as Record<(typeof TOKEN_TICKERS)[number], number>,
-    );
-
-    // MarketCapServiceをモック
-    mock.module("@/services/market-cap", () => ({
-      createMarketCapService: () => ({
-        getMcMap: async () => ok(mockMcMap),
-        getRoundedMcMap: async () => ok(mockMcMap),
-      }),
-    }));
-
+  it("should return zero map with generatedAt timestamp", async () => {
     const ctx = createMockContext();
     const caller = mcRouter.createCaller(ctx);
 
     const result = await caller.getMarketCaps();
 
-    expect(result).toHaveProperty("tokens");
-    expect(result).toHaveProperty("generatedAt");
-    expect(Object.keys(result.tokens).length).toBe(TOKEN_TICKERS.length);
+    expect(result.tokens).toEqual(ZERO_MAP);
+    expect(typeof result.generatedAt).toBe("string");
+    expect(Number.isNaN(new Date(result.generatedAt).getTime())).toBe(false);
   });
 
-  it("should return zero map on service error", async () => {
-    const error: AppError = {
-      type: "ExternalApiError",
-      provider: "DexScreener",
-      message: "API error",
-    };
-
-    // MarketCapServiceをモック
-    mock.module("@/services/market-cap", () => ({
-      createMarketCapService: () => ({
-        getMcMap: async () => err(error),
-        getRoundedMcMap: async () => err(error),
-      }),
-    }));
-
+  it("should always return zero map for rounded caps", async () => {
     const ctx = createMockContext();
     const caller = mcRouter.createCaller(ctx);
 
-    const result = await caller.getMarketCaps();
+    const result = await caller.getRoundedMcMap();
 
-    expect(result.tokens).toBeDefined();
-    // エラー時はゼロマップを返す
-    for (const ticker of TOKEN_TICKERS) {
-      expect(result.tokens[ticker]).toBe(0);
-    }
+    expect(result.tokens).toEqual(ZERO_MAP);
+    expect(typeof result.generatedAt).toBe("string");
   });
 
-  it("should throw error on getRoundedMcMap service error", async () => {
-    const error: AppError = {
-      type: "ExternalApiError",
-      provider: "DexScreener",
-      message: "API error",
-    };
-
-    // MarketCapServiceをモック
-    mock.module("@/services/market-cap", () => ({
-      createMarketCapService: () => ({
-        getMcMap: async () => err(error),
-        getRoundedMcMap: async () => err(error),
-      }),
-    }));
-
+  it("should return consistent tokens across calls", async () => {
     const ctx = createMockContext();
     const caller = mcRouter.createCaller(ctx);
 
-    try {
-      await caller.getRoundedMcMap();
-      throw new Error("Should have thrown an error");
-    } catch (error) {
-      expect(error).toBeDefined();
-    }
+    const first = await caller.getMarketCaps();
+    const second = await caller.getMarketCaps();
+
+    expect(first.tokens).toEqual(second.tokens);
   });
 });

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import type { ArchiveMetadata } from "@/types/archive";
-import { isArchiveMetadata } from "@/lib/pure/archive-metadata";
+import type { PaintingMetadata } from "@/types/paintings";
+import { isPaintingMetadata } from "@/lib/pure/painting-metadata";
 
-describe("isArchiveMetadata", () => {
+describe("isPaintingMetadata", () => {
   it("should validate valid archive metadata", () => {
-    const validMetadata: ArchiveMetadata = {
+    const validMetadata: PaintingMetadata = {
       id: "DOOM_202511141234_abc12345_def45678",
       timestamp: "2025-11-14T12:34:00Z",
       minuteBucket: "2025-11-14T12:34:00Z",
@@ -44,7 +44,7 @@ describe("isArchiveMetadata", () => {
       negative: "test negative",
     };
 
-    expect(isArchiveMetadata(validMetadata)).toBe(true);
+    expect(isPaintingMetadata(validMetadata)).toBe(true);
   });
 
   it("should reject metadata with missing required fields", () => {
@@ -54,7 +54,7 @@ describe("isArchiveMetadata", () => {
       // missing minuteBucket
     };
 
-    expect(isArchiveMetadata(invalidMetadata)).toBe(false);
+    expect(isPaintingMetadata(invalidMetadata)).toBe(false);
   });
 
   it("should reject metadata with invalid mcRounded structure", () => {
@@ -92,7 +92,7 @@ describe("isArchiveMetadata", () => {
       negative: "test negative",
     };
 
-    expect(isArchiveMetadata(invalidMetadata)).toBe(false);
+    expect(isPaintingMetadata(invalidMetadata)).toBe(false);
   });
 
   it("should reject metadata with invalid visualParams structure", () => {
@@ -122,13 +122,13 @@ describe("isArchiveMetadata", () => {
       negative: "test negative",
     };
 
-    expect(isArchiveMetadata(invalidMetadata)).toBe(false);
+    expect(isPaintingMetadata(invalidMetadata)).toBe(false);
   });
 
   it("should reject non-object values", () => {
-    expect(isArchiveMetadata(null)).toBe(false);
-    expect(isArchiveMetadata(undefined)).toBe(false);
-    expect(isArchiveMetadata("string")).toBe(false);
-    expect(isArchiveMetadata(123)).toBe(false);
+    expect(isPaintingMetadata(null)).toBe(false);
+    expect(isPaintingMetadata(undefined)).toBe(false);
+    expect(isPaintingMetadata("string")).toBe(false);
+    expect(isPaintingMetadata(123)).toBe(false);
   });
 });

@@ -1,9 +1,9 @@
 import { err, ok, Result } from "neverthrow";
-import type { ArchiveMetadata } from "@/types/archive";
+import type { PaintingMetadata } from "@/types/paintings";
 import type { AppError } from "@/types/app-error";
 import { putImageR2, putJsonR2 } from "@/lib/r2";
-import { buildArchiveKey, extractIdFromFilename, buildPublicR2Path } from "@/utils/archive";
-import { isArchiveMetadata } from "@/lib/pure/archive-metadata";
+import { buildPaintingKey, extractIdFromFilename, buildPublicR2Path } from "@/utils/paintings";
+import { isPaintingMetadata } from "@/lib/pure/painting-metadata";
 import { logger } from "@/utils/logger";
 
 /**
@@ -15,10 +15,10 @@ export async function storeImageWithMetadata(
   minuteBucket: string,
   filename: string,
   imageBuffer: ArrayBuffer,
-  metadata: ArchiveMetadata,
+  metadata: PaintingMetadata,
 ): Promise<Result<{ imageUrl: string; metadataUrl: string }, AppError>> {
   // Validate metadata structure
-  if (!isArchiveMetadata(metadata)) {
+  if (!isPaintingMetadata(metadata)) {
     return err({
       type: "ValidationError",
       message: "Invalid archive metadata structure",
@@ -35,7 +35,7 @@ export async function storeImageWithMetadata(
   }
 
   // Build R2 keys with date prefix
-  const imageKey = buildArchiveKey(minuteBucket, filename);
+  const imageKey = buildPaintingKey(minuteBucket, filename);
   const metadataKey = imageKey.replace(/\.webp$/, ".json");
 
   // Ensure filenames match (only extension differs)
@@ -49,7 +49,7 @@ export async function storeImageWithMetadata(
   }
 
   // Update metadata with correct imageUrl and fileSize
-  const updatedMetadata: ArchiveMetadata = {
+  const updatedMetadata: PaintingMetadata = {
     ...metadata,
     imageUrl: buildPublicR2Path(imageKey),
     fileSize: imageBuffer.byteLength,

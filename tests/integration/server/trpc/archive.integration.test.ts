@@ -2,9 +2,9 @@ import { describe, expect, it, beforeEach, mock } from "bun:test";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { createMockContext } from "../../../unit/server/trpc/helpers";
 import { createTestR2Bucket } from "../../../lib/memory-r2";
-import type { ArchiveMetadata } from "@/types/archive";
+import type { PaintingMetadata } from "@/types/paintings";
 
-function createTestMetadata(id: string, imageKey: string, timestamp: string): ArchiveMetadata {
+function createTestMetadata(id: string, imageKey: string, timestamp: string): PaintingMetadata {
   return {
     id,
     timestamp,
@@ -91,11 +91,11 @@ describe("Archive tRPC Router Integration", () => {
     }));
   });
 
-  describe("archive.list", () => {
+  describe("paintings.list", () => {
     it("should return archive items with default parameters", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
-      const result = await caller.archive.list({});
+      const result = await caller.paintings.list({});
 
       expect(result.items).toBeDefined();
       expect(Array.isArray(result.items)).toBe(true);
@@ -106,7 +106,7 @@ describe("Archive tRPC Router Integration", () => {
     it("should parse limit parameter", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
-      const result = await caller.archive.list({ limit: 5 });
+      const result = await caller.paintings.list({ limit: 5 });
 
       expect(result.items.length).toBeLessThanOrEqual(5);
     });
@@ -115,13 +115,13 @@ describe("Archive tRPC Router Integration", () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
       // zod will throw error for values > 100
-      await expect(caller.archive.list({ limit: 200 as unknown as number })).rejects.toThrow();
+      await expect(caller.paintings.list({ limit: 200 as unknown as number })).rejects.toThrow();
     });
 
     it("should parse cursor parameter", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
-      const result = await caller.archive.list({ cursor: "test-cursor" });
+      const result = await caller.paintings.list({ cursor: "test-cursor" });
 
       expect(result.items).toBeDefined();
     });
@@ -129,7 +129,7 @@ describe("Archive tRPC Router Integration", () => {
     it("should parse startDate parameter", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
-      const result = await caller.archive.list({ startDate: "2025-11-14" });
+      const result = await caller.paintings.list({ startDate: "2025-11-14" });
 
       expect(result.items).toBeDefined();
     });
@@ -137,7 +137,7 @@ describe("Archive tRPC Router Integration", () => {
     it("should parse endDate parameter", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
-      const result = await caller.archive.list({ endDate: "2025-11-14" });
+      const result = await caller.paintings.list({ endDate: "2025-11-14" });
 
       expect(result.items).toBeDefined();
     });
@@ -145,7 +145,7 @@ describe("Archive tRPC Router Integration", () => {
     it("should parse date range query parameters", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
-      const result = await caller.archive.list({
+      const result = await caller.paintings.list({
         startDate: "2025-11-14",
         endDate: "2025-11-15",
       });
@@ -156,20 +156,20 @@ describe("Archive tRPC Router Integration", () => {
     it("should throw error for invalid date format", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
-      await expect(caller.archive.list({ startDate: "invalid-date" as unknown as string })).rejects.toThrow();
+      await expect(caller.paintings.list({ startDate: "invalid-date" as unknown as string })).rejects.toThrow();
     });
 
     it("should throw error for invalid limit (negative)", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
-      await expect(caller.archive.list({ limit: -1 as unknown as number })).rejects.toThrow();
+      await expect(caller.paintings.list({ limit: -1 as unknown as number })).rejects.toThrow();
     });
 
     it("should throw error when startDate > endDate", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
       await expect(
-        caller.archive.list({
+        caller.paintings.list({
           startDate: "2025-11-15",
           endDate: "2025-11-14",
         }),

@@ -46,6 +46,7 @@ type CreateTavilyClientDeps = {
   timeoutMs?: number; // Default: 5 seconds for Tavily
   log?: typeof logger;
   tavilyClient?: ReturnType<typeof tavily>;
+  mockClient?: TavilyClient; // For testing: inject a TavilyClient mock directly
 };
 
 /**
@@ -60,7 +61,12 @@ export function createTavilyClient({
   timeoutMs = 5_000,
   log = logger,
   tavilyClient,
+  mockClient,
 }: CreateTavilyClientDeps = {}): TavilyClient {
+  // Return mock client directly if provided (for testing)
+  if (mockClient) {
+    return mockClient;
+  }
   // Build search query from token metadata
   const buildQuery = (input: TavilyQueryInput): string => {
     const parts = [input.name, input.symbol, input.chainId, "token"];

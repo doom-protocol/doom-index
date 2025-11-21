@@ -1,12 +1,12 @@
-import type { ArchiveMetadata } from "@/types/archive";
+import type { PaintingMetadata } from "@/types/paintings";
 import { TOKEN_TICKERS } from "@/constants/token";
 import type { VisualParams } from "@/lib/pure/mapping";
 
 /**
- * Type guard for ArchiveMetadata
+ * Type guard for PaintingMetadata
  * Validates that all required fields are present and have correct types
  */
-export function isArchiveMetadata(value: unknown): value is ArchiveMetadata {
+export function isPaintingMetadata(value: unknown): value is PaintingMetadata {
   if (!value || typeof value !== "object") {
     return false;
   }

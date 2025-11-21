@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC, useTRPCClient } from "@/lib/trpc/client";
-import type { ArchiveListResponse } from "@/services/archive";
+import type { ArchiveListResponse } from "@/services/paintings";
 import { logger } from "@/utils/logger";
 
 interface UseArchiveOptions {
@@ -18,14 +18,14 @@ export const useArchive = (options: UseArchiveOptions = {}) => {
   const client = useTRPCClient();
 
   // Ensure cursor is included in queryKey even if undefined
-  const queryKey = trpc.archive.list.queryKey({
+  const queryKey = trpc.paintings.list.queryKey({
     limit,
     cursor: cursor ?? undefined, // Explicitly pass undefined
     startDate: startDate ?? undefined,
     endDate: endDate ?? undefined,
   });
 
-  logger.debug("use-archive.query-key", {
+  logger.debug("use-paintings.query-key", {
     limit,
     cursor: cursor || "undefined",
     startDate: startDate || "none",
@@ -36,14 +36,14 @@ export const useArchive = (options: UseArchiveOptions = {}) => {
   return useQuery({
     queryKey,
     queryFn: async (): Promise<ArchiveListResponse> => {
-      logger.debug("use-archive.query-fn", {
+      logger.debug("use-paintings.query-fn", {
         limit,
         cursor: cursor || "undefined",
         startDate: startDate || "none",
         endDate: endDate || "none",
       });
 
-      const result = await client.archive.list.query({
+      const result = await client.paintings.list.query({
         limit,
         cursor,
         startDate,
@@ -51,7 +51,7 @@ export const useArchive = (options: UseArchiveOptions = {}) => {
       });
 
       const typedResult = result as ArchiveListResponse;
-      logger.debug("use-archive.fetch-result", {
+      logger.debug("use-paintings.fetch-result", {
         itemsCount: typedResult.items.length,
         hasMore: typedResult.hasMore,
         limit,

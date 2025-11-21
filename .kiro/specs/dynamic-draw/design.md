@@ -48,30 +48,30 @@
 graph TB
     CronTrigger[Cloudflare Cron Trigger 1h]
     Orchestrator[PaintingGenerationOrchestrator]
-    
+
     subgraph DataAcquisition[Data Acquisition Layer]
         CoinGeckoClient[CoinGeckoClient ACL]
         AlternativeMeClient[AlternativeMeClient ACL]
         TokenFetchService[TokenDataFetchService]
         MarketDataService[MarketDataService]
     end
-    
+
     subgraph SelectionLayer[Token Selection Layer]
         TokenSelectionService[TokenSelectionService]
         ScoringEngine[ScoringEngine]
     end
-    
+
     subgraph ContextLayer[Context Building Layer]
         ContextBuilder[PaintingContextBuilder]
         ClassificationFns[Classification Functions lib/pure]
     end
-    
+
     subgraph GenerationLayer[Image Generation Layer]
         WorldPromptService[WorldPromptService existing]
         ImageGenerationService[ImageGenerationService existing]
         RunwareClient[RunwareClient existing]
     end
-    
+
     subgraph DataLayer[Data Access Layer]
         TokensRepo[TokensRepository]
         MarketSnapshotsRepo[MarketSnapshotsRepository]
@@ -79,32 +79,32 @@ graph TB
         D1[(Cloudflare D1)]
         R2[(Cloudflare R2)]
     end
-    
+
     CronTrigger --> Orchestrator
-    
+
     Orchestrator --> CoinGeckoClient
     Orchestrator --> AlternativeMeClient
     CoinGeckoClient --> TokenFetchService
     CoinGeckoClient --> MarketDataService
     AlternativeMeClient --> MarketDataService
-    
+
     TokenFetchService --> TokenSelectionService
     MarketDataService --> TokenSelectionService
     TokenSelectionService --> ScoringEngine
-    
+
     TokenSelectionService --> ContextBuilder
     MarketDataService --> ContextBuilder
     ContextBuilder --> ClassificationFns
-    
+
     ContextBuilder --> WorldPromptService
     WorldPromptService --> ImageGenerationService
     ImageGenerationService --> RunwareClient
-    
+
     TokensRepo --> D1
     MarketSnapshotsRepo --> D1
     PaintingsRepo --> D1
     PaintingsRepo --> R2
-    
+
     Orchestrator --> TokensRepo
     Orchestrator --> MarketSnapshotsRepo
     Orchestrator --> PaintingsRepo
@@ -113,6 +113,7 @@ graph TB
 ### Architecture Integration
 
 **Existing patterns preserved**:
+
 - tRPC v11 による型安全 API 通信（既存の tRPC ルーターとの統合）
 - neverthrow による Result 型でのエラーハンドリング
 - Drizzle ORM による D1 データベースアクセス
@@ -120,6 +121,7 @@ graph TB
 - 純関数による決定論的分類（`lib/pure/` 配置）
 
 **New components rationale**:
+
 - **CoinGeckoClient ACL**: 公式 TypeScript SDK をラップし、腐敗防止層として外部 API の変更から内部ドメインを保護
 - **AlternativeMeClient ACL**: Alternative.me Fear & Greed Index API をラップし、腐敗防止層として外部 API の変更から内部ドメインを保護
 - **PaintingGenerationOrchestrator**: 既存の `cron.ts` を置き換え、1 時間ごとの生成フローを統括
@@ -128,6 +130,7 @@ graph TB
 - **TokensRepository / MarketSnapshotsRepository**: D1 データベースへのアクセスを抽象化
 
 **Technology alignment**:
+
 - Cloudflare Workers Cron Triggers（既存）
 - Cloudflare D1 + Drizzle ORM（既存）
 - Cloudflare R2（既存）
@@ -136,6 +139,7 @@ graph TB
 - TypeScript 5.9 + neverthrow（既存）
 
 **Steering compliance**:
+
 - `structure.md`: 外部統合は `lib/` に配置、純関数は `lib/pure/` に配置、サービス層は `services/` に配置
 - `tech.md`: D1 データベース統合、tRPC 型安全 API、neverthrow Result 型、Edge ファースト
 - `product.md`: 毎時の自律実行と履歴管理、型安全と結果型で堅牢なエラーハンドリング
@@ -217,19 +221,19 @@ sequenceDiagram
     participant PR as PaintingsRepository
     participant D1 as Cloudflare D1
     participant R2 as Cloudflare R2
-    
+
     Cron->>Orch: Trigger (hourly)
     Orch->>Orch: Generate hourBucket
     Orch->>MSR: Check duplicate (hourBucket)
     MSR->>D1: SELECT FROM market_snapshots
     D1-->>MSR: Existing record or null
     MSR-->>Orch: Result<boolean>
-    
+
     alt Duplicate detected
         Orch-->>Cron: Skip (idempotency)
     else No duplicate
         Orch->>CG: Check FORCE_TOKEN_LIST env
-        
+
         alt FORCE_TOKEN_LIST is set
             CG->>CG: Parse FORCE_TOKEN_LIST
             CG->>CG: GET /coins/list (ID mapping)
@@ -239,11 +243,11 @@ sequenceDiagram
             CG->>CG: GET /search/trending
             CG-->>TFS: Trending token list with ranks
         end
-        
+
         TFS->>CG: GET /coins/markets with ids parameter
         CG-->>TFS: Batch token details (logo, price, volume, etc.)
         TFS-->>TSS: Candidate tokens with market data
-        
+
         MDS->>CG: GET /global
         CG-->>MDS: Global market data
         MDS->>Orch: Request Fear & Greed Index
@@ -253,19 +257,19 @@ sequenceDiagram
         MDS-->>TSS: Market snapshot (with FGI)
         MDS->>MSR: Store market snapshot
         MSR->>D1: INSERT INTO market_snapshots
-        
+
         TSS->>TSS: Score candidates (trend, impact, mood)
         TSS->>TSS: Select top token by finalScore
         TSS->>TR: Check if token exists in DB
         TR->>D1: SELECT FROM tokens
         D1-->>TR: Token record or null
-        
+
         alt Token not in DB
             TR->>D1: INSERT INTO tokens
         end
-        
+
         TSS-->>PCB: Selected token + market data
-        
+
         PCB->>PCB: classifyMarketClimate()
         PCB->>PCB: classifyTokenArchetype()
         PCB->>PCB: classifyEventPressure()
@@ -274,18 +278,18 @@ sequenceDiagram
         PCB->>PCB: classifyDynamics()
         PCB->>PCB: deriveMotifs()
         PCB-->>WPS: PaintingContext
-        
+
         WPS->>WPS: composeTokenPrompt()
         WPS-->>IGS: PromptComposition
-        
+
         IGS->>IGS: Generate image (Runware FLUX kontext)
         IGS-->>PR: Image buffer + metadata
-        
+
         PR->>R2: Store image
         R2-->>PR: Image URL
         PR->>D1: INSERT INTO paintings
         D1-->>PR: Success
-        
+
         PR-->>Orch: Generation result
         Orch-->>Cron: Success
     end
@@ -301,30 +305,30 @@ flowchart TD
     GetCoinsList[GET /coins/list<br/>ID mapping]
     ResolveIds[Resolve tickers to<br/>CoinGecko IDs]
     GetTrending[GET /search/trending<br/>Trending Search]
-    
+
     GetDetails["GET /coins/markets<br/>batch fetch all tokens"]
     BuildCandidates[Build candidate set<br/>with market data]
-    
+
     CheckForceFlow{FORCE_TOKEN_LIST<br/>used?}
     SkipStablecoins[Skip stablecoin<br/>exclusion]
     ExcludeStablecoins[Exclude stablecoins<br/>USDT, USDC, etc.]
-    
+
     CheckForceScoring{FORCE_TOKEN_LIST<br/>used?}
     SortByPriority[Sort by forcePriority]
     SelectTop[Select top priority token]
-    
+
     CalculateScores[Calculate scores:<br/>trendScore, impactScore, moodScore]
     CalculateFinal["finalScore = 0.50*trend<br/>+ 0.35*impact + 0.15*mood"]
     SelectMaxScore[Select token with<br/>max finalScore]
-    
+
     CheckDuplicate{Token selected<br/>in last 24h?}
     SkipDuplicate[Skip to next candidate]
-    
+
     CheckTokenDB{Token exists<br/>in DB?}
     StoreToken[INSERT INTO tokens<br/>with coingeckoId]
-    
+
     End([Return Selected Token])
-    
+
     Start --> CheckForce
     CheckForce -->|Yes| ParseForce
     CheckForce -->|No| GetTrending
@@ -332,30 +336,30 @@ flowchart TD
     GetCoinsList --> ResolveIds
     ResolveIds --> GetDetails
     GetTrending --> GetDetails
-    
+
     GetDetails --> BuildCandidates
     BuildCandidates --> CheckForceFlow
-    
+
     CheckForceFlow -->|Yes| SkipStablecoins
     CheckForceFlow -->|No| ExcludeStablecoins
-    
+
     SkipStablecoins --> CheckForceScoring
     ExcludeStablecoins --> CheckForceScoring
-    
+
     CheckForceScoring -->|Yes| SortByPriority
     CheckForceScoring -->|No| CalculateScores
-    
+
     SortByPriority --> SelectTop
     SelectTop --> CheckTokenDB
-    
+
     CalculateScores --> CalculateFinal
     CalculateFinal --> SelectMaxScore
     SelectMaxScore --> CheckDuplicate
-    
+
     CheckDuplicate -->|Yes, skip| SkipDuplicate
     CheckDuplicate -->|No| CheckTokenDB
     SkipDuplicate --> CalculateScores
-    
+
     CheckTokenDB -->|No| StoreToken
     CheckTokenDB -->|Yes| End
     StoreToken --> End
@@ -363,23 +367,23 @@ flowchart TD
 
 ## Requirements Traceability
 
-| Requirement | Summary | Components | Interfaces | Flows |
-|-------------|---------|------------|------------|-------|
-| 1A | CoinGecko Trending Search Intake | CoinGeckoClient, TokenDataFetchService | `GET /search/trending` | Hourly Generation Flow |
-| 1B | 管理者による候補トークンリストの強制上書き | CoinGeckoClient, TokenSelectionService | `FORCE_TOKEN_LIST` env var, `GET /coins/list` | Token Selection Flow |
-| 1C | CoinGecko ID から詳細トークンデータの取得 | CoinGeckoClient, TokenDataFetchService | `GET /coins/markets` | Hourly Generation Flow |
-| 1D | CoinGecko Trending Search からの候補集合の構築とスコアリング | TokenSelectionService, ScoringEngine | `TokenCandidate`, `TokenScore` | Token Selection Flow |
-| 2 | 主役トークンの市場データ取得 | TokenDataFetchService, MarketDataService | `TokenSnapshot` | Hourly Generation Flow |
-| 3 | グローバル市場データ取得 | MarketDataService, AlternativeMeClient | `GET /global`, `GET /fng/`, `MarketSnapshot` | Hourly Generation Flow |
-| 4 | トークンメタ情報の管理と取得 | TokensRepository | `tokens` table, Drizzle ORM | Hourly Generation Flow |
-| 5 | PaintingContext の構築 | PaintingContextBuilder, Classification Functions | `PaintingContext`, pure functions | Hourly Generation Flow |
-| 6 | dynamic-prompt によるプロンプト生成 | WorldPromptService (existing) | `composeTokenPrompt()` | Hourly Generation Flow |
-| 7 | Runware FLUX kontext による画像生成 | ImageGenerationService (existing), RunwareClient (existing) | `generate()`, `referenceImageUrl` | Hourly Generation Flow |
-| 8 | D1 データベーススキーマ設計 | TokensRepository, MarketSnapshotsRepository | `tokens` table, `market_snapshots` table | Data Models |
-| 9 | トークン情報と市場スナップショットの永続化 | TokensRepository, MarketSnapshotsRepository | `insert()`, `update()` | Hourly Generation Flow |
-| 10 | 冪等性とエラーハンドリング | PaintingGenerationOrchestrator | `Result<T, AppError>`, hourBucket check | Hourly Generation Flow |
-| 11 | セキュリティと環境変数管理 | CoinGeckoClient, ImageGenerationService | `COINGECKO_API_KEY`, `RUNWARE_API_KEY`, `FORCE_TOKEN_LIST` | All flows |
-| 12 | ロギングと可観測性 | All services | `logger.info()`, `logger.error()`, `logger.debug()` | All flows |
+| Requirement | Summary                                                      | Components                                                  | Interfaces                                                 | Flows                  |
+| ----------- | ------------------------------------------------------------ | ----------------------------------------------------------- | ---------------------------------------------------------- | ---------------------- |
+| 1A          | CoinGecko Trending Search Intake                             | CoinGeckoClient, TokenDataFetchService                      | `GET /search/trending`                                     | Hourly Generation Flow |
+| 1B          | 管理者による候補トークンリストの強制上書き                   | CoinGeckoClient, TokenSelectionService                      | `FORCE_TOKEN_LIST` env var, `GET /coins/list`              | Token Selection Flow   |
+| 1C          | CoinGecko ID から詳細トークンデータの取得                    | CoinGeckoClient, TokenDataFetchService                      | `GET /coins/markets`                                       | Hourly Generation Flow |
+| 1D          | CoinGecko Trending Search からの候補集合の構築とスコアリング | TokenSelectionService, ScoringEngine                        | `TokenCandidate`, `TokenScore`                             | Token Selection Flow   |
+| 2           | 主役トークンの市場データ取得                                 | TokenDataFetchService, MarketDataService                    | `TokenSnapshot`                                            | Hourly Generation Flow |
+| 3           | グローバル市場データ取得                                     | MarketDataService, AlternativeMeClient                      | `GET /global`, `GET /fng/`, `MarketSnapshot`               | Hourly Generation Flow |
+| 4           | トークンメタ情報の管理と取得                                 | TokensRepository                                            | `tokens` table, Drizzle ORM                                | Hourly Generation Flow |
+| 5           | PaintingContext の構築                                       | PaintingContextBuilder, Classification Functions            | `PaintingContext`, pure functions                          | Hourly Generation Flow |
+| 6           | dynamic-prompt によるプロンプト生成                          | WorldPromptService (existing)                               | `composeTokenPrompt()`                                     | Hourly Generation Flow |
+| 7           | Runware FLUX kontext による画像生成                          | ImageGenerationService (existing), RunwareClient (existing) | `generate()`, `referenceImageUrl`                          | Hourly Generation Flow |
+| 8           | D1 データベーススキーマ設計                                  | TokensRepository, MarketSnapshotsRepository                 | `tokens` table, `market_snapshots` table                   | Data Models            |
+| 9           | トークン情報と市場スナップショットの永続化                   | TokensRepository, MarketSnapshotsRepository                 | `insert()`, `update()`                                     | Hourly Generation Flow |
+| 10          | 冪等性とエラーハンドリング                                   | PaintingGenerationOrchestrator                              | `Result<T, AppError>`, hourBucket check                    | Hourly Generation Flow |
+| 11          | セキュリティと環境変数管理                                   | CoinGeckoClient, ImageGenerationService                     | `COINGECKO_API_KEY`, `RUNWARE_API_KEY`, `FORCE_TOKEN_LIST` | All flows              |
+| 12          | ロギングと可観測性                                           | All services                                                | `logger.info()`, `logger.error()`, `logger.debug()`        | All flows              |
 
 ## Components and Interfaces
 
@@ -469,13 +473,13 @@ CoinGecko TypeScript SDK の公式ドキュメントとリポジトリ（https:/
 interface CoinGeckoClient {
   // Trending Search List (Requirement 1A)
   getTrendingSearch(): Result<TrendingSearchResponse, AppError>;
-  
+
   // Coins List for ID mapping (Requirement 1B)
   getCoinsList(): Result<CoinsListResponse, AppError>;
-  
+
   // Coins Markets - Batch fetch multiple coins with market data (Requirement 1C)
   getCoinsMarkets(ids: string[], options?: CoinsMarketsOptions): Result<CoinsMarketsResponse, AppError>;
-  
+
   // Global Market Data (Requirement 3)
   getGlobalMarketData(): Result<GlobalMarketDataResponse, AppError>;
 }
@@ -629,7 +633,7 @@ type TokenCandidate = {
 interface MarketDataService {
   // Fetch global market data (Requirement 3)
   fetchGlobalMarketData(): Promise<Result<MarketSnapshot, AppError>>;
-  
+
   // Store market snapshot to D1 (Requirement 9)
   storeMarketSnapshot(snapshot: MarketSnapshot, hourBucket: string): Promise<Result<void, AppError>>;
 }
@@ -738,13 +742,13 @@ type SelectedToken = {
 interface ScoringEngine {
   // Calculate trend score (Requirement 1D)
   calculateTrendScore(candidate: TokenCandidate): number;
-  
+
   // Calculate impact score (Requirement 1D)
   calculateImpactScore(candidate: TokenCandidate): number;
-  
+
   // Calculate mood score (Requirement 1D)
   calculateMoodScore(candidate: TokenCandidate, marketClimate: MarketClimate): number;
-  
+
   // Calculate final score (Requirement 1D)
   calculateFinalScore(scores: { trend: number; impact: number; mood: number }): number;
 }
@@ -830,10 +834,18 @@ function classifyTokenArchetype(token: SelectedToken, categories: string[]): Tok
 function classifyEventPressure(token: SelectedToken): { k: EventKind; i: EventIntensity };
 
 // Composition selection (Requirement 5)
-function pickComposition(climate: MarketClimate, archetype: TokenArchetype, event: { k: EventKind; i: EventIntensity }): Composition;
+function pickComposition(
+  climate: MarketClimate,
+  archetype: TokenArchetype,
+  event: { k: EventKind; i: EventIntensity },
+): Composition;
 
 // Palette selection (Requirement 5)
-function pickPalette(climate: MarketClimate, archetype: TokenArchetype, event: { k: EventKind; i: EventIntensity }): Palette;
+function pickPalette(
+  climate: MarketClimate,
+  archetype: TokenArchetype,
+  event: { k: EventKind; i: EventIntensity },
+): Palette;
 
 // Dynamics classification (Requirement 5)
 function classifyDynamics(token: SelectedToken): { dir: TrendDirection; vol: VolatilityLevel };
@@ -951,13 +963,13 @@ function deriveNarrativeHints(climate: MarketClimate, event: { k: EventKind; i: 
 interface TokensRepository {
   // Find token by CoinGecko ID (Requirement 4)
   findById(id: string): Promise<Result<Token | null, AppError>>;
-  
+
   // Insert new token (Requirement 9)
   insert(token: NewToken): Promise<Result<void, AppError>>;
-  
+
   // Update token metadata (Requirement 9)
   update(id: string, updates: Partial<NewToken>): Promise<Result<void, AppError>>;
-  
+
   // Find recently selected tokens (Requirement 1D)
   findRecentlySelected(windowHours: number): Promise<Result<Token[], AppError>>;
 }
@@ -992,7 +1004,7 @@ interface TokensRepository {
 interface MarketSnapshotsRepository {
   // Find snapshot by hourBucket (Requirement 10)
   findByHourBucket(hourBucket: string): Promise<Result<MarketSnapshot | null, AppError>>;
-  
+
   // Insert or update snapshot (Requirement 9)
   upsert(hourBucket: string, snapshot: MarketSnapshot): Promise<Result<void, AppError>>;
 }
@@ -1136,10 +1148,7 @@ export const tokens = sqliteTable(
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
-  table => [
-    index("idx_tokens_symbol").on(table.symbol),
-    index("idx_tokens_coingecko_id").on(table.coingeckoId),
-  ],
+  table => [index("idx_tokens_symbol").on(table.symbol), index("idx_tokens_coingecko_id").on(table.coingeckoId)],
 );
 
 export type Token = typeof tokens.$inferSelect;
@@ -1147,10 +1156,12 @@ export type NewToken = typeof tokens.$inferInsert;
 ```
 
 **Indexes**:
+
 - `idx_tokens_symbol`: トークンシンボルでの高速検索
 - `idx_tokens_coingecko_id`: CoinGecko ID での高速検索
 
 **Migration Strategy**:
+
 - 既存の `tokens` テーブル（`src/db/schema/tokens.ts`）を削除し、新しいスキーマで置き換え
 - Drizzle Kit で新しいマイグレーションを生成: `bun run db:generate`
 - ローカル D1 でマイグレーション実行: `bun run db:migrate`
@@ -1195,9 +1206,7 @@ export const marketSnapshots = sqliteTable(
     updatedAt: integer("updated_at").notNull(),
     createdAt: integer("created_at").notNull(),
   },
-  table => [
-    index("idx_market_snapshots_created_at").on(table.createdAt),
-  ],
+  table => [index("idx_market_snapshots_created_at").on(table.createdAt)],
 );
 
 export type MarketSnapshot = typeof marketSnapshots.$inferSelect;
@@ -1205,9 +1214,11 @@ export type NewMarketSnapshot = typeof marketSnapshots.$inferInsert;
 ```
 
 **Indexes**:
+
 - `idx_market_snapshots_created_at`: 時系列データの高速検索
 
 **Migration Strategy**:
+
 - Drizzle Kit で新しいマイグレーションを生成: `bun run db:generate`
 - ローカル D1 でマイグレーション実行: `bun run db:migrate`
 - 本番 D1 でマイグレーション実行: `bun run db:migrate:prod`
@@ -1226,10 +1237,12 @@ export type NewMarketSnapshot = typeof marketSnapshots.$inferInsert;
 // Future tRPC router schema (not implemented in this phase)
 export const paintingsRouter = router({
   getRecentPaintings: publicProcedure
-    .input(z.object({
-      limit: z.number().min(1).max(100).default(10),
-      cursor: z.string().optional(),
-    }))
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(10),
+        cursor: z.string().optional(),
+      }),
+    )
     .query(async ({ input, ctx }) => {
       // Implementation using PaintingsRepository
     }),
@@ -1260,25 +1273,30 @@ type AppError =
 ### Error Categories and Responses
 
 **External API Errors (CoinGecko, Alternative.me, Runware)**:
+
 - **CoinGecko レート制限**: エラーログを記録し、cron 実行を停止
 - **CoinGecko ネットワークエラー**: エラーログを記録し、cron 実行を停止
 - **Alternative.me ネットワークエラー**: 警告ログを記録して `fearGreedIndex: null` を設定し、処理を継続
 - **Runware タイムアウト**: エラーログを記録し、cron 実行を停止
 
 **Validation Errors**:
+
 - **FORCE_TOKEN_LIST パースエラー**: エラーログを記録し、cron 実行を停止
 - **トークン ID 解決失敗**: 警告ログを記録し、そのティッカーをスキップして次のティッカーへ進む
 
 **Configuration Errors**:
+
 - **COINGECKO_API_KEY 未設定**: エラーログを記録し、cron 実行を停止（Demo API の場合は不要）
 - **RUNWARE_API_KEY 未設定**: エラーログを記録し、cron 実行を停止
 - **Alternative.me API は API キー不要**: 設定エラーなし
 
 **Storage Errors (D1, R2)**:
+
 - **D1 書き込みエラー**: エラーログを記録し、cron 実行を停止
 - **R2 書き込みエラー**: エラーログを記録し、cron 実行を停止
 
 **Internal Errors**:
+
 - **予期しない例外**: スタックトレースを含むエラーログを記録し、cron 実行を停止
 
 ### Error Flow
@@ -1295,20 +1313,20 @@ flowchart TD
     LogError[Log Error]
     ReturnError[Return Result.err]
     ReturnSuccess[Return Result.ok]
-    
+
     Start --> Success
     Success -->|Yes| ReturnSuccess
     Success -->|No| RetryableError
-    
+
     RetryableError -->|Yes| RetryCount
     RetryableError -->|No| LogError
-    
+
     RetryCount -->|Yes| ExponentialBackoff
     RetryCount -->|No| LogError
-    
+
     ExponentialBackoff --> Retry
     Retry --> Success
-    
+
     LogError --> ReturnError
     LogWarning --> ReturnError
 ```
@@ -1316,16 +1334,19 @@ flowchart TD
 ### Monitoring
 
 **Error Tracking**:
+
 - すべてのエラーは `logger.error()` で記録され、Cloudflare Workers のログストリームに送信
 - エラーログには `errorType`, `message`, `provider`, `status`, `ticker` などのコンテキスト情報を含む
 
 **Logging**:
+
 - `logger.info()`: 成功した操作（トークン選定、画像生成、D1 保存）
 - `logger.warn()`: 警告（トークン ID 解決失敗、ステーブルコイン除外）
 - `logger.error()`: エラー（API 呼び出し失敗、D1 書き込みエラー）
 - `logger.debug()`: デバッグ情報（API レスポンス、スコアリング詳細）
 
 **Health Monitoring**:
+
 - Cloudflare Workers のダッシュボードで cron 実行の成功率とエラー率を監視
 - エラーログの頻度が閾値を超えた場合はアラートを発火（将来的な実装）
 
@@ -1334,6 +1355,7 @@ flowchart TD
 ### Unit Tests
 
 **Core Functions** (`lib/pure/painting-context-classification.ts`):
+
 - `classifyMarketClimate()`: 各市場状態（euphoria, cooling, despair, panic, transition）のテストケース
 - `classifyTokenArchetype()`: 各トークンカテゴリ（perp-liquidity, meme-ascendant, l1-sovereign, privacy, ai-oracle, political, unknown）のテストケース
 - `classifyEventPressure()`: 各イベント種別（rally, collapse, ritual）と強度（1-3）のテストケース
@@ -1344,12 +1366,14 @@ flowchart TD
 - `deriveNarrativeHints()`: 各組み合わせ（climate × event）のナラティブヒントのテストケース
 
 **Scoring Engine** (`services/paintings/scoring-engine.ts`):
+
 - `calculateTrendScore()`: トレンドランクと取引高の正規化テスト
 - `calculateImpactScore()`: 価格変動率、時価総額、取引高、トークンアーキタイプの重み付けテスト
 - `calculateMoodScore()`: 市場ムードとトークン価格変動の一致度テスト
 - `calculateFinalScore()`: 最終スコア計算式のテスト
 
 **Token Selection Service** (`services/paintings/token-selection.ts`):
+
 - `selectToken()`: 通常フローと強制リストフローのテスト
 - 重複選出チェックのテスト
 - ステーブルコイン除外のテスト
@@ -1358,6 +1382,7 @@ flowchart TD
 ### Integration Tests
 
 **CoinGeckoClient** (`lib/coingecko-client.ts`):
+
 - `getTrendingSearch()`: CoinGecko API 呼び出しと正規化のテスト（モック使用）
 - `getCoinsList()`: CoinGecko API 呼び出しと ID マッピングのテスト（モック使用）
 - `getCoinsMarkets()`: CoinGecko API 呼び出しと複数トークンのバッチ取得のテスト（モック使用）
@@ -1365,20 +1390,24 @@ flowchart TD
 - エラーハンドリングのテスト（レート制限エラー、ネットワークエラー）
 
 **AlternativeMeClient** (`lib/alternative-me-client.ts`):
+
 - `getFearGreedIndex()`: Alternative.me API 呼び出しと正規化のテスト（モック使用）
 - エラー時の `Result.err<AppError>` 返却のテスト
 
 **TokensRepository** (`repositories/tokens-repository.ts`):
+
 - `findById()`: D1 からのトークン取得のテスト（メモリ D1 使用）
 - `insert()`: D1 へのトークン挿入のテスト（メモリ D1 使用）
 - `update()`: D1 でのトークン更新のテスト（メモリ D1 使用）
 - `findRecentlySelected()`: 最近選出されたトークンの取得のテスト（メモリ D1 使用）
 
 **MarketSnapshotsRepository** (`repositories/market-snapshots-repository.ts`):
+
 - `findByHourBucket()`: D1 からのスナップショット取得のテスト（メモリ D1 使用）
 - `upsert()`: D1 へのスナップショット挿入/更新のテスト（メモリ D1 使用）
 
 **PaintingGenerationOrchestrator** (`cron.ts`):
+
 - 正常フローのエンドツーエンドテスト（モックサービス使用）
 - 冪等性チェックのテスト（重複 hourBucket）
 - エラーハンドリングのテスト（API 失敗、D1 失敗）
@@ -1386,6 +1415,7 @@ flowchart TD
 ### Manual Execution Tests (scripts/generate.ts)
 
 **Manual Generation Script**:
+
 - `scripts/generate.ts` を使用して一連のフローを手動実行し、結果が `out/` ディレクトリに出力されるかを確認
 - 正常フロー: トークン選定 → コンテキスト構築 → プロンプト生成 → 画像生成 → ローカル保存
 - 強制リストフロー: `FORCE_TOKEN_LIST` 環境変数を設定してトークン選定をテスト
@@ -1397,6 +1427,7 @@ flowchart TD
 ### Threat Modeling
 
 **Threats**:
+
 - **API キー漏洩**: `COINGECKO_API_KEY` と `RUNWARE_API_KEY` が漏洩すると、不正利用やコスト増加のリスク
 - **環境変数改ざん**: `FORCE_TOKEN_LIST` が改ざんされると、意図しないトークンが選定されるリスク
 - **レート制限攻撃**: CoinGecko API のレート制限を超えると、サービス停止のリスク
@@ -1405,27 +1436,33 @@ flowchart TD
 ### Security Controls
 
 **API キー管理**:
+
 - すべての API キーは Cloudflare Workers の Secrets で管理し、コード内にハードコードしない
 - 環境変数は `@t3-oss/env-nextjs` で型安全に検証し、未設定の場合はエラーを返却
 
 **環境変数検証**:
+
 - `FORCE_TOKEN_LIST` はカンマ区切りの文字列として検証し、不正な形式の場合は警告ログを記録してフォールバック
 
 **レート制限対策**:
+
 - CoinGecko API 呼び出しはレート制限エラーを適切にハンドリングし、エラーログを記録
 - 並列 API 呼び出しは最大 15 トークンに制限
 
 **D1 セキュリティ**:
+
 - Drizzle ORM を使用してパラメータ化クエリを実行し、SQL インジェクションを防止
 - すべてのユーザー入力は zod スキーマで検証（将来的な tRPC ルーター実装時）
 
 ### Compliance
 
 **データプライバシー**:
+
 - 本システムは個人情報を収集しないため、GDPR や CCPA のコンプライアンスは不要
 - CoinGecko API から取得したトークンデータは公開情報のみ
 
 **API 利用規約**:
+
 - CoinGecko API の利用規約に準拠し、レート制限とデータ使用ポリシーを遵守
 - Alternative.me API の利用規約に準拠し、データの表示箇所において Alternative.me からのデータであることを明示
 - Runware API の利用規約に準拠し、生成画像の著作権とライセンスを確認
@@ -1435,6 +1472,7 @@ flowchart TD
 ### Target Metrics
 
 **Hourly Execution Time**:
+
 - 目標: 60 秒以内（1 時間ごとの cron 実行）
 - 内訳:
   - CoinGecko API 呼び出し: 2-5 秒（トレンド検索 + `/coins/markets` バッチ取得 + グローバルデータ）
@@ -1444,12 +1482,14 @@ flowchart TD
   - D1/R2 保存: 2-3 秒
 
 **API レート制限**:
+
 - CoinGecko Demo API: 10-30 calls/minute（トレンド検索 + `/coins/markets` バッチ取得 + グローバルデータ = 3 calls）
 - CoinGecko Pro API: 500 calls/minute（十分な余裕）
 - Alternative.me API: 明示的な制限なし（無料、常識的な範囲での使用）
 - Runware API: 制限なし（有料プラン）
 
 **D1 クエリ性能**:
+
 - `tokens` テーブル: 1 ms 以内（インデックス使用）
 - `market_snapshots` テーブル: 1 ms 以内（インデックス使用）
 - `paintings` テーブル: 既存のインデックスを使用
@@ -1457,20 +1497,24 @@ flowchart TD
 ### Scaling Approaches
 
 **Horizontal Scaling**:
+
 - Cloudflare Workers は自動的に水平スケールするため、追加の設定は不要
 - 1 時間ごとの cron 実行は単一 Worker インスタンスで実行されるため、並行性制御は不要
 
 **Vertical Scaling**:
+
 - Cloudflare Workers の CPU 時間制限（10 ms CPU time per request）は、本システムの処理時間（60 秒以内）に対して十分
 - D1 データベースのストレージ容量は、トークン数（数千件）とスナップショット数（1 時間ごと = 年間 8,760 件）に対して十分
 
 ### Caching Strategies
 
 **CoinGecko API キャッシング**:
+
 - トークン詳細データ（`/coins/{id}`）は D1 の `tokens` テーブルにキャッシュし、`updatedAt` フィールドで更新時刻を記録
 - グローバル市場データ（`/global`）は D1 の `market_snapshots` テーブルにキャッシュし、`hourBucket` で冪等性を保証
 
 **Cloudflare Cache API**:
+
 - 将来的に Cloudflare Cache API を使用して CoinGecko API レスポンスをエッジキャッシュ（開発中）
 
 ## Migration Strategy
@@ -1478,6 +1522,7 @@ flowchart TD
 ### Phase 1: Preparation (Week 1)
 
 **Tasks**:
+
 1. 外部 API クライアントの実装
    - `bun add @coingecko/coingecko-typescript`
    - `lib/coingecko-client.ts` の実装
@@ -1495,6 +1540,7 @@ flowchart TD
    - ユニットテストの作成
 
 **Validation Checkpoints**:
+
 - CoinGeckoClient と AlternativeMeClient のユニットテストが全て合格
 - D1 マイグレーションがローカル環境で正常に実行
 - リポジトリ層のユニットテストが全て合格
@@ -1502,6 +1548,7 @@ flowchart TD
 ### Phase 2: Core Implementation (Week 2)
 
 **Tasks**:
+
 1. データ取得層の実装
    - `services/paintings/token-data-fetch.ts` の実装
    - `services/paintings/market-data.ts` の実装
@@ -1516,6 +1563,7 @@ flowchart TD
    - ユニットテストの作成
 
 **Validation Checkpoints**:
+
 - データ取得層の統合テストが全て合格
 - トークン選定層のユニットテストが全て合格
 - コンテキスト構築層のユニットテストが全て合格
@@ -1523,6 +1571,7 @@ flowchart TD
 ### Phase 3: Orchestration and Deployment (Week 3)
 
 **Tasks**:
+
 1. オーケストレーション層の実装
    - `cron.ts` を `PaintingGenerationOrchestrator` に置き換え
    - 既存の `market-cap.ts` サービスを削除
@@ -1535,6 +1584,7 @@ flowchart TD
    - 初回実行を監視し、ログを確認
 
 **Validation Checkpoints**:
+
 - `scripts/generate.ts` を使用した手動実行テストが成功し、`out/` ディレクトリに画像とメタデータが出力される
 - ローカル環境で cron が正常に実行される（`bun run preview --test-scheduled`）
 - 本番環境で初回 cron が正常に実行され、絵画が生成される

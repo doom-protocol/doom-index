@@ -9,6 +9,7 @@
 **Users**: DOOM INDEX のギャラリー訪問者が、気に入ったアートワークを自身の Solana ウォレットに NFT としてミントできます。
 
 **Impact**: 既存のギャラリー表示機能に対して以下の変更を加えます：
+
 - FramedPainting コンポーネントから絵画モデルのみを GLB 形式でエクスポート
 - tRPC ルーターに Pinata 署名付き URL 生成エンドポイントを追加（メタデータ・GLB 用）
 - クライアントサイドで Solana ウォレット接続と直接トランザクション送信を実装
@@ -90,16 +91,19 @@ graph TB
 本機能は既存の技術スタックに完全に準拠します：
 
 **Frontend**:
+
 - React 19 + Next.js 16（App Router, Edge Runtime）
 - React Three Fiber + Three.js（GLTFExporter 追加）
 - TanStack Query + tRPC Client（既存パターン踏襲）
 
 **Backend**:
+
 - tRPC v11（新規ルーター `ipfs.ts` 追加）
 - Cloudflare Workers（Edge Runtime）
 - neverthrow Result 型（既存エラーハンドリングパターン）
 
 **New Dependencies**:
+
 - `pinata` (v3): Pinata SDK for IPFS uploads
 - `@solana/web3.js` (v1.95+): Solana RPC client
 - `@solana/wallet-adapter-react` (v0.15+): Solana wallet integration
@@ -183,23 +187,23 @@ sequenceDiagram
     GLTFExporter-->>MintModal: GLB ArrayBuffer
     MintModal->>MintModal: Optimize if > 32MB
     MintModal->>MintModal: Create GLB File object
-    
+
     MintModal->>MintModal: Build NFT metadata JSON
     MintModal->>MintModal: Create Metadata File object
-    
+
     MintModal->>tRPC: createSignedUploadUrl(name: glb)
     tRPC->>Pinata: createSignedURL(expires: 30)
     Pinata-->>tRPC: signedUrlGlb
     tRPC-->>MintModal: signedUrlGlb
-    
+
     MintModal->>tRPC: createSignedUploadUrl(name: metadata)
     tRPC->>Pinata: createSignedURL(expires: 30)
     Pinata-->>tRPC: signedUrlMetadata
     tRPC-->>MintModal: signedUrlMetadata
-    
+
     MintModal->>Pinata: POST signedUrlGlb (GLB file)
     Pinata-->>MintModal: { cidGlb }
-    
+
     MintModal->>MintModal: Update metadata.image with cidGlb
     MintModal->>Pinata: POST signedUrlMetadata (JSON)
     Pinata-->>MintModal: { cidMetadata }
@@ -218,33 +222,33 @@ sequenceDiagram
     User->>MintModal: Open Mint Modal
     MintModal->>Wallet: Connect wallet
     Wallet-->>MintModal: Connected (publicKey)
-    
+
     MintModal->>Contract: Read mint price
     Contract-->>MintModal: { lamports, networkFee }
     MintModal->>MintModal: Display price (SOL + USD)
-    
+
     loop Every 5 seconds
         MintModal->>Contract: Read mint price
         Contract-->>MintModal: Updated pricing
         MintModal->>MintModal: Update UI if changed > 1%
     end
-    
+
     Note over MintModal: After IPFS upload complete
     User->>MintModal: Confirm Mint
     MintModal->>MintModal: Build mint transaction
     Note over MintModal: Include cidGlb, cidMetadata
-    
+
     MintModal->>Wallet: Request signature
     Wallet->>User: Show transaction details
     User->>Wallet: Approve
     Wallet-->>MintModal: Signed transaction
-    
+
     MintModal->>Solana: Send signed transaction
     Solana->>Contract: Execute mint instruction
     Contract->>Contract: Store CIDs on-chain
     Contract-->>Solana: Success
     Solana-->>MintModal: Transaction signature
-    
+
     MintModal->>Solana: Confirm transaction
     Solana-->>MintModal: Confirmed
     MintModal->>User: Show success + NFT link
@@ -252,14 +256,14 @@ sequenceDiagram
 
 ## Requirements Traceability
 
-| Requirement | Summary | Components | Interfaces | Flows |
-|-------------|---------|------------|------------|-------|
-| 1.1-1.4 | GLB エクスポートと最適化 | GlbExportService, PaintingModel | exportPaintingGlb(model) | GLB Export Flow |
-| 2.1-2.6 | Pinata 署名付き URL 生成 | IpfsRouter, PinataClient | createSignedUploadUrl() | IPFS Upload Flow |
-| 3.1-3.7 | クライアント直接アップロード | MintModal, useIpfsUpload | uploadToIpfs(file, signedUrl) | IPFS Upload Flow |
-| 4.1-4.5 | IPFS メタデータ構築とアップロード | MintModal, MetadataBuilder | buildMetadata(), uploadMetadata() | IPFS Upload Flow |
-| 5.1-5.4 | ミント料金の動的取得 | MintModal, useSolanaContract | getMintPricing() | Mint Flow |
-| 6.1-6.4 | NFT ミントフロー | MintModal, useSolanaWallet | buildMintTx(), sendTransaction() | Mint Flow |
+| Requirement | Summary                           | Components                      | Interfaces                        | Flows            |
+| ----------- | --------------------------------- | ------------------------------- | --------------------------------- | ---------------- |
+| 1.1-1.4     | GLB エクスポートと最適化          | GlbExportService, PaintingModel | exportPaintingGlb(model)          | GLB Export Flow  |
+| 2.1-2.6     | Pinata 署名付き URL 生成          | IpfsRouter, PinataClient        | createSignedUploadUrl()           | IPFS Upload Flow |
+| 3.1-3.7     | クライアント直接アップロード      | MintModal, useIpfsUpload        | uploadToIpfs(file, signedUrl)     | IPFS Upload Flow |
+| 4.1-4.5     | IPFS メタデータ構築とアップロード | MintModal, MetadataBuilder      | buildMetadata(), uploadMetadata() | IPFS Upload Flow |
+| 5.1-5.4     | ミント料金の動的取得              | MintModal, useSolanaContract    | getMintPricing()                  | Mint Flow        |
+| 6.1-6.4     | NFT ミントフロー                  | MintModal, useSolanaWallet      | buildMintTx(), sendTransaction()  | Mint Flow        |
 
 ## Components and Interfaces
 
@@ -294,7 +298,7 @@ interface MintModalProps {
 }
 
 interface MintModalState {
-  step: 'export' | 'upload' | 'verify' | 'pricing' | 'mint' | 'success' | 'error';
+  step: "export" | "upload" | "verify" | "pricing" | "mint" | "success" | "error";
   progress: number;
   glbFile: File | null;
   ipfsData: { cid: string; gatewayUrl: string } | null;
@@ -416,9 +420,9 @@ interface IpfsUploadResult {
 
 **API Contract**:
 
-| Method | Endpoint | Request | Response | Errors |
-|--------|----------|---------|----------|--------|
-| mutation | createSignedUploadUrl | CreateSignedUrlInput | SignedUrlOutput | 500 |
+| Method   | Endpoint              | Request              | Response        | Errors |
+| -------- | --------------------- | -------------------- | --------------- | ------ |
+| mutation | createSignedUploadUrl | CreateSignedUrlInput | SignedUrlOutput | 500    |
 
 **Detailed Schemas**:
 
@@ -426,13 +430,15 @@ interface IpfsUploadResult {
 // createSignedUploadUrl
 const createSignedUrlInput = z.object({
   filename: z.string().min(1).max(255),
-  contentType: z.enum(['application/octet-stream', 'application/json']),
-  keyvalues: z.object({
-    walletAddress: z.string().optional(),
-    timestamp: z.string(),
-    paintingHash: z.string(),
-    network: z.enum(['devnet', 'mainnet-beta']),
-  }).optional(),
+  contentType: z.enum(["application/octet-stream", "application/json"]),
+  keyvalues: z
+    .object({
+      walletAddress: z.string().optional(),
+      timestamp: z.string(),
+      paintingHash: z.string(),
+      network: z.enum(["devnet", "mainnet-beta"]),
+    })
+    .optional(),
   group: z.string().optional(),
 });
 
@@ -467,6 +473,7 @@ type SignedUrlOutput = {
 **External Dependencies Investigation**:
 
 Pinata SDK v3 は以下の API を提供：
+
 - `upload.public.createSignedURL({ expires, name, keyvalues, group })`: 署名付き URL を生成
 - `gateways.public.convert(cid)`: CID を署名付き Gateway URL に変換
 - 認証: `pinataJwt` による Bearer トークン認証
@@ -516,6 +523,7 @@ interface SignedUrl {
 **External Dependencies Investigation**:
 
 Solana web3.js v1.95+ は以下の API を提供：
+
 - `Connection.getAccountInfo()`: コントラクトアカウント情報を取得
 - `Connection.getRecentBlockhash()`: 最新のブロックハッシュを取得
 - `Connection.getFeeForMessage(message)`: トランザクション手数料を推定
@@ -687,11 +695,13 @@ ipfs://{cidMetadata}
 ```
 
 **IPFS Key Design**:
+
 - CID による内容ベースアドレッシング
 - GLB ファイルと Metadata JSON を個別に IPFS にアップロード
 - Metadata JSON の `image` フィールドに `ipfs://{cidGlb}` を含める
 
 **Pinata Metadata (keyvalues)**:
+
 - `timestamp`: アップロード時刻
 - `paintingHash`: 元の絵画のハッシュ
 - `network`: devnet | mainnet-beta
@@ -704,7 +714,7 @@ NFT Account (on-chain):
   - mint: PublicKey (NFT Mint Address)
   - metadata: PublicKey (Metadata Account Address)
   - uri: string (ipfs://{cidMetadata})
-  
+
 Metadata Account (on-chain):
   - name: string
   - symbol: string
@@ -714,6 +724,7 @@ Metadata Account (on-chain):
 ```
 
 **On-chain Data Design**:
+
 - すべてのミント情報はコントラクトに保存
 - IPFS CID は Metadata Account の `uri` フィールドに保存
 - 中央集権的なデータベース（D1, R2）は使用しない
@@ -753,6 +764,7 @@ interface MetaplexMetadata {
 ```
 
 **Schema Versioning Strategy**:
+
 - Metaplex Standard v1.1.0 に準拠
 - 将来的な拡張のため `properties.category` に "glb" を指定
 - Backward compatibility: 既存の NFT ビューアーとの互換性を維持
@@ -772,16 +784,19 @@ interface MetaplexMetadata {
 #### User Errors (4xx)
 
 **Invalid Input**:
+
 - **Trigger**: GLB ファイルサイズが 32MB を超える、無効な CID フォーマット
 - **Response**: フィールドレベルのバリデーションエラーを表示、リトライ不可
 - **Example**: "GLB file size exceeds 32MB limit. Please reduce texture quality."
 
 **Wallet Not Connected**:
+
 - **Trigger**: ウォレット未接続状態でミント実行
 - **Response**: ウォレット接続モーダルを表示、接続後にリトライ
 - **Example**: "Please connect your Solana wallet to continue."
 
 **Insufficient Funds**:
+
 - **Trigger**: ウォレット残高がミント料金 + ネットワーク手数料を下回る
 - **Response**: 必要額と不足額を表示、ウォレットへの入金を促す
 - **Example**: "Insufficient funds. Required: 0.05 SOL, Available: 0.02 SOL"
@@ -789,16 +804,19 @@ interface MetaplexMetadata {
 #### System Errors (5xx)
 
 **Pinata API Failure**:
+
 - **Trigger**: Pinata API がタイムアウト、レート制限、サーバーエラー
 - **Response**: エラーメッセージを表示、3 回まで自動リトライ、Circuit Breaker で過負荷防止
 - **Example**: "IPFS upload failed. Retrying... (Attempt 2/3)"
 
 **Solana RPC Timeout**:
+
 - **Trigger**: Solana RPC が 2 秒以内に応答しない
 - **Response**: タイムアウトメッセージを表示、リトライボタンを提供
 - **Example**: "Solana network is slow. Please retry."
 
 **Solana Transaction Error**:
+
 - **Trigger**: トランザクション送信が失敗（ネットワークエラー、残高不足、コントラクトエラー）
 - **Response**: エラーメッセージを表示、リトライボタンを提供、エラーログを記録
 - **Example**: "Transaction failed: Insufficient funds. Please add SOL to your wallet."
@@ -806,11 +824,13 @@ interface MetaplexMetadata {
 #### Business Logic Errors (422)
 
 **Duplicate Mint Attempt**:
+
 - **Trigger**: 同じ CID で既にミント済み
 - **Response**: 既存の NFT 情報を表示、新規ミント不可を通知
 - **Example**: "This artwork has already been minted. View your NFT in wallet."
 
 **Expired Signed URL**:
+
 - **Trigger**: 署名付き URL の有効期限（30 秒）が切れた
 - **Response**: 新しい署名付き URL を自動取得、アップロードを再開
 - **Example**: "Upload session expired. Restarting upload..."
@@ -822,19 +842,19 @@ flowchart TD
     Start[User Action] --> Validate{Input Valid?}
     Validate -->|No| UserError[Display Validation Error]
     Validate -->|Yes| Execute[Execute Operation]
-    
+
     Execute --> CheckResult{Result OK?}
     CheckResult -->|Yes| Success[Display Success]
     CheckResult -->|No| ErrorType{Error Type?}
-    
+
     ErrorType -->|User Error| UserError
     ErrorType -->|System Error| SystemError[Log Error]
     ErrorType -->|Business Error| BusinessError[Display Business Rule]
-    
+
     SystemError --> Retry{Retry Count < 3?}
     Retry -->|Yes| Execute
     Retry -->|No| FinalError[Display Final Error + Support]
-    
+
     UserError --> End[End]
     BusinessError --> End
     Success --> End
@@ -866,26 +886,31 @@ flowchart TD
 ### Unit Tests
 
 **GlbExportService**:
+
 - `exportGlb()` が有効な GLB バイナリを生成することを検証
 - `optimizeGlb()` がファイルサイズを targetSizeMB 以下に削減することを検証
 - エラーケース: 無効なシーン、メモリ不足
 
 **PinataClient**:
+
 - `createSignedUploadUrl()` が有効な署名付き URL を返すことを検証（モック）
 - `convertToGatewayUrl()` が正しい Gateway URL を生成することを検証（モック）
 - エラーケース: JWT 無効、ネットワークエラー
 
 **useSolanaContract**:
+
 - `getMintPricing()` が正しい lamports と networkFee を返すことを検証（モック）
 - `buildMintTransaction()` が有効な Transaction オブジェクトを構築することを検証（モック）
 - エラーケース: RPC タイムアウト、コントラクトアカウント不正
 
 **useSolanaWallet**:
+
 - `connect()` がウォレット接続を正しく実行することを検証（モック）
 - `signAndSendTransaction()` がトランザクション署名を返すことを検証（モック）
 - エラーケース: ウォレット未インストール、ユーザー拒否、残高不足
 
 **MetadataBuilder**:
+
 - `buildNftMetadata()` が Metaplex 標準に準拠した JSON を生成することを検証
 - `image` フィールドが `ipfs://{cidGlb}` 形式であることを検証
 - エラーケース: 無効な CID フォーマット
@@ -893,47 +918,57 @@ flowchart TD
 ### Integration Tests
 
 **tRPC IpfsRouter**:
+
 - `createSignedUploadUrl` プロシージャが Pinata SDK を正しく呼び出すことを検証
 - エラーケース: Pinata API エラー、JWT 無効
 
 **GLB Export to IPFS Flow**:
+
 - PaintingModel → GLB エクスポート → 署名付き URL 取得（GLB） → Pinata アップロード（GLB） → 署名付き URL 取得（Metadata） → Metadata 構築 → Pinata アップロード（Metadata） → CID 取得の一連のフローを検証
 - エラーケース: 署名付き URL 有効期限切れ、アップロード失敗
 
 **Mint Flow with Wallet**:
+
 - ウォレット接続 → 料金取得 → IPFS アップロード完了 → トランザクション構築 → ウォレット署名 → トランザクション送信 → 確認の一連のフローを検証
 - エラーケース: ウォレット未接続、料金変動、残高不足、ユーザー拒否、トランザクション失敗
 
 ### E2E Tests
 
 **Complete Mint Flow**:
+
 - ユーザーがギャラリーで "Mint NFT" をクリック → ウォレット接続 → 絵画モデル GLB エクスポート → IPFS アップロード（GLB + Metadata） → 料金確認 → トランザクション構築 → ウォレット署名 → トランザクション送信 → 確認 → 成功モーダル表示
 - エラーケース: ウォレット未接続、ネットワークエラー、ユーザー拒否、トランザクション失敗
 
 **Retry and Recovery**:
+
 - IPFS アップロード失敗時のリトライ動作を検証
 - 署名付き URL 有効期限切れ時の自動再取得を検証
 - トランザクション失敗時のエラーメッセージ表示とリトライを検証
 
 **Wallet Integration**:
+
 - Phantom/Solflare Wallet 接続 → トランザクション構築 → 署名リクエスト → ユーザー確認 → 署名 → トランザクション送信を検証
 - エラーケース: ウォレット未インストール、ユーザー拒否、署名キャンセル、残高不足
 
 ### Performance Tests
 
 **GLB Export Performance**:
+
 - 10MB, 20MB, 30MB の GLB エクスポート時間を測定（目標: 30MB で 5 秒以内）
 - メモリ使用量を測定（目標: 100MB 以内）
 
 **IPFS Upload Performance**:
+
 - 10MB, 20MB, 30MB のアップロード時間を測定（目標: 30MB で 30 秒以内）
 - ネットワーク帯域幅の影響を評価
 
 **Pricing Update Latency**:
+
 - 5 秒間隔での料金更新レイテンシを測定（目標: 500ms 以内）
 - Solana RPC のレスポンスタイムを監視
 
 **Concurrent Mints**:
+
 - 10 ユーザーが同時にミントを実行した場合のシステム負荷を測定
 - tRPC プロシージャのスループットを評価（目標: 100 requests/sec）
 
@@ -942,11 +977,13 @@ flowchart TD
 ### Authentication and Authorization
 
 **Pinata JWT Management**:
+
 - サーバーサイドのみで PINATA_JWT を管理、クライアントに公開しない
 - 署名付き URL の有効期限を 30 秒に制限し、不正利用を防止
 - 環境変数検証で JWT の存在を必須化（`@t3-oss/env-nextjs`）
 
 **Solana Wallet Verification**:
+
 - ミント実行時にウォレット署名を必須化
 - トランザクションペイロードにウォレットアドレスを含め、改ざんを防止
 - クライアントサイドでウォレット接続状態を検証
@@ -954,11 +991,13 @@ flowchart TD
 ### Data Protection
 
 **IPFS Data Integrity**:
+
 - CID による内容ベースアドレッシングで、GLB ファイルの改ざんを検出
 - Gateway URL に署名を含め、不正アクセスを防止
 - R2 メタデータに CID と paintingHash を保存し、整合性を保証
 
 **Metadata Privacy**:
+
 - ウォレットアドレスを keyvalues に含めるが、公開 IPFS には含めない
 - R2 メタデータは Cloudflare 内部に保存し、外部アクセスを制限
 - 個人情報（メールアドレス等）は一切保存しない
@@ -966,16 +1005,19 @@ flowchart TD
 ### Threat Modeling
 
 **Threat 1: 署名付き URL の不正利用**:
+
 - **Attack Vector**: 署名付き URL を盗んで大量のファイルをアップロード
 - **Mitigation**: 有効期限を 30 秒に制限、1 URL につき 1 回のみ使用可能
 - **Detection**: Pinata のアップロードログを監視、異常なアップロード数を検出
 
 **Threat 2: NFT メタデータの改ざん**:
+
 - **Attack Vector**: IPFS メタデータを改ざんして不正な NFT を生成
 - **Mitigation**: CID による内容ベースアドレッシングで改ざんを検出、コントラクトが CID を検証
 - **Detection**: CID が変更されると異なるアドレスになるため、改ざんは自動的に検出される
 
 **Threat 3: トランザクションのリプレイ攻撃**:
+
 - **Attack Vector**: 同じトランザクションを複数回送信してミントを重複実行
 - **Mitigation**: Solana の nonce メカニズムと blockhash による有効期限で自動的に防止、コントラクトが重複ミントをチェック
 - **Detection**: Solana RPC が重複トランザクションを拒否、コントラクトが Mint Account の一意性を保証
@@ -983,11 +1025,13 @@ flowchart TD
 ### Compliance
 
 **GDPR Compliance**:
+
 - ウォレットアドレスは公開鍵であり、個人情報ではない（GDPR 適用外）
 - ユーザーの同意なしに個人情報を収集しない
 - すべてのデータはオンチェーン（Solana + IPFS）に保存され、中央集権的なデータベースを使用しない
 
 **Copyright and Licensing**:
+
 - ミントされた NFT は DOOM INDEX の生成アートワークの派生物
 - ユーザーは NFT の所有権を持つが、著作権は DOOM INDEX に帰属
 - メタデータに creator 情報を含め、クリエイターを明示（Metaplex 標準）
@@ -997,21 +1041,25 @@ flowchart TD
 ### Target Metrics
 
 **GLB Export**:
+
 - 30MB GLB エクスポート時間: 5 秒以内
 - メモリ使用量: 100MB 以内
 - CPU 使用率: 80% 以内（クライアント）
 
 **IPFS Upload**:
+
 - 30MB アップロード時間: 30 秒以内（平均ネットワーク速度 10Mbps）
 - アップロード成功率: 99% 以上
 - リトライ成功率: 95% 以上（3 回リトライ後）
 
 **Mint Transaction**:
+
 - トランザクション送信時間: 2 秒以内
 - トランザクション確認時間: 30 秒以内（Solana の確認時間に依存）
 - 料金更新レイテンシ: 500ms 以内
 
 **tRPC API**:
+
 - `createSignedUploadUrl`: 200ms 以内
 - `verifyIpfsUpload`: 500ms 以内
 - `getMintPricing`: 1 秒以内
@@ -1020,32 +1068,38 @@ flowchart TD
 ### Scaling Approaches
 
 **Horizontal Scaling**:
+
 - Cloudflare Workers は自動的に Edge ロケーションにデプロイされ、グローバルにスケール
 - tRPC プロシージャはステートレスで、リクエストごとに独立して実行
 - R2 と Pinata は無制限にスケール可能
 
 **Vertical Scaling**:
+
 - GLB エクスポートはクライアントサイドで実行されるため、サーバーリソースを消費しない
 - Solana RPC は Private RPC（Helius, QuickNode）を使用することでレート制限を緩和可能
 
 **Load Distribution**:
+
 - Pinata へのアップロードはクライアントから直接実行され、サーバー負荷を分散
 - 署名付き URL 生成のみサーバーで実行し、アップロード自体は Pinata が処理
 
 ### Caching Strategies
 
 **Mint Pricing Cache**:
+
 - Solana コントラクトの料金は頻繁に変更されないため、クライアントサイドで 5 秒間キャッシュ
 - TanStack Query のキャッシュメカニズムを使用
 - キャッシュキー: `['mintPricing', network, contractAddress]`
 
 **IPFS CID Cache**:
+
 - アップロード済みの CID をクライアントサイドで一時保存
 - 同じ絵画を再度ミントする場合、IPFS アップロードをスキップ可能
 - localStorage または sessionStorage に保存
 - キャッシュキー: `ipfs:cid:{paintingHash}`
 
 **GLB Export Optimization**:
+
 - 絵画モデルの GLB エクスポート結果をクライアントサイドで一時キャッシュ
 - 同じ絵画を再度エクスポートする場合、キャッシュから取得
 - メモリキャッシュ（React state）に保存

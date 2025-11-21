@@ -1,4 +1,4 @@
-import type { DatePrefix } from "@/types/archive";
+import type { DatePrefix } from "@/types/paintings";
 
 /**
  * Parse date string (YYYY-MM-DD or ISO timestamp) to date prefix structure

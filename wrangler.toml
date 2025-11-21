@@ -17,7 +17,7 @@ command = "bun run build:cf"
 
 # Cron Triggers
 [triggers]
-crons = ["* * * * *"] # Every minute
+crons = ["0 * * * *"] # Every hour (dynamic-draw feature)
 
 [[routes]]
 pattern = "doomindex.fun"

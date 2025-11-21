@@ -118,6 +118,10 @@ export default async function Page() {
 }
 ```
 
+> **Note**  
+> The legacy DexScreener-backed market-cap service has been removed.  
+> `mc.getMarketCaps` now returns a cached zero-map placeholder while the new CoinGecko-based pipeline is being finalized.
+
 ## API Route Mapping
 
 | REST API Route             | tRPC Procedure                             | Type     |

@@ -1,11 +1,11 @@
 import { router, publicProcedure } from "../trpc";
-import { archiveListSchema } from "../schemas";
-import { createArchiveService } from "@/services/archive";
+import { paintingsListSchema } from "../schemas";
+import { createPaintingsService } from "@/services/paintings";
 import { get, set } from "@/lib/cache";
 import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
 
-export const archiveRouter = router({
-  list: publicProcedure.input(archiveListSchema).query(async ({ input, ctx }) => {
+export const paintingsRouter = router({
+  list: publicProcedure.input(paintingsListSchema).query(async ({ input, ctx }) => {
     const { limit, cursor, startDate, endDate } = input;
 
     const cacheKey = `archive:list:v2:${JSON.stringify({ limit, cursor, startDate, endDate })}`;
@@ -24,7 +24,7 @@ export const archiveRouter = router({
     // Resolve R2 bucket and create archive service with D1 binding
     const bucket = resolveR2BucketOrThrow(ctx);
     const d1Binding = ctx.env?.DB;
-    const archiveService = createArchiveService({
+    const archiveService = createPaintingsService({
       r2Bucket: bucket,
       d1Binding,
     });

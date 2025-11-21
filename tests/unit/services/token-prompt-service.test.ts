@@ -15,11 +15,11 @@ describe("WorldPromptService (token mode)", () => {
     t: { n: "Test Token", c: "ethereum" },
     m: { mc: 1_000_000, bd: 450_000, fg: 120_000 },
     s: { p: 1.0, p7: 0.85, v: 900_000, mc: 1_200_000, vol: 300_000 },
-    c: "bullish",
-    a: "meme",
-    e: { k: "pump", i: "high" },
-    o: "portrait",
-    p: "vibrant",
+    c: "euphoria",
+    a: "meme-ascendant",
+    e: { k: "rally", i: 2 },
+    o: "central-altar",
+    p: "solar-gold",
     d: { dir: "up", vol: "high" },
     f: ["pump-fun", "viral"],
     h: ["community-driven"],
@@ -53,7 +53,9 @@ describe("WorldPromptService (token mode)", () => {
 
   beforeEach(() => {
     mockTokenContextService = {
-      generateTokenContext: mock(() => Promise.resolve(ok(mockTokenContext))) as unknown as TokenContextService["generateTokenContext"],
+      generateTokenContext: mock(() =>
+        Promise.resolve(ok(mockTokenContext)),
+      ) as unknown as TokenContextService["generateTokenContext"],
     };
 
     mockWorkersAiClient = {
@@ -65,7 +67,9 @@ describe("WorldPromptService (token mode)", () => {
           }),
         ),
       ) as unknown as WorkersAiClient["generateText"],
-      generateJson: mock(() => Promise.resolve(err({ type: "ExternalApiError", provider: "WorkersAI", message: "unused" }))) as unknown as WorkersAiClient["generateJson"],
+      generateJson: mock(() =>
+        Promise.resolve(err({ type: "ExternalApiError", provider: "WorkersAI", message: "unused" })),
+      ) as unknown as WorkersAiClient["generateJson"],
     };
   });
 
@@ -108,7 +112,9 @@ describe("WorldPromptService (token mode)", () => {
       message: "generation failed",
     };
 
-    mockWorkersAiClient.generateText = mock(() => Promise.resolve(err(aiError))) as unknown as WorkersAiClient["generateText"];
+    mockWorkersAiClient.generateText = mock(() =>
+      Promise.resolve(err(aiError)),
+    ) as unknown as WorkersAiClient["generateText"];
 
     const service = createService();
     const result = await service.composeTokenPrompt({
@@ -130,7 +136,9 @@ describe("WorldPromptService (token mode)", () => {
       message: "context fetch failed",
     };
 
-    mockTokenContextService.generateTokenContext = mock(() => Promise.resolve(err(contextError))) as unknown as TokenContextService["generateTokenContext"];
+    mockTokenContextService.generateTokenContext = mock(() =>
+      Promise.resolve(err(contextError)),
+    ) as unknown as TokenContextService["generateTokenContext"];
 
     const service = createService();
     const result = await service.composeTokenPrompt({
@@ -145,5 +153,20 @@ describe("WorldPromptService (token mode)", () => {
     }
 
     expect(mockWorkersAiClient.generateText).not.toHaveBeenCalled();
+  });
+
+  it("requires tokenMeta when tokenContext is not provided", async () => {
+    const service = createService();
+
+    const result = await service.composeTokenPrompt({
+      mcRounded: mockMcRounded,
+      paintingContext: mockPaintingContext,
+    });
+
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.type).toBe("ValidationError");
+    }
+    expect(mockTokenContextService.generateTokenContext).not.toHaveBeenCalled();
   });
 });

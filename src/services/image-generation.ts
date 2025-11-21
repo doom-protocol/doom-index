@@ -18,6 +18,8 @@ import type { McMapRounded } from "@/constants/token";
 import type { ImageProvider } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
 import type { WorldPromptService, PromptComposition } from "@/services/world-prompt-service";
+import type { PaintingContext } from "@/types/painting-context";
+import type { TokenContext, TokenMetaInput } from "@/services/token-context-service";
 
 export type ImageGenerationResult = {
   composition: PromptComposition;
@@ -27,6 +29,7 @@ export type ImageGenerationResult = {
 
 export type ImageGenerationService = {
   generateImage(mcRounded: McMapRounded): Promise<Result<ImageGenerationResult, AppError>>;
+  generateTokenImage(input: TokenImageGenerationInput): Promise<Result<ImageGenerationResult, AppError>>;
 };
 
 type ImageGenerationDeps = {
@@ -34,6 +37,14 @@ type ImageGenerationDeps = {
   imageProvider: ImageProvider;
   generationTimeoutMs?: number;
   log?: typeof logger;
+};
+
+type TokenImageGenerationInput = {
+  mcRounded: McMapRounded;
+  paintingContext: PaintingContext;
+  tokenMeta: TokenMetaInput;
+  tokenContext?: TokenContext;
+  referenceImageUrl?: string | null;
 };
 
 /**
@@ -54,22 +65,29 @@ export function createImageGenerationService({
    * @param mcRounded - Rounded market cap map
    * @returns Generation result with image buffer and metadata
    */
-  async function generateImage(mcRounded: McMapRounded): Promise<Result<ImageGenerationResult, AppError>> {
-    // Step 1: Compose prompt
-    const promptResult = await promptService.composePrompt(mcRounded);
-    if (promptResult.isErr()) return err(promptResult.error);
+  const sanitizeReferenceImageUrl = (url?: string | null): string | null => {
+    if (!url) return null;
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return null;
+      }
+      parsed.protocol = "https:";
+      return parsed.toString();
+    } catch {
+      return null;
+    }
+  };
 
-    const composition = promptResult.value;
-
-    // Log visual parameters and prompt composition
+  const logPromptDetails = (composition: PromptComposition, referenceImageUrl: string | null) => {
     log.info("image-generation.composition", {
       visualParams: composition.vp,
       paramsHash: composition.paramsHash,
       seed: composition.seed,
       size: `${composition.prompt.size.w}x${composition.prompt.size.h}`,
+      referenceImageUrl,
     });
 
-    // Estimate token count from prompt
     const promptTokens = estimateTokenCount(composition.prompt.text);
     const negativeTokens = estimateTokenCount(composition.prompt.negative);
     const totalTokens = {
@@ -77,21 +95,28 @@ export function createImageGenerationService({
       wordBased: promptTokens.wordBased + negativeTokens.wordBased,
     };
 
-    // Log final prompt before image generation
     log.info("image-generation.prompt", {
       prompt: composition.prompt.text,
       negative: composition.prompt.negative,
       seed: composition.prompt.seed,
       model: env.IMAGE_MODEL,
       size: `${composition.prompt.size.w}x${composition.prompt.size.h}`,
+      referenceImageUrl,
       tokens: {
         prompt: promptTokens,
         negative: negativeTokens,
         total: totalTokens,
       },
     });
+  };
 
-    // Step 2: Generate image
+  const requestImage = async (
+    composition: PromptComposition,
+    options?: { referenceImageUrl?: string | null },
+  ): Promise<Result<ImageGenerationResult, AppError>> => {
+    const sanitizedReference = sanitizeReferenceImageUrl(options?.referenceImageUrl);
+    logPromptDetails(composition, sanitizedReference);
+
     const imageResult = await imageProvider.generate(
       {
         prompt: composition.prompt.text,
@@ -101,18 +126,28 @@ export function createImageGenerationService({
         format: composition.prompt.format,
         seed: composition.prompt.seed,
         model: env.IMAGE_MODEL,
+        ...(sanitizedReference ? { referenceImageUrl: sanitizedReference } : {}),
       },
       {
         timeoutMs: generationTimeoutMs,
       },
     );
 
-    if (imageResult.isErr()) return err(imageResult.error);
+    if (imageResult.isErr()) {
+      log.error("image-generation.failure", {
+        paramsHash: composition.paramsHash,
+        seed: composition.seed,
+        referenceImageUrl: sanitizedReference,
+        error: imageResult.error,
+      });
+      return err(imageResult.error);
+    }
 
     log.info("image-generation.success", {
       paramsHash: composition.paramsHash,
       seed: composition.seed,
       bufferSize: imageResult.value.imageBuffer.byteLength,
+      referenceImageUrl: sanitizedReference,
     });
 
     return ok({
@@ -120,7 +155,29 @@ export function createImageGenerationService({
       imageBuffer: imageResult.value.imageBuffer,
       providerMeta: imageResult.value.providerMeta,
     });
+  };
+
+  async function generateImage(mcRounded: McMapRounded): Promise<Result<ImageGenerationResult, AppError>> {
+    const promptResult = await promptService.composePrompt(mcRounded);
+    if (promptResult.isErr()) return err(promptResult.error);
+
+    return requestImage(promptResult.value);
   }
 
-  return { generateImage };
+  async function generateTokenImage(
+    input: TokenImageGenerationInput,
+  ): Promise<Result<ImageGenerationResult, AppError>> {
+    const promptResult = await promptService.composeTokenPrompt({
+      mcRounded: input.mcRounded,
+      paintingContext: input.paintingContext,
+      tokenMeta: input.tokenMeta,
+      tokenContext: input.tokenContext,
+    });
+
+    if (promptResult.isErr()) return err(promptResult.error);
+
+    return requestImage(promptResult.value, { referenceImageUrl: input.referenceImageUrl });
+  }
+
+  return { generateImage, generateTokenImage };
 }

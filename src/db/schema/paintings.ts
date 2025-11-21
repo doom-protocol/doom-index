@@ -1,17 +1,17 @@
 import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 /**
- * Archive items table - Index for generated images with metadata
+ * Paintings table - Generated artworks with metadata
  * Enables efficient DESC sorting and pagination for archive page
  */
-export const archiveItems = sqliteTable(
-  "archive_items",
+export const paintings = sqliteTable(
+  "paintings",
   {
     id: text("id").primaryKey().notNull(),
 
     ts: integer("ts").notNull(), // Unix epoch seconds (minute-level precision)
     timestamp: text("timestamp").notNull(), // ISO 8601 format: "YYYY-MM-DDTHH:MM:SSZ"
-    minuteBucket: text("minute_bucket").notNull(), // Same as timestamp (kept for ArchiveMetadata compatibility)
+    minuteBucket: text("minute_bucket").notNull(), // Same as timestamp (kept for PaintingMetadata compatibility)
 
     paramsHash: text("params_hash").notNull(), // 8-character hex hash of visual parameters
     seed: text("seed").notNull(), // 12-character hex seed for reproducibility
@@ -27,16 +27,16 @@ export const archiveItems = sqliteTable(
     negative: text("negative").notNull(), // Negative prompt text
   },
   table => [
-    index("idx_archive_ts_id").on(table.ts, table.id),
-    index("idx_archive_ts").on(table.ts),
-    index("idx_archive_params_hash").on(table.paramsHash),
-    index("idx_archive_seed").on(table.seed),
-    uniqueIndex("idx_archive_r2_key").on(table.r2Key),
+    index("idx_paintings_ts_id").on(table.ts, table.id),
+    index("idx_paintings_ts").on(table.ts),
+    index("idx_paintings_params_hash").on(table.paramsHash),
+    index("idx_paintings_seed").on(table.seed),
+    uniqueIndex("idx_paintings_r2_key").on(table.r2Key),
   ],
 );
 
 /**
  * Type definitions (using Drizzle's type inference)
  */
-export type ArchiveItem = typeof archiveItems.$inferSelect;
-export type NewArchiveItem = typeof archiveItems.$inferInsert;
+export type Painting = typeof paintings.$inferSelect;
+export type NewPainting = typeof paintings.$inferInsert;

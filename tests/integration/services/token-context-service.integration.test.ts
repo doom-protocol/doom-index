@@ -13,7 +13,6 @@ import { createTokenContextRepository } from "@/repositories/token-context-repos
 import { createTavilyClient } from "@/lib/tavily-client";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { getDB } from "@/db";
 import type { TokenMetaInput } from "@/services/token-context-service";
 
 // TODO: Fix D1 binding mock for integration tests
@@ -84,19 +83,20 @@ describe.skip("TokenContextService Integration", () => {
     it("should generate TokenContext via Tavily + Workers AI when D1 miss (cache miss)", async () => {
       // This test requires D1 database and external APIs
       // Skip if not available in test environment
-      let db: Awaited<ReturnType<typeof getDB>> | null = null;
+      let d1Binding: D1Database | null = null;
       try {
-        db = await getDB();
+        const { env } = await getCloudflareContext({ async: true });
+        d1Binding = (env as Cloudflare.Env).DB;
       } catch (error) {
         console.log("Skipping test: D1 database not available", error);
         return;
       }
-      if (!db) {
+      if (!d1Binding) {
         console.log("Skipping test: D1 database not available");
         return;
       }
 
-      const repository = createTokenContextRepository({ d1Binding: d1Binding });
+      const repository = createTokenContextRepository({ d1Binding });
       const tavilyClient = createTavilyClient();
       const workersAiClient = createWorkersAiClient();
       const service = createTokenContextService({
@@ -135,19 +135,20 @@ describe.skip("TokenContextService Integration", () => {
     });
 
     it("should handle errors gracefully when external APIs fail", async () => {
-      let db: Awaited<ReturnType<typeof getDB>> | null = null;
+      let d1Binding: D1Database | null = null;
       try {
-        db = await getDB();
+        const { env } = await getCloudflareContext({ async: true });
+        d1Binding = (env as Cloudflare.Env).DB;
       } catch (error) {
         console.log("Skipping test: D1 database not available", error);
         return;
       }
-      if (!db) {
+      if (!d1Binding) {
         console.log("Skipping test: D1 database not available");
         return;
       }
 
-      const repository = createTokenContextRepository({ d1Binding: d1Binding });
+      const repository = createTokenContextRepository({ d1Binding });
       // Use invalid API key to force error
       const tavilyClient = createTavilyClient({ apiKey: "invalid-key" });
       const workersAiClient = createWorkersAiClient();

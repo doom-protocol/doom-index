@@ -2,10 +2,10 @@
 
 import React, { useEffect } from "react";
 import Image from "next/image";
-import type { ArchiveItem } from "@/types/archive";
+import type { Painting } from "@/types/paintings";
 
 interface ArchiveZoomViewProps {
-  item: ArchiveItem | null;
+  item: Painting | null;
   onClose: () => void;
 }
 

@@ -434,7 +434,8 @@ describe("TokenContextService", () => {
 
       // AI returns valid length context (50-500 chars)
       const mockAiResponse = {
-        short_context: "A test token designed for testing blockchain applications. It provides a simple way to test various features.",
+        short_context:
+          "A test token designed for testing blockchain applications. It provides a simple way to test various features.",
         category: "test",
         tags: ["testing", "blockchain"],
       };

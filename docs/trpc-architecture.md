@@ -107,23 +107,31 @@ export async function createServerContext(): Promise<Context> {
 
 ### Procedure Definition
 
+> **Note**  
+> As of the dynamic-draw rollout, the legacy DexScreener flow has been removed.  
+> `mc.getMarketCaps` now returns a zeroed placeholder map that is still cached for API compatibility.
+
 ```typescript
+const ZERO_MAP = TOKEN_TICKERS.reduce(
+  (acc, ticker) => {
+    acc[ticker] = 0;
+    return acc;
+  },
+  {} as Record<TokenTicker, number>,
+);
+
 export const mcRouter = router({
   getMarketCaps: publicProcedure.query(async ({ ctx }) => {
-    const marketCapService = createMarketCapService({
-      fetch,
-      log: ctx.logger,
-    });
-
-    const result = await marketCapService.getMcMap();
-
-    if (result.isErr()) {
-      ctx.logger.error("trpc.mc.getMarketCaps.error", result.error);
-      return { tokens: zeroMap, generatedAt: new Date().toISOString() };
+    const cached = await get<{ tokens: Record<string, number> }>("mc:getMarketCaps", { logger: ctx.logger });
+    if (cached) {
+      return { ...cached, generatedAt: new Date().toISOString() };
     }
 
+    const payload = { tokens: { ...ZERO_MAP } };
+    await set("mc:getMarketCaps", payload, { ttlSeconds: 60, logger: ctx.logger });
+
     return {
-      tokens: roundMc(result.value),
+      ...payload,
       generatedAt: new Date().toISOString(),
     };
   }),

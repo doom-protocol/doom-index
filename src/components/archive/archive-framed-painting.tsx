@@ -17,7 +17,7 @@ import {
   Texture,
 } from "three";
 import type { GLTF } from "three-stdlib";
-import type { ArchiveItem } from "@/types/archive";
+import type { Painting } from "@/types/paintings";
 import {
   calculatePlaneDimensions,
   handlePointerMoveForDrag,
@@ -26,9 +26,9 @@ import {
 } from "@/utils/three";
 
 interface ArchiveFramedPaintingProps {
-  item: ArchiveItem;
+  item: Painting;
   framePosition?: [number, number, number];
-  onPointerClick?: (item: ArchiveItem, event: ThreeEvent<PointerEvent>) => void;
+  onPointerClick?: (item: Painting, event: ThreeEvent<PointerEvent>) => void;
 }
 
 interface PaintingContentProps {

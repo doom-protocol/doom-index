@@ -49,6 +49,7 @@ graph TB
 ```
 
 **Architecture Integration**:
+
 - Existing patterns preserved: Next.js フロントエンドパターン、React Hooks
 - New components rationale: SolanaOnchainWorker - QuickNode 接続とイベントフィルタリング担当
 - Technology alignment: 既存の TypeScript/React スタックに統合
@@ -56,13 +57,13 @@ graph TB
 
 ### Technology Stack and Design Decisions
 
-| Layer                    | Choice / Version | Role in Feature | Notes |
-| ------------------------ | ---------------- | --------------- | ----- |
-| Frontend / CLI           | React + TypeScript | メインスレッド UI と Worker 管理 | 既存コンポーネントに統合 |
-| Backend / Services       | なし | - | QuickNode 直接接続 |
-| Data / Storage           | なし | - | イベントはメモリのみ |
-| Messaging / Events       | Web Worker Message API | スレッド間通信 | postMessage/onmessage |
-| Infrastructure / Runtime | QuickNode WebSocket | Solana RPC 接続 | wss:// endpoint |
+| Layer                    | Choice / Version       | Role in Feature                  | Notes                    |
+| ------------------------ | ---------------------- | -------------------------------- | ------------------------ |
+| Frontend / CLI           | React + TypeScript     | メインスレッド UI と Worker 管理 | 既存コンポーネントに統合 |
+| Backend / Services       | なし                   | -                                | QuickNode 直接接続       |
+| Data / Storage           | なし                   | -                                | イベントはメモリのみ     |
+| Messaging / Events       | Web Worker Message API | スレッド間通信                   | postMessage/onmessage    |
+| Infrastructure / Runtime | QuickNode WebSocket    | Solana RPC 接続                  | wss:// endpoint          |
 
 **Key Design Decisions**:
 
@@ -107,24 +108,24 @@ stateDiagram-v2
 
 ## Requirements Traceability
 
-| Requirement | Summary | Components | Interfaces | Flows |
-|-------------|---------|------------|------------|-------|
-| 1.1 | QuickNode WebSocket 接続 | SolanaOnchainWorker | WebSocket API | イベント検知フロー |
-| 1.2 | NFT/SPL 監視開始 | SolanaOnchainWorker | logsSubscribe | イベント検知フロー |
-| 1.3 | NFT mint 検知 | SolanaOnchainWorker | Event filtering | イベント検知フロー |
-| 1.4 | SPL 購入検知 | SolanaOnchainWorker | Event filtering | イベント検知フロー |
-| 2.1 | Web Worker 生成 | OnchainMonitor | Worker constructor | 初期化フロー |
-| 3.1 | NFT mint 通知 | OnchainMonitor | Sonner toast | 通知フロー |
-| 3.2 | SPL 購入通知 | OnchainMonitor | Sonner toast | 通知フロー |
-| 4.1 | 定数読み込み | SolanaConstants | Export constants | 初期化フロー |
+| Requirement | Summary                  | Components          | Interfaces         | Flows              |
+| ----------- | ------------------------ | ------------------- | ------------------ | ------------------ |
+| 1.1         | QuickNode WebSocket 接続 | SolanaOnchainWorker | WebSocket API      | イベント検知フロー |
+| 1.2         | NFT/SPL 監視開始         | SolanaOnchainWorker | logsSubscribe      | イベント検知フロー |
+| 1.3         | NFT mint 検知            | SolanaOnchainWorker | Event filtering    | イベント検知フロー |
+| 1.4         | SPL 購入検知             | SolanaOnchainWorker | Event filtering    | イベント検知フロー |
+| 2.1         | Web Worker 生成          | OnchainMonitor      | Worker constructor | 初期化フロー       |
+| 3.1         | NFT mint 通知            | OnchainMonitor      | Sonner toast       | 通知フロー         |
+| 3.2         | SPL 購入通知             | OnchainMonitor      | Sonner toast       | 通知フロー         |
+| 4.1         | 定数読み込み             | SolanaConstants     | Export constants   | 初期化フロー       |
 
 ## Components and Interfaces
 
-| Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
-|-----------|-------------|--------|--------------|------------------|-----------|
-| SolanaOnchainWorker | Worker | QuickNode 接続とイベント監視 | 1, 2 | QuickNode WS | Message API |
-| OnchainMonitor | UI Hook | Worker 管理と通知表示 | 3, 4 | Web Worker, Sonner | React Hook |
-| SolanaConstants | Config | 監視対象定義 | 4 | - | Export |
+| Component           | Domain/Layer | Intent                       | Req Coverage | Key Dependencies   | Contracts   |
+| ------------------- | ------------ | ---------------------------- | ------------ | ------------------ | ----------- |
+| SolanaOnchainWorker | Worker       | QuickNode 接続とイベント監視 | 1, 2         | QuickNode WS       | Message API |
+| OnchainMonitor      | UI Hook      | Worker 管理と通知表示        | 3, 4         | Web Worker, Sonner | React Hook  |
+| SolanaConstants     | Config       | 監視対象定義                 | 4            | -                  | Export      |
 
 ### Worker Layer
 
@@ -145,6 +146,7 @@ stateDiagram-v2
 **External Dependencies Investigation**
 
 QuickNode Solana WebSocket の公式ドキュメントを確認した結果：
+
 - JSON-RPC 2.0 プロトコルを使用
 - logsSubscribe メソッドでリアルタイムログ監視が可能
 - mentions パラメータでフィルタリング可能
@@ -212,7 +214,7 @@ interface SolanaConstants {
 ### Domain Model
 
 ```typescript
-type OnchainEventType = 'NFT_MINT' | 'TOKEN_BUY';
+type OnchainEventType = "NFT_MINT" | "TOKEN_BUY";
 
 interface BaseOnchainEvent {
   type: OnchainEventType;
@@ -221,14 +223,14 @@ interface BaseOnchainEvent {
 }
 
 interface NftMintEvent extends BaseOnchainEvent {
-  type: 'NFT_MINT';
+  type: "NFT_MINT";
   minter?: string;
   mint?: string;
   collection?: string;
 }
 
 interface TokenBuyEvent extends BaseOnchainEvent {
-  type: 'TOKEN_BUY';
+  type: "TOKEN_BUY";
   buyer?: string;
   tokenMint: string;
   amount?: string;

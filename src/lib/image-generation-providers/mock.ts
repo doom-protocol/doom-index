@@ -21,6 +21,7 @@ export const createMockImageProvider = (): ImageProvider => ({
       model: input.model,
       size: `${input.width}x${input.height}`,
       seed: input.seed,
+      referenceImageUrl: input.referenceImageUrl ?? null,
       tokens: {
         prompt: promptTokens,
         negative: negativeTokens,

@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import { createArchiveService } from "@/services/archive";
+import { createPaintingsService } from "@/services/paintings";
 import { createTestR2Bucket } from "../../lib/memory-r2";
-import type { ArchiveMetadata } from "@/types/archive";
+import type { PaintingMetadata } from "@/types/paintings";
 
 describe("Archive Storage Service", () => {
   let bucket: R2Bucket;
@@ -15,9 +15,9 @@ describe("Archive Storage Service", () => {
 
   describe("storeImageWithMetadata", () => {
     it("should store image and metadata atomically", async () => {
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const imageBuffer = new TextEncoder().encode("fake image data").buffer;
-      const metadata: ArchiveMetadata = {
+      const metadata: PaintingMetadata = {
         id: "DOOM_202511141234_abc12345_def456789012",
         timestamp: "2025-11-14T12:34:00Z",
         minuteBucket: "2025-11-14T12:34:00Z",
@@ -80,7 +80,7 @@ describe("Archive Storage Service", () => {
         const storedMetadata = store.get(metadataKey);
         expect(storedMetadata).toBeDefined();
         if (storedMetadata && typeof storedMetadata.content === "string") {
-          const parsed = JSON.parse(storedMetadata.content) as ArchiveMetadata;
+          const parsed = JSON.parse(storedMetadata.content) as PaintingMetadata;
           expect(parsed.id).toBe(metadata.id);
           expect(parsed.timestamp).toBe(metadata.timestamp);
         }
@@ -88,12 +88,12 @@ describe("Archive Storage Service", () => {
     });
 
     it("should rollback image if metadata save fails", async () => {
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const imageBuffer = new TextEncoder().encode("fake image data").buffer;
       const invalidMetadata = {
         id: "DOOM_202511141234_abc12345_def456789012",
         // missing required fields
-      } as unknown as ArchiveMetadata;
+      } as unknown as PaintingMetadata;
 
       const result = await service.storeImageWithMetadata(
         "2025-11-14T12:34:00Z",
@@ -128,9 +128,9 @@ describe("Archive Storage Service", () => {
         },
       } as unknown as R2Bucket;
 
-      const service = createArchiveService({ r2Bucket: failingBucket });
+      const service = createPaintingsService({ r2Bucket: failingBucket });
       const imageBuffer = new TextEncoder().encode("fake image data").buffer;
-      const metadata: ArchiveMetadata = {
+      const metadata: PaintingMetadata = {
         id: "DOOM_202511141234_abc12345_def456789012",
         timestamp: "2025-11-14T12:34:00Z",
         minuteBucket: "2025-11-14T12:34:00Z",
@@ -187,9 +187,9 @@ describe("Archive Storage Service", () => {
     });
 
     it("should ensure image and metadata have matching filenames", async () => {
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const imageBuffer = new TextEncoder().encode("fake image data").buffer;
-      const metadata: ArchiveMetadata = {
+      const metadata: PaintingMetadata = {
         id: "DOOM_202511141234_abc12345_def456789012",
         timestamp: "2025-11-14T12:34:00Z",
         minuteBucket: "2025-11-14T12:34:00Z",

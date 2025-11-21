@@ -1,11 +1,5 @@
 import type { NormalizedMcMap } from "@/constants/token";
-
-const clamp01 = (value: number): number => {
-  if (!Number.isFinite(value)) return 0;
-  if (value <= 0) return 0;
-  if (value >= 1) return 1;
-  return value;
-};
+import { clamp01 } from "./normalize";
 
 const ease = (value: number, power: number): number => clamp01(Math.pow(clamp01(value), power));
 

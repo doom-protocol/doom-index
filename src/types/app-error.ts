@@ -1,6 +1,6 @@
 export type ExternalApiError = {
   type: "ExternalApiError";
-  provider: "DexScreener" | "ImageProvider" | "WorkersAI" | "Tavily";
+  provider: "ImageProvider" | "WorkersAI" | "Tavily" | "coingecko" | "alternative.me" | "runware";
   status?: number;
   message: string;
   ticker?: string;

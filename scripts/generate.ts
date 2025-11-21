@@ -1,7 +1,14 @@
 #!/usr/bin/env bun
 
 /**
- * Image Generation Script
+ * Image Generation Script (Manual Testing)
+ *
+ * This script is for manual testing and development purposes only.
+ * It allows you to generate images with custom market cap values for the legacy
+ * 8-token system (CO2, ICE, FOREST, NUKE, MACHINE, PANDEMIC, FEAR, HOPE).
+ *
+ * For production hourly painting generation with dynamic token selection,
+ * see src/cron.ts and PaintingGenerationOrchestrator.
  *
  * Usage:
  *   bun scripts/generate.ts --model "dall-e-3" --mc "CO2=1300000,ICE=200000,FOREST=900000,NUKE=50000,MACHINE=1450000,PANDEMIC=700000,FEAR=1100000,HOPE=400000"
@@ -16,8 +23,8 @@ import type { McMapRounded } from "@/constants/token";
 import { createWorldPromptService } from "@/services/world-prompt-service";
 import { resolveProviderWithMock, createImageProvider } from "@/lib/image-generation-providers";
 import { logger } from "@/utils/logger";
-import { extractIdFromFilename } from "@/utils/archive";
-import type { ArchiveMetadata } from "@/types/archive";
+import { extractIdFromFilename } from "@/utils/paintings";
+import type { PaintingMetadata } from "@/types/paintings";
 
 type Args = {
   mock?: boolean;
@@ -234,7 +241,7 @@ const main = async () => {
   // Build archive metadata (same structure as archive)
   const metadataId = extractIdFromFilename(composition.prompt.filename);
   const minuteBucketIso = `${composition.minuteBucket}:00Z`;
-  const archiveMetadata: ArchiveMetadata = {
+  const archiveMetadata: PaintingMetadata = {
     id: metadataId,
     timestamp: minuteBucketIso,
     minuteBucket: minuteBucketIso,

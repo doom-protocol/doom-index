@@ -4,7 +4,7 @@ import { useRef, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Vector3 } from "three";
 import { useScrollY } from "@/hooks/use-scroll-y";
-import { getGridConfig } from "@/lib/pure/archive-grid";
+import { getGridConfig } from "@/lib/pure/painting-grid";
 import { useMobile } from "@/hooks/use-mobile";
 
 interface ArchiveCameraRigProps {

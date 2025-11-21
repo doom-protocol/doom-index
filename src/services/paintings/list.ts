@@ -1,15 +1,15 @@
 import { err, ok, Result } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import { getJsonR2, listR2Objects } from "@/lib/r2";
-import type { ArchiveItem, ArchiveMetadata } from "@/types/archive";
-import { isValidArchiveFilename, buildPublicR2Path } from "@/utils/archive";
-import { parseDatePrefix } from "@/lib/pure/archive-date";
-import { isArchiveMetadata } from "@/lib/pure/archive-metadata";
+import type { Painting, PaintingMetadata } from "@/types/paintings";
+import { isValidPaintingFilename, buildPublicR2Path } from "@/utils/paintings";
+import { parseDatePrefix } from "@/lib/pure/painting-date";
+import { isPaintingMetadata } from "@/lib/pure/painting-metadata";
 import { logger } from "@/utils/logger";
 import type { McMapRounded } from "@/constants/token";
 import type { VisualParams } from "@/lib/pure/mapping";
-import { createArchiveRepository } from "@/repositories/archive-repository";
-import type { ArchiveRepository } from "@/repositories/archive-repository";
+import { createPaintingsRepository } from "@/repositories/paintings-repository";
+import type { PaintingsRepository } from "@/repositories/paintings-repository";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -22,7 +22,7 @@ const R2_FETCH_MULTIPLIER = 2;
 function filterWebpObjects(objects: R2Object[]): R2Object[] {
   return objects.filter(obj => {
     const filename = obj.key.split("/").pop() || "";
-    return filename.endsWith(".webp") && isValidArchiveFilename(filename);
+    return filename.endsWith(".webp") && isValidPaintingFilename(filename);
   });
 }
 
@@ -31,16 +31,16 @@ type BuildMetadataOptions = {
 };
 
 /**
- * Build ArchiveItem array from R2Object array with metadata loading
+ * Build Painting array from R2Object array with metadata loading
  */
-async function buildArchiveItemsWithMetadata(
+async function buildPaintingsWithMetadata(
   webpObjects: R2Object[],
   bucket: R2Bucket,
   options: BuildMetadataOptions = {},
-): Promise<Array<{ key: string; item: ArchiveItem }>> {
+): Promise<Array<{ key: string; item: Painting }>> {
   const metadataPromises = webpObjects.map(async obj => {
     const metadataKey = obj.key.replace(/\.webp$/, ".json");
-    const metadataResult = await getJsonR2<ArchiveMetadata>(bucket, metadataKey);
+    const metadataResult = await getJsonR2<PaintingMetadata>(bucket, metadataKey);
 
     if (metadataResult.isErr()) {
       logger.warn("archive.list.metadata.load.failed", {
@@ -52,7 +52,7 @@ async function buildArchiveItemsWithMetadata(
     }
 
     const metadata = metadataResult.value;
-    if (!metadata || !isArchiveMetadata(metadata)) {
+    if (!metadata || !isPaintingMetadata(metadata)) {
       logger.warn("archive.list.metadata.invalid", {
         imageKey: obj.key,
         metadataKey,
@@ -64,7 +64,7 @@ async function buildArchiveItemsWithMetadata(
   });
 
   const metadataResults = await Promise.allSettled(metadataPromises);
-  const items: Array<{ key: string; item: ArchiveItem }> = [];
+  const items: Array<{ key: string; item: Painting }> = [];
 
   for (const result of metadataResults) {
     if (result.status === "rejected") {
@@ -88,7 +88,7 @@ async function buildArchiveItemsWithMetadata(
       fileSize: obj.size ?? metadata.fileSize,
     });
 
-    const item: ArchiveItem = {
+    const item: Painting = {
       ...metadata,
       imageUrl,
       fileSize: obj.size ?? metadata.fileSize,
@@ -112,12 +112,12 @@ async function buildArchiveItemsWithMetadata(
 }
 
 type PaginatedCollectionResult = {
-  entries: Array<{ key: string; item: ArchiveItem }>;
+  entries: Array<{ key: string; item: Painting }>;
   cursor?: string;
   hasMore: boolean;
 };
 
-async function collectPaginatedArchiveItems({
+async function collectPaginatedPaintings({
   bucket,
   prefix,
   limit,
@@ -128,7 +128,7 @@ async function collectPaginatedArchiveItems({
   limit: number;
   startAfter?: string;
 }): Promise<Result<PaginatedCollectionResult, AppError>> {
-  const collected: Array<{ key: string; item: ArchiveItem }> = [];
+  const collected: Array<{ key: string; item: Painting }> = [];
   let pendingStartAfter = startAfter;
   let continuationCursor: string | undefined;
   let sawAdditionalPages = false;
@@ -152,7 +152,7 @@ async function collectPaginatedArchiveItems({
     }
 
     const webpObjects = filterWebpObjects(listResult.value.objects);
-    const builtItems = await buildArchiveItemsWithMetadata(webpObjects, bucket);
+    const builtItems = await buildPaintingsWithMetadata(webpObjects, bucket);
     collected.push(...builtItems);
 
     if (listResult.value.truncated && listResult.value.cursor) {
@@ -223,7 +223,7 @@ export type ListImagesOptions = {
 };
 
 export type ListImagesResponse = {
-  items: ArchiveItem[];
+  items: Painting[];
   cursor?: string;
   hasMore: boolean;
 };
@@ -237,11 +237,11 @@ export async function listImages(
   bucket: R2Bucket,
   d1Binding: D1Database | undefined,
   options: ListImagesOptions,
-  archiveRepository?: ArchiveRepository,
+  archiveRepository?: PaintingsRepository,
 ): Promise<Result<ListImagesResponse, AppError>> {
   try {
     const limit = Math.min(options.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
-    const repo = archiveRepository ?? createArchiveRepository({ d1Binding });
+    const repo = archiveRepository ?? createPaintingsRepository({ d1Binding });
 
     const d1Result = await repo.list({
       limit,
@@ -253,7 +253,7 @@ export async function listImages(
     if (d1Result.isOk()) {
       const d1Data = d1Result.value;
 
-      const items: ArchiveItem[] = d1Data.items.map(item => {
+      const items: Painting[] = d1Data.items.map(item => {
         try {
           const mcRounded = JSON.parse(item.mcRoundedJson) as McMapRounded;
           const visualParams = JSON.parse(item.visualParamsJson) as VisualParams;
@@ -334,7 +334,7 @@ export async function listImages(
       const endDateStartAfter = calculateStartAfterForEndDate(options.endDate);
       const filteredObjects = webpObjects.filter(obj => obj.key < endDateStartAfter);
 
-      const items = await buildArchiveItemsWithMetadata(filteredObjects, bucket, { sortOrder: "desc" });
+      const items = await buildPaintingsWithMetadata(filteredObjects, bucket, { sortOrder: "desc" });
       const limitedItems = items.slice(0, limit).map(entry => entry.item);
       // Date-range queries span multiple prefixes and currently do not support pagination.
       const response: ListImagesResponse = {
@@ -360,7 +360,7 @@ export async function listImages(
       }
     }
 
-    const pageResult = await collectPaginatedArchiveItems({
+    const pageResult = await collectPaginatedPaintings({
       bucket,
       prefix: listPrefix,
       limit,

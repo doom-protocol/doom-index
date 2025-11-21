@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import { createArchiveService } from "@/services/archive";
+import { createPaintingsService } from "@/services/paintings";
 import { createTestR2Bucket } from "../../lib/memory-r2";
-import type { ArchiveMetadata } from "@/types/archive";
+import type { PaintingMetadata } from "@/types/paintings";
 
 describe("Archive List Service - Metadata Loading", () => {
   let bucket: R2Bucket;
@@ -16,7 +16,7 @@ describe("Archive List Service - Metadata Loading", () => {
     const imageKey = "images/2025/11/14/DOOM_202511141200_abc12345_def456789012.webp";
     const metadataKey = "images/2025/11/14/DOOM_202511141200_abc12345_def456789012.json";
 
-    const metadata: ArchiveMetadata = {
+    const metadata: PaintingMetadata = {
       id: "DOOM_202511141200_abc12345_def456789012",
       timestamp: "2025-11-14T12:00:00Z",
       minuteBucket: "2025-11-14T12:00:00Z",
@@ -69,7 +69,7 @@ describe("Archive List Service - Metadata Loading", () => {
 
   describe("listImages with metadata loading", () => {
     it("should load metadata for images", async () => {
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
@@ -93,7 +93,7 @@ describe("Archive List Service - Metadata Loading", () => {
         contentType: "image/webp",
       });
 
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
@@ -119,7 +119,7 @@ describe("Archive List Service - Metadata Loading", () => {
         contentType: "application/json",
       });
 
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
@@ -151,7 +151,7 @@ describe("Archive List Service - Metadata Loading", () => {
           contentType: "image/webp",
         });
 
-        const metadata: ArchiveMetadata = {
+        const metadata: PaintingMetadata = {
           id,
           timestamp: "2025-11-14T12:00:00Z",
           minuteBucket: "2025-11-14T12:00:00Z",
@@ -197,7 +197,7 @@ describe("Archive List Service - Metadata Loading", () => {
         });
       }
 
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);

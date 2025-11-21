@@ -12,17 +12,17 @@
 
 import { Result } from "neverthrow";
 import type { AppError } from "@/types/app-error";
-import type { ArchiveMetadata } from "@/types/archive";
+import type { PaintingMetadata } from "@/types/paintings";
 import { resolveBucketOrThrow } from "@/lib/r2";
-import { createArchiveRepository } from "@/repositories/archive-repository";
-import type { ArchiveRepository } from "@/repositories/archive-repository";
+import { createPaintingsRepository } from "@/repositories/paintings-repository";
+import type { PaintingsRepository } from "@/repositories/paintings-repository";
 import * as storage from "./storage";
 import * as list from "./list";
 
-export type ArchiveServiceDeps = {
+export type PaintingsServiceDeps = {
   r2Bucket?: R2Bucket;
   d1Binding?: D1Database;
-  archiveRepository?: ArchiveRepository;
+  archiveRepository?: PaintingsRepository;
 };
 
 export type ArchiveStorageResult = {
@@ -41,7 +41,7 @@ export type ArchiveListOptions = {
 
 export type ArchiveListResponse = list.ListImagesResponse;
 
-export type ArchiveService = {
+export type PaintingsService = {
   /**
    * Store image and metadata atomically to R2
    * If metadata save fails, image save is rolled back
@@ -50,7 +50,7 @@ export type ArchiveService = {
     minuteBucket: string,
     filename: string,
     imageBuffer: ArrayBuffer,
-    metadata: ArchiveMetadata,
+    metadata: PaintingMetadata,
   ): Promise<Result<ArchiveStorageResult, AppError>>;
 
   /**
@@ -62,12 +62,12 @@ export type ArchiveService = {
   /**
    * Insert archive item metadata into D1 index (idempotent)
    */
-  insertArchiveItem(metadata: ArchiveMetadata, r2Key: string): Promise<Result<void, AppError>>;
+  insertPainting(metadata: PaintingMetadata, r2Key: string): Promise<Result<void, AppError>>;
 
   /**
    * Get archive item by ID from D1 index
    */
-  getArchiveItemById(id: string): Promise<Result<ArchiveMetadata | null, AppError>>;
+  getPaintingById(id: string): Promise<Result<PaintingMetadata | null, AppError>>;
 };
 
 /**
@@ -77,13 +77,13 @@ export type ArchiveService = {
  * @param d1Binding - Optional D1 database binding. If not provided, resolves from Cloudflare context
  * @param archiveRepository - Optional archive repository. If not provided, creates a new one
  */
-export function createArchiveService({
+export function createPaintingsService({
   r2Bucket,
   d1Binding,
   archiveRepository,
-}: ArchiveServiceDeps = {}): ArchiveService {
+}: PaintingsServiceDeps = {}): PaintingsService {
   const bucket = resolveBucketOrThrow({ r2Bucket });
-  const repo = archiveRepository ?? createArchiveRepository({ d1Binding });
+  const repo = archiveRepository ?? createPaintingsRepository({ d1Binding });
 
   return {
     storeImageWithMetadata: (minuteBucket, filename, imageBuffer, metadata) =>
@@ -91,28 +91,28 @@ export function createArchiveService({
 
     listImages: options => list.listImages(bucket, d1Binding, options, repo),
 
-    insertArchiveItem: (metadata, r2Key) => repo.insert(metadata, r2Key),
+    insertPainting: (metadata, r2Key) => repo.insert(metadata, r2Key),
 
-    getArchiveItemById: id => repo.findById(id),
+    getPaintingById: id => repo.findById(id),
   };
 }
 
 // Re-export types for convenience
-export type { ArchiveCursor } from "@/repositories/archive-repository";
-export { encodeCursor, decodeCursor } from "@/repositories/archive-repository";
+export type { PaintingCursor } from "@/repositories/paintings-repository";
+export { encodeCursor, decodeCursor } from "@/repositories/paintings-repository";
 
 // Legacy exports for backward compatibility (deprecated)
-/** @deprecated Use createArchiveService instead */
-export { createArchiveService as createArchiveStorageService };
-/** @deprecated Use createArchiveService instead */
-export { createArchiveService as createArchiveIndexService };
-/** @deprecated Use createArchiveService instead */
-export { createArchiveService as createArchiveListService };
+/** @deprecated Use createPaintingsService instead */
+export { createPaintingsService as createArchiveStorageService };
+/** @deprecated Use createPaintingsService instead */
+export { createPaintingsService as createArchiveIndexService };
+/** @deprecated Use createPaintingsService instead */
+export { createPaintingsService as createArchiveListService };
 
 // Legacy type exports (deprecated)
-/** @deprecated Import from @/services/archive instead */
-export type ArchiveStorageService = Pick<ArchiveService, "storeImageWithMetadata">;
-/** @deprecated Import from @/services/archive instead */
-export type ArchiveIndexService = Pick<ArchiveService, "insertArchiveItem" | "getArchiveItemById">;
-/** @deprecated Import from @/services/archive instead */
-export type ArchiveListService = Pick<ArchiveService, "listImages">;
+/** @deprecated Import from @/services/paintings instead */
+export type ArchiveStorageService = Pick<PaintingsService, "storeImageWithMetadata">;
+/** @deprecated Import from @/services/paintings instead */
+export type ArchiveIndexService = Pick<PaintingsService, "insertPainting" | "getPaintingById">;
+/** @deprecated Import from @/services/paintings instead */
+export type ArchiveListService = Pick<PaintingsService, "listImages">;

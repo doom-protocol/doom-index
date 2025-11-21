@@ -24,6 +24,7 @@ export type ImageRequest = {
   format: "webp" | "png";
   seed: string;
   model?: string;
+  referenceImageUrl?: string;
 };
 
 export type ImageResponse = {
@@ -38,11 +39,4 @@ export type ImageGenerationOptions = {
 export interface ImageProvider {
   name: string;
   generate(input: ImageRequest, options?: ImageGenerationOptions): Promise<Result<ImageResponse, AppError>>;
-}
-
-export interface StateService {
-  readGlobalState(): Promise<Result<GlobalState | null, AppError>>;
-  writeGlobalState(state: GlobalState): Promise<Result<void, AppError>>;
-  readTokenState(ticker: TokenTicker): Promise<Result<TokenState | null, AppError>>;
-  writeTokenStates(states: TokenState[]): Promise<Result<void, AppError>>;
 }

@@ -98,3 +98,5 @@ export const logger = {
    */
   getLevels: () => LOG_LEVELS,
 };
+
+export type Logger = typeof logger;

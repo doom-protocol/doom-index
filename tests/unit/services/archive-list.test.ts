@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import { createArchiveService } from "@/services/archive";
+import { createPaintingsService } from "@/services/paintings";
 import { createTestR2Bucket } from "../../lib/memory-r2";
-import type { ArchiveMetadata } from "@/types/archive";
+import type { PaintingMetadata } from "@/types/paintings";
 
 const TEST_IMAGE_KEYS = [
   "images/2025/11/14/DOOM_202511141200_abc12345_def456789012.webp",
@@ -11,7 +11,7 @@ const TEST_IMAGE_KEYS = [
   "images/2025/11/14/DOOM_202511141204_abc12345_def456789012.webp",
 ];
 
-function createTestMetadata(id: string, imageKey: string): ArchiveMetadata {
+function createTestMetadata(id: string, imageKey: string): PaintingMetadata {
   return {
     id,
     timestamp: "2025-11-14T12:00:00Z",
@@ -86,7 +86,7 @@ describe("Archive List Service", () => {
 
   describe("listImages", () => {
     it("should list images with default limit", async () => {
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
@@ -98,7 +98,7 @@ describe("Archive List Service", () => {
     });
 
     it("should respect limit parameter", async () => {
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({ limit: 3 });
 
       expect(result.isOk()).toBe(true);
@@ -108,7 +108,7 @@ describe("Archive List Service", () => {
     });
 
     it("should enforce maximum limit of 100", async () => {
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({ limit: 200 });
 
       expect(result.isOk()).toBe(true);
@@ -124,7 +124,7 @@ describe("Archive List Service", () => {
         contentType: "image/png",
       });
 
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
@@ -135,7 +135,7 @@ describe("Archive List Service", () => {
     });
 
     it("should support cursor-based pagination with key-based cursor", async () => {
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const firstPage = await service.listImages({ limit: 2 });
 
       expect(firstPage.isOk()).toBe(true);
@@ -153,7 +153,7 @@ describe("Archive List Service", () => {
     });
 
     it("should return hasMore when truncated", async () => {
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({ limit: 2 });
 
       expect(result.isOk()).toBe(true);
@@ -173,7 +173,7 @@ describe("Archive List Service", () => {
         contentType: "image/webp",
       });
 
-      const service = createArchiveService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);

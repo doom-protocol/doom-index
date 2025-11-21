@@ -1,10 +1,10 @@
 # DOOM INDEX
 
-A decentralized archive of financial emotions. AI generates one painting every minute, translating the collective psychology of 8 pump.fun tokens into visual art.
+A decentralized archive of financial emotions. AI generates one painting every hour, translating the collective psychology of trending tokens into visual art.
 
 ## Overview
 
-DOOM INDEX tracks 8 indicator tokens on Solana (`$CO2`, `$ICE`, `$FOREST`, `$NUKE`, `$MACHINE`, `$PANDEMIC`, `$FEAR`, `$HOPE`) and generates a unique artwork every minute based on their market cap values.
+DOOM INDEX dynamically selects trending tokens from CoinGecko and generates a unique artwork every hour based on their market data, fear & greed index, and contextual analysis.
 
 ## Development
 
@@ -19,27 +19,41 @@ bun install
 Create a `.env` file:
 
 ```bash
-# Image Generation Provider
-IMAGE_PROVIDER=smart  # Options: smart (recommended), ai-sdk, runware-sdk
+# Base URL (required)
+NEXT_PUBLIC_BASE_URL=http://localhost:8787
 
-# Log Level (optional, exposed to client)
+# Image Generation Model (optional)
+# Default: runware:106@1
+# Options: runware:106@1, civitai:38784@44716, etc.
+IMAGE_MODEL=runware:106@1
+
+# Log Level (optional)
 # Options: ERROR, WARN, INFO, DEBUG, LOG
 # Default: DEBUG in development, INFO in production
-# NEXT_PUBLIC_LOG_LEVEL=DEBUG
+LOG_LEVEL=DEBUG
 
-# Cloudflare R2 Storage (required for production)
-R2_PUBLIC_DOMAIN=https://doom-index-storage.r2.dev
+# API Keys (required)
+RUNWARE_API_KEY=your_runware_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here  # Optional, for OpenAI models
 
-# Provider API Keys (configure based on your chosen provider)
-OPENAI_API_KEY=your_key_here   # For OpenAI models (dall-e-3, etc.)
-RUNWARE_API_KEY=your_key_here  # For Runware/CivitAI models
+# External API Keys (optional)
+COINGECKO_API_KEY=your_coingecko_api_key_here  # Optional, for higher rate limits
+TAVILY_API_KEY=your_tavily_api_key_here  # Optional, for web search
+
+# Force Token List (optional, for testing)
+# Comma-separated list of CoinGecko token IDs to force selection from
+# FORCE_TOKEN_LIST=bitcoin,ethereum,solana
 ```
 
 For Cloudflare Workers, create a `.dev.vars` file:
 
 ```bash
-# Provider API Key for Cloudflare Workers
-PROVIDER_API_KEY=your_runware_api_key_here
+# Same as .env but for local Cloudflare Workers development
+RUNWARE_API_KEY=your_runware_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+COINGECKO_API_KEY=your_coingecko_api_key_here
+TAVILY_API_KEY=your_tavily_api_key_here
+FORCE_TOKEN_LIST=bitcoin,ethereum,solana
 
 # R2 Batch Upload (optional, for faster OpenNext build/deploy)
 # These variables enable faster batch upload for remote R2 during build/deploy
@@ -50,8 +64,6 @@ PROVIDER_API_KEY=your_runware_api_key_here
 # R2_SECRET_ACCESS_KEY="your_r2_secret_access_key"
 # CF_ACCOUNT_ID="your_cloudflare_account_id"
 ```
-
-**Note**: `mock` provider is for testing only and not available in production.
 
 **Note**: R2 batch upload environment variables are optional. If not set, OpenNext will use slower individual uploads but functionality will still work.
 
@@ -66,28 +78,52 @@ bun run preview
 
 # Development (Cloudflare Workers Cron)
 # Start preview with --test-scheduled flag
-bun run preview -- --test-scheduled
+bun run preview
 
-# Automatically trigger cron every minute (starting at :00 seconds)
-# This script waits until the next minute (0 seconds) and then triggers every 60 seconds
+# Automatically trigger cron every hour (starting at :00:00)
+# This script waits until the next hour and then triggers every 3600 seconds
 bun run watch-cron
 
 # Or trigger cron manually via curl
 curl "http://localhost:8787/__scheduled?cron=0+*+*+*+*"
 
-# Or use wrangler dev command
-bun run wrangler:dev
-
 # Deploy to Cloudflare
 bun run deploy
-bun run wrangler:deploy
+```
+
+### Database Management
+
+```bash
+# Generate migration files
+bun run db:generate
+
+# Run migrations (local)
+bun run db:migrate
+
+# Run migrations (production)
+bun run db:migrate:prod
+
+# Push schema changes (local)
+bun run db:push
+
+# Push schema changes (production)
+bun run db:push:prod
+
+# Open Drizzle Studio (database GUI)
+bun run db:studio
 ```
 
 ### Testing
 
 ```bash
-# Run all tests (requires IMAGE_PROVIDER env var)
-IMAGE_PROVIDER=smart bun test
+# Run all tests
+bun test
+
+# Run unit tests only
+bun run test:unit
+
+# Run integration tests only
+bun run test:integration
 
 # Type checking
 bun run typecheck
@@ -95,54 +131,44 @@ bun run typecheck
 
 ## Image Generation Script
 
-Generate images locally using the CLI script with weighted prompts:
+Generate images locally using the CLI script:
 
 ### Basic Usage
 
 ```bash
-# Generate with default settings (smart provider, all tokens at 1M)
-IMAGE_PROVIDER=smart bun scripts/generate.ts
+# Generate with default settings
+bun run generate
 
-# Generate with custom market cap values (recommended format)
-IMAGE_PROVIDER=smart bun scripts/generate.ts \
-  --mc "CO2=1300000,ICE=200000,FOREST=900000,NUKE=50000,MACHINE=1450000,PANDEMIC=700000,FEAR=1100000,HOPE=400000"
-
-# Generate with specific model (OpenAI)
-IMAGE_PROVIDER=smart bun scripts/generate.ts --model "dall-e-3" --w 1024 --h 1024
 
 # Generate with Runware/CivitAI model
-IMAGE_PROVIDER=smart bun scripts/generate.ts --model "civitai:38784@44716"
+bun run generate --model "civitai:38784@44716"
 
 # Use mock provider for testing (no API key required)
-IMAGE_PROVIDER=smart bun scripts/generate.ts --provider mock
+bun run generate --provider mock
 
 # Custom dimensions and format
-IMAGE_PROVIDER=smart bun scripts/generate.ts --w 1280 --h 720 --format webp
+bun run generate --w 1280 --h 720 --format webp
 
 # Custom output directory
-IMAGE_PROVIDER=smart bun scripts/generate.ts --output ./my-outputs
+bun run generate --output ./my-outputs
 ```
 
 ### Available Options
 
-- `--provider <name>`: Image provider (smart, ai-sdk, runware-sdk, mock) - default: smart
+- `--provider <name>`: Image provider (mock) - default: runware (from env)
 - `--model <name>`: Model name (dall-e-3, runware:100@1, civitai:xxx@xxx, etc.)
-- `--mc <values>`: Market cap values (format: "TOKEN=value,...") - default: all 1,000,000
-- `--seed <string>`: Custom seed for reproducibility - default: generated from MC
 - `--w, --width <num>`: Image width - default: 1280
 - `--h, --height <num>`: Image height - default: 720
 - `--format <fmt>`: Output format (webp, png) - default: webp
-- `--output <path>`: Output directory - default: ./scripts/.out
+- `--output <path>`: Output directory - default: ./out
 - `--help`: Show help message
-
-**Note**: Market cap values are normalized with threshold 1,000,000 (1M). Values are converted to weights (0.01-1.50) for prompt generation.
 
 ### Output
 
 The script creates a folder for each generation:
 
 ```
-scripts/.out/DOOM_<timestamp>_<hash>_<seed>/
+out/DOOM_<timestamp>_<hash>_<seed>/
 ├── image.webp      # Generated image
 └── params.json     # Generation parameters and metadata
 ```
@@ -151,7 +177,7 @@ The `params.json` includes:
 
 - Prompt and negative prompt
 - Visual parameters
-- Market cap values
+- Token data and market context
 - Seed and hash
 - Provider information
 - File size
@@ -164,14 +190,14 @@ For local development, use the cron watcher script to automatically trigger sche
 ### Basic Usage
 
 ```bash
-# Start cron watcher (runs every minute starting at :00 seconds)
+# Start cron watcher (runs every hour starting at :00:00)
 bun run watch-cron
 
 # Custom port
 bun run watch-cron --port 8787
 
 # Custom interval (in seconds)
-bun run watch-cron --interval 60
+bun run watch-cron --interval 3600
 
 # Custom cron expression
 bun run watch-cron --cron "0 * * * *"
@@ -180,26 +206,72 @@ bun run watch-cron --cron "0 * * * *"
 ### Available Options
 
 - `--port, -p <number>`: Server port (default: 8787)
-- `--interval, -i <number>`: Interval in seconds (default: 60)
+- `--interval, -i <number>`: Interval in seconds (default: 3600)
 - `--cron, -c <string>`: Cron expression (default: "0 \* \* \* \*")
 - `--help, -h`: Show help message
 
-**Note**: The script waits until the next minute (0 seconds) before starting, then executes every 60 seconds. This matches Cloudflare Workers cron trigger behavior.
+**Note**: The script waits until the next hour (0 minutes, 0 seconds) before starting, then executes every 3600 seconds. This matches Cloudflare Workers cron trigger behavior.
+
+## R2 Storage Management
+
+### Truncate R2 Bucket
+
+Clean up old files from R2 storage:
+
+```bash
+# Dry run (preview what would be deleted)
+bun run truncate-r2:dry-run
+
+# Actually delete files
+bun run truncate-r2
+```
+
+**Warning**: This will permanently delete files from R2 storage. Always run dry-run first to preview the changes.
 
 ## Architecture
 
 ### Tech Stack
 
-- **Framework**: Next.js 16 (App Router, Edge Runtime)
+- **Framework**: Next.js 16 (App Router, React 19, React Compiler)
 - **Hosting**: Cloudflare Pages + Workers
-- **Scheduling**: Cloudflare Cron Triggers (every minute)
+- **Scheduling**: Cloudflare Cron Triggers (every hour)
+- **Database**: Cloudflare D1 (SQLite)
+- **ORM**: Drizzle ORM
 - **Storage**: Cloudflare R2 (S3-compatible object storage)
+- **Cache**: Cloudflare KV (key-value store)
 - **3D Rendering**: React Three Fiber + Three.js
 - **Data Fetching**: TanStack Query + tRPC (end-to-end type safety)
 - **API**: tRPC v11 (type-safe RPC framework)
 - **Error Handling**: neverthrow (Result type)
-- **Image Generation**: Runware (default) / OpenAI (via AI SDK)
+- **Image Generation**: Runware (default) / OpenAI
+- **External APIs**: CoinGecko, Alternative.me (Fear & Greed Index), Tavily (web search)
 - **Runtime**: Bun (local), workerd (Cloudflare)
+
+### Cloudflare D1 Database
+
+The application uses Cloudflare D1 (SQLite) with Drizzle ORM for structured data:
+
+#### Database Schema
+
+- **paintings**: Generated artwork records with metadata
+  - `id`, `hourBucket`, `tokenId`, `imageUrl`, `prompt`, `negativePrompt`, `seed`, `paramsHash`, `createdAt`
+- **tokens**: Token information from CoinGecko
+  - `id`, `symbol`, `name`, `coingeckoId`, `logoUrl`, `categories`, `createdAt`, `updatedAt`
+- **token_contexts**: Contextual analysis for each token (from Tavily + Workers AI)
+  - `tokenId`, `symbol`, `displayName`, `chain`, `category`, `tags`, `shortContext`, `updatedAt`
+- **market_snapshots**: Historical global market data (from CoinGecko)
+  - `hourBucket`, `totalMarketCapUsd`, `totalVolumeUsd`, `marketCapChangePercentage24hUsd`, `btcDominance`, `ethDominance`, `fearGreedIndex`, `createdAt`
+
+> **Note**: State management has been migrated from R2 JSON files (`state/global.json`, `state/{ticker}.json`) to D1 database tables. The `StateService` has been removed as part of the dynamic-draw and dynamic-prompt implementation.
+
+- `id`, `tokenId`, `price`, `marketCap`, `volume24h`, `priceChange24h`, `fearGreedIndex`, `snapshotAt`, `createdAt`
+
+#### Key Features
+
+- **Type-safe queries**: Drizzle ORM provides full TypeScript support
+- **Migrations**: Version-controlled schema changes via Drizzle Kit
+- **Local development**: Uses local SQLite file for fast iteration
+- **Production**: Direct D1 binding for optimal performance
 
 ### Cloudflare R2 Storage
 
@@ -244,94 +316,171 @@ For detailed documentation, see [R2 Storage Structure](docs/r2-storage-structure
 
 ```
 src/
-├── app/              # Next.js App Router
-│   ├── api/          # API routes
-│   │   └── trpc/     # tRPC HTTP endpoint
-│   └── page.tsx      # Main gallery page
-├── components/       # React components
-│   ├── gallery/      # 3D scene components
-│   ├── ui/           # UI components
-│   └── providers/    # Context providers
-├── hooks/            # Custom React hooks (tRPC integrated)
-├── lib/              # External integrations
-│   ├── trpc/         # tRPC clients (React, Server, Vanilla)
-│   ├── providers/    # Image generation providers
-│   └── r2.ts         # Cloudflare R2 client
-├── server/           # Server-side code
-│   └── trpc/         # tRPC routers and schemas
+├── app/                    # Next.js App Router
+│   ├── api/                # API routes
+│   │   ├── trpc/           # tRPC HTTP endpoint
+│   │   └── r2/             # R2 proxy endpoint
+│   ├── archive/            # Archive page
+│   ├── about/              # About page
+│   └── page.tsx            # Main gallery page
+├── components/             # React components
+│   ├── gallery/            # 3D gallery scene
+│   ├── archive/            # Archive grid and detail views
+│   ├── about/              # About page components
+│   ├── ui/                 # UI components
+│   └── icons/              # Icon components
+├── hooks/                  # Custom React hooks
+├── lib/                    # External integrations
+│   ├── trpc/               # tRPC clients (React, Server, Vanilla)
+│   ├── image-generation-providers/  # Image generation providers
+│   ├── pure/               # Pure functions (testable)
+│   ├── r2.ts               # Cloudflare R2 client
+│   ├── kv.ts               # Cloudflare KV client
+│   ├── cache.ts            # Cache utilities
+│   └── *-client.ts         # External API clients
+├── server/                 # Server-side code
+│   └── trpc/               # tRPC routers and schemas
 │       ├── context.ts      # Context creation
 │       ├── trpc.ts         # tRPC initialization
-│       ├── schemas/        # zod schemas
+│       ├── schemas/        # Zod schemas
 │       └── routers/        # Domain routers
-├── services/         # Business logic
-│   └── container.ts  # Service factory (Workers/Next.js)
-├── constants/        # Configuration
-├── types/            # TypeScript types
-└── utils/            # Utilities
-
-workers/
-└── cron.ts           # Cloudflare Cron Trigger handler
+├── services/               # Business logic
+│   ├── paintings/          # Painting generation orchestration
+│   ├── image-generation.ts # Image generation service
+│   ├── state.ts            # Global state management
+│   └── *.ts                # Other services
+├── repositories/           # Data access layer (D1)
+│   ├── paintings-repository.ts
+│   ├── tokens-repository.ts
+│   └── market-snapshots-repository.ts
+├── db/                     # Database schema (Drizzle ORM)
+│   ├── index.ts            # Database client
+│   └── schema/             # Table schemas
+├── constants/              # Configuration
+│   ├── prompts/            # Prompt templates
+│   ├── token.ts            # Token definitions
+│   └── runware.ts          # Runware model configs
+├── types/                  # TypeScript types
+├── utils/                  # Utilities
+├── cron.ts                 # Cron handler entry point
+└── worker.ts               # Cloudflare Workers entry point
 
 scripts/
-├── generate.ts       # Image generation script
-└── watch-cron.ts     # Cron watcher for local development
+├── generate.ts             # Image generation script
+├── watch-cron.ts           # Cron watcher for local development
+└── truncate-r2.ts          # R2 cleanup utility
 
-wrangler.toml         # Cloudflare Workers configuration
-open-next.config.ts   # Next.js on Cloudflare Pages configuration
+migrations/                 # Drizzle ORM migrations
+wrangler.toml               # Cloudflare Workers configuration
+open-next.config.ts         # Next.js on Cloudflare Pages configuration
+drizzle.config.ts           # Drizzle ORM configuration
 ```
 
 ### tRPC API
 
 The project uses tRPC v11 for end-to-end type safety. All API endpoints are exposed as type-safe procedures:
 
-- **Market Cap**: `trpc.mc.getMarketCaps.useQuery()`
+- **Paintings**: `trpc.paintings.getLatest.useQuery()`, `trpc.paintings.getArchive.useQuery()`
+- **Tokens**: `trpc.tokens.getAll.useQuery()`, `trpc.tokens.getById.useQuery()`
+- **Market Snapshots**: `trpc.marketSnapshots.getLatest.useQuery()`
 - **Viewer**: `trpc.viewer.register.mutate()`, `trpc.viewer.remove.mutate()`
-- **Token State**: `trpc.token.getState.useQuery({ ticker })`
 - **R2 Objects**: `trpc.r2.getObject.useQuery({ key })`
 
-See [tRPC Architecture Documentation](./docs/trpc-architecture.md) and [Migration Guide](./docs/trpc-migration.md) for details.
+See [tRPC Architecture Documentation](./docs/trpc-architecture.md) for details.
 
-## Prompt Templates
+## Cron Pipeline
 
-The core prompt templates for the world-scale allegorical painting are defined in:
+The hourly cron job executes the following pipeline:
 
-- `src/constants/prompts/world-painting.ts` – base style, opening line, negative prompt, and token-specific motifs
+1. **Idempotency Check**: Verify if painting already exists for current hour bucket
+2. **Token Selection**: Select trending token from CoinGecko or force list
+3. **Market Data Fetch**: Fetch current market data and Fear & Greed Index
+4. **Store Market Snapshot**: Save market data to D1 database
+5. **Build Painting Context**: Analyze token context and world events
+6. **Generate Prompt**: Create weighted prompt based on context
+7. **Generate Image**: Generate artwork using selected model
+8. **Store Painting**: Save image to R2 and metadata to D1
 
-These constants are consumed by `src/lib/pure/weighted-prompt.ts` and shared across all image generation providers.
+See `src/cron.ts` and `src/services/paintings/painting-generation-orchestrator.ts` for implementation details.
+
+## Prompt System
+
+The project uses a dynamic prompt generation system that incorporates:
+
+- **Token Context**: Market data, price trends, and sentiment analysis
+- **Market Sentiment**: Fear & Greed Index from Alternative.me
+- **World Events**: Web search results via Tavily API
+- **Weighted Prompts**: Token-specific visual motifs weighted by market cap
+
+Key files:
+
+- `src/constants/prompts/` – Base style, negative prompt, and token-specific motifs
+- `src/lib/pure/weighted-prompt.ts` – Weighted prompt generation logic
+- `src/services/world-prompt-service.ts` – Dynamic world context generation
+
+See [Weighted Prompt System Documentation](./docs/weighted-prompt-system.md) for details.
 
 ## Deployment
 
 ### Cloudflare Setup
 
-1. **Create R2 Bucket**
+1. **Create R2 Buckets**
 
    ```bash
    wrangler r2 bucket create doom-index-storage
+   wrangler r2 bucket create doom-index-next-inc-cache
    ```
 
-2. **Set Workers Secrets**
+2. **Create D1 Database**
 
    ```bash
-   wrangler secret put PROVIDER_API_KEY
+   wrangler d1 create doom-index
    ```
 
-3. **Deploy Workers**
+3. **Create KV Namespace**
 
    ```bash
-   bun run wrangler:deploy
+   wrangler kv:namespace create VIEWER_KV
    ```
 
-4. **Deploy Next.js to Cloudflare Pages**
+4. **Run Migrations**
+
+   ```bash
+   bun run db:migrate:prod
+   ```
+
+5. **Set Workers Secrets**
+
+   ```bash
+   wrangler secret put RUNWARE_API_KEY
+   wrangler secret put OPENAI_API_KEY
+   wrangler secret put COINGECKO_API_KEY
+   wrangler secret put TAVILY_API_KEY
+   ```
+
+6. **Deploy Workers**
+
    ```bash
    bun run deploy
    ```
 
 ### Environment Variables (Production)
 
-Set these in Cloudflare Dashboard:
+Set these in Cloudflare Dashboard (Workers & Pages > Settings > Environment Variables):
 
-- **Pages**: `R2_PUBLIC_DOMAIN`
-- **Workers**: `PROVIDER_API_KEY` (via Secrets)
+**Required**:
+
+- `NEXT_PUBLIC_BASE_URL`: Your production domain (e.g., `https://doomindex.fun`)
+- `IMAGE_MODEL`: Image generation model (e.g., `runware:100@1`)
+- `LOG_LEVEL`: Log level (e.g., `INFO`)
+- `NODE_ENV`: `production`
+
+**Secrets** (via `wrangler secret put`):
+
+- `RUNWARE_API_KEY`: Runware API key
+- `OPENAI_API_KEY`: OpenAI API key (optional)
+- `COINGECKO_API_KEY`: CoinGecko API key (optional)
+- `TAVILY_API_KEY`: Tavily API key (optional)
 
 **Optional - R2 Batch Upload (for faster builds)**:
 
@@ -343,33 +492,52 @@ To enable faster batch uploads during OpenNext build/deploy, set these environme
 
 These are optional - builds will work without them but may be slower.
 
-## Image Providers
+## Image Generation
 
-### Mock Provider
+The project uses Runware as the primary image generation provider, with support for multiple models:
 
-No API key required. Returns empty image buffer for testing.
+### Supported Models
 
-```bash
-IMAGE_PROVIDER=mock
-```
+- **Runware Models**: `runware:100@1`, `runware:101@1`, etc.
+- **CivitAI Models**: `civitai:38784@44716`, etc.
 
-### Runware
+### Configuration
 
-Fast, Edge-compatible image generation (default provider).
-
-```bash
-IMAGE_PROVIDER=runware
-RUNWARE_API_KEY=your_key_here
-```
-
-### OpenAI
-
-DALL-E 2 via OpenAI API.
+Set the `IMAGE_MODEL` environment variable to specify the model:
 
 ```bash
-IMAGE_PROVIDER=openai
-OPENAI_API_KEY=your_key_here
+IMAGE_MODEL=runware:100@1  # Default
+IMAGE_MODEL=civitai:38784@44716  # CivitAI model
 ```
+
+### Mock Provider (Testing Only)
+
+For testing without API keys, use the mock provider:
+
+```bash
+bun run generate --provider mock
+```
+
+See [Runware Models Documentation](./docs/runware-models.md) for available models and their characteristics.
+
+## Documentation
+
+Additional documentation is available in the `docs/` directory:
+
+- [Project Description](./docs/project-description.md) – High-level overview and goals
+- [Development Specification](./docs/development-spec.md) – Technical specifications
+- [tRPC Architecture](./docs/trpc-architecture.md) – API architecture and patterns
+- [R2 Storage Structure](./docs/r2-storage-structure.md) – Storage organization
+- [Weighted Prompt System](./docs/weighted-prompt-system.md) – Prompt generation details
+- [Runware Models](./docs/runware-models.md) – Available models and configurations
+- [Cache Impact Analysis](./docs/cache-impact-analysis.md) – Caching strategy
+
+## Links
+
+- **Website**: [doomindex.fun](https://doomindex.fun)
+- **GitHub**: [github.com/posaune0423/doom-index](https://github.com/posaune0423/doom-index)
+- **X (Twitter)**: [@doom_index](https://x.com/doom_index)
+- **Dev.fun**: [dev.fun/p/155bae58a27d2f0905ed](https://dev.fun/p/155bae58a27d2f0905ed)
 
 ## License
 

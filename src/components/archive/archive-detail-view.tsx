@@ -8,10 +8,10 @@ import { Lights } from "@/components/gallery/lights";
 import { GalleryRoom } from "@/components/gallery/gallery-room";
 import { ArchiveFramedPainting } from "./archive-framed-painting";
 import { env } from "@/env";
-import type { ArchiveItem } from "@/types/archive";
+import type { Painting } from "@/types/paintings";
 
 interface ArchiveDetailViewProps {
-  item: ArchiveItem;
+  item: Painting;
   onClose: () => void;
 }
 

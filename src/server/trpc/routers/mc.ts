@@ -1,11 +1,9 @@
 import { router, publicProcedure } from "../trpc";
-import { createMarketCapService } from "@/services/market-cap";
-import { roundMc } from "@/utils/round";
 import { TOKEN_TICKERS } from "@/constants/token";
-import { TRPCError } from "@trpc/server";
 import { get, set } from "@/lib/cache";
+import type { Logger } from "@/utils/logger";
 
-const zeroMap = TOKEN_TICKERS.reduce(
+const BASE_ZERO_MAP = TOKEN_TICKERS.reduce(
   (acc, ticker) => {
     acc[ticker] = 0;
     return acc;
@@ -13,78 +11,56 @@ const zeroMap = TOKEN_TICKERS.reduce(
   {} as Record<(typeof TOKEN_TICKERS)[number], number>,
 );
 
-export const mcRouter = router({
-  getMarketCaps: publicProcedure.query(async ({ ctx }) => {
-    const cacheKey = "mc:getMarketCaps";
-    const cached = await get<{ tokens: Record<string, number> }>(cacheKey, { logger: ctx.logger });
+const buildZeroMap = () => ({ ...BASE_ZERO_MAP });
 
-    if (cached !== null) {
-      return {
-        ...cached,
-        generatedAt: new Date().toISOString(),
-      };
-    }
+const CACHE_TTL_SECONDS = 60;
 
-    const marketCapService = createMarketCapService({
-      fetch,
-      log: ctx.logger,
-    });
+type MarketCapResponse = {
+  tokens: Record<string, number>;
+  generatedAt: string;
+};
 
-    const result = await marketCapService.getMcMap();
+/**
+ * Get cached market cap data or return placeholder
+ */
+async function getMarketCapData(cacheKey: string, source: string, logger: Logger): Promise<MarketCapResponse> {
+  const cached = await get<{ tokens: Record<string, number> }>(cacheKey, { logger });
 
-    if (result.isErr()) {
-      ctx.logger.error("trpc.mc.getMarketCaps.error", result.error);
-      const value = {
-        tokens: zeroMap,
-        generatedAt: new Date().toISOString(),
-      };
-      await set(cacheKey, value, { ttlSeconds: 60, logger: ctx.logger });
-      return value;
-    }
-
-    const rounded = roundMc(result.value);
-    const value = {
-      tokens: rounded,
+  if (cached !== null) {
+    return {
+      ...cached,
       generatedAt: new Date().toISOString(),
     };
-    await set(cacheKey, value, { ttlSeconds: 60, logger: ctx.logger });
+  }
 
-    return value;
+  const value = {
+    tokens: buildZeroMap(),
+    generatedAt: new Date().toISOString(),
+  };
+
+  logger.info("mc.placeholder-response", {
+    reason: "legacy-market-cap-service-removed",
+    source,
+  });
+
+  await set(
+    cacheKey,
+    { tokens: value.tokens },
+    {
+      ttlSeconds: CACHE_TTL_SECONDS,
+      logger,
+    },
+  );
+
+  return value;
+}
+
+export const mcRouter = router({
+  getMarketCaps: publicProcedure.query(async ({ ctx }) => {
+    return getMarketCapData("mc:getMarketCaps", "placeholder", ctx.logger);
   }),
 
   getRoundedMcMap: publicProcedure.query(async ({ ctx }) => {
-    const cacheKey = "mc:getRoundedMcMap";
-    const cached = await get<{ tokens: Record<string, number> }>(cacheKey, { logger: ctx.logger });
-
-    if (cached !== null) {
-      return {
-        ...cached,
-        generatedAt: new Date().toISOString(),
-      };
-    }
-
-    const marketCapService = createMarketCapService({
-      fetch,
-      log: ctx.logger,
-    });
-
-    const result = await marketCapService.getRoundedMcMap();
-
-    if (result.isErr()) {
-      ctx.logger.error("trpc.mc.getRoundedMcMap.error", result.error);
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch market caps",
-        cause: result.error,
-      });
-    }
-
-    const value = {
-      tokens: result.value,
-      generatedAt: new Date().toISOString(),
-    };
-    await set(cacheKey, value, { ttlSeconds: 60, logger: ctx.logger });
-
-    return value;
+    return getMarketCapData("mc:getRoundedMcMap", "placeholder-rounded", ctx.logger);
   }),
 });

@@ -18,6 +18,17 @@ export function getMinuteBucket(date: Date = new Date()): string {
 }
 
 /**
+ * Returns an ISO-like hour bucket string that is stable within the same hour.
+ * Example: "2025-11-09T12"
+ */
+export function getHourBucket(date: Date = new Date()): string {
+  const copy = new Date(date.getTime());
+  copy.setMinutes(0, 0, 0);
+  // Keep it simple and deterministic; ISO 8601 up to hours
+  return copy.toISOString().slice(0, 13);
+}
+
+/**
  * Create timeout promise
  * Returns a promise that resolves to a TimeoutError after the specified duration
  *

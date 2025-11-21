@@ -34,64 +34,58 @@ describe("WorkersAiClient Integration (External API)", () => {
   });
 
   describe("generateText", () => {
-    it.skipIf(!ENABLE_EXTERNAL_API_TESTS)(
-      "should generate text successfully with fixed prompts",
-      async () => {
-        const aiAvailable = await isAiBindingAvailable();
-        if (!aiAvailable) {
-          console.log("Skipping test: AI binding not available");
-          return;
-        }
+    it.skipIf(!ENABLE_EXTERNAL_API_TESTS)("should generate text successfully with fixed prompts", async () => {
+      const aiAvailable = await isAiBindingAvailable();
+      if (!aiAvailable) {
+        console.log("Skipping test: AI binding not available");
+        return;
+      }
 
-        const client = createWorkersAiClient();
-        const request: TextGenerationRequest = {
-          systemPrompt: "You are a helpful assistant. Respond concisely.",
-          userPrompt: "What is the capital of France? Answer in one word.",
-        };
+      const client = createWorkersAiClient();
+      const request: TextGenerationRequest = {
+        systemPrompt: "You are a helpful assistant. Respond concisely.",
+        userPrompt: "What is the capital of France? Answer in one word.",
+      };
 
-        const startTime = Date.now();
-        const result = await client.generateText(request);
-        const elapsedMs = Date.now() - startTime;
+      const startTime = Date.now();
+      const result = await client.generateText(request);
+      const elapsedMs = Date.now() - startTime;
 
-        expect(result.isOk()).toBe(true);
-        if (result.isOk()) {
-          // Response should not be empty
-          expect(result.value.text.length).toBeGreaterThan(0);
-          // Should complete within timeout (10 seconds)
-          expect(elapsedMs).toBeLessThan(10000);
-          // Model ID should be set
-          expect(result.value.modelId).toBeTruthy();
-          // Response should contain relevant information
-          expect(result.value.text.toLowerCase()).toMatch(/paris|france/);
-        }
-      },
-    );
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        // Response should not be empty
+        expect(result.value.text.length).toBeGreaterThan(0);
+        // Should complete within timeout (10 seconds)
+        expect(elapsedMs).toBeLessThan(10000);
+        // Model ID should be set
+        expect(result.value.modelId).toBeTruthy();
+        // Response should contain relevant information
+        expect(result.value.text.toLowerCase()).toMatch(/paris|france/);
+      }
+    });
 
-    it.skipIf(!ENABLE_EXTERNAL_API_TESTS)(
-      "should handle timeout correctly",
-      async () => {
-        const aiAvailable = await isAiBindingAvailable();
-        if (!aiAvailable) {
-          console.log("Skipping test: AI binding not available");
-          return;
-        }
+    it.skipIf(!ENABLE_EXTERNAL_API_TESTS)("should handle timeout correctly", async () => {
+      const aiAvailable = await isAiBindingAvailable();
+      if (!aiAvailable) {
+        console.log("Skipping test: AI binding not available");
+        return;
+      }
 
-        // Use a very short timeout to test timeout handling
-        const client = createWorkersAiClient({ timeoutMs: 1 });
-        const request: TextGenerationRequest = {
-          systemPrompt: "You are a helpful assistant.",
-          userPrompt: "Say hello",
-        };
+      // Use a very short timeout to test timeout handling
+      const client = createWorkersAiClient({ timeoutMs: 1 });
+      const request: TextGenerationRequest = {
+        systemPrompt: "You are a helpful assistant.",
+        userPrompt: "Say hello",
+      };
 
-        const result = await client.generateText(request);
+      const result = await client.generateText(request);
 
-        // Should return timeout error
-        expect(result.isErr()).toBe(true);
-        if (result.isErr()) {
-          expect(result.error.type).toBe("TimeoutError");
-        }
-      },
-    );
+      // Should return timeout error
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) {
+        expect(result.error.type).toBe("TimeoutError");
+      }
+    });
   });
 
   describe("generateJson", () => {
@@ -148,30 +142,27 @@ describe("WorkersAiClient Integration (External API)", () => {
       },
     );
 
-    it.skipIf(!ENABLE_EXTERNAL_API_TESTS)(
-      "should handle JSON parsing errors gracefully",
-      async () => {
-        const aiAvailable = await isAiBindingAvailable();
-        if (!aiAvailable) {
-          console.log("Skipping test: AI binding not available");
-          return;
-        }
+    it.skipIf(!ENABLE_EXTERNAL_API_TESTS)("should handle JSON parsing errors gracefully", async () => {
+      const aiAvailable = await isAiBindingAvailable();
+      if (!aiAvailable) {
+        console.log("Skipping test: AI binding not available");
+        return;
+      }
 
-        const client = createWorkersAiClient();
-        // Request that might return invalid JSON
-        const request: JsonGenerationRequest<unknown> = {
-          systemPrompt: "You are a helpful assistant. Respond with plain text, not JSON.",
-          userPrompt: "Say hello",
-        };
+      const client = createWorkersAiClient();
+      // Request that might return invalid JSON
+      const request: JsonGenerationRequest<unknown> = {
+        systemPrompt: "You are a helpful assistant. Respond with plain text, not JSON.",
+        userPrompt: "Say hello",
+      };
 
-        const result = await client.generateJson(request);
+      const result = await client.generateJson(request);
 
-        // Should return parsing error
-        expect(result.isErr()).toBe(true);
-        if (result.isErr()) {
-          expect(result.error.type).toBe("ParsingError");
-        }
-      },
-    );
+      // Should return parsing error
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) {
+        expect(result.error.type).toBe("ParsingError");
+      }
+    });
   });
 });

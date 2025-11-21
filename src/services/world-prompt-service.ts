@@ -135,9 +135,7 @@ Your goal is to synthesize the provided token narrative, market state, and visua
       `- Global Market Snapshot:`,
       `  - Total MC: ${integerFormatter.format(ctx.m.mc)} USD`,
       `  - Dominance baseline: ${integerFormatter.format(ctx.m.bd)} USD`,
-      `  - Flight-to-quality: ${
-        ctx.m.fg === null ? "unknown" : `${integerFormatter.format(ctx.m.fg)} USD`
-      }`,
+      `  - Flight-to-quality: ${ctx.m.fg === null ? "unknown" : `${integerFormatter.format(ctx.m.fg)} USD`}`,
       `- Token Metrics:`,
       `  - Price: ${numberFormatter.format(ctx.s.p)} USD`,
       `  - 7d Anchor: ${numberFormatter.format(ctx.s.p7)} USD`,
@@ -162,9 +160,7 @@ Your goal is to synthesize the provided token narrative, market state, and visua
     ].join("\n");
   };
 
-  const resolveTokenContext = async (
-    request: TokenPromptRequest,
-  ): Promise<Result<TokenContext, AppError>> => {
+  const resolveTokenContext = async (request: TokenPromptRequest): Promise<Result<TokenContext, AppError>> => {
     if (request.tokenContext) return ok(request.tokenContext);
 
     if (!tokenContextService) {

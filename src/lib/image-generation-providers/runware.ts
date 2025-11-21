@@ -16,7 +16,15 @@ export const createRunwareProvider = (): ImageProvider => ({
   name: "runware",
 
   async generate(input: ImageRequest, options?: ImageGenerationOptions) {
-    const apiKey = env.RUNWARE_API_KEY; //already validated in env.ts
+    const apiKey = env.RUNWARE_API_KEY;
+    if (!apiKey) {
+      logger.error("runware.generate.missingApiKey");
+      return err({
+        type: "ConfigurationError",
+        message: "RUNWARE_API_KEY is required to generate images",
+        missingVar: "RUNWARE_API_KEY",
+      } as AppError);
+    }
 
     try {
       const timeoutMs = options?.timeoutMs ?? DEFAULT_RUNWARE_TIMEOUT;
@@ -34,6 +42,7 @@ export const createRunwareProvider = (): ImageProvider => ({
         model,
         timeoutMs,
         promptSample: input.prompt.substring(0, 80),
+        hasReferenceImage: Boolean(input.referenceImageUrl),
       });
 
       const images = await runware.requestImages({
@@ -46,6 +55,7 @@ export const createRunwareProvider = (): ImageProvider => ({
         outputFormat: input.format === "png" ? "PNG" : "WEBP",
         outputType: ["base64Data"],
         ...(seedInt !== undefined && { seed: seedInt }),
+        ...(input.referenceImageUrl ? { referenceImageUrl: input.referenceImageUrl } : {}),
       });
 
       const image = images?.[0];

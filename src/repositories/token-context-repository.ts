@@ -9,15 +9,13 @@ import { tokenContexts, type TokenContextRow } from "@/db/schema/token-contexts"
  * Token context record with parsed tags
  */
 export type TokenContextRecord = {
-  id: string;
-  name: string;
+  tokenId: string;
   symbol: string;
-  chainId: string;
-  contractAddress: string | null;
+  displayName: string;
+  chain: string;
   category: string | null;
   tags: string[] | null;
   shortContext: string;
-  createdAt: number;
   updatedAt: number;
 };
 
@@ -25,7 +23,7 @@ export type TokenContextRecord = {
  * Token context repository interface
  */
 export interface TokenContextRepository {
-  findById(id: string): Promise<Result<TokenContextRecord | null, AppError>>;
+  findById(tokenId: string): Promise<Result<TokenContextRecord | null, AppError>>;
 }
 
 type CreateTokenContextRepositoryDeps = {
@@ -63,32 +61,30 @@ export function createTokenContextRepository({
   // Map database row to record
   const mapRowToRecord = (row: TokenContextRow): TokenContextRecord => {
     return {
-      id: row.tokenId,
-      name: row.name,
+      tokenId: row.tokenId,
       symbol: row.symbol,
-      chainId: row.chainId,
-      contractAddress: row.contractAddress ?? null,
-      category: row.category ?? null,
-      tags: parseTags(row.tags ?? null),
+      displayName: row.displayName,
+      chain: row.chain,
+      category: row.category,
+      tags: parseTags(row.tags),
       shortContext: row.shortContext,
-      createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };
   };
 
-  async function findById(id: string): Promise<Result<TokenContextRecord | null, AppError>> {
+  async function findById(tokenId: string): Promise<Result<TokenContextRecord | null, AppError>> {
     try {
       const db = await getDB(d1Binding);
 
       log.debug("token-context-repo.find-by-id.start", {
-        tokenId: id,
+        tokenId,
       });
 
-      const result = await db.select().from(tokenContexts).where(eq(tokenContexts.tokenId, id)).limit(1);
+      const result = await db.select().from(tokenContexts).where(eq(tokenContexts.tokenId, tokenId)).limit(1);
 
       if (result.length === 0) {
         log.debug("token-context-repo.find-by-id.not-found", {
-          tokenId: id,
+          tokenId,
         });
         return ok(null);
       }
@@ -96,9 +92,9 @@ export function createTokenContextRepository({
       const record = mapRowToRecord(result[0]);
 
       log.debug("token-context-repo.find-by-id.success", {
-        tokenId: id,
+        tokenId,
         symbol: record.symbol,
-        chainId: record.chainId,
+        chain: record.chain,
       });
 
       return ok(record);
@@ -107,7 +103,7 @@ export function createTokenContextRepository({
       const stack = error instanceof Error ? error.stack : undefined;
 
       log.error("token-context-repo.find-by-id.error", {
-        tokenId: id,
+        tokenId,
         errorType: "InternalError",
         message: `Failed to query token context: ${message}`,
         stack,
