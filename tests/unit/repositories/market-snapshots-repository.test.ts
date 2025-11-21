@@ -9,9 +9,7 @@ import * as dbSchema from "@/db/schema";
 
 // Extended DB type with batch method for test compatibility
 type TestDb = BunSQLiteDatabase<typeof dbSchema> & {
-  batch<U extends BatchItem<'sqlite'>, T extends Readonly<[U, ...U[]]>>(
-    batch: T
-  ): Promise<BatchResponse<T>>;
+  batch<U extends BatchItem<"sqlite">, T extends Readonly<[U, ...U[]]>>(batch: T): Promise<BatchResponse<T>>;
 };
 
 describe("MarketSnapshotsRepository", () => {
@@ -44,25 +42,17 @@ describe("MarketSnapshotsRepository", () => {
 
     // Add batch method stub to match expected MarketSnapshotsDb interface
     // BunSQLiteDatabase doesn't have batch, but DrizzleD1Database does
-    type DbWithBatch = typeof baseDb & {
-      batch<U extends BatchItem<'sqlite'>, T extends Readonly<[U, ...U[]]>>(
-        batch: T
-      ): Promise<BatchResponse<T>>;
-    };
-
+    // The batch method receives query builder objects and should execute them sequentially
     db = Object.assign(baseDb, {
-      batch: async <U extends BatchItem<'sqlite'>, T extends Readonly<[U, ...U[]]>>(
-        operations: T
-      ): Promise<BatchResponse<T>> => {
+      batch: async <T extends readonly BatchItem<"sqlite">[]>(operations: T): Promise<BatchResponse<T>> => {
         // Simple sequential execution for test purposes
-        const results = [];
-        for (const op of operations) {
-          // Execute each batch item sequentially
-          results.push(await op);
-        }
+        // Each BatchItem is a query builder with methods like .execute(), .all(), etc.
+        // For simplicity in tests, we return empty results since the repository
+        // doesn't currently use batch operations
+        const results = operations.map(() => ({}));
         return results as BatchResponse<T>;
       },
-    }) as DbWithBatch;
+    }) as TestDb;
 
     repository = new MarketSnapshotsRepository(db);
   });

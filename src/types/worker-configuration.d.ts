@@ -21,7 +21,7 @@ declare namespace Cloudflare {
     CLOUDFLARE_DATABASE_ID: string;
     CLOUDFLARE_D1_TOKEN: string;
     TAVILY_API_KEY: string;
-    COINMARKETCAP_API_KEY: string;
+    COINGECKO_API_KEY: string;
     R2_BUCKET: R2Bucket;
     NEXT_INC_CACHE_R2_BUCKET: R2Bucket;
     DB: D1Database;
@@ -53,7 +53,7 @@ declare namespace NodeJS {
         | "CLOUDFLARE_DATABASE_ID"
         | "CLOUDFLARE_D1_TOKEN"
         | "TAVILY_API_KEY"
-        | "COINMARKETCAP_API_KEY"
+        | "COINGECKO_API_KEY"
       >
     > {}
 }

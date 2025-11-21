@@ -28,15 +28,27 @@ type AlternativeMeApiResponse = {
  */
 export class AlternativeMeClient {
   private readonly apiUrl = "https://api.alternative.me/fng/";
+  private readonly timeoutMs: number;
+
+  constructor(timeoutMs = 10_000) {
+    this.timeoutMs = timeoutMs;
+  }
 
   /**
    * Get latest Fear & Greed Index (Requirement 3)
    */
   async getFearGreedIndex(): Promise<Result<FearGreedIndexResponse, AppError>> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+
     try {
       logger.debug("[AlternativeMeClient] Fetching Fear & Greed Index");
 
-      const response = await fetch(this.apiUrl);
+      const response = await fetch(this.apiUrl, {
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         logger.error(`[AlternativeMeClient] API returned status ${response.status}`);
@@ -81,6 +93,18 @@ export class AlternativeMeClient {
       logger.info(`[AlternativeMeClient] Fetched Fear & Greed Index: ${value} (${result.valueClassification})`);
       return ok(result);
     } catch (error) {
+      clearTimeout(timeoutId);
+
+      // Handle abort/timeout errors
+      if (error instanceof Error && error.name === "AbortError") {
+        logger.error(`[AlternativeMeClient] Request timed out after ${this.timeoutMs}ms`);
+        return err({
+          type: "TimeoutError" as const,
+          message: `Alternative.me API request timed out after ${this.timeoutMs}ms`,
+          timeoutMs: this.timeoutMs,
+        });
+      }
+
       logger.error("[AlternativeMeClient] Failed to fetch Fear & Greed Index", { error });
       return err({
         type: "ExternalApiError" as const,

@@ -155,7 +155,7 @@ export class PaintingGenerationOrchestrator {
         palette: paintingContext.p,
       });
 
-      // Step 5: Generate prompt (Requirement 6)
+      // Step 5: Initialize services for image generation
       const bucket = resolveBucketOrThrow({ r2Bucket: this.deps.r2Bucket ?? cloudflareEnv.R2_BUCKET });
       const d1Binding = this.deps.d1Binding ?? cloudflareEnv.DB;
 
@@ -195,25 +195,6 @@ export class PaintingGenerationOrchestrator {
         FEAR: 0,
         HOPE: 0,
       };
-      const promptResult = await promptService.composeTokenPrompt({
-        mcRounded: emptyMcRounded,
-        paintingContext,
-        tokenMeta,
-      });
-
-      if (promptResult.isErr()) {
-        logger.error(`[PaintingGenerationOrchestrator] Prompt generation failed`, {
-          error: promptResult.error,
-        });
-        return err(promptResult.error);
-      }
-
-      const composition = promptResult.value;
-      logger.info(`[PaintingGenerationOrchestrator] Generated prompt`, {
-        paramsHash: composition.paramsHash,
-        seed: composition.seed,
-        promptLength: composition.prompt.text.length,
-      });
 
       // Step 6: Generate image (Requirement 7)
       const imageProvider = createImageProvider();
