@@ -37,7 +37,7 @@ function createClient(mock: CoinGeckoSdkMock): CoinGeckoClient {
       (async () => {
         throw new Error("Not implemented");
       }),
-  } as CoinGeckoSDK;
+  } as unknown as CoinGeckoSDK;
 
   return new CoinGeckoClient(undefined, sdk);
 }
@@ -65,8 +65,8 @@ describe("CoinGeckoClient", () => {
       const result = await client.getTrendingSearch();
 
       expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.coins[0].item.id).toBe("bitcoin");
+      if (result.isOk() && result.value.coins) {
+        expect(result.value.coins[0]?.item?.id).toBe("bitcoin");
       }
     });
   });
@@ -112,14 +112,14 @@ describe("CoinGeckoClient", () => {
           market_cap_change_percentage_24h: 2.0,
           circulating_supply: 19000000,
           total_supply: 21000000,
-          max_supply: 21000000,
+          max_supply: null,
           ath: 69000,
           ath_change_percentage: -27.5,
-          ath_date: "2021-11-10T14:24:11.849Z",
+          ath_date: new Date("2021-11-10T14:24:11.849Z"),
           atl: 67.81,
           atl_change_percentage: 73600.0,
-          atl_date: "2013-07-06T00:00:00.000Z",
-          last_updated: "2025-11-21T00:00:00.000Z",
+          atl_date: new Date("2013-07-06T00:00:00.000Z"),
+          last_updated: new Date("2025-11-21T00:00:00.000Z"),
         },
       ];
 
@@ -151,6 +151,9 @@ describe("CoinGeckoClient", () => {
           active_cryptocurrencies: 10000,
           markets: 500,
           updated_at: 1700000000,
+          upcoming_icos: 0,
+          ongoing_icos: 0,
+          ended_icos: 0,
         },
       };
 

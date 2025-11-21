@@ -39,15 +39,13 @@ describe("TokenContextService", () => {
   describe("generateTokenContext", () => {
     it("should return TokenContext from D1 when record exists", async () => {
       const mockRecord: TokenContextRecord = {
-        id: "test-token",
-        name: "Test Token",
+        tokenId: "test-token",
         symbol: "TEST",
-        chainId: "ethereum",
-        contractAddress: "0x123",
+        displayName: "Test Token",
+        chain: "ethereum",
         category: "meme",
         tags: ["test", "token"],
         shortContext: "A test token for testing purposes.",
-        createdAt: 1000000,
         updatedAt: 1000000,
       };
 
@@ -112,15 +110,13 @@ describe("TokenContextService", () => {
 
     it("should handle null category and tags from D1", async () => {
       const mockRecord: TokenContextRecord = {
-        id: "test-token",
-        name: "Test Token",
+        tokenId: "test-token",
         symbol: "TEST",
-        chainId: "ethereum",
-        contractAddress: null,
+        displayName: "Test Token",
+        chain: "ethereum",
         category: null,
         tags: null,
         shortContext: "A test token.",
-        createdAt: 1000000,
         updatedAt: 1000000,
       };
 

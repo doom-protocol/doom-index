@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { drizzle } from "drizzle-orm/bun-sqlite";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { Database } from "bun:sqlite";
 import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
-import { marketSnapshots } from "@/db/schema/market-snapshots";
+import { marketSnapshots, type NewMarketSnapshot } from "@/db/schema/market-snapshots";
 import * as dbSchema from "@/db/schema";
 
 describe("MarketSnapshotsRepository", () => {
-  let db: ReturnType<typeof drizzle>;
+  let db: BunSQLiteDatabase<typeof dbSchema>;
   let repository: MarketSnapshotsRepository;
 
   beforeEach(() => {
@@ -47,7 +48,7 @@ describe("MarketSnapshotsRepository", () => {
 
     it("should return snapshot when it exists", async () => {
       const now = Math.floor(Date.now() / 1000);
-      const snapshot = {
+      const snapshot: NewMarketSnapshot = {
         hourBucket: "2025-11-21T15",
         totalMarketCapUsd: 2000000000000,
         totalVolumeUsd: 100000000000,
@@ -77,7 +78,7 @@ describe("MarketSnapshotsRepository", () => {
   describe("upsert", () => {
     it("should insert new snapshot", async () => {
       const now = Math.floor(Date.now() / 1000);
-      const snapshot = {
+      const snapshot: Omit<NewMarketSnapshot, "hourBucket"> = {
         totalMarketCapUsd: 2000000000000,
         totalVolumeUsd: 100000000000,
         marketCapChangePercentage24hUsd: 2.5,
@@ -104,7 +105,7 @@ describe("MarketSnapshotsRepository", () => {
 
     it("should update existing snapshot on conflict", async () => {
       const now = Math.floor(Date.now() / 1000);
-      const snapshot = {
+      const snapshot: Omit<NewMarketSnapshot, "hourBucket"> = {
         totalMarketCapUsd: 2000000000000,
         totalVolumeUsd: 100000000000,
         marketCapChangePercentage24hUsd: 2.5,
@@ -121,7 +122,7 @@ describe("MarketSnapshotsRepository", () => {
       await repository.upsert("2025-11-21T15", snapshot);
 
       // Upsert again with updated data
-      const updatedSnapshot = {
+      const updatedSnapshot: Omit<NewMarketSnapshot, "hourBucket"> = {
         ...snapshot,
         totalMarketCapUsd: 2100000000000,
         updatedAt: now + 1000,
@@ -141,7 +142,7 @@ describe("MarketSnapshotsRepository", () => {
 
     it("should handle null fearGreedIndex", async () => {
       const now = Math.floor(Date.now() / 1000);
-      const snapshot = {
+      const snapshot: Omit<NewMarketSnapshot, "hourBucket"> = {
         totalMarketCapUsd: 2000000000000,
         totalVolumeUsd: 100000000000,
         marketCapChangePercentage24hUsd: 2.5,

@@ -142,10 +142,10 @@ describe("TavilyClient", () => {
     });
 
     it("should return ConfigurationError when API key is not set", async () => {
-      const originalKey = process.env.TAVILY_API_KEY;
-      delete (process.env as Record<string, unknown>).TAVILY_API_KEY;
-      // Don't use mockClient here - test the real implementation's API key validation
-      const client = createTavilyClient();
+      // Explicitly pass empty string apiKey to test API key validation
+      // Note: env.TAVILY_API_KEY may be cached from module initialization,
+      // so we explicitly pass empty string to ensure the test works regardless of env state
+      const client = createTavilyClient({ apiKey: "" });
       const input: TavilyQueryInput = {
         id: "test-token",
         name: "Test Token",
@@ -160,9 +160,6 @@ describe("TavilyClient", () => {
       if (result.isErr()) {
         expect(result.error.type).toBe("ConfigurationError");
       }
-
-      // Restore environment variable
-      process.env.TAVILY_API_KEY = originalKey;
     });
 
     it("should return ExternalApiError when SDK throws error", async () => {

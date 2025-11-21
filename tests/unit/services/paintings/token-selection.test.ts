@@ -3,7 +3,6 @@ import { ok } from "neverthrow";
 import { TokenSelectionService } from "@/services/paintings/token-selection";
 import type { TokenCandidate, MarketSnapshot } from "@/types/paintings";
 import type { AppError } from "@/types/app-error";
-import type { SelectedToken } from "@/types/paintings";
 import type { TokenDataFetchService } from "@/services/paintings/token-data-fetch";
 import type { MarketDataService } from "@/services/paintings/market-data";
 import type { TokensRepository } from "@/repositories/tokens-repository";
@@ -132,7 +131,19 @@ describe("TokenSelectionService", () => {
           ]),
       },
       tokensRepository: {
-        findRecentlySelected: async () => okResult([{ id: "fresh" } as SelectedToken]),
+        findRecentlySelected: async () =>
+          okResult([
+            {
+              id: "fresh",
+              symbol: "FRESH",
+              name: "Fresh Token",
+              coingeckoId: "fresh",
+              logoUrl: null,
+              categories: "[]",
+              createdAt: 0,
+              updatedAt: Date.now(),
+            },
+          ]),
       },
     });
 

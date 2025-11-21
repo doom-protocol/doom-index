@@ -1,9 +1,11 @@
 import { describe, it, expect } from "bun:test";
-import { ok, err } from "neverthrow";
+import { ok, type Result } from "neverthrow";
 import { PaintingContextBuilder } from "@/services/paintings/painting-context-builder";
 import type { TokensRepository } from "@/repositories/tokens-repository";
 import type { SelectedToken, MarketSnapshot } from "@/types/paintings";
 import type { PaintingContext } from "@/types/painting-context";
+import type { Token } from "@/db/schema/tokens";
+import type { AppError } from "@/types/app-error";
 
 const token = (overrides: Partial<SelectedToken> = {}): SelectedToken => ({
   id: "alpha",
@@ -40,7 +42,7 @@ const snapshot = (overrides: Partial<MarketSnapshot> = {}): MarketSnapshot => ({
 });
 
 describe("PaintingContextBuilder", () => {
-  const createBuilder = (repoResult: ReturnType<typeof ok | typeof err>) => {
+  const createBuilder = (repoResult: Result<Token | null, AppError>) => {
     const tokensRepository: Pick<TokensRepository, "findById"> = {
       findById: async () => repoResult,
     };

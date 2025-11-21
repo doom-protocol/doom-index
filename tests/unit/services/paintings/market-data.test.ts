@@ -23,6 +23,9 @@ const createGlobalResponse = (overrides: Partial<GlobalMarketDataResponse["data"
     active_cryptocurrencies: overrides.active_cryptocurrencies ?? 10_000,
     markets: overrides.markets ?? 500,
     updated_at: overrides.updated_at ?? 1_700_000_000,
+    upcoming_icos: overrides.upcoming_icos ?? 0,
+    ongoing_icos: overrides.ongoing_icos ?? 0,
+    ended_icos: overrides.ended_icos ?? 0,
   },
 });
 
@@ -68,11 +71,11 @@ describe("MarketDataService", () => {
 
     const alternativeMeClient: AlternativeMeClientStub = {
       getFearGreedIndex: async () =>
-        err<AppError>({
+        err({
           type: "ExternalApiError",
           provider: "alternative.me",
           message: "timeout",
-        }),
+        } as AppError),
     };
 
     const repository: MarketSnapshotsRepositoryStub = {

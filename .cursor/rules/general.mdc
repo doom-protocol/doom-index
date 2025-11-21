@@ -8,8 +8,92 @@ alwaysApply: true
 
 - all comments in source code should be in english
 
+## 型安全性とテスタビリティ
+
+### 外部依存の抽象化
+
+外部APIやサービスを使用する際は、依存性注入パターンを使用してテスタビリティを確保して下さい。
+
+```typescript
+// ✅ 良い例: 依存性注入
+export function createTavilyClient({
+  apiKey,
+  tavilyClient,
+  mockClient,  // テスト用のモック注入ポイント
+}: CreateTavilyClientDeps = {}): TavilyClient {
+  if (mockClient) {
+    return mockClient;
+  }
+  // 実装...
+}
+
+// テストで使用
+const client = createTavilyClient({ mockClient: mockTavilyClient });
+```
+
+### グローバル状態の回避
+
+環境変数などのグローバル状態に依存する場合、明示的なパラメータで上書きできるようにして下さい。
+
+```typescript
+// ✅ 良い例: パラメータで上書き可能
+async function searchToken(input: TavilyQueryInput): Promise<Result<TavilySearchResult, AppError>> {
+  const key = apiKey ?? env.TAVILY_API_KEY;  // パラメータ優先
+  if (!key) {
+    return err({ type: "ConfigurationError", ... });
+  }
+  // 実装...
+}
+```
+
+### 型定義の変更管理
+
+スキーマやインターフェースを変更する際は、以下を必ず実行して下さい:
+
+1. 関連するテストコードも同時に更新
+2. `bun run typecheck` で型エラーを確認
+3. `bun run test` ですべてのテストがパスすることを確認
+4. PR レビューで型定義とテストの整合性を確認
+
+### 依存ライブラリの更新
+
+依存ライブラリを更新する際は、以下の手順を踏んで下さい:
+
+```bash
+# 1. 更新
+bun update
+
+# 2. 型チェック（型定義の変更を検出）
+bun run typecheck
+
+# 3. テスト（互換性を確認）
+bun run test
+
+# 4. ビルド（本番環境での動作を確認）
+bun run build
+```
+
+型エラーが発生した場合は、テストのモックデータを新しい型定義に合わせて更新して下さい。
+
+### 型アサーションの使用ガイドライン
+
+- `as any` の使用は最小限に抑える
+- 必要な場合は `@ts-expect-error` または `@ts-ignore` にコメントを付けて理由を明記
+- テスト用の型互換性問題は `@ts-expect-error` で対応可能
+- `as unknown as TargetType` のパターンを使用して安全に変換
+
+```typescript
+// ✅ 良い例: 理由を明記
+// @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+const client = createWorkersAiClient({ aiBinding: mockAiBinding });
+
+// ✅ 良い例: unknown を経由
+const calls = mockGenerate.mock.calls as unknown as Array<[ImageRequest, unknown?]>;
+```
+
 Please refer to the following steering documents for more information:
 
 - @.kiro/steering/structure.md
 - @.kiro/steering/product.md
 - @.kiro/steering/tech.md
+- @docs/test-error-analysis-2025-11.md

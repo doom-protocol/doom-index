@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, mock } from "bun:test";
 import { createTokenContextRepository } from "@/repositories/token-context-repository";
-import type { Token } from "@/db/schema/tokens";
+import type { TokenContextRow } from "@/db/schema/token-contexts";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "@/db/schema";
 
@@ -12,30 +12,26 @@ describe.skip("TokenContextRepository", () => {
   beforeEach(() => {
     mock.restore();
 
-    // Mock database with test data
-    const testData: Token[] = [
+    // Mock database with test data matching TokenContextRow schema
+    const testData: TokenContextRow[] = [
       {
         tokenId: "test-token-1",
-        tokenName: "Test Token 1",
-        tokenSymbol: "TEST1",
-        tokenChain: "ethereum",
-        contractAddress: "0x123",
+        symbol: "TEST1",
+        displayName: "Test Token 1",
+        chain: "ethereum",
         category: "meme",
         tags: '["tag1","tag2"]',
         shortContext: "This is a test context",
-        createdAt: Math.floor(Date.now() / 1000),
         updatedAt: Math.floor(Date.now() / 1000),
       },
       {
         tokenId: "test-token-2",
-        tokenName: "Test Token 2",
-        tokenSymbol: "TEST2",
-        tokenChain: "solana",
-        contractAddress: null,
+        symbol: "TEST2",
+        displayName: "Test Token 2",
+        chain: "solana",
         category: null,
         tags: null,
         shortContext: "Another test context",
-        createdAt: Math.floor(Date.now() / 1000),
         updatedAt: Math.floor(Date.now() / 1000),
       },
     ];
@@ -48,7 +44,7 @@ describe.skip("TokenContextRepository", () => {
           })),
         })),
       })),
-    };
+    } as unknown as DrizzleD1Database<typeof schema>;
 
     mockGetDB = mock(() => Promise.resolve(mockDb));
 
@@ -66,14 +62,12 @@ describe.skip("TokenContextRepository", () => {
             limit: mock(() => [
               {
                 tokenId: "test-token-1",
-                tokenName: "Test Token 1",
-                tokenSymbol: "TEST1",
-                tokenChain: "ethereum",
-                contractAddress: "0x123",
+                symbol: "TEST1",
+                displayName: "Test Token 1",
+                chain: "ethereum",
                 category: "meme",
                 tags: '["tag1","tag2"]',
                 shortContext: "This is a test context",
-                createdAt: Math.floor(Date.now() / 1000),
                 updatedAt: Math.floor(Date.now() / 1000),
               },
             ]),
@@ -81,6 +75,7 @@ describe.skip("TokenContextRepository", () => {
         })),
       }));
 
+      // @ts-expect-error - Complex Drizzle ORM mock types don't match exactly but work at runtime
       mockDb.select = mockSelect;
       const repo = createTokenContextRepository();
       const result = await repo.findById("test-token-1");
@@ -88,11 +83,10 @@ describe.skip("TokenContextRepository", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value).not.toBeNull();
-        expect(result.value?.id).toBe("test-token-1");
-        expect(result.value?.tokenName).toBe("Test Token 1");
-        expect(result.value?.tokenSymbol).toBe("TEST1");
-        expect(result.value?.tokenChain).toBe("ethereum");
-        expect(result.value?.contractAddress).toBe("0x123");
+        expect(result.value?.tokenId).toBe("test-token-1");
+        expect(result.value?.displayName).toBe("Test Token 1");
+        expect(result.value?.symbol).toBe("TEST1");
+        expect(result.value?.chain).toBe("ethereum");
         expect(result.value?.category).toBe("meme");
         expect(result.value?.tags).toEqual(["tag1", "tag2"]);
         expect(result.value?.shortContext).toBe("This is a test context");
@@ -108,6 +102,7 @@ describe.skip("TokenContextRepository", () => {
         })),
       }));
 
+      // @ts-expect-error - Complex Drizzle ORM mock types don't match exactly but work at runtime
       mockDb.select = mockSelect;
       const repo = createTokenContextRepository();
       const result = await repo.findById("non-existent");
@@ -140,6 +135,7 @@ describe.skip("TokenContextRepository", () => {
         })),
       }));
 
+      // @ts-expect-error - Complex Drizzle ORM mock types don't match exactly but work at runtime
       mockDb.select = mockSelect;
       const repo = createTokenContextRepository();
       const result = await repo.findById("test-token-2");
@@ -147,7 +143,7 @@ describe.skip("TokenContextRepository", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value).not.toBeNull();
-        expect(result.value?.contractAddress).toBeNull();
+        expect(result.value?.category).toBeNull();
       }
     });
 
@@ -173,6 +169,7 @@ describe.skip("TokenContextRepository", () => {
         })),
       }));
 
+      // @ts-expect-error - Complex Drizzle ORM mock types don't match exactly but work at runtime
       mockDb.select = mockSelect;
       const repo = createTokenContextRepository();
       const result = await repo.findById("test-token-2");
@@ -192,14 +189,12 @@ describe.skip("TokenContextRepository", () => {
             limit: mock(() => [
               {
                 tokenId: "test-token-1",
-                tokenName: "Test Token 1",
-                tokenSymbol: "TEST1",
-                tokenChain: "ethereum",
-                contractAddress: "0x123",
+                symbol: "TEST1",
+                displayName: "Test Token 1",
+                chain: "ethereum",
                 category: "meme",
                 tags: '["tag1","tag2"]',
                 shortContext: "This is a test context",
-                createdAt: Math.floor(Date.now() / 1000),
                 updatedAt: Math.floor(Date.now() / 1000),
               },
             ]),
@@ -207,6 +202,7 @@ describe.skip("TokenContextRepository", () => {
         })),
       }));
 
+      // @ts-expect-error - Complex Drizzle ORM mock types don't match exactly but work at runtime
       mockDb.select = mockSelect;
       const repo = createTokenContextRepository();
       const result = await repo.findById("test-token-1");
@@ -224,14 +220,12 @@ describe.skip("TokenContextRepository", () => {
             limit: mock(() => [
               {
                 tokenId: "test-token-3",
-                name: "Test Token 3",
                 symbol: "TEST3",
-                chainId: "ethereum",
-                contractAddress: null,
+                displayName: "Test Token 3",
+                chain: "ethereum",
                 category: null,
                 tags: "invalid json",
                 shortContext: "Test context",
-                createdAt: Math.floor(Date.now() / 1000),
                 updatedAt: Math.floor(Date.now() / 1000),
               },
             ]),
@@ -239,6 +233,7 @@ describe.skip("TokenContextRepository", () => {
         })),
       }));
 
+      // @ts-expect-error - Complex Drizzle ORM mock types don't match exactly but work at runtime
       mockDb.select = mockSelect;
       const repo = createTokenContextRepository();
       const result = await repo.findById("test-token-3");

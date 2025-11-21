@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 import { ok, err } from "neverthrow";
 import { createImageGenerationService } from "@/services/image-generation";
 import type { WorldPromptService, PromptComposition } from "@/services/world-prompt-service";
-import type { ImageProvider } from "@/types/domain";
+import type { ImageProvider, ImageRequest } from "@/types/domain";
 import type { PaintingContext } from "@/types/painting-context";
 import type { McMapRounded } from "@/constants/token";
 import type { TokenMetaInput } from "@/services/token-context-service";
@@ -35,16 +35,22 @@ const paintingContext: PaintingContext = {
 };
 
 const visualParams: VisualParams = {
-  brilliance: 0.6,
-  decay: 0.2,
-  entropy: 0.45,
-  flux: 0.75,
-  gravity: 0.35,
-  resonance: 0.55,
-  saturation: 0.5,
-  spread: 0.4,
-  symmetry: 0.3,
-  tempo: 0.65,
+  fogDensity: 0.6,
+  skyTint: 0.2,
+  reflectivity: 0.45,
+  blueBalance: 0.75,
+  vegetationDensity: 0.35,
+  organicPattern: 0.55,
+  radiationGlow: 0.5,
+  debrisIntensity: 0.4,
+  mechanicalPattern: 0.3,
+  metallicRatio: 0.65,
+  fractalDensity: 0.5,
+  bioluminescence: 0.4,
+  shadowDepth: 0.3,
+  redHighlight: 0.2,
+  lightIntensity: 0.6,
+  warmHue: 0.5,
 };
 
 const composition: PromptComposition = {
@@ -79,19 +85,21 @@ const createDeps = () => {
     ) as unknown as WorldPromptService["composeTokenPrompt"],
   };
 
+  const mockGenerate = mock(() =>
+    Promise.resolve(
+      ok({
+        imageBuffer: new ArrayBuffer(8),
+        providerMeta: { provider: "mock" },
+      }),
+    ),
+  );
+
   const imageProvider: ImageProvider = {
     name: "mock",
-    generate: mock(() =>
-      Promise.resolve(
-        ok({
-          imageBuffer: new ArrayBuffer(8),
-          providerMeta: { provider: "mock" },
-        }),
-      ),
-    ) as unknown as ImageProvider["generate"],
+    generate: mockGenerate as unknown as ImageProvider["generate"],
   };
 
-  return { promptService, imageProvider };
+  return { promptService, imageProvider, mockGenerate };
 };
 
 describe("ImageGenerationService.generateTokenImage", () => {
@@ -100,7 +108,7 @@ describe("ImageGenerationService.generateTokenImage", () => {
   });
 
   it("passes sanitized reference image URLs to the provider", async () => {
-    const { promptService, imageProvider } = createDeps();
+    const { promptService, imageProvider, mockGenerate } = createDeps();
     const service = createImageGenerationService({
       promptService,
       imageProvider,
@@ -114,13 +122,15 @@ describe("ImageGenerationService.generateTokenImage", () => {
     });
 
     expect(result.isOk()).toBe(true);
-    expect(imageProvider.generate.mock.calls.length).toBe(1);
-    const [request] = imageProvider.generate.mock.calls[0];
-    expect(request.referenceImageUrl).toBe("https://assets.example.com/logo.png?size=large");
+    expect(mockGenerate.mock.calls.length).toBe(1);
+    const calls = mockGenerate.mock.calls as unknown as Array<[ImageRequest, unknown?]>;
+    const request = calls[0]![0];
+    expect(request).toBeDefined();
+    expect(request?.referenceImageUrl).toBe("https://assets.example.com/logo.png?size=large");
   });
 
   it("drops unsafe reference URLs before calling the provider", async () => {
-    const { promptService, imageProvider } = createDeps();
+    const { promptService, imageProvider, mockGenerate } = createDeps();
     const service = createImageGenerationService({
       promptService,
       imageProvider,
@@ -134,8 +144,10 @@ describe("ImageGenerationService.generateTokenImage", () => {
     });
 
     expect(result.isOk()).toBe(true);
-    const [request] = imageProvider.generate.mock.calls[0];
-    expect(request.referenceImageUrl).toBeUndefined();
+    const calls = mockGenerate.mock.calls as unknown as Array<[ImageRequest, unknown?]>;
+    const request = calls[0]![0];
+    expect(request).toBeDefined();
+    expect(request?.referenceImageUrl).toBeUndefined();
   });
 
   it("propagates prompt composition errors", async () => {

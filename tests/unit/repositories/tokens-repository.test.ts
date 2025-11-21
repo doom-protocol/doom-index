@@ -30,7 +30,8 @@ describe("TokensRepository", () => {
     `);
 
     db = drizzle(sqlite, { schema: dbSchema });
-    repository = new TokensRepository(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    repository = new TokensRepository(db as any);
   });
 
   describe("findById", () => {
