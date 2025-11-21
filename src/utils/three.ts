@@ -98,3 +98,46 @@ export function handlePointerMoveForDrag(
     hasPointerMovedRef.current = true;
   }
 }
+
+/**
+ * Handle pointer up event for click detection
+ *
+ * Validates pointer event, checks if it should trigger a click action,
+ * and executes the provided callback if conditions are met.
+ *
+ * @param event - Pointer up event from React Three Fiber
+ * @param pointerDownPositionRef - Ref containing starting pointer position
+ * @param hasPointerMovedRef - Ref to track if pointer has moved
+ * @param activePointerIdRef - Ref containing active pointer ID
+ * @param resetPointerState - Function to reset pointer state
+ * @param onClickAction - Callback to execute when click is detected
+ * @returns true if click was triggered, false otherwise
+ */
+export function handlePointerUpForClick(
+  event: ThreeEvent<PointerEvent>,
+  pointerDownPositionRef: React.MutableRefObject<{ x: number; y: number } | null>,
+  hasPointerMovedRef: React.MutableRefObject<boolean>,
+  activePointerIdRef: React.MutableRefObject<number | null>,
+  resetPointerState: () => void,
+  onClickAction: (event: ThreeEvent<PointerEvent>) => void,
+): boolean {
+  if (!isValidPointerEvent(event, activePointerIdRef.current)) {
+    return false;
+  }
+
+  const shouldTrigger =
+    pointerDownPositionRef.current !== null &&
+    !hasPointerMovedRef.current &&
+    (event.pointerType === "touch" || event.button === 0);
+
+  resetPointerState();
+
+  if (!shouldTrigger) {
+    return false;
+  }
+
+  event.stopPropagation();
+  onClickAction(event);
+
+  return true;
+}

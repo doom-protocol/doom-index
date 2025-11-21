@@ -6,9 +6,7 @@ import { base64ToArrayBuffer } from "@/utils/image";
 import { getErrorMessage } from "@/utils/error";
 import { env } from "@/env";
 import { RunwareClient } from "@/lib/runware-client";
-
-const DEFAULT_MODEL = "runware:100@1";
-const DEFAULT_SIZE = 1024;
+import { DEFAULT_RUNWARE_MODEL, DEFAULT_IMAGE_SIZE, DEFAULT_RUNWARE_TIMEOUT } from "@/constants/runware";
 
 /**
  * Runware Provider for Image Generation
@@ -21,16 +19,16 @@ export const createRunwareProvider = (): ImageProvider => ({
     const apiKey = env.RUNWARE_API_KEY; //already validated in env.ts
 
     try {
-      const timeoutMs = options?.timeoutMs ?? 30_000;
+      const timeoutMs = options?.timeoutMs ?? DEFAULT_RUNWARE_TIMEOUT;
       const runware = new RunwareClient({
         apiKey,
         timeoutMs,
       });
 
       const seedInt = input.seed ? parseInt(input.seed.substring(0, 8), 16) : undefined;
-      const model = input.model || DEFAULT_MODEL;
-      const width = DEFAULT_SIZE;
-      const height = DEFAULT_SIZE;
+      const model = input.model || DEFAULT_RUNWARE_MODEL;
+      const width = DEFAULT_IMAGE_SIZE;
+      const height = DEFAULT_IMAGE_SIZE;
 
       logger.debug("runware.generate.start", {
         model,

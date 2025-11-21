@@ -112,7 +112,7 @@ watermark, text, logo, oversaturated colors, low detail hands, extra limbs
 ### TypeScript API
 
 ```typescript
-import { buildSDXLPrompt, buildGenericPayload, toWeightedFragments } from "@/lib/pure/doom-prompt";
+import { buildSDXLPrompt, buildGenericPayload, toWeightedFragments } from "@/lib/pure/weighted-prompt";
 import type { McMap } from "@/constants/token";
 
 const mc: McMap = {

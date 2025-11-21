@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import { createArchiveListService } from "@/services/archive-list";
+import { createArchiveService } from "@/services/archive";
 import { createTestR2Bucket } from "../../lib/memory-r2";
 import type { ArchiveMetadata } from "@/types/archive";
 
@@ -69,7 +69,7 @@ describe("Archive List Service - Metadata Loading", () => {
 
   describe("listImages with metadata loading", () => {
     it("should load metadata for images", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
@@ -93,7 +93,7 @@ describe("Archive List Service - Metadata Loading", () => {
         contentType: "image/webp",
       });
 
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
@@ -119,7 +119,7 @@ describe("Archive List Service - Metadata Loading", () => {
         contentType: "application/json",
       });
 
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
@@ -197,7 +197,7 @@ describe("Archive List Service - Metadata Loading", () => {
         });
       }
 
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);

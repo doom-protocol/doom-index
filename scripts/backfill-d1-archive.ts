@@ -1,6 +1,7 @@
-import { createArchiveIndexService } from "@/services/archive-index";
+import { createArchiveService } from "@/services/archive";
 import { resolveBucketOrThrow, listR2Objects, getJsonR2 } from "@/lib/r2";
-import { isValidArchiveFilename, isArchiveMetadata } from "@/lib/pure/archive";
+import { isValidArchiveFilename } from "@/utils/archive";
+import { isArchiveMetadata } from "@/lib/pure/archive-metadata";
 import type { ArchiveMetadata } from "@/types/archive";
 import { logger } from "@/utils/logger";
 
@@ -20,7 +21,7 @@ async function backfillArchive() {
   logger.info("backfill.start", { message: "Starting D1 archive backfill from R2" });
 
   const bucket = resolveBucketOrThrow({});
-  const archiveIndexService = createArchiveIndexService({});
+  const archiveService = createArchiveService({});
 
   let totalProcessed = 0;
   let totalInserted = 0;
@@ -83,7 +84,7 @@ async function backfillArchive() {
         continue;
       }
 
-      const insertResult = await archiveIndexService.insertArchiveItem(metadata, obj.key);
+      const insertResult = await archiveService.insertArchiveItem(metadata, obj.key);
 
       if (insertResult.isErr()) {
         logger.error("backfill.insert.error", {

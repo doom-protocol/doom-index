@@ -1,6 +1,6 @@
 import { router, publicProcedure } from "../trpc";
 import { archiveListSchema } from "../schemas";
-import { createArchiveListService } from "@/services/archive-list";
+import { createArchiveService } from "@/services/archive";
 import { get, set } from "@/lib/cache";
 import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
 
@@ -21,10 +21,10 @@ export const archiveRouter = router({
       return cached;
     }
 
-    // Resolve R2 bucket and create archive list service with D1 binding
+    // Resolve R2 bucket and create archive service with D1 binding
     const bucket = resolveR2BucketOrThrow(ctx);
     const d1Binding = ctx.env?.DB;
-    const archiveService = createArchiveListService({
+    const archiveService = createArchiveService({
       r2Bucket: bucket,
       d1Binding,
     });

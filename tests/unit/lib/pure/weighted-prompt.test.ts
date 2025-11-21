@@ -6,7 +6,7 @@ import {
   buildGenericPayload,
   DEFAULT_DOMINANCE_CONFIG,
   type DominanceWeightConfig,
-} from "@/lib/pure/doom-prompt";
+} from "@/lib/pure/weighted-prompt";
 import type { McMap } from "@/constants/token";
 
 describe("Doom Prompt Generation", () => {

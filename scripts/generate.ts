@@ -14,9 +14,9 @@ import { join } from "node:path";
 import { mkdir } from "node:fs/promises";
 import type { McMapRounded } from "@/constants/token";
 import { createPromptService } from "@/services/prompt";
-import { resolveProviderWithMock, createAutoResolveProvider } from "@/lib/providers";
+import { resolveProviderWithMock, createImageProvider } from "@/lib/image-generation-providers";
 import { logger } from "@/utils/logger";
-import { extractIdFromFilename } from "@/lib/pure/archive";
+import { extractIdFromFilename } from "@/utils/archive";
 import type { ArchiveMetadata } from "@/types/archive";
 
 type Args = {
@@ -189,8 +189,8 @@ const main = async () => {
   console.log(`Params Hash: ${composition.paramsHash}`);
 
   // Generate image
-  // Provider is automatically resolved based on the model
-  const provider = args.mock ? resolveProviderWithMock("mock") : createAutoResolveProvider();
+  // Use Runware provider (or mock for testing)
+  const provider = args.mock ? resolveProviderWithMock("mock") : createImageProvider();
   logger.info("generate.provider", { name: provider.name, model: args.model });
 
   const imageRequest = {

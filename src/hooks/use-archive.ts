@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC, useTRPCClient } from "@/lib/trpc/client";
-import type { ArchiveListResponse } from "@/services/archive-list";
+import type { ArchiveListResponse } from "@/services/archive";
 import { logger } from "@/utils/logger";
 
 interface UseArchiveOptions {

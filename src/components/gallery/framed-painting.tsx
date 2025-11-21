@@ -18,7 +18,12 @@ import {
 } from "three";
 import type { GLTF } from "three-stdlib";
 import { openTweetIntent } from "@/utils/twitter";
-import { calculatePlaneDimensions, handlePointerMoveForDrag, isValidPointerEvent } from "@/utils/three";
+import {
+  calculatePlaneDimensions,
+  handlePointerMoveForDrag,
+  handlePointerUpForClick,
+  isValidPointerEvent,
+} from "@/utils/three";
 
 interface FramedPaintingProps {
   thumbnailUrl: string;
@@ -502,28 +507,18 @@ export const FramedPainting: React.FC<FramedPaintingProps> = ({
   };
 
   const handlePointerUp = (event: ThreeEvent<PointerEvent>): boolean => {
-    if (!isValidPointerEvent(event, activePointerIdRef.current)) {
-      return false;
-    }
-
-    const shouldTrigger =
-      pointerDownPositionRef.current !== null &&
-      !hasPointerMovedRef.current &&
-      (event.pointerType === "touch" || event.button === 0);
-
-    resetPointerState();
-
-    if (!shouldTrigger) {
-      return false;
-    }
-
-    event.stopPropagation();
-
-    window.setTimeout(() => {
-      openTweetIntent();
-    }, PULSE_DURATION * 1000);
-
-    return true;
+    return handlePointerUpForClick(
+      event,
+      pointerDownPositionRef,
+      hasPointerMovedRef,
+      activePointerIdRef,
+      resetPointerState,
+      () => {
+        window.setTimeout(() => {
+          openTweetIntent();
+        }, PULSE_DURATION * 1000);
+      },
+    );
   };
 
   const handlePointerCancel = (event: ThreeEvent<PointerEvent>) => {

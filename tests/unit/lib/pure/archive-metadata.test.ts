@@ -1,14 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import type { ArchiveMetadata } from "@/types/archive";
-import {
-  isArchiveMetadata,
-  parseDatePrefix,
-  buildArchiveKey,
-  isValidArchiveFilename,
-  extractIdFromFilename,
-} from "@/lib/pure/archive";
+import { isArchiveMetadata } from "@/lib/pure/archive-metadata";
 
-describe("Archive Metadata Type Guards", () => {
+describe("isArchiveMetadata", () => {
   it("should validate valid archive metadata", () => {
     const validMetadata: ArchiveMetadata = {
       id: "DOOM_202511141234_abc12345_def45678",
@@ -100,61 +94,41 @@ describe("Archive Metadata Type Guards", () => {
 
     expect(isArchiveMetadata(invalidMetadata)).toBe(false);
   });
-});
 
-describe("Date Prefix Parsing", () => {
-  it("should parse date string to prefix structure", () => {
-    expect(parseDatePrefix("2025-11-14")).toEqual({
-      year: "2025",
-      month: "11",
-      day: "14",
-      prefix: "images/2025/11/14/",
-    });
+  it("should reject metadata with invalid visualParams structure", () => {
+    const invalidMetadata = {
+      id: "DOOM_202511141234_abc12345_def45678",
+      timestamp: "2025-11-14T12:34:00Z",
+      minuteBucket: "2025-11-14T12:34:00Z",
+      paramsHash: "abc12345",
+      seed: "def45678",
+      mcRounded: {
+        CO2: 1000000,
+        ICE: 2000000,
+        FOREST: 3000000,
+        NUKE: 4000000,
+        MACHINE: 5000000,
+        PANDEMIC: 6000000,
+        FEAR: 7000000,
+        HOPE: 8000000,
+      },
+      visualParams: {
+        fogDensity: 0.5,
+        // missing other visual params
+      },
+      imageUrl: "/api/r2/images/2025/11/14/DOOM_202511141234_abc12345_def45678.webp",
+      fileSize: 123456,
+      prompt: "test prompt",
+      negative: "test negative",
+    };
+
+    expect(isArchiveMetadata(invalidMetadata)).toBe(false);
   });
 
-  it("should parse ISO timestamp to prefix structure", () => {
-    expect(parseDatePrefix("2025-11-14T12:34:00Z")).toEqual({
-      year: "2025",
-      month: "11",
-      day: "14",
-      prefix: "images/2025/11/14/",
-    });
-  });
-
-  it("should throw error for invalid date format", () => {
-    expect(() => parseDatePrefix("invalid-date")).toThrow();
-  });
-});
-
-describe("Archive Key Building", () => {
-  it("should build archive key with date prefix", () => {
-    const key = buildArchiveKey("2025-11-14", "DOOM_202511141234_abc12345_def45678.webp");
-    expect(key).toBe("images/2025/11/14/DOOM_202511141234_abc12345_def45678.webp");
-  });
-
-  it("should build metadata key from image key", () => {
-    const imageKey = "images/2025/11/14/DOOM_202511141234_abc12345_def45678.webp";
-    const metadataKey = imageKey.replace(/\.webp$/, ".json");
-    expect(metadataKey).toBe("images/2025/11/14/DOOM_202511141234_abc12345_def45678.json");
-  });
-});
-
-describe("Filename Validation", () => {
-  it("should validate correct filename pattern", () => {
-    expect(isValidArchiveFilename("DOOM_202511141234_abc12345_def456789012.webp")).toBe(true);
-  });
-
-  it("should reject invalid filename patterns", () => {
-    expect(isValidArchiveFilename("invalid.webp")).toBe(false);
-    expect(isValidArchiveFilename("DOOM_20251114123_abc12345_def456789012.webp")).toBe(false); // wrong timestamp length
-    expect(isValidArchiveFilename("DOOM_202511141234_ABC12345_def456789012.webp")).toBe(false); // uppercase hash
-    expect(isValidArchiveFilename("DOOM_202511141234_abc12345_def45678.webp")).toBe(false); // wrong seed length (8 instead of 12)
-    expect(isValidArchiveFilename("DOOM_202511141234_abc12345_def456789012.png")).toBe(false); // wrong extension
-  });
-
-  it("should extract ID from filename", () => {
-    expect(extractIdFromFilename("DOOM_202511141234_abc12345_def456789012.webp")).toBe(
-      "DOOM_202511141234_abc12345_def456789012",
-    );
+  it("should reject non-object values", () => {
+    expect(isArchiveMetadata(null)).toBe(false);
+    expect(isArchiveMetadata(undefined)).toBe(false);
+    expect(isArchiveMetadata("string")).toBe(false);
+    expect(isArchiveMetadata(123)).toBe(false);
   });
 });

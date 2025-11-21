@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import { createArchiveListService } from "@/services/archive-list";
+import { createArchiveService } from "@/services/archive";
 import { createTestR2Bucket } from "../../lib/memory-r2";
 import type { ArchiveMetadata } from "@/types/archive";
 
@@ -93,7 +93,7 @@ describe("Archive List Service - Date Filtering", () => {
 
   describe("listImages with date filtering", () => {
     it("should filter by single date prefix", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({
         prefix: "images/2025/11/14/",
       });
@@ -106,7 +106,7 @@ describe("Archive List Service - Date Filtering", () => {
     });
 
     it("should filter by date range using startDate and endDate", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({
         startDate: "2025-11-14",
         endDate: "2025-11-15",
@@ -126,7 +126,7 @@ describe("Archive List Service - Date Filtering", () => {
     });
 
     it("should exclude items after endDate using startAfter", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({
         prefix: "images/2025/11/",
         startAfter: "images/2025/11/15/DOOM_202511151201_abc12345_def456789012.webp",
@@ -141,7 +141,7 @@ describe("Archive List Service - Date Filtering", () => {
     });
 
     it("should handle date range spanning multiple days", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({
         startDate: "2025-11-14",
         endDate: "2025-11-16",

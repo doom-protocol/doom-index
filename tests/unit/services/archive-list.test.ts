@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import { createArchiveListService } from "@/services/archive-list";
+import { createArchiveService } from "@/services/archive";
 import { createTestR2Bucket } from "../../lib/memory-r2";
 import type { ArchiveMetadata } from "@/types/archive";
 
@@ -86,7 +86,7 @@ describe("Archive List Service", () => {
 
   describe("listImages", () => {
     it("should list images with default limit", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
@@ -98,7 +98,7 @@ describe("Archive List Service", () => {
     });
 
     it("should respect limit parameter", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({ limit: 3 });
 
       expect(result.isOk()).toBe(true);
@@ -108,7 +108,7 @@ describe("Archive List Service", () => {
     });
 
     it("should enforce maximum limit of 100", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({ limit: 200 });
 
       expect(result.isOk()).toBe(true);
@@ -124,7 +124,7 @@ describe("Archive List Service", () => {
         contentType: "image/png",
       });
 
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
@@ -135,7 +135,7 @@ describe("Archive List Service", () => {
     });
 
     it("should support cursor-based pagination with key-based cursor", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const firstPage = await service.listImages({ limit: 2 });
 
       expect(firstPage.isOk()).toBe(true);
@@ -153,7 +153,7 @@ describe("Archive List Service", () => {
     });
 
     it("should return hasMore when truncated", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({ limit: 2 });
 
       expect(result.isOk()).toBe(true);
@@ -173,7 +173,7 @@ describe("Archive List Service", () => {
         contentType: "image/webp",
       });
 
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);

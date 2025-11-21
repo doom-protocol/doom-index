@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import { createArchiveStorageService } from "@/services/archive-storage";
+import { createArchiveService } from "@/services/archive";
 import { createTestR2Bucket } from "../../lib/memory-r2";
 import type { ArchiveMetadata } from "@/types/archive";
 
@@ -15,7 +15,7 @@ describe("Archive Storage Service", () => {
 
   describe("storeImageWithMetadata", () => {
     it("should store image and metadata atomically", async () => {
-      const service = createArchiveStorageService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const imageBuffer = new TextEncoder().encode("fake image data").buffer;
       const metadata: ArchiveMetadata = {
         id: "DOOM_202511141234_abc12345_def456789012",
@@ -88,7 +88,7 @@ describe("Archive Storage Service", () => {
     });
 
     it("should rollback image if metadata save fails", async () => {
-      const service = createArchiveStorageService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const imageBuffer = new TextEncoder().encode("fake image data").buffer;
       const invalidMetadata = {
         id: "DOOM_202511141234_abc12345_def456789012",
@@ -128,7 +128,7 @@ describe("Archive Storage Service", () => {
         },
       } as unknown as R2Bucket;
 
-      const service = createArchiveStorageService({ r2Bucket: failingBucket });
+      const service = createArchiveService({ r2Bucket: failingBucket });
       const imageBuffer = new TextEncoder().encode("fake image data").buffer;
       const metadata: ArchiveMetadata = {
         id: "DOOM_202511141234_abc12345_def456789012",
@@ -187,7 +187,7 @@ describe("Archive Storage Service", () => {
     });
 
     it("should ensure image and metadata have matching filenames", async () => {
-      const service = createArchiveStorageService({ r2Bucket: bucket });
+      const service = createArchiveService({ r2Bucket: bucket });
       const imageBuffer = new TextEncoder().encode("fake image data").buffer;
       const metadata: ArchiveMetadata = {
         id: "DOOM_202511141234_abc12345_def456789012",

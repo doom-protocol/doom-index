@@ -2,6 +2,12 @@ import { logger } from "@/utils/logger";
 
 const API_BASE_URL = "https://api.runware.ai/v1";
 
+/**
+ * Default model for FLUX kontext [dev] on Runware
+ * Used for dynamic-draw flow (1h auto-generation with reference image).
+ */
+export const FLUX_KONTEXT_DEV_MODEL = "runware:106@1";
+
 export type RunwareImageInferenceRequest = {
   taskType: "imageInference";
   taskUUID: string;
@@ -15,6 +21,11 @@ export type RunwareImageInferenceRequest = {
   scheduler?: string;
   seed?: number;
   numberResults?: number;
+  /**
+   * Optional reference image URL (e.g. token logo) for image-to-image / guided generation.
+   * This is passed through to Runware's FLUX kontext models when provided.
+   */
+  referenceImageUrl?: string;
   outputFormat?: "JPEG" | "PNG" | "WEBP";
   outputType?: ("URL" | "base64Data" | "dataURI")[] | "URL" | "base64Data" | "dataURI";
   outputQuality?: number;
