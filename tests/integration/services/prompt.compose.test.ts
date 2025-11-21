@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { createWorldPaintingPromptService } from "@/services/world-painting-prompt";
+import { createWorldPromptService } from "@/services/world-prompt-service";
 import { TOKEN_CONFIG_MAP, TOKEN_TICKERS, type McMap } from "@/constants/token";
 
 const createRoundedMap = (multiplier: number): McMap =>
@@ -11,11 +11,11 @@ const createRoundedMap = (multiplier: number): McMap =>
   }, {} as McMap);
 
 const createService = (minute = "2025-11-09T12:34") =>
-  createWorldPaintingPromptService({
+  createWorldPromptService({
     getMinuteBucket: () => minute,
   });
 
-describe("PromptService.composePrompt (3.x)", () => {
+describe("WorldPromptService.composePrompt", () => {
   it("returns deterministic prompt composition including params hash and seed", async () => {
     const mcRounded = createRoundedMap(1.05);
     const service = createService();

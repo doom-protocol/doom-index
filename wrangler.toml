@@ -45,6 +45,10 @@ database_id = "f953738f-09c7-47bd-8235-2affa996db8e"
 binding = "VIEWER_KV"
 id = "8c588d03a8ab4cd19e0c458dcabf1bec"
 
+# Workers AI Binding
+[ai]
+binding = "AI"
+
 # Next.js on Cloudflare Pages is managed in open-next.config.ts
 [assets]
 directory = "./.open-next/assets"
@@ -102,6 +106,10 @@ database_id = "f953738f-09c7-47bd-8235-2affa996db8e"
 [[env.dev.kv_namespaces]]
 binding = "VIEWER_KV"
 id = "8c588d03a8ab4cd19e0c458dcabf1bec"
+
+# Workers AI Binding (same as production for dev)
+[env.dev.ai]
+binding = "AI"
 
 # Service Binding
 [[env.dev.services]]

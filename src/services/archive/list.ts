@@ -8,7 +8,8 @@ import { isArchiveMetadata } from "@/lib/pure/archive-metadata";
 import { logger } from "@/utils/logger";
 import type { McMapRounded } from "@/constants/token";
 import type { VisualParams } from "@/lib/pure/mapping";
-import * as indexDb from "./index-db";
+import { createArchiveRepository } from "@/repositories/archive-repository";
+import type { ArchiveRepository } from "@/repositories/archive-repository";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -236,11 +237,13 @@ export async function listImages(
   bucket: R2Bucket,
   d1Binding: D1Database | undefined,
   options: ListImagesOptions,
+  archiveRepository?: ArchiveRepository,
 ): Promise<Result<ListImagesResponse, AppError>> {
   try {
     const limit = Math.min(options.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
+    const repo = archiveRepository ?? createArchiveRepository({ d1Binding });
 
-    const d1Result = await indexDb.listArchive(d1Binding, {
+    const d1Result = await repo.list({
       limit,
       cursor: options.cursor,
       startDate: options.startDate,

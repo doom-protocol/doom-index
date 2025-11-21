@@ -17,7 +17,7 @@ import { env } from "@/env";
 import type { McMapRounded } from "@/constants/token";
 import type { ImageProvider } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
-import type { WorldPaintingPromptService, PromptComposition } from "@/services/world-painting-prompt";
+import type { WorldPromptService, PromptComposition } from "@/services/world-prompt-service";
 
 export type ImageGenerationResult = {
   composition: PromptComposition;
@@ -30,7 +30,7 @@ export type ImageGenerationService = {
 };
 
 type ImageGenerationDeps = {
-  promptService: WorldPaintingPromptService;
+  promptService: WorldPromptService;
   imageProvider: ImageProvider;
   generationTimeoutMs?: number;
   log?: typeof logger;

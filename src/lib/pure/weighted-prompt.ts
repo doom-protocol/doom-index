@@ -216,11 +216,7 @@ export function buildSimplePrompt(mc: McMap): { prompt: string; negative: string
     })
     .join(", ");
 
-  const prompt = [
-    WORLD_PAINTING_OPENING_LINE,
-    weightedPhrases + ",",
-    WORLD_PAINTING_STYLE_BASE,
-  ].join(" ");
+  const prompt = [WORLD_PAINTING_OPENING_LINE, weightedPhrases + ",", WORLD_PAINTING_STYLE_BASE].join(" ");
 
   return {
     prompt,

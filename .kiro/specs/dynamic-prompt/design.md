@@ -286,9 +286,7 @@ export type CreateDynamicPromptServiceDeps = {
   log?: typeof logger;
 };
 
-export function createDynamicPromptService(
-  deps?: CreateDynamicPromptServiceDeps,
-): DynamicPromptService;
+export function createDynamicPromptService(deps?: CreateDynamicPromptServiceDeps): DynamicPromptService;
 ```
 
 - **Integration Strategy**
@@ -393,26 +391,26 @@ export interface AiPromptService {
 
 論理スキーマは次のとおりである。
 
-- `token_id` TEXT PRIMARY KEY  
+- `token_id` TEXT PRIMARY KEY
   - 例: `"trump-official"` など、dynamic-draw 側で定義する一意のトークン ID。
-- `symbol` TEXT NOT NULL  
+- `symbol` TEXT NOT NULL
   - 例: `"TRUMP"`。
-- `display_name` TEXT NOT NULL  
+- `display_name` TEXT NOT NULL
   - 例: `"Official Trump Meme"`。
-- `chain` TEXT NOT NULL  
+- `chain` TEXT NOT NULL
   - 例: `"ethereum"`。
-- `category` TEXT NULL  
+- `category` TEXT NULL
   - 例: `"meme"`, `"political"` など 1語カテゴリ。
-- `tags` TEXT NULL  
+- `tags` TEXT NULL
   - JSON 文字列として保存（例: `["official-meme","president-related"]`）。
-- `short_context` TEXT NOT NULL  
+- `short_context` TEXT NOT NULL
   - 2〜4文程度の英語テキスト（200〜400文字程度を推奨）。
-- `updated_at` INTEGER NOT NULL  
+- `updated_at` INTEGER NOT NULL
   - UNIX epoch（秒）として保存。将来的な再サマリ判定に利用可能。
 
 推奨インデックス:
 
-- `idx_token_contexts_symbol_chain` (`symbol`, `chain`)  
+- `idx_token_contexts_symbol_chain` (`symbol`, `chain`)
   - 将来的にシンボル＋チェーンから検索するユースケースを想定し、カバリングインデックスとして定義する。
 
 #### Drizzle Schema 例（SQLite / D1）
@@ -434,9 +432,7 @@ export const tokenContexts = sqliteTable(
     shortContext: text("short_context").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
-  table => [
-    index("idx_token_contexts_symbol_chain").on(table.symbol, table.chain),
-  ],
+  table => [index("idx_token_contexts_symbol_chain").on(table.symbol, table.chain)],
 );
 
 export type TokenContextRow = typeof tokenContexts.$inferSelect;
@@ -513,7 +509,7 @@ export type NewTokenContextRow = typeof tokenContexts.$inferInsert;
   - D1 アクセスエラー時に `Result.err` が返されること。
 
 ### Integration Tests
- 
+
 - Tavily と Workers AI をモックした統合テストを行い、dynamic-draw 相当の呼び出しから `TokenContext` 取得までのフローを検証する。
 - 実際の Tavily API と Cloudflare Workers AI に対する統合テストを別スイートとして用意し、環境変数（例: `ENABLE_EXTERNAL_API_TESTS=true`）が設定されている場合のみ実際の API コールを実行する。
   - Tavily 統合テストでは、実在するトークン名を用いて検索を行い、記事リストが 1 件以上返ることと combinedText が空でないことを確認する。

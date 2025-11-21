@@ -1,6 +1,6 @@
 export type ExternalApiError = {
   type: "ExternalApiError";
-  provider: "DexScreener" | "ImageProvider";
+  provider: "DexScreener" | "ImageProvider" | "WorkersAI" | "Tavily";
   status?: number;
   message: string;
   ticker?: string;
@@ -25,4 +25,30 @@ export type InternalError = {
   cause?: unknown;
 };
 
-export type AppError = ExternalApiError | StorageError | ValidationError | InternalError;
+export type ConfigurationError = {
+  type: "ConfigurationError";
+  message: string;
+  missingVar?: string;
+};
+
+export type ParsingError = {
+  type: "ParsingError";
+  message: string;
+  rawValue?: string;
+};
+
+export type TimeoutError = {
+  type: "TimeoutError";
+  message: string;
+  timeoutMs: number;
+  elapsedMs?: number;
+};
+
+export type AppError =
+  | ExternalApiError
+  | StorageError
+  | ValidationError
+  | InternalError
+  | ConfigurationError
+  | ParsingError
+  | TimeoutError;

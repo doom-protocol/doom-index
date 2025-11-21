@@ -1,6 +1,6 @@
 import { createMarketCapService } from "../src/services/market-cap";
 import { TOKENS } from "../src/constants/token";
-import { roundMc } from "../src/lib/round";
+import { roundMc } from "../src/utils/round";
 
 const DEXSCREENER_BASE = "https://api.dexscreener.com/latest/dex/tokens";
 

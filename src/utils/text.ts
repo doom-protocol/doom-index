@@ -1,8 +1,11 @@
 /**
  * Text Processing Utilities
  *
- * Provides functions for text analysis and token estimation.
+ * Provides functions for text analysis, token estimation, and text extraction.
  */
+
+import { Result, err, ok } from "neverthrow";
+import type { ParsingError } from "@/types/app-error";
 
 /**
  * Estimate token count from text using character and word-based heuristics
@@ -32,4 +35,121 @@ export function estimateTokenCount(text: string): { charBased: number; wordBased
     charBased: Math.ceil(charCount / 4),
     wordBased: Math.ceil(wordCount / 0.75),
   };
+}
+
+/**
+ * Extract text from AI response object
+ * Handles various response formats including Workers AI and other AI APIs
+ *
+ * @param response - Response from AI API (can be string or object)
+ * @returns Extracted text or null if not found
+ */
+export function extractTextFromResponse(response: unknown): string | null {
+  if (typeof response === "string") {
+    return response;
+  }
+
+  if (response && typeof response === "object") {
+    const obj = response as Record<string, unknown>;
+    // Workers AI text generation returns { response: string }
+    if (typeof obj.response === "string") {
+      return obj.response;
+    }
+    // Fallback for other formats
+    if (typeof obj.text === "string") {
+      return obj.text;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Parse JSON from text, handling markdown code blocks and extra text
+ * Robustly extracts JSON even when surrounded by other text or markdown formatting
+ *
+ * @param text - Text containing JSON
+ * @returns Result containing parsed JSON or ParsingError
+ */
+export function parseJsonFromText<T>(text: string): Result<T, ParsingError> {
+  // Try direct JSON parse first
+  try {
+    return ok(JSON.parse(text) as T);
+  } catch {
+    // Try extracting JSON from markdown code blocks
+    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        return ok(JSON.parse(jsonMatch[1].trim()) as T);
+      } catch {
+        // Fall through to try other methods
+      }
+    }
+
+    // Try to find JSON object/array in the text (look for { or [)
+    const jsonStart = text.indexOf("{");
+    const arrayStart = text.indexOf("[");
+    let startIndex = -1;
+    if (jsonStart !== -1 && (arrayStart === -1 || jsonStart < arrayStart)) {
+      startIndex = jsonStart;
+    } else if (arrayStart !== -1) {
+      startIndex = arrayStart;
+    }
+
+    if (startIndex !== -1) {
+      // Try to find the matching closing brace/bracket
+      let depth = 0;
+      let inString = false;
+      let escapeNext = false;
+      let endIndex = startIndex;
+
+      for (let i = startIndex; i < text.length; i++) {
+        const char = text[i];
+
+        if (escapeNext) {
+          escapeNext = false;
+          continue;
+        }
+
+        if (char === "\\") {
+          escapeNext = true;
+          continue;
+        }
+
+        if (char === '"') {
+          inString = !inString;
+          continue;
+        }
+
+        if (inString) {
+          continue;
+        }
+
+        if (char === "{" || char === "[") {
+          depth++;
+        } else if (char === "}" || char === "]") {
+          depth--;
+          if (depth === 0) {
+            endIndex = i + 1;
+            break;
+          }
+        }
+      }
+
+      if (depth === 0 && endIndex > startIndex) {
+        const jsonCandidate = text.substring(startIndex, endIndex);
+        try {
+          return ok(JSON.parse(jsonCandidate) as T);
+        } catch {
+          // Fall through to error
+        }
+      }
+    }
+
+    return err({
+      type: "ParsingError",
+      message: "Failed to parse JSON from response",
+      rawValue: text.substring(0, 200), // First 200 chars for debugging
+    });
+  }
 }

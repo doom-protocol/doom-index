@@ -17,6 +17,8 @@ export const env = createEnv({
     // Image Provider API Keys
     OPENAI_API_KEY: z.string().optional(),
     RUNWARE_API_KEY: z.string().min(1),
+    // External API Keys
+    TAVILY_API_KEY: z.string().optional(),
   },
 
   /**
@@ -49,6 +51,7 @@ export const env = createEnv({
     // Server
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     RUNWARE_API_KEY: process.env.RUNWARE_API_KEY,
+    TAVILY_API_KEY: process.env.TAVILY_API_KEY,
     // Client
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     // Shared

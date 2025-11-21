@@ -2,7 +2,7 @@ import { ok, Result } from "neverthrow";
 import { logger } from "@/utils/logger";
 import { TOKENS, type McMap, type TokenConfig, type TokenTicker } from "@/constants/token";
 import type { AppError, ExternalApiError } from "@/types/app-error";
-import { roundMc } from "@/lib/round";
+import { roundMc } from "@/utils/round";
 
 type DexPair = {
   liquidity?: { usd?: number };

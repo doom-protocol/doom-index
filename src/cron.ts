@@ -10,14 +10,14 @@
  */
 
 import { err, ok, Result } from "neverthrow";
-import { roundMc } from "./lib/round";
+import { roundMc } from "./utils/round";
 import { hashRoundedMap } from "./lib/pure/hash";
 import { logger } from "./utils/logger";
 import { getErrorMessage, getErrorStack } from "./utils/error";
 import { TOKEN_TICKERS, type McMap, type McMapRounded } from "./constants/token";
 import { extractIdFromFilename, buildArchiveKey } from "./utils/archive";
 import { createMarketCapService } from "./services/market-cap";
-import { createWorldPaintingPromptService } from "./services/world-painting-prompt";
+import { createWorldPromptService } from "./services/world-prompt-service";
 import { createImageGenerationService } from "./services/image-generation";
 import { createStateService } from "./services/state";
 import { createArchiveService } from "./services/archive";
@@ -104,7 +104,7 @@ async function evaluateMinute(env: Cloudflare.Env): Promise<Result<MinuteEvaluat
 
   // Initialize services
   const marketCapService = createMarketCapService({ fetch, log: logger });
-  const promptService = createWorldPaintingPromptService();
+  const promptService = createWorldPromptService();
   const stateService = createStateService({ r2Bucket: bucket });
   const archiveService = createArchiveService({ r2Bucket: bucket, d1Binding: env.DB });
   const imageProvider = createImageProvider();

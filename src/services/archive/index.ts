@@ -14,13 +14,15 @@ import { Result } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import type { ArchiveMetadata } from "@/types/archive";
 import { resolveBucketOrThrow } from "@/lib/r2";
+import { createArchiveRepository } from "@/repositories/archive-repository";
+import type { ArchiveRepository } from "@/repositories/archive-repository";
 import * as storage from "./storage";
-import * as indexDb from "./index-db";
 import * as list from "./list";
 
 export type ArchiveServiceDeps = {
   r2Bucket?: R2Bucket;
   d1Binding?: D1Database;
+  archiveRepository?: ArchiveRepository;
 };
 
 export type ArchiveStorageResult = {
@@ -73,25 +75,31 @@ export type ArchiveService = {
  *
  * @param r2Bucket - Optional R2 bucket. If not provided, resolves from Cloudflare context
  * @param d1Binding - Optional D1 database binding. If not provided, resolves from Cloudflare context
+ * @param archiveRepository - Optional archive repository. If not provided, creates a new one
  */
-export function createArchiveService({ r2Bucket, d1Binding }: ArchiveServiceDeps = {}): ArchiveService {
+export function createArchiveService({
+  r2Bucket,
+  d1Binding,
+  archiveRepository,
+}: ArchiveServiceDeps = {}): ArchiveService {
   const bucket = resolveBucketOrThrow({ r2Bucket });
+  const repo = archiveRepository ?? createArchiveRepository({ d1Binding });
 
   return {
     storeImageWithMetadata: (minuteBucket, filename, imageBuffer, metadata) =>
       storage.storeImageWithMetadata(bucket, minuteBucket, filename, imageBuffer, metadata),
 
-    listImages: options => list.listImages(bucket, d1Binding, options),
+    listImages: options => list.listImages(bucket, d1Binding, options, repo),
 
-    insertArchiveItem: (metadata, r2Key) => indexDb.insertArchiveItem(d1Binding, metadata, r2Key),
+    insertArchiveItem: (metadata, r2Key) => repo.insert(metadata, r2Key),
 
-    getArchiveItemById: id => indexDb.getArchiveItemById(d1Binding, id),
+    getArchiveItemById: id => repo.findById(id),
   };
 }
 
 // Re-export types for convenience
-export type { ArchiveCursor } from "./index-db";
-export { encodeCursor, decodeCursor } from "./index-db";
+export type { ArchiveCursor } from "@/repositories/archive-repository";
+export { encodeCursor, decodeCursor } from "@/repositories/archive-repository";
 
 // Legacy exports for backward compatibility (deprecated)
 /** @deprecated Use createArchiveService instead */

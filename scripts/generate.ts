@@ -13,7 +13,7 @@
 import { join } from "node:path";
 import { mkdir } from "node:fs/promises";
 import type { McMapRounded } from "@/constants/token";
-import { createWorldPaintingPromptService } from "@/services/world-painting-prompt";
+import { createWorldPromptService } from "@/services/world-prompt-service";
 import { resolveProviderWithMock, createImageProvider } from "@/lib/image-generation-providers";
 import { logger } from "@/utils/logger";
 import { extractIdFromFilename } from "@/utils/archive";
@@ -162,7 +162,7 @@ const main = async () => {
   logger.info("generate.mc", mcRounded);
 
   // Compose prompt
-  const promptService = createWorldPaintingPromptService();
+  const promptService = createWorldPromptService();
   const promptResult = await promptService.composePrompt(mcRounded);
 
   if (promptResult.isErr()) {

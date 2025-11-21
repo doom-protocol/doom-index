@@ -7,3 +7,9 @@ alwaysApply: true
 - lib/pureには純粋関数として切り出すべき関数、testabiltyが重要であったり、validateionが複雑、domain logicに直結する計算などを行うmoduleにとどめて下さい
 
 - all comments in source code should be in english
+
+Please refer to the following steering documents for more information:
+
+- @.kiro/steering/structure.md
+- @.kiro/steering/product.md
+- @.kiro/steering/tech.md
