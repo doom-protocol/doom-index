@@ -1,13 +1,13 @@
 {
   "feature_name": "dynamic-prompt",
   "created_at": "2025-11-21T00:00:00.000Z",
-  "updated_at": "2025-11-21T00:00:00.000Z",
+  "updated_at": "2025-11-21T16:00:00.000Z",
   "language": "ja",
-  "phase": "tasks-generated",
+  "phase": "requirements-generated",
   "approvals": {
     "requirements": {
       "generated": true,
-      "approved": true
+      "approved": false
     },
     "design": {
       "generated": true,
