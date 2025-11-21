@@ -23,19 +23,25 @@ export type PromptComposition = {
   paramsHash: string;
 };
 
-type PromptServiceDeps = {
+type WorldPaintingPromptServiceDeps = {
   getMinuteBucket?: () => string;
   log?: typeof logger;
 };
 
-export type PromptService = {
+export type WorldPaintingPromptService = {
   composePrompt(input: McMapRounded): Promise<Result<PromptComposition, AppError>>;
 };
 
-export function createPromptService({
+/**
+ * Service that composes "world allegorical painting" prompts based on market capitalization.
+ * - Market Cap → VisualParams normalization
+ * - VisualParams → Hash, seed, and filename determination
+ * - World painting prompt composition using weighted-prompt
+ */
+export function createWorldPaintingPromptService({
   getMinuteBucket: minuteBucketFn = () => getMinuteBucket(),
   log = logger,
-}: PromptServiceDeps = {}): PromptService {
+}: WorldPaintingPromptServiceDeps = {}): WorldPaintingPromptService {
   async function composePrompt(mcRounded: McMapRounded): Promise<Result<PromptComposition, AppError>> {
     try {
       const normalized = normalizeMcMap(mcRounded);
@@ -44,7 +50,6 @@ export function createPromptService({
       const minuteBucket = minuteBucketFn();
       const seed = await seedForMinute(minuteBucket, paramsHash);
 
-      // Build weighted prompt using doom-prompt
       const { prompt: promptTextBase, negative: negativePrompt } = buildSDXLPrompt(mcRounded);
       const promptText = `${promptTextBase}\ncontrols: paramsHash=${paramsHash}, seed=${seed}`;
       const filename = buildGenerationFileName(minuteBucket, paramsHash, seed);

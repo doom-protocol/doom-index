@@ -180,7 +180,7 @@ export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onWheel={e => {
-            // PCでのマウスホイールスクロールを優先するため、イベントの伝播を停止
+            // Stop event propagation to prioritize mouse wheel scrolling on PC
             if (!isMobile) {
               e.stopPropagation();
             }
@@ -188,11 +188,11 @@ export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
           {...(isMobile
             ? {
                 onTouchStart: () => {
-                  // タッチ開始時にホバー状態を設定（スクロール可能にする）
+                  // Set hover state on touch start (to enable scrolling)
                   setIsHovered(true);
                 },
                 onTouchEnd: () => {
-                  // タッチ終了時に少し遅延してホバー状態を解除
+                  // Clear hover state with slight delay on touch end
                   setTimeout(() => setIsHovered(false), 100);
                 },
               }

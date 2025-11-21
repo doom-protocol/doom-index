@@ -293,14 +293,11 @@ See [tRPC Architecture Documentation](./docs/trpc-architecture.md) and [Migratio
 
 ## Prompt Templates
 
-Prompt templates are defined in `src/constants/prompts.ts` and shared across all image generation providers.
+The core prompt templates for the world-scale allegorical painting are defined in:
 
-### Available Templates
+- `src/constants/prompts/world-painting.ts` – base style, opening line, negative prompt, and token-specific motifs
 
-- **default**: Detailed surreal oil painting prompt with comprehensive visual parameters
-- **experimental**: Abstract expressionist style for testing new approaches
-
-You can create your own template by adding it to `src/constants/prompts.ts`.
+These constants are consumed by `src/lib/pure/weighted-prompt.ts` and shared across all image generation providers.
 
 ## Deployment
 

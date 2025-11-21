@@ -2,9 +2,9 @@
 
 ## Introduction
 
-DOOM INDEX の画像生成プロンプト作成において、各トークン固有のナラティブ・性質・象徴性を自動的に付与するための dynamic-prompt サブモジュールを実装する。本モジュールは dynamic-draw フローの一部として動作し、Cloudflare Workers AI に対する汎用的かつ型安全なテキスト生成クライアントと、Tavily Search を用いたトークン情報の検索・要約機能を提供する。
+DOOM INDEX の自動生成パイプラインにおいて、各トークン固有のナラティブ・性質・象徴性を付与するための dynamic-prompt サブモジュールを実装する。本モジュールは `market-cap`・`prompt`・`image-generation` など既存のサービス群と同じレイヤーの内部サービスとして動作し、主に dynamic-draw フローから呼び出される。
 
-本モジュールは既存の DOOM INDEX プロジェクトアーキテクチャ（Next.js + Drizzle ORM + Cloudflare Workers）に準拠し、既存のエラーハンドリング方針（neverthrow ベースの関数型エラーハンドリング）およびロギングユーティリティ（`utils/logger`）を再利用する。dynamic-prompt は HTTP API エンドポイントを公開せず、cron ジョブなどサーバー側の内部処理からのみ呼び出される。
+dynamic-prompt は Cloudflare Workers AI に対する汎用的かつ型安全なテキスト生成クライアントと、Tavily Search を用いたトークン情報の検索・要約機能を提供する。既存の DOOM INDEX プロジェクトアーキテクチャ（Next.js + Drizzle ORM + Cloudflare Workers）に準拠し、neverthrow ベースの関数型エラーハンドリングおよびロギングユーティリティ（`utils/logger`）を再利用する。HTTP API エンドポイントは公開せず、cron ジョブなどサーバー側の内部処理からのみ呼び出される。
 
 ## Requirements
 

@@ -235,7 +235,7 @@ export const AboutScene: React.FC<AboutSceneProps> = ({ children, initialCameraP
     };
   }, [PAPER_ASPECT_RATIO]);
 
-  // WebGLエラー時のみフォールバック表示
+  // Show fallback only when WebGL error occurs
   if (webglError) {
     return <WebGLErrorFallback paperSize={webglErrorPaperSize}>{children}</WebGLErrorFallback>;
   }

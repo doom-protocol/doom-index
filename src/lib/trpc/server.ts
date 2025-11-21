@@ -7,7 +7,7 @@ export async function createServerTRPCClient() {
   return appRouter.createCaller(context);
 }
 
-// Server Component用ヘルパー
+// Helper for Server Component
 export async function getServerTRPC() {
   return createServerTRPCClient();
 }

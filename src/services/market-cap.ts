@@ -38,14 +38,14 @@ const selectBestMarketCap = (
     return null;
   }
 
-  // 優先順位: 1. marketCapフィールド, 2. priceUsd * supply, 3. liquidityで選択したprice * supply
+  // Priority order: 1. marketCap field, 2. priceUsd * supply, 3. price * supply selected by liquidity
   let bestMc: number | null = null;
   let bestVolume = -1;
   let pairsWithInvalidMc = 0;
   let pairsWithoutPrice = 0;
 
   for (const pair of pairs) {
-    // marketCapフィールドが直接提供されている場合はそれを使用
+    // Use marketCap field if directly provided
     if (typeof pair.marketCap === "number" && Number.isFinite(pair.marketCap) && pair.marketCap > 0) {
       const volume = pair.volume?.h24 || 0;
       if (volume > bestVolume) {
@@ -55,7 +55,7 @@ const selectBestMarketCap = (
       continue;
     }
 
-    // marketCapがない場合はpriceUsdから計算
+    // Calculate from priceUsd if marketCap is not available
     const price = pair.priceUsd ? Number(pair.priceUsd) : null;
     if (!price || !Number.isFinite(price)) {
       pairsWithoutPrice++;
@@ -68,7 +68,7 @@ const selectBestMarketCap = (
       continue;
     }
 
-    // volumeまたはliquidityで優先順位を決定
+    // Determine priority by volume or liquidity
     const volume = pair.volume?.h24 || pair.liquidity?.usd || 0;
     if (volume > bestVolume || bestMc === null) {
       bestVolume = volume;

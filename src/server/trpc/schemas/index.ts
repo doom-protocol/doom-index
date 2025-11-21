@@ -53,7 +53,7 @@ export const archiveListSchema = z
     },
   );
 
-// 型推論ヘルパー
+// Type inference helpers
 export type TokenTicker = z.infer<typeof tokenTickerSchema>;
 export type ViewerRegisterInput = z.infer<typeof viewerRegisterSchema>;
 export type ViewerRemoveInput = z.infer<typeof viewerRemoveSchema>;

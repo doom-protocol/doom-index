@@ -3,24 +3,24 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 import type { AppRouter } from "@/server/trpc/routers/_app";
 import { getBaseUrl } from "@/utils/url";
 
-// tRPC Context ProviderとHooksを作成
+// Create tRPC Context Provider and Hooks
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
 
-// tRPCクライアント作成関数
+// tRPC client creation function
 export function createTRPCClientInstance() {
   return createTRPCClient<AppRouter>({
     links: [
       httpBatchLink({
         url: `${getBaseUrl()}/api/trpc`,
 
-        // カスタムヘッダー
+        // Custom headers
         async headers() {
           return {
-            // 必要に応じて認証ヘッダーなどを追加
+            // Add authentication headers as needed
           };
         },
 
-        // バッチ設定
+        // Batch settings
         maxURLLength: 2083,
       }),
     ],

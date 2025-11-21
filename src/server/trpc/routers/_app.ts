@@ -13,5 +13,5 @@ export const appRouter = router({
   archive: archiveRouter,
 });
 
-// クライアント型推論用にエクスポート
+// Export for client-side type inference
 export type AppRouter = typeof appRouter;

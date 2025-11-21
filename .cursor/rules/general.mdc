@@ -2,7 +2,8 @@
 alwaysApply: true
 ---
 
-
 - folder name, file name, class name, function name, などを名前空間として認識し、適切な命名を行うようにして下さい
 
 - lib/pureには純粋関数として切り出すべき関数、testabiltyが重要であったり、validateionが複雑、domain logicに直結する計算などを行うmoduleにとどめて下さい
+
+- all comments in source code should be in english

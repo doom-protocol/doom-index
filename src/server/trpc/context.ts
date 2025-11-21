@@ -10,7 +10,7 @@ export type Context = {
   r2Bucket?: R2Bucket;
 };
 
-// API Handler用コンテキスト作成
+// Context creation for API Handler
 export async function createContext(opts: FetchCreateContextFnOptions): Promise<Context> {
   const { req } = opts;
 
@@ -37,7 +37,7 @@ export async function createContext(opts: FetchCreateContextFnOptions): Promise<
   }
 }
 
-// Server Component用コンテキスト作成
+// Context creation for Server Component
 export async function createServerContext(): Promise<Context> {
   const { headers } = await import("next/headers");
   const headersList = await headers();

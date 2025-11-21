@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { createPromptService } from "@/services/prompt";
+import { createWorldPaintingPromptService } from "@/services/world-painting-prompt";
 import { TOKEN_CONFIG_MAP, TOKEN_TICKERS, type McMap } from "@/constants/token";
 
 const createRoundedMap = (multiplier: number): McMap =>
@@ -11,7 +11,7 @@ const createRoundedMap = (multiplier: number): McMap =>
   }, {} as McMap);
 
 const createService = (minute = "2025-11-09T12:34") =>
-  createPromptService({
+  createWorldPaintingPromptService({
     getMinuteBucket: () => minute,
   });
 

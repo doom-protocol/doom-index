@@ -1,9 +1,16 @@
 /**
  * Doom Index Prompt Generation
- * Baroque allegorical painting with weighted elements based on market cap
+ * World-scale baroque allegorical painting with weighted elements based on market cap
  */
 
 import { TOKEN_TICKERS, type TokenTicker, type McMap } from "@/constants/token";
+import {
+  WORLD_PAINTING_HUMAN_ELEMENT_TEXT,
+  WORLD_PAINTING_NEGATIVE_PROMPT,
+  WORLD_PAINTING_OPENING_LINE,
+  WORLD_PAINTING_STYLE_BASE,
+  WORLD_PAINTING_TOKEN_PHRASES,
+} from "@/constants/prompts/world-painting";
 
 /**
  * Configuration for dominance weight calculation
@@ -89,33 +96,8 @@ export function calculateDominanceWeights(
 
 const safeWeight = (w: number, minWeight: number = DEFAULT_DOMINANCE_CONFIG.minWeight) => (w === 0 ? minWeight : w);
 
-/**
- * Token phrase mapping for allegorical elements
- */
-const TOKEN_PHRASE: Record<TokenTicker, string> = {
-  CO2: "dense toxic smog in the sky",
-  ICE: "melting glaciers submerging cities as rising oceans engulf skyscrapers and drown civilizations",
-  FOREST:
-    "endless expanses of vibrant green canopies, intertwined roots reclaiming abandoned structures, and wildlife thriving in the untouched wilderness",
-  NUKE: "ashen wastelands under nuclear fallout, with radioactive winds sweeping through ruins and a towering mushroom cloud dominating the sky",
-  MACHINE:
-    "cold robotic automatons marching in formation, towering AI surveillance systems with glowing electronic eyes, automated factories with mechanical arms and assembly lines, cybernetic beings fused with technology, dystopian machinery controlling and monitoring everything",
-  PANDEMIC:
-    "masked figures wandering through unsanitary streets filled with viral clouds, bio-contaminants, and microscopic pathogens dominating the air",
-  FEAR: "oppressive darkness with many red eyes",
-  HOPE: "radiant golden divine light breaking the clouds",
-};
-
-/**
- * Fixed style elements
- */
-const STYLE_BASE =
-  "baroque allegorical oil painting, Caravaggio and Rubens influence, dramatic tenebrism with intense chiaroscuro, dynamic composition with diagonal movement, rich vibrant colors, emotional expression, thick impasto oil texture, theatrical lighting, detailed human figures, cohesive single landscape";
-
-const NEGATIVE_PROMPT = "watermark, text, logo, oversaturated colors, low detail hands, extra limbs";
-
 const HUMAN_ELEMENT = {
-  text: "figures praying, trading, recording the scene",
+  text: WORLD_PAINTING_HUMAN_ELEMENT_TEXT,
   weight: 1.0,
 };
 
@@ -142,7 +124,7 @@ export function toWeightedFragments(
   const weights = calculateDominanceWeights(mc, config);
 
   const fragments = tokens.map(ticker => ({
-    text: TOKEN_PHRASE[ticker],
+    text: WORLD_PAINTING_TOKEN_PHRASES[ticker],
     weight: safeWeight(weights[ticker], minWeight),
   }));
 
@@ -179,16 +161,16 @@ export function buildSDXLPrompt(mc: McMap): { prompt: string; negative: string }
   const summary = `weights summary: sum=${sum.toFixed(3)}, min=${min.toFixed(3)}, max=${max.toFixed(3)}`;
 
   const prompt = [
-    "a grand baroque allegorical oil painting of the world, all forces visible and weighted by real-time power,",
+    WORLD_PAINTING_OPENING_LINE,
     weightedLines + ",",
-    STYLE_BASE + ",",
+    WORLD_PAINTING_STYLE_BASE + ",",
     summary + ",",
-    `negative prompt: ${NEGATIVE_PROMPT}`,
+    `negative prompt: ${WORLD_PAINTING_NEGATIVE_PROMPT}`,
   ].join("\n");
 
   return {
     prompt,
-    negative: NEGATIVE_PROMPT,
+    negative: WORLD_PAINTING_NEGATIVE_PROMPT,
   };
 }
 
@@ -209,8 +191,8 @@ export function buildGenericPayload(
   const { width = 1024, height = 1024, steps = 30, cfg = 5.5, seed = 42 } = options;
 
   return {
-    style: STYLE_BASE,
-    negatives: NEGATIVE_PROMPT,
+    style: WORLD_PAINTING_STYLE_BASE,
+    negatives: WORLD_PAINTING_NEGATIVE_PROMPT,
     fragments: toWeightedFragments(mc),
     width,
     height,
@@ -235,13 +217,13 @@ export function buildSimplePrompt(mc: McMap): { prompt: string; negative: string
     .join(", ");
 
   const prompt = [
-    "a grand baroque allegorical oil painting of the world, all forces visible and weighted by real-time power,",
+    WORLD_PAINTING_OPENING_LINE,
     weightedPhrases + ",",
-    STYLE_BASE,
+    WORLD_PAINTING_STYLE_BASE,
   ].join(" ");
 
   return {
     prompt,
-    negative: NEGATIVE_PROMPT,
+    negative: WORLD_PAINTING_NEGATIVE_PROMPT,
   };
 }
