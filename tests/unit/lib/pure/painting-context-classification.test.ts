@@ -95,18 +95,18 @@ describe("painting-context-classification", () => {
   });
 
   it("selects composition and palette based on climate/archetype/event", () => {
-    const event = { k: "rally" as const, i: 3 as const };
+    const event = { k: "rally", i: 3 } as const;
 
     expect(pickComposition("transition", "perp-liquidity", event)).toBe("citadel-panorama");
     expect(pickComposition("transition", "meme-ascendant", event)).toBe("procession");
     expect(pickComposition("euphoria", "unknown", event)).toBe("central-altar");
-    expect(pickComposition("despair", "unknown", { k: "collapse" as const, i: 3 as const })).toBe("storm-battlefield");
+    expect(pickComposition("despair", "unknown", { k: "collapse", i: 3 } as const)).toBe("storm-battlefield");
     expect(pickComposition("transition", "unknown", event)).toBe("cosmic-horizon");
 
     expect(pickPalette("euphoria", "unknown", event)).toBe("solar-gold");
     expect(pickPalette("panic", "unknown", event)).toBe("ashen-blue");
     expect(pickPalette("transition", "meme-ascendant", event)).toBe("infernal-red");
-    expect(pickPalette("transition", "unknown", { k: "collapse" as const, i: 1 as const })).toBe("ivory-marble");
+    expect(pickPalette("transition", "unknown", { k: "collapse", i: 1 } as const)).toBe("ivory-marble");
   });
 
   it("classifies dynamics using thresholds", () => {

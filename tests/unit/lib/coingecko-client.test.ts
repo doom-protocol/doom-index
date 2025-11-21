@@ -111,7 +111,6 @@ describe("CoinGeckoClient", () => {
           market_cap_change_24h: 20000000000,
           market_cap_change_percentage_24h: 2.0,
           circulating_supply: 19000000,
-          total_supply: 21000000,
           max_supply: null,
           ath: 69000,
           ath_change_percentage: -27.5,

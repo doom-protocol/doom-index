@@ -33,6 +33,22 @@ describe("MarketSnapshotsRepository", () => {
     `);
 
     db = drizzle(sqlite, { schema: dbSchema });
+    
+    // Add batch method stub to match expected interface
+    if (!db.batch) {
+      // @ts-expect-error - Adding batch method for test compatibility
+      db.batch = async (operations: unknown[]) => {
+        // Simple sequential execution for test purposes
+        const results = [];
+        for (const op of operations) {
+          if (typeof op === "function") {
+            results.push(await op());
+          }
+        }
+        return results;
+      };
+    }
+    
     repository = new MarketSnapshotsRepository(db);
   });
 
