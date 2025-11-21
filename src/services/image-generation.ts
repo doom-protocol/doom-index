@@ -14,7 +14,6 @@ import { err, ok, Result } from "neverthrow";
 import { logger } from "@/utils/logger";
 import { estimateTokenCount } from "@/utils/text";
 import { env } from "@/env";
-import type { McMapRounded } from "@/constants/token";
 import type { ImageProvider } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
 import type { WorldPromptService, PromptComposition } from "@/services/world-prompt-service";
@@ -28,7 +27,6 @@ export type ImageGenerationResult = {
 };
 
 export type ImageGenerationService = {
-  generateImage(mcRounded: McMapRounded): Promise<Result<ImageGenerationResult, AppError>>;
   generateTokenImage(input: TokenImageGenerationInput): Promise<Result<ImageGenerationResult, AppError>>;
 };
 
@@ -40,7 +38,6 @@ type ImageGenerationDeps = {
 };
 
 type TokenImageGenerationInput = {
-  mcRounded: McMapRounded;
   paintingContext: PaintingContext;
   tokenMeta: TokenMetaInput;
   tokenContext?: TokenContext;
@@ -60,9 +57,8 @@ export function createImageGenerationService({
   log = logger,
 }: ImageGenerationDeps): ImageGenerationService {
   /**
-   * Generate image from market cap data
+   * Generate image from token context
    *
-   * @param mcRounded - Rounded market cap map
    * @returns Generation result with image buffer and metadata
    */
   const sanitizeReferenceImageUrl = (url?: string | null): string | null => {
@@ -157,18 +153,10 @@ export function createImageGenerationService({
     });
   };
 
-  async function generateImage(mcRounded: McMapRounded): Promise<Result<ImageGenerationResult, AppError>> {
-    const promptResult = await promptService.composePrompt(mcRounded);
-    if (promptResult.isErr()) return err(promptResult.error);
-
-    return requestImage(promptResult.value);
-  }
-
   async function generateTokenImage(
     input: TokenImageGenerationInput,
   ): Promise<Result<ImageGenerationResult, AppError>> {
     const promptResult = await promptService.composeTokenPrompt({
-      mcRounded: input.mcRounded,
       paintingContext: input.paintingContext,
       tokenMeta: input.tokenMeta,
       tokenContext: input.tokenContext,
@@ -179,5 +167,5 @@ export function createImageGenerationService({
     return requestImage(promptResult.value, { referenceImageUrl: input.referenceImageUrl });
   }
 
-  return { generateImage, generateTokenImage };
+  return { generateTokenImage };
 }

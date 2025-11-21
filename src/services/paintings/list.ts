@@ -6,7 +6,6 @@ import { isValidPaintingFilename, buildPublicR2Path } from "@/utils/paintings";
 import { parseDatePrefix } from "@/lib/pure/painting-date";
 import { isPaintingMetadata } from "@/lib/pure/painting-metadata";
 import { logger } from "@/utils/logger";
-import type { McMapRounded } from "@/constants/token";
 import type { VisualParams } from "@/lib/pure/mapping";
 import { createPaintingsRepository } from "@/repositories/paintings-repository";
 import type { PaintingsRepository } from "@/repositories/paintings-repository";
@@ -255,7 +254,6 @@ export async function listImages(
 
       const items: Painting[] = d1Data.items.map(item => {
         try {
-          const mcRounded = JSON.parse(item.mcRoundedJson) as McMapRounded;
           const visualParams = JSON.parse(item.visualParamsJson) as VisualParams;
 
           return {
@@ -266,7 +264,6 @@ export async function listImages(
             seed: item.seed,
             imageUrl: item.imageUrl,
             fileSize: item.fileSize,
-            mcRounded,
             visualParams,
             prompt: item.prompt,
             negative: item.negative,
@@ -285,7 +282,6 @@ export async function listImages(
             seed: item.seed,
             imageUrl: item.imageUrl,
             fileSize: item.fileSize,
-            mcRounded: {} as McMapRounded,
             visualParams: {} as VisualParams,
             prompt: item.prompt,
             negative: item.negative,

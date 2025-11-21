@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { createMockContext } from "../../../unit/server/trpc/helpers";
-import { TOKEN_TICKERS } from "@/constants/token";
 import {
   createMockCache,
   setupCacheMock,
@@ -9,18 +8,16 @@ import {
   type CachedResponseData,
 } from "../../lib/cache-test-helpers";
 
-const ZERO_MAP = TOKEN_TICKERS.reduce(
-  (acc, ticker) => {
-    acc[ticker] = 0;
-    return acc;
-  },
-  {} as Record<(typeof TOKEN_TICKERS)[number], number>,
-);
+const ZERO_MAP = {};
 
 const CACHE_KEY = "https://cache.local/mc:getMarketCaps";
 const CACHE_KEY_ROUNDED = "https://cache.local/mc:getRoundedMcMap";
 
-describe("MC Integration", () => {
+/**
+ * Legacy MC Integration tests
+ * @deprecated These tests are for the legacy market cap API which is deprecated.
+ */
+describe("MC Integration (legacy)", () => {
   let originalCaches: CacheStorage | undefined;
   let cacheMap: Map<string, CachedResponseData>;
 
@@ -35,7 +32,7 @@ describe("MC Integration", () => {
     restoreCacheMock(originalCaches);
   });
 
-  it("should return zero map with metadata", async () => {
+  it("should return empty map with metadata", async () => {
     const ctx = createMockContext();
     const caller = appRouter.createCaller(ctx);
 
@@ -46,7 +43,7 @@ describe("MC Integration", () => {
     expect(Number.isNaN(new Date(result.generatedAt).getTime())).toBe(false);
   });
 
-  it("should return zero map for rounded caps as well", async () => {
+  it("should return empty map for rounded caps as well", async () => {
     const ctx = createMockContext();
     const caller = appRouter.createCaller(ctx);
 

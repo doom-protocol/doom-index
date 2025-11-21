@@ -1,17 +1,8 @@
 import { router, publicProcedure } from "../trpc";
-import { TOKEN_TICKERS } from "@/constants/token";
 import { get, set } from "@/lib/cache";
 import type { Logger } from "@/utils/logger";
 
-const BASE_ZERO_MAP = TOKEN_TICKERS.reduce(
-  (acc, ticker) => {
-    acc[ticker] = 0;
-    return acc;
-  },
-  {} as Record<(typeof TOKEN_TICKERS)[number], number>,
-);
-
-const buildZeroMap = () => ({ ...BASE_ZERO_MAP });
+const buildZeroMap = () => ({});
 
 const CACHE_TTL_SECONDS = 60;
 
@@ -22,6 +13,8 @@ type MarketCapResponse = {
 
 /**
  * Get cached market cap data or return placeholder
+ * @deprecated This is a legacy API endpoint for backward compatibility.
+ * The legacy 8-token system has been removed.
  */
 async function getMarketCapData(cacheKey: string, source: string, logger: Logger): Promise<MarketCapResponse> {
   const cached = await get<{ tokens: Record<string, number> }>(cacheKey, { logger });
@@ -55,6 +48,11 @@ async function getMarketCapData(cacheKey: string, source: string, logger: Logger
   return value;
 }
 
+/**
+ * Legacy market cap router
+ * @deprecated This router is for backward compatibility only.
+ * The legacy 8-token system has been removed.
+ */
 export const mcRouter = router({
   getMarketCaps: publicProcedure.query(async ({ ctx }) => {
     return getMarketCapData("mc:getMarketCaps", "placeholder", ctx.logger);

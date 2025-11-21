@@ -21,6 +21,7 @@ describe("TokensRepository", () => {
         name TEXT NOT NULL,
         coingecko_id TEXT NOT NULL,
         logo_url TEXT,
+        short_context TEXT,
         categories TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL

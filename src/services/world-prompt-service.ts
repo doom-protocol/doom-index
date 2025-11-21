@@ -2,15 +2,15 @@ import { err, ok, Result } from "neverthrow";
 import { normalizeMcMap } from "@/lib/pure/normalize";
 import { mapToVisualParams, type VisualParams } from "@/lib/pure/mapping";
 import { hashVisualParams, seedForMinute, buildGenerationFileName } from "@/lib/pure/hash";
-import { buildSDXLPrompt } from "@/lib/pure/weighted-prompt";
 import { WORLD_PAINTING_NEGATIVE_PROMPT } from "@/constants/prompts/world-painting";
 import { getMinuteBucket } from "@/utils/time";
 import { logger } from "@/utils/logger";
-import type { McMapRounded } from "@/constants/token";
 import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
 import type { TokenContextService, TokenContext, TokenMetaInput } from "@/services/token-context-service";
+import { FALLBACK_SHORT_CONTEXT } from "@/services/token-context-service";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
+import type { TokensRepository } from "@/repositories/tokens-repository";
 
 export type PromptComposition = {
   seed: string;
@@ -28,7 +28,6 @@ export type PromptComposition = {
 };
 
 export type TokenPromptRequest = {
-  mcRounded: McMapRounded;
   paintingContext: PaintingContext;
   tokenMeta?: TokenMetaInput;
   tokenContext?: TokenContext;
@@ -36,13 +35,13 @@ export type TokenPromptRequest = {
 
 type WorldPromptServiceDeps = {
   tokenContextService?: TokenContextService;
+  tokensRepository?: TokensRepository;
   workersAiClient?: WorkersAiClient;
   getMinuteBucket?: () => string;
   log?: typeof logger;
 };
 
 export type WorldPromptService = {
-  composePrompt(input: McMapRounded): Promise<Result<PromptComposition, AppError>>;
   composeTokenPrompt(request: TokenPromptRequest): Promise<Result<PromptComposition, AppError>>;
 };
 
@@ -71,12 +70,14 @@ const integerFormatter = new Intl.NumberFormat("en-US", {
 
 export function createWorldPromptService({
   tokenContextService,
+  tokensRepository,
   workersAiClient,
   getMinuteBucket: minuteBucketFn = () => getMinuteBucket(),
   log = logger,
 }: WorldPromptServiceDeps = {}): WorldPromptService {
-  const buildPromptMetadata = async (mcRounded: McMapRounded) => {
-    const normalized = normalizeMcMap(mcRounded);
+  const buildPromptMetadata = async () => {
+    // Legacy mcRounded system is deprecated - use default visual params
+    const normalized = normalizeMcMap({});
     const vp = mapToVisualParams(normalized);
     const paramsHash = await hashVisualParams(vp);
     const minuteBucket = minuteBucketFn();
@@ -110,20 +111,17 @@ Your goal is to synthesize the provided token narrative, market state, and visua
     ctx: PaintingContext,
     tokenCtx: TokenContext,
     vp: VisualParams,
-    mcRounded: McMapRounded,
+    shortContext: string,
   ): string => {
     const motifLine = ctx.f.length ? ctx.f.join(", ") : "none";
     const hintsLine = ctx.h.length ? ctx.h.join(", ") : "none";
     const tagLine = tokenCtx.tags.length ? tokenCtx.tags.join(", ") : "none";
-    const globalMap = Object.entries(mcRounded)
-      .map(([ticker, value]) => `  - ${ticker}: ${integerFormatter.format(value)}`)
-      .join("\n");
 
     return [
       `Token Context:`,
       `- Name: ${ctx.t.n}`,
       `- Chain: ${ctx.t.c}`,
-      `- Short Narrative: ${tokenCtx.shortContext}`,
+      `- Short Narrative: ${shortContext}`,
       `- Category: ${tokenCtx.category}`,
       `- Symbolic Tags: ${tagLine}`,
       ``,
@@ -152,9 +150,6 @@ Your goal is to synthesize the provided token narrative, market state, and visua
       `Market Map Derived Controls:`,
       summarizeVisualParams(vp),
       ``,
-      `Global Market Weighting (rounded caps):`,
-      globalMap,
-      ``,
       `Instructions:`,
       `Describe a single cohesive FLUX-ready painting capturing the token's emotional arc, market tension, and symbolic motifs. Keep the prose flowing, cinematic, and evocative. Reference composition, palette, atmosphere, and key symbolism explicitly.`,
     ].join("\n");
@@ -180,37 +175,6 @@ Your goal is to synthesize the provided token narrative, market state, and visua
     return tokenContextService.generateTokenContext(request.tokenMeta);
   };
 
-  async function composePrompt(mcRounded: McMapRounded): Promise<Result<PromptComposition, AppError>> {
-    try {
-      const { vp, paramsHash, minuteBucket, seed, filename } = await buildPromptMetadata(mcRounded);
-
-      const { prompt: promptTextBase, negative: negativePrompt } = buildSDXLPrompt(mcRounded);
-      const promptText = `${promptTextBase}\ncontrols: paramsHash=${paramsHash}, seed=${seed}`;
-
-      const composition: PromptComposition = {
-        seed,
-        minuteBucket,
-        vp,
-        prompt: {
-          text: promptText,
-          negative: negativePrompt,
-          size: DEFAULT_IMAGE_SIZE,
-          format: "webp",
-          seed,
-          filename,
-        },
-        paramsHash,
-      };
-
-      log.debug("prompt.compose", { paramsHash, seed, minuteBucket });
-      return ok(composition);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown prompt composition error";
-      log.error("prompt.compose.error", { message });
-      return err({ type: "InternalError", message, cause: error });
-    }
-  }
-
   async function composeTokenPrompt(request: TokenPromptRequest): Promise<Result<PromptComposition, AppError>> {
     if (!workersAiClient) {
       return err({
@@ -222,7 +186,7 @@ Your goal is to synthesize the provided token narrative, market state, and visua
 
     try {
       const { paintingContext } = request;
-      const { vp, paramsHash, minuteBucket, seed, filename } = await buildPromptMetadata(request.mcRounded);
+      const { vp, paramsHash, minuteBucket, seed, filename } = await buildPromptMetadata();
 
       log.debug("prompt.compose.token.start", {
         tokenName: paintingContext.t.n,
@@ -243,8 +207,18 @@ Your goal is to synthesize the provided token narrative, market state, and visua
       }
 
       const tokenContext = tokenContextResult.value;
+
+      // Get shortContext from token table
+      let shortContext: string = FALLBACK_SHORT_CONTEXT;
+      if (tokensRepository && request.tokenMeta) {
+        const tokenResult = await tokensRepository.findById(request.tokenMeta.id);
+        if (tokenResult.isOk() && tokenResult.value?.shortContext) {
+          shortContext = tokenResult.value.shortContext;
+        }
+      }
+
       const systemPrompt = buildTokenSystemPrompt();
-      const userPrompt = buildTokenUserPrompt(paintingContext, tokenContext, vp, request.mcRounded);
+      const userPrompt = buildTokenUserPrompt(paintingContext, tokenContext, vp, shortContext);
 
       const aiResult = await workersAiClient.generateText({
         systemPrompt,
@@ -297,5 +271,5 @@ Your goal is to synthesize the provided token narrative, market state, and visua
     }
   }
 
-  return { composePrompt, composeTokenPrompt };
+  return { composeTokenPrompt };
 }

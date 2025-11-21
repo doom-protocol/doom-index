@@ -23,11 +23,5 @@ const withMDX = createMDX({
 
 export default withMDX(nextConfig);
 
-// Only initialize OpenNext Cloudflare dev mode in local development
-// Skip in CI and production builds
-if (!process.env.CI && process.env.NODE_ENV !== "production") {
-  // Dynamic import to avoid execution in CI/production
-  import("@opennextjs/cloudflare").then((module) => {
-    module.initOpenNextCloudflareForDev();
-  });
-}
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+initOpenNextCloudflareForDev();

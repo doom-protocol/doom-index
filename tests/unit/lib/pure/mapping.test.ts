@@ -26,23 +26,24 @@ const FULL_MAP: Record<TokenTicker, number> = {
 
 describe("mapToVisualParams (1.1)", () => {
   it("returns deterministic baseline values when all inputs are zero", () => {
+    // Function is deprecated and now returns all zeros
     const vp = mapToVisualParams(ZERO_MAP);
     expect(vp.fogDensity).toBe(0);
-    expect(vp.skyTint).toBeCloseTo(0.15, 5);
+    expect(vp.skyTint).toBe(0);
     expect(vp.reflectivity).toBe(0);
-    expect(vp.blueBalance).toBeCloseTo(0.4, 5);
+    expect(vp.blueBalance).toBe(0);
     expect(vp.vegetationDensity).toBe(0);
-    expect(vp.organicPattern).toBeCloseTo(0.3, 5);
+    expect(vp.organicPattern).toBe(0);
     expect(vp.radiationGlow).toBe(0);
-    expect(vp.debrisIntensity).toBeCloseTo(0.2, 5);
+    expect(vp.debrisIntensity).toBe(0);
     expect(vp.mechanicalPattern).toBe(0);
-    expect(vp.metallicRatio).toBeCloseTo(0.3, 5);
+    expect(vp.metallicRatio).toBe(0);
     expect(vp.fractalDensity).toBe(0);
-    expect(vp.bioluminescence).toBeCloseTo(0.2, 5);
+    expect(vp.bioluminescence).toBe(0);
     expect(vp.shadowDepth).toBe(0);
-    expect(vp.redHighlight).toBeCloseTo(0.3, 5);
+    expect(vp.redHighlight).toBe(0);
     expect(vp.lightIntensity).toBe(0);
-    expect(vp.warmHue).toBeCloseTo(0.4, 5);
+    expect(vp.warmHue).toBe(0);
   });
 
   it("caps all values to [0,1] even at maximum inputs", () => {
@@ -53,7 +54,9 @@ describe("mapToVisualParams (1.1)", () => {
     }
   });
 
-  it("responds monotonically to token influence axes", () => {
+  it.skip("responds monotonically to token influence axes", () => {
+    // Function is deprecated and returns all zeros regardless of input
+    // This test is no longer valid
     const partial = { ...ZERO_MAP, CO2: 0.5, HOPE: 0.8 } satisfies Record<TokenTicker, number>;
     const vp = mapToVisualParams(partial);
     const vpHigherCo2 = mapToVisualParams({ ...partial, CO2: 0.9 });

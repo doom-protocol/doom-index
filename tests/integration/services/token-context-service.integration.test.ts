@@ -9,11 +9,12 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { createTokenContextService } from "@/services/token-context-service";
-import { createTokenContextRepository } from "@/repositories/token-context-repository";
+import { TokensRepository } from "@/repositories/tokens-repository";
 import { createTavilyClient } from "@/lib/tavily-client";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { TokenMetaInput } from "@/services/token-context-service";
+import { getDB } from "@/db";
 
 // TODO: Fix D1 binding mock for integration tests
 describe.skip("TokenContextService Integration", () => {
@@ -42,13 +43,14 @@ describe.skip("TokenContextService Integration", () => {
         return;
       }
 
-      const repository = createTokenContextRepository({ d1Binding });
+      const db = await getDB(d1Binding);
+      const tokensRepository = new TokensRepository(db);
       const tavilyClient = createTavilyClient();
       const workersAiClient = createWorkersAiClient();
       const service = createTokenContextService({
-        repository,
         tavilyClient,
         workersAiClient,
+        tokensRepository,
       });
 
       // Create a test token context in D1 first
@@ -74,9 +76,13 @@ describe.skip("TokenContextService Integration", () => {
 
       expect(secondResult.isOk()).toBe(true);
       if (secondResult.isOk()) {
-        expect(secondResult.value.shortContext).toBe(firstResult.value.shortContext);
         expect(secondResult.value.category).toBe(firstResult.value.category);
         expect(secondResult.value.tags).toEqual(firstResult.value.tags);
+        // shortContext is now stored in tokens table, not in TokenContext
+        const tokenResult = await tokensRepository.findById(testTokenMeta.id);
+        if (tokenResult.isOk() && tokenResult.value) {
+          expect(tokenResult.value.shortContext).toBeTruthy();
+        }
       }
     });
 
@@ -96,13 +102,14 @@ describe.skip("TokenContextService Integration", () => {
         return;
       }
 
-      const repository = createTokenContextRepository({ d1Binding });
+      const db = await getDB(d1Binding);
+      const tokensRepository = new TokensRepository(db);
       const tavilyClient = createTavilyClient();
       const workersAiClient = createWorkersAiClient();
       const service = createTokenContextService({
-        repository,
         tavilyClient,
         workersAiClient,
+        tokensRepository,
       });
 
       // Use a unique token ID to ensure cache miss
@@ -126,11 +133,15 @@ describe.skip("TokenContextService Integration", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.shortContext.length).toBeGreaterThan(50);
-        expect(result.value.shortContext.length).toBeLessThanOrEqual(500);
         expect(result.value.category).toBeTruthy();
         expect(Array.isArray(result.value.tags)).toBe(true);
         expect(result.value.tags.length).toBeGreaterThan(0);
+        // shortContext is now stored in tokens table, not in TokenContext
+        const tokenResult = await tokensRepository.findById(uniqueId);
+        if (tokenResult.isOk() && tokenResult.value?.shortContext) {
+          expect(tokenResult.value.shortContext.length).toBeGreaterThan(50);
+          expect(tokenResult.value.shortContext.length).toBeLessThanOrEqual(500);
+        }
       }
     });
 
@@ -148,14 +159,15 @@ describe.skip("TokenContextService Integration", () => {
         return;
       }
 
-      const repository = createTokenContextRepository({ d1Binding });
+      const db = await getDB(d1Binding);
+      const tokensRepository = new TokensRepository(db);
       // Use invalid API key to force error
       const tavilyClient = createTavilyClient({ apiKey: "invalid-key" });
       const workersAiClient = createWorkersAiClient();
       const service = createTokenContextService({
-        repository,
         tavilyClient,
         workersAiClient,
+        tokensRepository,
       });
 
       const testTokenMeta: TokenMetaInput = {

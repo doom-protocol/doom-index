@@ -30,11 +30,9 @@ import { resolveBucketOrThrow } from "@/lib/r2";
 import { extractIdFromFilename, buildPaintingKey } from "@/utils/paintings";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
 import { createTokenContextService } from "@/services/token-context-service";
-import { createTokenContextRepository } from "@/repositories/token-context-repository";
 import { createTavilyClient } from "@/lib/tavily-client";
 import type { SelectedToken } from "@/types/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
-import type { McMapRounded } from "@/constants/token";
 import { env } from "@/env";
 
 /**
@@ -162,15 +160,14 @@ export class PaintingGenerationOrchestrator {
       // Initialize Workers AI client and token context service
       const workersAiClient = createWorkersAiClient({ aiBinding: cloudflareEnv.AI });
       const tavilyClient = createTavilyClient();
-      const tokenContextRepository = createTokenContextRepository({ d1Binding });
       const tokenContextService = createTokenContextService({
-        repository: tokenContextRepository,
         tavilyClient,
         workersAiClient,
       });
 
       const promptService = createWorldPromptService({
         tokenContextService,
+        tokensRepository: this.deps.tokensRepository,
         workersAiClient,
       });
 
@@ -183,19 +180,6 @@ export class PaintingGenerationOrchestrator {
         createdAt: new Date().toISOString(),
       };
 
-      // Use empty mcRounded for token-based generation
-      // The prompt service will use paintingContext instead
-      const emptyMcRounded: McMapRounded = {
-        CO2: 0,
-        ICE: 0,
-        FOREST: 0,
-        NUKE: 0,
-        MACHINE: 0,
-        PANDEMIC: 0,
-        FEAR: 0,
-        HOPE: 0,
-      };
-
       // Step 6: Generate image (Requirement 7)
       const imageProvider = createImageProvider();
       const imageGenerationService = createImageGenerationService({
@@ -205,7 +189,6 @@ export class PaintingGenerationOrchestrator {
       });
 
       const imageResult = await imageGenerationService.generateTokenImage({
-        mcRounded: emptyMcRounded,
         paintingContext,
         tokenMeta,
         referenceImageUrl: selectedToken.logoUrl,
@@ -240,7 +223,6 @@ export class PaintingGenerationOrchestrator {
         minuteBucket: timestamp,
         paramsHash: finalComposition.paramsHash,
         seed: finalComposition.seed,
-        mcRounded: emptyMcRounded,
         visualParams: finalComposition.vp,
         imageUrl: "",
         fileSize: imageBuffer.byteLength,

@@ -1,8 +1,11 @@
 import { z } from "zod";
-import { TOKEN_TICKERS } from "@/constants/token";
 
-// Token Ticker Schema
-export const tokenTickerSchema = z.enum(TOKEN_TICKERS as unknown as [string, ...string[]]);
+/**
+ * Legacy Token Ticker Schema
+ * @deprecated This schema is for backward compatibility only.
+ * The legacy 8-token system has been removed.
+ */
+export const tokenTickerSchema = z.string();
 
 // Viewer Schemas
 export const viewerRegisterSchema = z.object({
@@ -15,6 +18,10 @@ export const viewerRemoveSchema = z.object({
 });
 
 // Token Schemas
+/**
+ * Legacy token state schema
+ * @deprecated This schema is for backward compatibility only.
+ */
 export const tokenGetStateSchema = z.object({
   ticker: tokenTickerSchema,
 });
@@ -54,6 +61,10 @@ export const paintingsListSchema = z
   );
 
 // Type inference helpers
+/**
+ * Legacy TokenTicker type
+ * @deprecated This type is for backward compatibility only.
+ */
 export type TokenTicker = z.infer<typeof tokenTickerSchema>;
 export type ViewerRegisterInput = z.infer<typeof viewerRegisterSchema>;
 export type ViewerRemoveInput = z.infer<typeof viewerRemoveSchema>;

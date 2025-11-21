@@ -1,9 +1,9 @@
 import { Result, ok, err } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
-import type { TokenContextRepository, TokenContextRecord } from "@/repositories/token-context-repository";
 import type { TavilyClient } from "@/lib/tavily-client";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
+import type { TokensRepository } from "@/repositories/tokens-repository";
 
 /**
  * Token metadata input
@@ -19,9 +19,9 @@ export type TokenMetaInput = {
 
 /**
  * Token context output
+ * Note: shortContext is now stored in tokens table, not returned here
  */
 export type TokenContext = {
-  shortContext: string;
   category: string;
   tags: string[];
 };
@@ -31,11 +31,16 @@ export type TokenContext = {
  * Used when token context generation fails or quality check fails
  */
 export const FALLBACK_TOKEN_CONTEXT: TokenContext = {
-  shortContext:
-    "A speculative crypto token with unclear fundamentals but strong narrative-driven price action. Symbolic themes: crowds, flickering candles, unstable altars, and volatile market winds.",
   category: "speculative",
   tags: ["speculative", "narrative-driven", "volatile"],
 };
+
+/**
+ * Fallback shortContext constant
+ * Used when token context generation fails or quality check fails
+ */
+export const FALLBACK_SHORT_CONTEXT =
+  "A speculative crypto token with unclear fundamentals but strong narrative-driven price action. Symbolic themes: crowds, flickering candles, unstable altars, and volatile market winds.";
 
 /**
  * Token context service interface
@@ -45,9 +50,9 @@ export interface TokenContextService {
 }
 
 type CreateTokenContextServiceDeps = {
-  repository: TokenContextRepository;
   tavilyClient: TavilyClient;
   workersAiClient: WorkersAiClient;
+  tokensRepository?: TokensRepository;
   log?: typeof logger;
 };
 
@@ -58,20 +63,11 @@ type CreateTokenContextServiceDeps = {
  * @returns Token context service instance
  */
 export function createTokenContextService({
-  repository,
   tavilyClient,
   workersAiClient,
+  tokensRepository,
   log = logger,
 }: CreateTokenContextServiceDeps): TokenContextService {
-  // Map TokenContextRecord to TokenContext
-  const mapRecordToContext = (record: TokenContextRecord): TokenContext => {
-    return {
-      shortContext: record.shortContext,
-      category: record.category ?? "",
-      tags: record.tags ?? [],
-    };
-  };
-
   // Validate shortContext quality
   const validateShortContext = (shortContext: string): Result<void, AppError> => {
     const length = shortContext.length;
@@ -110,34 +106,8 @@ export function createTokenContextService({
       chainId: input.chainId,
     });
 
-    // Step 1: Try to find existing context in D1
-    const d1Result = await repository.findById(input.id);
-
-    if (d1Result.isErr()) {
-      log.error("token-context-service.generate.d1-error", {
-        tokenId: input.id,
-        name: input.name,
-        symbol: input.symbol,
-        chainId: input.chainId,
-        errorType: d1Result.error.type,
-        message: d1Result.error.message,
-      });
-      return err(d1Result.error);
-    }
-
-    // Step 2: If D1 hit, return the cached context
-    if (d1Result.value !== null) {
-      log.info("token-context-service.generate.d1-hit", {
-        tokenId: input.id,
-        symbol: input.symbol,
-      });
-
-      const context = mapRecordToContext(d1Result.value);
-      return ok(context);
-    }
-
-    // Step 3: D1 miss - call Tavily + Workers AI to generate context
-    log.info("token-context-service.generate.d1-miss", {
+    // Call Tavily + Workers AI to generate context
+    log.info("token-context-service.generate.start", {
       tokenId: input.id,
       symbol: input.symbol,
     });
@@ -225,23 +195,42 @@ Generate a concise context JSON for this token.`;
 
     // Step 3.3: Map AI response to TokenContext and validate quality
     const aiContext = aiResult.value.value;
-    const context: TokenContext = {
-      shortContext: aiContext.short_context,
-      category: aiContext.category,
-      tags: aiContext.tags,
-    };
+    const shortContext = aiContext.short_context;
 
     // Step 3.4: Validate shortContext quality
-    const validationResult = validateShortContext(context.shortContext);
+    const validationResult = validateShortContext(shortContext);
     if (validationResult.isErr()) {
       log.warn("token-context-service.generate.quality-check-failed", {
         tokenId: input.id,
         symbol: input.symbol,
         error: validationResult.error,
-        shortContextLength: context.shortContext.length,
+        shortContextLength: shortContext.length,
       });
       return err(validationResult.error);
     }
+
+    // Step 3.5: Save shortContext to tokens table if repository is available
+    if (tokensRepository) {
+      const saveResult = await tokensRepository.updateShortContext(input.id, shortContext);
+      if (saveResult.isErr()) {
+        log.warn("token-context-service.generate.save-short-context-failed", {
+          tokenId: input.id,
+          symbol: input.symbol,
+          error: saveResult.error,
+        });
+        // Continue even if save fails - context is still valid
+      } else {
+        log.info("token-context-service.generate.short-context-saved", {
+          tokenId: input.id,
+          symbol: input.symbol,
+        });
+      }
+    }
+
+    const context: TokenContext = {
+      category: aiContext.category,
+      tags: aiContext.tags,
+    };
 
     return ok(context);
   }

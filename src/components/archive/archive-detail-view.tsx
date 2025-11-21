@@ -209,18 +209,6 @@ export const ArchiveDetailView: React.FC<ArchiveDetailViewProps> = ({ item, onCl
             </div>
           </div>
 
-          {/* Market Cap Values */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-white/90 normal-case">Market cap</h3>
-            <div className="space-y-1 rounded-lg bg-white/5 p-4">
-              {Object.entries(item.mcRounded).map(([token, value]) => (
-                <div key={token} className="flex justify-between">
-                  <span className="text-sm text-white/70">{token}:</span>
-                  <span className="font-mono text-sm">{value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Visual Parameters */}
           <div className="space-y-3">

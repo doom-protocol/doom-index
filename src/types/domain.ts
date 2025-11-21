@@ -1,8 +1,13 @@
 import type { Result } from "neverthrow";
-import type { TokenTicker, McMap } from "@/constants/token";
 import type { AppError } from "@/types/app-error";
 
-export type { TokenTicker, McMap };
+/**
+ * Legacy type aliases for backward compatibility
+ * @deprecated These types are for backward compatibility only.
+ * The legacy 8-token system has been removed.
+ */
+export type TokenTicker = string;
+export type McMap = Record<string, number>;
 
 export type GlobalState = {
   prevHash: string | null;

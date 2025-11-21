@@ -12,6 +12,7 @@ export const tokens = sqliteTable(
     name: text("name").notNull(), // Token name (e.g., "Bitcoin")
     coingeckoId: text("coingecko_id").notNull(), // CoinGecko ID (same as id, for explicit reference)
     logoUrl: text("logo_url"), // Token logo image URL
+    shortContext: text("short_context"), // 2-4 sentence English description of the token's purpose, narrative, and key characteristics (50-500 characters)
     categories: text("categories").notNull(), // JSON array string (e.g., '["l1", "store-of-value"]')
     createdAt: integer("created_at").notNull(), // Unix epoch seconds
     updatedAt: integer("updated_at").notNull(), // Unix epoch seconds

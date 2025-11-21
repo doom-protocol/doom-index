@@ -137,6 +137,7 @@ describe("TokenSelectionService", () => {
               id: "fresh",
               symbol: "FRESH",
               name: "Fresh Token",
+              shortContext: null,
               coingeckoId: "fresh",
               logoUrl: null,
               categories: "[]",

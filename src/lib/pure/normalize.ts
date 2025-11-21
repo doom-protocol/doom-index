@@ -1,5 +1,3 @@
-import { TOKEN_CONFIG_MAP, TOKEN_TICKERS, type NormalizedMcMap, type TokenTicker } from "@/constants/token";
-
 /**
  * Clamp value to [0, 1] range
  */
@@ -20,12 +18,12 @@ export function normalizeValue(value: number, min: number, max: number): number 
   return clamp01(eased);
 }
 
-export function normalizeMcMap(input: Record<string, number>): NormalizedMcMap {
-  const normalized: Partial<Record<TokenTicker, number>> = {};
-  for (const ticker of TOKEN_TICKERS) {
-    const bounds = TOKEN_CONFIG_MAP[ticker].normalization;
-    const raw = input[ticker] ?? 0;
-    normalized[ticker] = normalizeValue(raw, bounds.min, bounds.max);
-  }
-  return normalized as NormalizedMcMap;
+/**
+ * Legacy function: normalizeMcMap
+ * @deprecated This function is part of the legacy 8-token system and should not be used.
+ * It returns an empty object for backward compatibility.
+ */
+export function normalizeMcMap(_input: Record<string, number>): Record<string, number> {
+  // Legacy system is deprecated - return empty map
+  return {};
 }

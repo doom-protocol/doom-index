@@ -57,7 +57,9 @@ describe("isPaintingMetadata", () => {
     expect(isPaintingMetadata(invalidMetadata)).toBe(false);
   });
 
-  it("should reject metadata with invalid mcRounded structure", () => {
+  it.skip("should reject metadata with invalid mcRounded structure", () => {
+    // mcRounded is no longer part of PaintingMetadata type
+    // This test is deprecated
     const invalidMetadata = {
       id: "DOOM_202511141234_abc12345_def45678",
       timestamp: "2025-11-14T12:34:00Z",

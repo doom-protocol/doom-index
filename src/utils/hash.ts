@@ -1,7 +1,5 @@
 import { stableStringify } from "@/lib/pure/hash";
 
-export { stableStringify };
-
 export function computeStableHash(obj: unknown): string {
   const s = stableStringify(obj);
   // Simple 32-bit FNV-1a

@@ -4,14 +4,13 @@
  * Image Generation Script (Manual Testing)
  *
  * This script is for manual testing and development purposes only.
- * It allows you to generate images with custom market cap values for the legacy
- * 8-token system (CO2, ICE, FOREST, NUKE, MACHINE, PANDEMIC, FEAR, HOPE).
+ * It allows you to generate images with custom parameters.
  *
  * For production hourly painting generation with dynamic token selection,
  * see src/cron.ts and PaintingGenerationOrchestrator.
  *
  * Usage:
- *   bun scripts/generate.ts --model "dall-e-3" --mc "CO2=1300000,ICE=200000,FOREST=900000,NUKE=50000,MACHINE=1450000,PANDEMIC=700000,FEAR=1100000,HOPE=400000"
+ *   bun scripts/generate.ts --model "dall-e-3"
  *   bun scripts/generate.ts --model "runware:100@1" --seed abc123def456 --w 1280 --h 720
  *   bun scripts/generate.ts --model "civitai:38784@44716" --output ./test-output
  *   bun scripts/generate.ts --model "dall-e-3" --w 1024 --h 1024
@@ -19,16 +18,28 @@
 
 import { join } from "node:path";
 import { mkdir } from "node:fs/promises";
-import type { McMapRounded } from "@/constants/token";
+import { ok } from "neverthrow";
 import { createWorldPromptService } from "@/services/world-prompt-service";
-import { resolveProviderWithMock, createImageProvider } from "@/lib/image-generation-providers";
+import { createImageGenerationService } from "@/services/image-generation";
+import { createImageProvider } from "@/lib/image-generation-providers";
 import { logger } from "@/utils/logger";
 import { extractIdFromFilename } from "@/utils/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
+import { TokenSelectionService } from "@/services/paintings/token-selection";
+import { TokenDataFetchService } from "@/services/paintings/token-data-fetch";
+import { MarketDataService } from "@/services/paintings/market-data";
+import { PaintingContextBuilder } from "@/services/paintings/painting-context-builder";
+import { CoinGeckoClient } from "@/lib/coingecko-client";
+import { AlternativeMeClient } from "@/lib/alternative-me-client";
+import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
+import { TokensRepository } from "@/repositories/tokens-repository";
+import { createWorkersAiClient } from "@/lib/workers-ai-client";
+import { createTokenContextService, FALLBACK_TOKEN_CONTEXT } from "@/services/token-context-service";
+import { createTavilyClient } from "@/lib/tavily-client";
+import { env } from "@/env";
 
 type Args = {
   mock?: boolean;
-  mc?: string;
   seed?: string;
   model?: string;
   width: number;
@@ -68,10 +79,6 @@ const parseArgs = (): Args => {
       case "--mock":
         parsed.mock = true;
         break;
-      case "--mc":
-        parsed.mc = next;
-        i++;
-        break;
       case "--seed":
         parsed.seed = next;
         i++;
@@ -104,21 +111,19 @@ Usage: bun scripts/generate.ts [options]
 
 Options:
   --mock               Use mock provider (for testing only)
-  --mc <values>        Market cap values: "CO2=1000000,ICE=2000000,..." (default: all 1000000)
-  --seed <string>      Custom seed (default: generated from MC)
+  --seed <string>      Custom seed (default: auto-generated)
   --model <name>       Model name: dall-e-3, runware:100@1, civitai:xxx@xxx, etc.
                        Provider will be automatically resolved based on the model
   --w, --width <num>   Image width (default: 1280)
   --h, --height <num>  Image height (default: 720)
   --format <fmt>       Output format: webp, png (default: webp)
-  --output <path>      Output directory (default: ./scripts/.out)
+  --output <path>      Output directory (default: ./out)
   --help               Show this help
 
 Examples:
   bun scripts/generate.ts --model "dall-e-3"
   bun scripts/generate.ts --model "runware:100@1"
   bun scripts/generate.ts --model "civitai:38784@44716"
-  bun scripts/generate.ts --model "dall-e-3" --mc "CO2=1300000,ICE=200000,FOREST=900000,NUKE=50000,MACHINE=1450000,PANDEMIC=700000,FEAR=1100000,HOPE=400000"
   bun scripts/generate.ts --model "dall-e-3" --seed custom123 --w 1024 --h 1024
         `);
         safeExit(0);
@@ -128,29 +133,24 @@ Examples:
   return parsed as Args;
 };
 
-const parseMcString = (mcString?: string): McMapRounded => {
-  const defaultMc: McMapRounded = {
-    CO2: 1_000_000,
-    ICE: 1_000_000,
-    FOREST: 1_000_000,
-    NUKE: 1_000_000,
-    MACHINE: 1_000_000,
-    PANDEMIC: 1_000_000,
-    FEAR: 1_000_000,
-    HOPE: 1_000_000,
-  };
+/**
+ * Create mock repositories for script testing
+ * These return empty results since we don't need database persistence in scripts
+ */
+const createMockTokensRepository = (): TokensRepository => {
+  return {
+    findById: async () => ok(null),
+    insert: async () => ok(undefined),
+    update: async () => ok(undefined),
+    findRecentlySelected: async () => ok([]),
+  } as unknown as TokensRepository;
+};
 
-  if (!mcString) return defaultMc;
-
-  const pairs = mcString.split(",");
-  for (const pair of pairs) {
-    const [ticker, value] = pair.split("=");
-    if (ticker && value && ticker in defaultMc) {
-      defaultMc[ticker as keyof McMapRounded] = parseFloat(value);
-    }
-  }
-
-  return defaultMc;
+const createMockMarketSnapshotsRepository = (): MarketSnapshotsRepository => {
+  return {
+    findByHourBucket: async () => ok(null),
+    upsert: async () => ok(undefined),
+  } as unknown as MarketSnapshotsRepository;
 };
 
 const main = async () => {
@@ -158,27 +158,213 @@ const main = async () => {
 
   logger.info("generate.start", {
     model: args.model,
-    mock: args.mock,
     width: args.width,
     height: args.height,
     format: args.format,
   });
 
-  // Parse MC values
-  const mcRounded = parseMcString(args.mc);
-  logger.info("generate.mc", mcRounded);
-
-  // Compose prompt
-  const promptService = createWorldPromptService();
-  const promptResult = await promptService.composePrompt(mcRounded);
-
-  if (promptResult.isErr()) {
-    logger.error("generate.prompt.error", promptResult.error);
+  // Validate required environment variables
+  if (!env.COINGECKO_API_KEY) {
+    console.error("\n❌ Error: COINGECKO_API_KEY environment variable is required");
+    console.error("   Please set it in your .env file or environment");
     safeExit(1);
     return;
   }
 
-  const composition = promptResult.value;
+  if (!env.TAVILY_API_KEY) {
+    console.warn("\n⚠️ Warning: TAVILY_API_KEY not set. Token context generation may fail.");
+  }
+
+  // Initialize actual API clients
+  const coinGeckoClient = new CoinGeckoClient(env.COINGECKO_API_KEY);
+  const alternativeMeClient = new AlternativeMeClient();
+
+  // Create mock repositories (no database needed for script)
+  const tokensRepository = createMockTokensRepository();
+  const marketSnapshotsRepository = createMockMarketSnapshotsRepository();
+
+  // Initialize services with actual data fetching
+  const tokenDataFetchService = new TokenDataFetchService(coinGeckoClient);
+  const marketDataService = new MarketDataService(
+    coinGeckoClient,
+    alternativeMeClient,
+    marketSnapshotsRepository,
+  );
+  const tokenSelectionService = new TokenSelectionService(
+    tokenDataFetchService,
+    marketDataService,
+    tokensRepository,
+  );
+  const paintingContextBuilder = new PaintingContextBuilder(tokensRepository);
+
+  console.log("\n=== Step 1: Selecting Token ===");
+  console.log("Fetching trending tokens from CoinGecko...");
+
+  // Step 1: Select token (same as production)
+  const forceTokenList = env.FORCE_TOKEN_LIST;
+  const tokenSelectionResult = await tokenSelectionService.selectToken({
+    forceTokenList,
+    excludeRecentlySelected: false, // Don't exclude in script mode
+    recentSelectionWindowHours: 24,
+  });
+
+  if (tokenSelectionResult.isErr()) {
+    logger.error("generate.token-selection.error", tokenSelectionResult.error);
+    console.error("\n❌ Token selection failed:", tokenSelectionResult.error);
+    safeExit(1);
+    return;
+  }
+
+  const selectedToken = tokenSelectionResult.value;
+  console.log(`✅ Selected token: ${selectedToken.name} (${selectedToken.symbol})`);
+  console.log(`   ID: ${selectedToken.id}`);
+  console.log(`   Price: $${selectedToken.priceUsd.toFixed(4)}`);
+  console.log(`   24h Change: ${selectedToken.priceChange24h.toFixed(2)}%`);
+
+  console.log("\n=== Step 2: Fetching Market Data ===");
+  console.log("Fetching global market data from CoinGecko...");
+
+  // Step 2: Fetch market data (same as production)
+  const marketDataResult = await marketDataService.fetchGlobalMarketData();
+  if (marketDataResult.isErr()) {
+    logger.error("generate.market-data.error", marketDataResult.error);
+    console.error("\n❌ Market data fetch failed:", marketDataResult.error);
+    safeExit(1);
+    return;
+  }
+
+  const marketSnapshot = marketDataResult.value;
+  console.log(`✅ Market data fetched`);
+  console.log(`   Total Market Cap: $${marketSnapshot.totalMarketCapUsd.toLocaleString()}`);
+  console.log(`   24h Change: ${marketSnapshot.marketCapChangePercentage24hUsd.toFixed(2)}%`);
+  console.log(`   Fear & Greed Index: ${marketSnapshot.fearGreedIndex ?? "N/A"}`);
+
+  console.log("\n=== Step 3: Building Painting Context ===");
+
+  // Step 3: Build painting context (same as production)
+  const contextResult = await paintingContextBuilder.buildContext({
+    selectedToken,
+    marketSnapshot,
+  });
+
+  if (contextResult.isErr()) {
+    logger.error("generate.context.error", contextResult.error);
+    console.error("\n❌ Context building failed:", contextResult.error);
+    safeExit(1);
+    return;
+  }
+
+  const paintingContext = contextResult.value;
+  console.log(`✅ Painting context built`);
+  console.log(`   Climate: ${paintingContext.c}`);
+  console.log(`   Archetype: ${paintingContext.a}`);
+  console.log(`   Composition: ${paintingContext.o}`);
+  console.log(`   Palette: ${paintingContext.p}`);
+
+  // Step 4: Initialize token context service (optional, requires Workers AI and Tavily)
+  // Note: Workers AI requires Cloudflare environment, so we'll use fallback context for scripts
+  let tokenContext;
+  let tokenContextService;
+  let workersAiClient;
+
+  if (env.TAVILY_API_KEY) {
+    try {
+      const tavilyClient = createTavilyClient();
+      // Note: Workers AI requires Cloudflare environment, so we'll use a mock for script
+      // In production, this would use cloudflareEnv.AI
+      workersAiClient = createWorkersAiClient({
+        aiBinding: {} as Ai, // Mock AI binding for script
+      });
+      tokenContextService = createTokenContextService({
+        tavilyClient,
+        workersAiClient,
+        tokensRepository,
+      });
+
+      console.log("\n=== Step 4: Generating Token Context ===");
+      console.log("Fetching token context from Tavily and Workers AI...");
+
+      const tokenMeta = {
+        id: selectedToken.id,
+        name: selectedToken.name,
+        symbol: selectedToken.symbol,
+        chainId: "unknown",
+        contractAddress: null,
+        createdAt: new Date().toISOString(),
+      };
+
+      const tokenContextResult = await tokenContextService.generateTokenContext(tokenMeta);
+      if (tokenContextResult.isOk()) {
+        tokenContext = tokenContextResult.value;
+        console.log(`✅ Token context generated`);
+        console.log(`   Category: ${tokenContext.category}`);
+        console.log(`   Tags: ${tokenContext.tags.join(", ")}`);
+      } else {
+        console.warn(`⚠️ Token context generation failed, using fallback`);
+        console.warn(`   Error: ${tokenContextResult.error.message}`);
+        tokenContext = FALLBACK_TOKEN_CONTEXT;
+      }
+    } catch (error) {
+      console.warn(`⚠️ Token context service initialization failed, using fallback`);
+      console.warn(`   Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+      tokenContext = FALLBACK_TOKEN_CONTEXT;
+    }
+  } else {
+    console.warn("\n⚠️ Warning: TAVILY_API_KEY not set. Using fallback token context.");
+    tokenContext = FALLBACK_TOKEN_CONTEXT;
+  }
+
+  // Step 5: Initialize prompt and image generation services
+  const promptService = createWorldPromptService({
+    tokenContextService,
+    tokensRepository,
+    workersAiClient,
+  });
+  const imageProvider = createImageProvider();
+  const imageGenerationService = createImageGenerationService({
+    promptService,
+    imageProvider,
+    log: logger,
+  });
+
+  logger.info("generate.provider", { name: imageProvider.name, model: args.model });
+
+  const tokenMeta = {
+    id: selectedToken.id,
+    name: selectedToken.name,
+    symbol: selectedToken.symbol,
+    chainId: "unknown",
+    contractAddress: null,
+    createdAt: new Date().toISOString(),
+  };
+
+  console.log("\n=== Step 5: Generating Image ===");
+  console.log(`Provider: ${imageProvider.name}`);
+  console.log(`Dimensions: ${args.width}x${args.height}`);
+  console.log(`Format: ${args.format}`);
+  console.log("Please wait...\n");
+
+  // Step 6: Generate image using latest token-based generation process
+  const generateResult = await imageGenerationService.generateTokenImage({
+    paintingContext,
+    tokenMeta,
+    tokenContext, // Provide token context directly to avoid service dependency
+    referenceImageUrl: selectedToken.logoUrl,
+  });
+
+  if (generateResult.isErr()) {
+    logger.error("generate.error", generateResult.error);
+    console.error("\n❌ Generation failed:", generateResult.error);
+    safeExit(1);
+    return;
+  }
+
+  const { composition, imageBuffer, providerMeta } = generateResult.value;
+  logger.info("generate.success", {
+    size: imageBuffer.byteLength,
+    provider: providerMeta,
+  });
+
   logger.info("generate.prompt", {
     seed: composition.seed,
     paramsHash: composition.paramsHash,
@@ -195,37 +381,10 @@ const main = async () => {
   console.log(`Seed: ${composition.seed}`);
   console.log(`Params Hash: ${composition.paramsHash}`);
 
-  // Generate image
-  // Use Runware provider (or mock for testing)
-  const provider = args.mock ? resolveProviderWithMock("mock") : createImageProvider();
-  logger.info("generate.provider", { name: provider.name, model: args.model });
-
-  const imageRequest = {
-    prompt: composition.prompt.text,
-    negative: composition.prompt.negative,
-    width: args.width,
-    height: args.height,
-    format: args.format,
-    seed: args.seed || composition.seed,
-    model: args.model,
+  const imageResponse = {
+    imageBuffer,
+    providerMeta,
   };
-
-  console.log("\n=== Generating Image ===");
-  console.log(`Provider: ${provider.name}`);
-  console.log(`Dimensions: ${args.width}x${args.height}`);
-  console.log(`Format: ${args.format}`);
-  console.log("Please wait...\n");
-
-  const generateResult = await provider.generate(imageRequest);
-
-  if (generateResult.isErr()) {
-    logger.error("generate.error", generateResult.error);
-    console.error("\n❌ Generation failed:", generateResult.error);
-    safeExit(1);
-    return;
-  }
-
-  const imageResponse = generateResult.value;
   logger.info("generate.success", {
     size: imageResponse.imageBuffer.byteLength,
     provider: imageResponse.providerMeta,
@@ -247,7 +406,6 @@ const main = async () => {
     minuteBucket: minuteBucketIso,
     paramsHash: composition.paramsHash,
     seed: composition.seed,
-    mcRounded,
     visualParams: composition.vp,
     imageUrl: "", // Not used in script mode
     fileSize: imageResponse.imageBuffer.byteLength,
@@ -279,7 +437,7 @@ const main = async () => {
   const localMetadata = {
     ...archiveMetadata,
     timestamp: timestamp,
-    provider: provider.name,
+    provider: imageProvider.name,
     dimensions: { width: args.width, height: args.height },
     format: args.format,
     providerMeta: imageResponse.providerMeta,

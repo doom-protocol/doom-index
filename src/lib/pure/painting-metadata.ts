@@ -1,5 +1,4 @@
 import type { PaintingMetadata } from "@/types/paintings";
-import { TOKEN_TICKERS } from "@/constants/token";
 import type { VisualParams } from "@/lib/pure/mapping";
 
 /**
@@ -33,17 +32,6 @@ export function isPaintingMetadata(value: unknown): value is PaintingMetadata {
   // Check fileSize is a number
   if (typeof obj.fileSize !== "number" || !Number.isFinite(obj.fileSize)) {
     return false;
-  }
-
-  // Check mcRounded structure
-  if (!obj.mcRounded || typeof obj.mcRounded !== "object") {
-    return false;
-  }
-  const mcRounded = obj.mcRounded as Record<string, unknown>;
-  for (const ticker of TOKEN_TICKERS) {
-    if (typeof mcRounded[ticker] !== "number" || !Number.isFinite(mcRounded[ticker])) {
-      return false;
-    }
   }
 
   // Check visualParams structure

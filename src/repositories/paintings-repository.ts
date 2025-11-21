@@ -43,7 +43,6 @@ export type ArchiveIndexRow = {
   imageUrl: string;
   fileSize: number;
   ts: number;
-  mcRoundedJson: string;
   visualParamsJson: string;
   prompt: string;
   negative: string;
@@ -115,7 +114,6 @@ export function createPaintingsRepository({
           imageUrl: paintings.imageUrl,
           fileSize: paintings.fileSize,
           ts: paintings.ts,
-          mcRoundedJson: paintings.mcRoundedJson,
           visualParamsJson: paintings.visualParamsJson,
           prompt: paintings.prompt,
           negative: paintings.negative,
@@ -171,7 +169,6 @@ export function createPaintingsRepository({
           r2Key,
           imageUrl: metadata.imageUrl,
           fileSize: metadata.fileSize,
-          mcRoundedJson: JSON.stringify(metadata.mcRounded),
           visualParamsJson: JSON.stringify(metadata.visualParams),
           prompt: metadata.prompt,
           negative: metadata.negative,
@@ -209,7 +206,6 @@ export function createPaintingsRepository({
         minuteBucket: row.minuteBucket,
         paramsHash: row.paramsHash,
         seed: row.seed,
-        mcRounded: JSON.parse(row.mcRoundedJson),
         visualParams: JSON.parse(row.visualParamsJson),
         imageUrl: row.imageUrl,
         fileSize: row.fileSize,

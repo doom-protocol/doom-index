@@ -1,7 +1,6 @@
 /**
  * Types for dynamic-draw painting generation
  */
-import type { McMapRounded } from "@/constants/token";
 import type { VisualParams } from "@/lib/pure/mapping";
 
 /**
@@ -82,7 +81,6 @@ export type PaintingMetadata = {
   seed: string;
   imageUrl: string;
   fileSize: number;
-  mcRounded: McMapRounded;
   visualParams: VisualParams;
   prompt: string;
   negative: string;

@@ -64,6 +64,7 @@ export class TokensRepository {
             symbol: token.symbol,
             name: token.name,
             logoUrl: token.logoUrl,
+            shortContext: token.shortContext,
             categories: token.categories,
             updatedAt: token.updatedAt,
           },
@@ -99,6 +100,31 @@ export class TokensRepository {
         type: "StorageError" as const,
         op: "put" as const,
         key: `tokens/${id}`,
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  /**
+   * Update token shortContext
+   */
+  async updateShortContext(id: string, shortContext: string): Promise<Result<void, AppError>> {
+    try {
+      logger.debug(`[TokensRepository] Updating shortContext for token: ${id}`);
+
+      await this.db
+        .update(tokens)
+        .set({ shortContext, updatedAt: Math.floor(Date.now() / 1000) })
+        .where(eq(tokens.id, id));
+
+      logger.info(`[TokensRepository] Updated shortContext for token: ${id}`);
+      return ok(undefined);
+    } catch (error) {
+      logger.error(`[TokensRepository] Failed to update shortContext for token: ${id}`, { error });
+      return err({
+        type: "StorageError" as const,
+        op: "put" as const,
+        key: `tokens/${id}/shortContext`,
         message: error instanceof Error ? error.message : "Unknown error",
       });
     }
