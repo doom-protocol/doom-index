@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "129b940f-9a0f-48de-ab78-86ff2ec536ad",
+  "id": "736cf7b4-b356-41ea-a68f-3248cdc965f5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "paintings": {
@@ -293,78 +293,6 @@
         "idx_market_snapshots_created_at": {
           "name": "idx_market_snapshots_created_at",
           "columns": ["created_at"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "token_contexts": {
-      "name": "token_contexts",
-      "columns": {
-        "token_id": {
-          "name": "token_id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "symbol": {
-          "name": "symbol",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "display_name": {
-          "name": "display_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "chain": {
-          "name": "chain",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "category": {
-          "name": "category",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "tags": {
-          "name": "tags",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "short_context": {
-          "name": "short_context",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_token_contexts_symbol_chain": {
-          "name": "idx_token_contexts_symbol_chain",
-          "columns": ["symbol", "chain"],
           "isUnique": false
         }
       },

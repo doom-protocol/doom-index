@@ -46,16 +46,4 @@ CREATE TABLE `market_snapshots` (
 	`created_at` integer NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX `idx_market_snapshots_created_at` ON `market_snapshots` (`created_at`);--> statement-breakpoint
-CREATE TABLE `token_contexts` (
-	`token_id` text PRIMARY KEY NOT NULL,
-	`symbol` text NOT NULL,
-	`display_name` text NOT NULL,
-	`chain` text NOT NULL,
-	`category` text,
-	`tags` text,
-	`short_context` text NOT NULL,
-	`updated_at` integer NOT NULL
-);
---> statement-breakpoint
-CREATE INDEX `idx_token_contexts_symbol_chain` ON `token_contexts` (`symbol`,`chain`);
+CREATE INDEX `idx_market_snapshots_created_at` ON `market_snapshots` (`created_at`);

@@ -148,7 +148,7 @@ export function createPaintingsRepository({
       return err({
         type: "StorageError" as const,
         op: "list" as const,
-        key: "archive_items",
+        key: "paintings",
         message: `D1 list failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       });
     }

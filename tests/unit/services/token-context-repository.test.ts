@@ -1,8 +1,19 @@
 import { describe, expect, it, beforeEach, mock } from "bun:test";
 import { createTokenContextRepository } from "@/repositories/token-context-repository";
-import type { TokenContextRow } from "@/db/schema/token-contexts";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "@/db/schema";
+
+// TokenContextRow type definition (moved from token-contexts.ts)
+type TokenContextRow = {
+  tokenId: string;
+  symbol: string;
+  displayName: string;
+  chain: string;
+  category: string | null;
+  tags: string | null;
+  shortContext: string;
+  updatedAt: number;
+};
 
 // TODO: Fix complex Drizzle ORM mock types
 describe.skip("TokenContextRepository", () => {

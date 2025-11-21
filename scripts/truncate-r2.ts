@@ -4,7 +4,7 @@
  * Truncate R2 Bucket Script
  *
  * This script removes ALL objects from the R2 bucket
- * and deletes ALL records from D1 archive_items table.
+ * and deletes ALL records from D1 paintings table.
  *
  * Usage:
  *   # Using npm scripts (recommended):
@@ -239,13 +239,13 @@ async function executeD1Query(sql: string, params: unknown[] = []): Promise<Resu
 }
 
 /**
- * Delete all records from D1 archive_items table
+ * Delete all records from D1 paintings table
  */
 async function deleteD1Records(dryRun: boolean): Promise<Result<number, AppError>> {
   try {
     if (dryRun) {
       // Count records that would be deleted
-      const countResult = await executeD1Query(`SELECT COUNT(*) as count FROM archive_items`, []);
+      const countResult = await executeD1Query(`SELECT COUNT(*) as count FROM paintings`, []);
 
       if (countResult.isErr()) {
         return err(countResult.error);
@@ -273,7 +273,7 @@ async function deleteD1Records(dryRun: boolean): Promise<Result<number, AppError
     }
 
     // Actually delete records
-    const countResult = await executeD1Query(`SELECT COUNT(*) as count FROM archive_items`, []);
+    const countResult = await executeD1Query(`SELECT COUNT(*) as count FROM paintings`, []);
 
     if (countResult.isErr()) {
       return err(countResult.error);
@@ -294,7 +294,7 @@ async function deleteD1Records(dryRun: boolean): Promise<Result<number, AppError
     }
 
     // Delete all records
-    const deleteResult = await executeD1Query(`DELETE FROM archive_items`, []);
+    const deleteResult = await executeD1Query(`DELETE FROM paintings`, []);
 
     if (deleteResult.isErr()) {
       return err(deleteResult.error);
@@ -309,7 +309,7 @@ async function deleteD1Records(dryRun: boolean): Promise<Result<number, AppError
     return err({
       type: "StorageError",
       op: "delete",
-      key: "archive_items",
+      key: "paintings",
       message: `D1 delete failed: ${error instanceof Error ? error.message : String(error)}`,
     });
   }
@@ -463,7 +463,7 @@ async function main() {
     console.log(`    Total: ${toDelete.length} objects`);
     if (d1RecordsToDelete > 0) {
       console.log(`  D1 Records:`);
-      console.log(`    - ${d1RecordsToDelete} archive_items records`);
+      console.log(`    - ${d1RecordsToDelete} paintings records`);
     }
     console.log(`  Total: ${toDelete.length + d1RecordsToDelete} items\n`);
 
@@ -484,7 +484,7 @@ async function main() {
     console.log("⚠️  WARNING: This will permanently delete:");
     console.log(`   - ${toDelete.length} R2 objects (ALL objects in bucket)`);
     if (d1RecordsToDelete > 0) {
-      console.log(`   - ${d1RecordsToDelete} D1 records (ALL records in archive_items)`);
+      console.log(`   - ${d1RecordsToDelete} D1 records (ALL records in paintings)`);
     }
     console.log("Press Ctrl+C to cancel, or wait 5 seconds to proceed...");
     await new Promise(resolve => setTimeout(resolve, 5000));

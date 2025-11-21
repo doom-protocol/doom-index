@@ -163,7 +163,6 @@ import { beforeEach, afterEach, mock } from "bun:test";
 
 beforeEach(() => {
   // テストごとにモックをリセット
-  mock.restore();
 });
 
 afterEach(() => {
