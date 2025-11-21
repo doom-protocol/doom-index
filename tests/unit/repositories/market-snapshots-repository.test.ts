@@ -1,13 +1,21 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import type { BatchItem, BatchResponse } from "drizzle-orm/batch";
 import { Database } from "bun:sqlite";
 import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
 import { marketSnapshots, type NewMarketSnapshot } from "@/db/schema/market-snapshots";
 import * as dbSchema from "@/db/schema";
 
+// Extended DB type with batch method for test compatibility
+type TestDb = BunSQLiteDatabase<typeof dbSchema> & {
+  batch<U extends BatchItem<'sqlite'>, T extends Readonly<[U, ...U[]]>>(
+    batch: T
+  ): Promise<BatchResponse<T>>;
+};
+
 describe("MarketSnapshotsRepository", () => {
-  let db: BunSQLiteDatabase<typeof dbSchema>;
+  let db: TestDb;
   let repository: MarketSnapshotsRepository;
 
   beforeEach(() => {
@@ -32,23 +40,30 @@ describe("MarketSnapshotsRepository", () => {
       CREATE INDEX idx_market_snapshots_created_at ON market_snapshots(created_at);
     `);
 
-    db = drizzle(sqlite, { schema: dbSchema });
-    
-    // Add batch method stub to match expected interface
-    if (!db.batch) {
-      // @ts-expect-error - Adding batch method for test compatibility
-      db.batch = async (operations: unknown[]) => {
+    const baseDb = drizzle(sqlite, { schema: dbSchema });
+
+    // Add batch method stub to match expected MarketSnapshotsDb interface
+    // BunSQLiteDatabase doesn't have batch, but DrizzleD1Database does
+    type DbWithBatch = typeof baseDb & {
+      batch<U extends BatchItem<'sqlite'>, T extends Readonly<[U, ...U[]]>>(
+        batch: T
+      ): Promise<BatchResponse<T>>;
+    };
+
+    db = Object.assign(baseDb, {
+      batch: async <U extends BatchItem<'sqlite'>, T extends Readonly<[U, ...U[]]>>(
+        operations: T
+      ): Promise<BatchResponse<T>> => {
         // Simple sequential execution for test purposes
         const results = [];
         for (const op of operations) {
-          if (typeof op === "function") {
-            results.push(await op());
-          }
+          // Execute each batch item sequentially
+          results.push(await op);
         }
-        return results;
-      };
-    }
-    
+        return results as BatchResponse<T>;
+      },
+    }) as DbWithBatch;
+
     repository = new MarketSnapshotsRepository(db);
   });
 
