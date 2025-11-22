@@ -119,9 +119,10 @@ body {
   transition: all 0.3s ease-out;
 }
 
-.liquid-glass-effect:active::before {
+/* Removed click light effect - too distracting */
+/* .liquid-glass-effect:active::before {
   animation: liquid-glass 0.4s ease-out;
-}
+} */
 
 /* Whitepaper MDX content styles */
 @layer components {
@@ -273,5 +274,103 @@ body {
       line-height: 1.6 !important;
       margin-bottom: 0.25rem !important;
     }
+  }
+
+  /* Sonner Toast - Liquid Glass Style */
+  .liquid-glass-toast {
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(12px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 16px !important;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    padding: 16px 20px !important;
+    font-family: inherit !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .liquid-glass-toast::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    pointer-events: none;
+  }
+
+  .liquid-glass-toast-error {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    box-shadow:
+      0 8px 32px rgba(239, 68, 68, 0.2),
+      0 0 0 1px rgba(239, 68, 68, 0.1) inset !important;
+  }
+
+  .liquid-glass-toast-success {
+    background: rgba(34, 197, 94, 0.15) !important;
+    border-color: rgba(34, 197, 94, 0.3) !important;
+    box-shadow:
+      0 8px 32px rgba(34, 197, 94, 0.2),
+      0 0 0 1px rgba(34, 197, 94, 0.1) inset !important;
+  }
+
+  .liquid-glass-toast-info {
+    background: rgba(59, 130, 246, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    box-shadow:
+      0 8px 32px rgba(59, 130, 246, 0.2),
+      0 0 0 1px rgba(59, 130, 246, 0.1) inset !important;
+  }
+
+  .liquid-glass-toast-warning {
+    background: rgba(251, 191, 36, 0.15) !important;
+    border-color: rgba(251, 191, 36, 0.3) !important;
+    box-shadow:
+      0 8px 32px rgba(251, 191, 36, 0.2),
+      0 0 0 1px rgba(251, 191, 36, 0.1) inset !important;
+  }
+
+  /* Override sonner's default styles */
+  [data-sonner-toaster] {
+    --width: 400px;
+    --border-radius: 16px;
+  }
+
+  [data-sonner-toast] {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  [data-sonner-toast] [data-title] {
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  [data-sonner-toast] [data-description] {
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 4px;
+  }
+
+  [data-sonner-toast] [data-icon] {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  [data-sonner-toast] [data-close-button] {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+
+  [data-sonner-toast] [data-close-button]:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
   }
 }

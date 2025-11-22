@@ -6,6 +6,7 @@ import { useState } from "react";
 import { TRPCProvider, createTRPCClientInstance } from "@/lib/trpc/client";
 import { WalletAdapterProvider } from "@/components/providers/wallet-adapter-provider";
 import { UmiProvider } from "@/components/providers/umi-provider";
+import { Toaster } from "sonner";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -46,6 +47,19 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({ children })
         <UmiProvider>
           <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
             {children}
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                classNames: {
+                  toast: "liquid-glass-toast",
+                  error: "liquid-glass-toast-error",
+                  success: "liquid-glass-toast-success",
+                  info: "liquid-glass-toast-info",
+                  warning: "liquid-glass-toast-warning",
+                },
+              }}
+              theme="dark"
+            />
           </TRPCProvider>
         </UmiProvider>
       </WalletAdapterProvider>

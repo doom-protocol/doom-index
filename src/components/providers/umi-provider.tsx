@@ -11,7 +11,20 @@ import { env } from "@/env";
 // Create Umi instance
 const createUmiInstance = (): Umi => {
   // Fallback to devnet if RPC URL is not set
-  const rpcUrl = env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com";
+  // Handle both undefined and empty string cases
+  let rpcUrl: string;
+  try {
+    rpcUrl = env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com";
+  } catch {
+    // Fallback if env is not available
+    rpcUrl = "https://api.devnet.solana.com";
+  }
+
+  // Ensure rpcUrl is a valid string
+  if (!rpcUrl || typeof rpcUrl !== "string" || rpcUrl.trim() === "") {
+    rpcUrl = "https://api.devnet.solana.com";
+  }
+
   const umi = createUmi(rpcUrl).use(mplTokenMetadata());
 
   return umi;
@@ -42,14 +55,20 @@ export const UmiProvider: React.FC<UmiProviderProps> = ({ children }) => {
       return null;
     }
 
-    const umiInstance = createUmiInstance();
+    try {
+      const umiInstance = createUmiInstance();
 
-    // If wallet is connected, use wallet adapter identity
-    if (wallet.publicKey && wallet.signTransaction) {
-      umiInstance.use(walletAdapterIdentity(wallet as unknown as Parameters<typeof walletAdapterIdentity>[0]));
+      // If wallet is connected, use wallet adapter identity
+      if (wallet.publicKey && wallet.signTransaction) {
+        umiInstance.use(walletAdapterIdentity(wallet as unknown as Parameters<typeof walletAdapterIdentity>[0]));
+      }
+
+      return umiInstance;
+    } catch (error) {
+      console.error("Failed to initialize Umi:", error);
+      // Return null to prevent app crash, but this should be handled by useUmi hook
+      return null;
     }
-
-    return umiInstance;
   }, [wallet]);
 
   return <UmiContext.Provider value={umi}>{children}</UmiContext.Provider>;

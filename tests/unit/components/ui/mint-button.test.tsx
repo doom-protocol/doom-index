@@ -54,7 +54,7 @@ describe("MintButton", () => {
     const { getByRole } = render(<MintButton />, { wrapper: createWrapper() });
     const button = getByRole("button");
     expect(button).toBeInTheDocument();
-    expect(button.textContent).toMatch(/Export GLB/i);
+    expect(button.textContent).toMatch(/Mint/i);
   });
 
   it("handles click events", () => {
@@ -68,17 +68,17 @@ describe("MintButton", () => {
   });
 
   it("shows loading state", () => {
-    const { getByRole, getByText } = render(<MintButton isLoading={true} />, { wrapper: createWrapper() });
+    const { getByRole } = render(<MintButton isLoading={true} />, { wrapper: createWrapper() });
     const button = getByRole("button");
     expect(button).toBeDisabled();
-    expect(getByText(/Exporting/i)).toBeInTheDocument();
+    expect(button.textContent).toMatch(/Mint/i);
   });
 
   it("shows error state", () => {
-    const { getByRole, getByText } = render(<MintButton isError={true} />, { wrapper: createWrapper() });
+    const { getByRole } = render(<MintButton isError={true} />, { wrapper: createWrapper() });
     const button = getByRole("button");
     expect(button).toBeDisabled();
-    expect(getByText(/Failed/i)).toBeInTheDocument();
+    expect(button.textContent).toMatch(/Mint/i);
   });
 
   it("is disabled when disabled prop is true", () => {

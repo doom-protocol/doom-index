@@ -10,10 +10,12 @@ import { CameraRig } from "./camera-rig";
 import { GalleryRoom } from "./gallery-room";
 import { RealtimeDashboard } from "../ui/realtime-dashboard";
 import { MintButton } from "../ui/mint-button";
+import { MintModal } from "../ui/mint-modal";
 import { useLatestPainting } from "@/hooks/use-latest-painting";
 import { logger } from "@/utils/logger";
 import { env } from "@/env";
 import { glbExportService } from "@/lib/glb-export-service";
+import { toast } from "sonner";
 
 interface GallerySceneProps {
   cameraPreset?: "dashboard" | "painting";
@@ -42,13 +44,20 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
   // Export state
   const paintingRef = useRef<Group>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [exportError, setExportError] = useState(false);
+  const [exportedGlbFile, setExportedGlbFile] = useState<File | null>(null);
+  const [isMintModalOpen, setIsMintModalOpen] = useState(false);
 
   const handleExport = async () => {
+    // If GLB file is already exported, open mint modal
+    if (exportedGlbFile && latestPainting) {
+      setIsMintModalOpen(true);
+      return;
+    }
+
+    // Otherwise, export GLB
     if (isExporting || !paintingRef.current) return;
 
     setIsExporting(true);
-    setExportError(false);
     try {
       const result = await glbExportService.exportPaintingModel(paintingRef);
       if (result.isOk()) {
@@ -68,22 +77,18 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
           }
         }
 
-        // Download the file
-        const url = URL.createObjectURL(finalFile);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = finalFile.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Store the file for mint flow and open mint modal
+        setExportedGlbFile(finalFile);
+        setIsMintModalOpen(true);
+        logger.info("MintButton.exportSuccess", { fileName: finalFile.name, size: finalFile.size });
       } else {
         logger.error("MintButton.exportFailed", { error: result.error });
-        setExportError(true);
+        toast.error(`Export failed: ${result.error.message}`);
       }
     } catch (e) {
       logger.error("MintButton.exportException", { error: e });
-      setExportError(true);
+      const errorMessage = e instanceof Error ? e.message : "Export failed";
+      toast.error(`Export error: ${errorMessage}`);
     } finally {
       setIsExporting(false);
     }
@@ -204,8 +209,25 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
           pointerEvents: "none",
         }}
       >
-        <MintButton onClick={handleExport} isLoading={isExporting} isError={exportError} />
+        <MintButton onClick={handleExport} isLoading={isExporting} />
       </div>
+
+      {/* Mint Modal */}
+      {latestPainting && exportedGlbFile && (
+        <MintModal
+          isOpen={isMintModalOpen}
+          onClose={() => {
+            setIsMintModalOpen(false);
+            setExportedGlbFile(null);
+          }}
+          paintingMetadata={{
+            timestamp: latestPainting.timestamp ?? new Date().toISOString(),
+            paintingHash: latestPainting.id ?? `painting-${Date.now()}`,
+            thumbnailUrl: latestPainting.imageUrl ?? DEFAULT_THUMBNAIL,
+          }}
+          glbFile={exportedGlbFile}
+        />
+      )}
     </>
   );
 };

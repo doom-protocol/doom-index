@@ -2,6 +2,7 @@ import Coingecko from "@coingecko/coingecko-typescript";
 import { Result, ok, err } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
+import { handleApiError } from "@/lib/pure/error-handling";
 
 // Helper to extract return types from the SDK methods
 type CoinGeckoInstance = Coingecko;
@@ -180,18 +181,11 @@ export class CoinGeckoClient {
         return ok(fallback);
       }
 
-      logger.error("[CoinGeckoClient] API call failed", { error });
-
-      const message = error instanceof Error ? error.message : "Unknown error";
-      // Helper to extract status if possible (Stainless errors usually have 'status')
+      // Extract status if possible (Stainless errors usually have 'status')
       const status = (error as { status?: number } & Error)?.status;
+      const apiError = handleApiError(error, { provider: "coingecko" });
 
-      return err({
-        type: "ExternalApiError",
-        provider: "coingecko",
-        message,
-        status: typeof status === "number" ? status : undefined,
-      });
+      return err(status !== undefined ? { ...apiError, status } : apiError);
     }
   }
 }
