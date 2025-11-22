@@ -1,4 +1,4 @@
-import { and, or, lt, eq, desc, sql } from "drizzle-orm";
+import { and, or, lt, gt, eq, desc, asc, sql } from "drizzle-orm";
 import { err, ok, Result } from "neverthrow";
 import { paintings } from "@/db/schema/paintings";
 import { getDB } from "@/db";
@@ -48,16 +48,49 @@ type ArchiveIndexRow = {
   negative: string;
 };
 
-type ListArchiveOptions = {
+/**
+ * Sort direction for archive queries
+ * - "desc": Newest first (default, backward compatible)
+ * - "asc": Oldest first
+ */
+export type ArchiveSortDirection = "asc" | "desc";
+
+/**
+ * Archive query options with flexible pagination support
+ * Designed to support future extensions like token-based timeline queries
+ */
+export type ListArchiveOptions = {
   limit: number;
   cursor?: string;
   startDate?: string;
   endDate?: string;
+  /**
+   * Sort direction: "desc" for newest first (default), "asc" for oldest first
+   * @default "desc"
+   */
+  direction?: ArchiveSortDirection;
+  /**
+   * Optional metadata filters for future use
+   * Currently reserved for token timeline queries
+   */
+  paramsHash?: string;
+  seed?: string;
 };
 
-type ListArchiveResult = {
+/**
+ * Archive query result with bidirectional cursor support
+ */
+export type ListArchiveResult = {
   items: ArchiveIndexRow[];
+  /**
+   * Cursor for next page (forward pagination)
+   */
   cursor?: string;
+  /**
+   * Cursor for previous page (backward pagination)
+   * Only available when direction is "desc" and items are returned
+   */
+  prevCursor?: string;
   hasMore: boolean;
 };
 
@@ -88,8 +121,11 @@ export function createPaintingsRepository({
   async function list(options: ListArchiveOptions): Promise<Result<ListArchiveResult, AppError>> {
     try {
       const db = await getDB(d1Binding);
-      const { limit, cursor, startDate, endDate } = options;
+      const { limit, cursor, startDate, endDate, direction = "desc", paramsHash, seed } = options;
       const { startTs, endExclusiveTs } = toRangeTs(startDate, endDate);
+
+      // Validate and clamp limit
+      const clampedLimit = Math.min(Math.max(limit, 1), 100);
 
       const whereParts = [];
       if (typeof startTs === "number") {
@@ -99,10 +135,29 @@ export function createPaintingsRepository({
         whereParts.push(sql`${paintings.ts} < ${endExclusiveTs}`);
       }
 
+      // Optional metadata filters (for future token timeline queries)
+      if (paramsHash) {
+        whereParts.push(eq(paintings.paramsHash, paramsHash));
+      }
+      if (seed) {
+        whereParts.push(eq(paintings.seed, seed));
+      }
+
+      // Cursor-based pagination: direction-aware comparison
       if (cursor) {
         const c = decodeCursor(cursor);
-        whereParts.push(or(lt(paintings.ts, c.ts), and(eq(paintings.ts, c.ts), lt(paintings.id, c.id))));
+        if (direction === "desc") {
+          // For DESC: get items before cursor (ts < cursor.ts OR (ts == cursor.ts AND id < cursor.id))
+          whereParts.push(or(lt(paintings.ts, c.ts), and(eq(paintings.ts, c.ts), lt(paintings.id, c.id))));
+        } else {
+          // For ASC: get items after cursor (ts > cursor.ts OR (ts == cursor.ts AND id > cursor.id))
+          whereParts.push(or(gt(paintings.ts, c.ts), and(eq(paintings.ts, c.ts), gt(paintings.id, c.id))));
+        }
       }
+
+      // Build orderBy clause based on direction
+      const orderBy =
+        direction === "desc" ? [desc(paintings.ts), desc(paintings.id)] : [asc(paintings.ts), asc(paintings.id)];
 
       const rows = await db
         .select({
@@ -120,26 +175,51 @@ export function createPaintingsRepository({
         })
         .from(paintings)
         .where(whereParts.length ? and(...whereParts) : undefined)
-        .orderBy(desc(paintings.ts), desc(paintings.id))
-        .limit(limit)
+        .orderBy(...orderBy)
+        .limit(clampedLimit + 1) // Fetch one extra to determine hasMore
         .all();
 
-      const nextCursor =
-        rows.length > 0 ? encodeCursor({ ts: rows[rows.length - 1].ts, id: rows[rows.length - 1].id }) : undefined;
+      // Determine if there are more items
+      const hasMore = rows.length > clampedLimit;
+      const items = hasMore ? rows.slice(0, clampedLimit) : rows;
+
+      // Generate cursors
+      let nextCursor: string | undefined;
+      let prevCursor: string | undefined;
+
+      if (items.length > 0) {
+        if (direction === "desc") {
+          // For DESC: next cursor is the last item (older items)
+          nextCursor = encodeCursor({ ts: items[items.length - 1].ts, id: items[items.length - 1].id });
+          // prev cursor is the first item (newer items) - for backward navigation
+          prevCursor = encodeCursor({ ts: items[0].ts, id: items[0].id });
+        } else {
+          // For ASC: next cursor is the last item (newer items)
+          nextCursor = encodeCursor({ ts: items[items.length - 1].ts, id: items[items.length - 1].id });
+          // prev cursor is the first item (older items) - for backward navigation
+          prevCursor = encodeCursor({ ts: items[0].ts, id: items[0].id });
+        }
+      }
 
       log.debug("archive-repo.list", {
-        limit,
+        limit: clampedLimit,
+        direction,
         cursor: cursor || "none",
         startDate: startDate || "none",
         endDate: endDate || "none",
-        itemsCount: rows.length,
-        hasMore: !!nextCursor && rows.length === limit,
+        paramsHash: paramsHash || "none",
+        seed: seed || "none",
+        itemsCount: items.length,
+        hasMore,
+        nextCursor: nextCursor || "none",
+        prevCursor: prevCursor || "none",
       });
 
       return ok({
-        items: rows,
+        items,
         cursor: nextCursor,
-        hasMore: !!nextCursor && rows.length === limit,
+        prevCursor,
+        hasMore,
       });
     } catch (error) {
       log.error("archive-repo.list.error", { error });

@@ -51,7 +51,7 @@ export const DateFilter: React.FC = () => {
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-2 md:flex-row md:justify-center">
         <div className="flex flex-col gap-2 md:flex-row md:items-center">
           <div className="flex items-center gap-2">
-            <label htmlFor="startDate" className="text-xs text-white/70 md:text-sm whitespace-nowrap">
+            <label htmlFor="startDate" className="w-14 text-xs text-white/70 md:text-sm whitespace-nowrap">
               Start:
             </label>
             <input
@@ -64,7 +64,7 @@ export const DateFilter: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <label htmlFor="endDate" className="text-xs text-white/70 md:text-sm whitespace-nowrap">
+            <label htmlFor="endDate" className="w-14 text-xs text-white/70 md:text-sm whitespace-nowrap">
               End:
             </label>
             <input

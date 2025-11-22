@@ -120,7 +120,12 @@ describe("Archive List Service", () => {
 
               const limitedData = testData.slice(0, limit);
               const hasMore = testData.length > limit;
-              const cursor = hasMore ? encodeCursor({ ts: limitedData[limitedData.length - 1].ts, id: limitedData[limitedData.length - 1].id }) : undefined;
+              const cursor = hasMore
+                ? encodeCursor({
+                    ts: limitedData[limitedData.length - 1].ts,
+                    id: limitedData[limitedData.length - 1].id,
+                  })
+                : undefined;
 
               return {
                 items: limitedData,
@@ -159,7 +164,12 @@ describe("Archive List Service", () => {
 
               const limitedData = testData.slice(0, limit);
               const hasMore = testData.length > limit;
-              const cursor = hasMore ? encodeCursor({ ts: limitedData[limitedData.length - 1].ts, id: limitedData[limitedData.length - 1].id }) : undefined;
+              const cursor = hasMore
+                ? encodeCursor({
+                    ts: limitedData[limitedData.length - 1].ts,
+                    id: limitedData[limitedData.length - 1].id,
+                  })
+                : undefined;
 
               return {
                 items: limitedData,
