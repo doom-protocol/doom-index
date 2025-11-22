@@ -1,7 +1,6 @@
-# GLB Export 機能実装計画 (1st Round)
+# Mint NFT Implementation Plan
 
-本実装計画は NFT ミント機能の最初のフェーズとして、GLB エクスポート機能に特化しています。
-Mint ボタンを押した時に GLB がエクスポートできるところまでを実装し、NFT ミント機能との接続はおいておきます。
+## Round 1: GLB Export (Completed)
 
 - [x] 1. 環境セットアップと依存関係の追加
   - three-stdlib をインストールして GLTFExporter を利用可能にする
@@ -44,3 +43,40 @@ Mint ボタンを押した時に GLB がエクスポートできるところま�
   - エラーケース（無効なシーン、メモリ不足等）をテスト
   - バックグラウンド実行のテストを実装
   - _Requirements: 1.1, 1.4_
+
+## Round 2: IPFS Upload & Solana Minting
+
+- [ ] 8. Pinata 統合とサーバーサイド実装
+  - `pinata` (v3) パッケージをインストール
+  - `PINATA_JWT` を `src/env.ts` に追加（server-side only）
+  - `src/server/trpc/routers/ipfs.ts` を作成し `createSignedUploadUrl` プロシージャを実装
+  - メインの tRPC ルーターに `ipfs` ルーターを統合
+  - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
+
+- [ ] 9. クライアントサイド IPFS アップロード実装
+  - `useIpfsUpload` フックを実装（署名付き URL 取得 -> 直接アップロード）
+  - `MetadataBuilder` ユーティリティを実装（Metaplex 標準準拠 JSON 生成）
+  - アップロード進行状況（progress）の監視処理を実装
+  - アップロード失敗時のリトライロジックとエラーハンドリングを追加
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 4.4_
+
+- [ ] 10. Solana ウォレット接続と契約統合
+  - `@solana/web3.js`, `@solana/wallet-adapter-react` 等をインストール
+  - `NEXT_PUBLIC_SOLANA_RPC_URL` を `src/env.ts` に追加
+  - `useSolanaWallet` フックを実装（接続、署名、送信）
+  - `useSolanaContract` フックを実装（`getMintPricing` による料金取得）
+  - _Requirements: 5.1, 5.2, 5.3, 5.4, 6.2, 7.1_
+
+- [ ] 11. Mint モーダル UI と統合フロー実装
+  - `MintModal` コンポーネントを作成し、ステップ遷移（Export -> Upload -> Pricing -> Mint）を実装
+  - 既存の `MintButton` と GLB エクスポート機能をモーダルフローに統合
+  - 動的価格表示（SOL/USD/Fees）と残高確認 UI を実装
+  - ミントトランザクションの署名フローと完了画面（Explorer Link）を実装
+  - _Requirements: 6.1, 6.3, 6.4, 5.4, 4.4_
+
+- [ ] 12. 統合テストと検証
+  - IPFS アップロードとメタデータ構造の E2E テスト（Devnet）
+  - ウォレット接続からミント完了までのフロー検証
+  - エラー系（拒否、残高不足、API エラー）の動作確認
+  - パフォーマンス検証（GLB サイズ、アップロード速度）
+  - _Requirements: 6.4, 3.7, 5.2_
