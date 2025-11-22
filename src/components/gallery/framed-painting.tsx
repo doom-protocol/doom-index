@@ -25,19 +25,16 @@ import {
   isValidPointerEvent,
 } from "@/utils/three";
 import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
+import {
+  FrameModel,
+  PaintingGroup,
+  type PaintingContentProps,
+  type PaintingGroupProps,
+} from "@/components/ui/framed-painting-base";
 
 interface FramedPaintingProps {
   thumbnailUrl: string;
   framePosition?: [number, number, number];
-  paintingId?: string;
-}
-
-interface PaintingContentProps {
-  thumbnailUrl: string;
-  onPointerDown: (event: ThreeEvent<PointerEvent>) => void;
-  onPointerMove: (event: ThreeEvent<PointerEvent>) => void;
-  onPointerUp: (event: ThreeEvent<PointerEvent>) => boolean;
-  onPointerCancel: (event: ThreeEvent<PointerEvent>) => void;
   paintingId?: string;
 }
 
@@ -52,89 +49,6 @@ const FRAME_ROTATION: [number, number, number] = [0, Math.PI, 0];
 // Material properties constants
 const PAINTING_MATERIAL_ROUGHNESS = 0.25;
 const PAINTING_MATERIAL_METALNESS = 0.05;
-
-const FrameModel: React.FC = () => {
-  const { scene: frameModel } = useGLTF("/frame.glb") as GLTF;
-  const clonedModel = frameModel.clone();
-
-  return <primitive object={clonedModel} scale={[-1, 1, 1]} castShadow />;
-};
-FrameModel.displayName = "FrameModel";
-
-// Group wrapper with entrance animation
-interface PaintingGroupProps {
-  position: [number, number, number];
-  rotation: [number, number, number];
-  children: React.ReactNode;
-}
-
-const ENTRANCE_DURATION = 0.5;
-
-const PaintingGroup: React.FC<PaintingGroupProps> = ({ position, rotation, children }) => {
-  const groupRef = useRef<Group>(null);
-  const entranceElapsedRef = useRef(0);
-  const isEntranceActiveRef = useRef(true);
-
-  useFrame(({ invalidate }, delta) => {
-    if (!isEntranceActiveRef.current || !groupRef.current) {
-      return;
-    }
-
-    entranceElapsedRef.current += delta;
-    const progress = Math.min(entranceElapsedRef.current / ENTRANCE_DURATION, 1);
-
-    // Smooth opacity animation: 0 -> 1
-    const opacity = progress;
-
-    // Apply opacity to all children meshes
-    groupRef.current.traverse(child => {
-      if (child instanceof Mesh && child.material) {
-        const material = child.material;
-        if (Array.isArray(material)) {
-          material.forEach(mat => {
-            if (mat instanceof MeshStandardMaterial || mat instanceof MeshBasicMaterial) {
-              mat.transparent = true;
-              mat.opacity = opacity;
-            }
-          });
-        } else if (material instanceof MeshStandardMaterial || material instanceof MeshBasicMaterial) {
-          material.transparent = true;
-          material.opacity = opacity;
-        }
-      }
-    });
-
-    if (progress >= 1) {
-      isEntranceActiveRef.current = false;
-      // Reset transparency after animation
-      groupRef.current.traverse(child => {
-        if (child instanceof Mesh && child.material) {
-          const material = child.material;
-          if (Array.isArray(material)) {
-            material.forEach(mat => {
-              if (mat instanceof MeshStandardMaterial || mat instanceof MeshBasicMaterial) {
-                mat.transparent = false;
-                mat.opacity = 1;
-              }
-            });
-          } else if (material instanceof MeshStandardMaterial || material instanceof MeshBasicMaterial) {
-            material.transparent = false;
-            material.opacity = 1;
-          }
-        }
-      });
-    }
-
-    invalidate();
-  });
-
-  return (
-    <group ref={groupRef} position={position} rotation={rotation}>
-      {children}
-    </group>
-  );
-};
-PaintingGroup.displayName = "PaintingGroup";
 
 // Painting content component - handles texture transitions
 const PaintingContent: React.FC<PaintingContentProps> = ({

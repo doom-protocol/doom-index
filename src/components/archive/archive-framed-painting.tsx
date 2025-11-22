@@ -24,19 +24,17 @@ import {
   handlePointerUpForClick,
   isValidPointerEvent,
 } from "@/utils/three";
+import {
+  FrameModel,
+  PaintingGroup,
+  type PaintingContentProps,
+  type PaintingGroupProps,
+} from "@/components/ui/framed-painting-base";
 
 interface ArchiveFramedPaintingProps {
   item: Painting;
   framePosition?: [number, number, number];
   onPointerClick?: (item: Painting, event: ThreeEvent<PointerEvent>) => void;
-}
-
-interface PaintingContentProps {
-  thumbnailUrl: string;
-  onPointerDown: (event: ThreeEvent<PointerEvent>) => void;
-  onPointerMove: (event: ThreeEvent<PointerEvent>) => void;
-  onPointerUp: (event: ThreeEvent<PointerEvent>) => boolean;
-  onPointerCancel: (event: ThreeEvent<PointerEvent>) => void;
 }
 
 const PULSE_DURATION = 0.6;
@@ -52,83 +50,6 @@ const PAINTING_MATERIAL_METALNESS = 0.05;
 
 const FRAME_INNER_WIDTH = 0.6;
 const FRAME_INNER_HEIGHT = 0.8;
-
-const FrameModel: React.FC = () => {
-  const { scene: frameModel } = useGLTF("/frame.glb") as GLTF;
-  const clonedModel = frameModel.clone();
-
-  return <primitive object={clonedModel} scale={[-1, 1, 1]} castShadow />;
-};
-FrameModel.displayName = "FrameModel";
-
-interface PaintingGroupProps {
-  position: [number, number, number];
-  rotation: [number, number, number];
-  children: React.ReactNode;
-}
-
-const ENTRANCE_DURATION = 0.5;
-
-const PaintingGroup: React.FC<PaintingGroupProps> = ({ position, rotation, children }) => {
-  const groupRef = useRef<Group>(null);
-  const entranceElapsedRef = useRef(0);
-  const isEntranceActiveRef = useRef(true);
-
-  useFrame(({ invalidate }, delta) => {
-    if (!isEntranceActiveRef.current || !groupRef.current) {
-      return;
-    }
-
-    entranceElapsedRef.current += delta;
-    const progress = Math.min(entranceElapsedRef.current / ENTRANCE_DURATION, 1);
-    const opacity = progress;
-
-    groupRef.current.traverse(child => {
-      if (child instanceof Mesh && child.material) {
-        const material = child.material;
-        if (Array.isArray(material)) {
-          material.forEach(mat => {
-            if (mat instanceof MeshStandardMaterial || mat instanceof MeshBasicMaterial) {
-              mat.transparent = true;
-              mat.opacity = opacity;
-            }
-          });
-        } else if (material instanceof MeshStandardMaterial || material instanceof MeshBasicMaterial) {
-          material.transparent = true;
-          material.opacity = opacity;
-        }
-      }
-    });
-
-    if (progress >= 1) {
-      isEntranceActiveRef.current = false;
-      groupRef.current.traverse(child => {
-        if (child instanceof Mesh && child.material) {
-          const material = child.material;
-          if (Array.isArray(material)) {
-            material.forEach(mat => {
-              if (mat instanceof MeshStandardMaterial || mat instanceof MeshBasicMaterial) {
-                mat.transparent = false;
-                mat.opacity = 1;
-              }
-            });
-          } else if (material instanceof MeshStandardMaterial || material instanceof MeshBasicMaterial) {
-            material.transparent = false;
-            material.opacity = 1;
-          }
-        }
-      });
-    }
-
-    invalidate();
-  });
-
-  return (
-    <group ref={groupRef} position={position} rotation={rotation}>
-      {children}
-    </group>
-  );
-};
 
 const PaintingContent: React.FC<PaintingContentProps> = ({
   thumbnailUrl,
