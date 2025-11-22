@@ -22,6 +22,10 @@ export const env = createEnv({
     COINGECKO_API_KEY: z.string().optional(),
     FORCE_TOKEN_LIST: z.string().optional(),
     SLACK_WEBHOOK_URL: z.string().optional(),
+    // Admin Tools
+    ADMIN_SECRET: z.string().optional(),
+    CACHE_PURGE_API_TOKEN: z.string().optional(),
+    CACHE_PURGE_ZONE_ID: z.string().optional(),
   },
 
   /**
@@ -62,6 +66,9 @@ export const env = createEnv({
     COINGECKO_API_KEY: process.env.COINGECKO_API_KEY,
     FORCE_TOKEN_LIST: process.env.FORCE_TOKEN_LIST,
     SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL,
+    ADMIN_SECRET: process.env.ADMIN_SECRET,
+    CACHE_PURGE_API_TOKEN: process.env.CACHE_PURGE_API_TOKEN,
+    CACHE_PURGE_ZONE_ID: process.env.CACHE_PURGE_ZONE_ID,
     // Client
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     NEXT_PUBLIC_R2_URL: process.env.NEXT_PUBLIC_R2_URL,
