@@ -34,7 +34,6 @@ export const ipfsRouter = router({
       expires: 30,
       name: input.filename,
       keyvalues: input.keyvalues,
-      group: input.group,
     });
 
     if (result.isErr()) {

@@ -115,6 +115,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         lastTs: latestPainting?.timestamp ?? null,
       });
       previousThumbnailUrlRef.current = thumbnailUrl;
+      setExportedGlbFile(null);
     }
   }, [thumbnailUrl, latestPainting?.timestamp]);
 
@@ -213,21 +214,20 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
       </div>
 
       {/* Mint Modal */}
-      {latestPainting && exportedGlbFile && (
-        <MintModal
-          isOpen={isMintModalOpen}
-          onClose={() => {
-            setIsMintModalOpen(false);
-            setExportedGlbFile(null);
-          }}
-          paintingMetadata={{
-            timestamp: latestPainting.timestamp ?? new Date().toISOString(),
-            paintingHash: latestPainting.id ?? `painting-${Date.now()}`,
-            thumbnailUrl: latestPainting.imageUrl ?? DEFAULT_THUMBNAIL,
-          }}
-          glbFile={exportedGlbFile}
-        />
-      )}
+      <MintModal
+        isOpen={isMintModalOpen && !!latestPainting && !!exportedGlbFile}
+        onClose={() => {
+          setIsMintModalOpen(false);
+          // Do not clear exportedGlbFile here to allow exit animation
+          // It will be cleared when painting changes or manually if needed
+        }}
+        paintingMetadata={{
+          timestamp: latestPainting?.timestamp ?? new Date().toISOString(),
+          paintingHash: latestPainting?.id ?? `painting-${Date.now()}`,
+          thumbnailUrl: latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL,
+        }}
+        glbFile={exportedGlbFile}
+      />
     </>
   );
 };

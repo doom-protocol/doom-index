@@ -10,11 +10,11 @@ import { FC, useState, useCallback, useRef, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, Group } from "three";
 import { OrbitControls } from "@react-three/drei";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { useIpfsUpload } from "@/hooks/use-ipfs-upload";
 import { useSolanaWallet } from "@/hooks/use-solana-wallet";
 import { useSolanaMint } from "@/hooks/use-solana-mint";
 import { logger } from "@/utils/logger";
+import { getErrorMessage } from "@/utils/error";
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import { FramedPainting } from "@/components/gallery/framed-painting";
 import { Lights } from "@/components/gallery/lights";
@@ -36,9 +36,8 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
   const paintingRef = useRef<Group>(null);
 
   const { uploadGlbAndMetadata, isUploading } = useIpfsUpload();
-  const { publicKey, connected } = useSolanaWallet();
+  const { publicKey, connected, connectWallet, connecting: isWalletConnecting } = useSolanaWallet();
   const { mint, isMinting } = useSolanaMint();
-  const wallet = useWallet();
 
   // Mock price (in SOL)
   const MINT_PRICE = 0.1;
@@ -69,7 +68,12 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
       // Step 2: Connect wallet if not connected
       if (!connected) {
         sendGAEvent(GA_EVENTS.MINT_WALLET_CONNECT);
-        await wallet.connect();
+
+        const connectResult = await connectWallet();
+        if (connectResult.isErr()) {
+          // Error handling is done inside useSolanaWallet hook
+          return;
+        }
       }
 
       // Step 3: Mint NFT
@@ -96,12 +100,12 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
       }, 2000);
     } catch (error) {
       logger.error("mint.failed", { error });
-      const errorMessage = error instanceof Error ? error.message : "Minting failed";
+      const errorMessage = getErrorMessage(error) || "Minting failed";
       toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
     }
-  }, [glbFile, uploadGlbAndMetadata, paintingMetadata, publicKey, connected, wallet, mint, onClose]);
+  }, [glbFile, uploadGlbAndMetadata, paintingMetadata, publicKey, connected, connectWallet, mint, onClose]);
 
   // Handle modal close
   const handleClose = useCallback(() => {
@@ -109,25 +113,31 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
     onClose();
   }, [onClose]);
 
-  const isLoading = isUploading || isMinting || wallet.connecting || isProcessing;
+  const isLoading = isUploading || isMinting || isWalletConnecting || isProcessing;
 
   // Extract token ID from painting hash (first 8 characters)
   const tokenId = paintingMetadata.paintingHash.slice(0, 8);
   const collectionName = `DOOM NFT #${tokenId}`;
 
-  if (!isOpen) return null;
-
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm overflow-y-auto transition-opacity duration-300 ease-out opacity-100"
-      style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
+      className={`fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm overflow-y-auto transition-all duration-500 ease-in-out ${
+        isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+      }`}
+      style={{ backgroundColor: isOpen ? "rgba(0, 0, 0, 0.6)" : "transparent" }}
+      aria-hidden={!isOpen}
     >
-      <div className="relative w-full max-w-2xl my-auto bg-black/80 border border-white/15 rounded-[16px] sm:rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-md overflow-hidden liquid-glass-effect transition-all duration-300 ease-out opacity-100 scale-100 translate-y-0">
+      <div
+        className={`relative w-full max-w-2xl my-auto bg-black/80 border border-white/15 rounded-[16px] sm:rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-md overflow-hidden liquid-glass-effect transition-all duration-500 cubic-bezier(0.32, 0.72, 0, 1) ${
+          isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-8"
+        }`}
+      >
         {/* Close button */}
         <button
           onClick={handleClose}
           className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md transition-all hover:bg-white/20 active:scale-95 sm:hover:scale-110 cursor-pointer touch-manipulation"
           aria-label="Close modal"
+          tabIndex={isOpen ? 0 : -1}
         >
           <svg className="h-5 w-5 sm:h-4 sm:w-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -138,7 +148,7 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
           {/* 3D Preview */}
           <div className="relative h-[300px] sm:h-[350px] lg:h-[500px] w-full lg:w-[60%] bg-black/40">
             <Canvas
-              frameloop="always"
+              frameloop={isOpen ? "always" : "never"}
               shadows
               dpr={[1, 1.5]}
               camera={{
@@ -168,7 +178,7 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
                 target={[0, 0.8, 4.0]}
                 rotateSpeed={0.5}
                 zoomSpeed={0.5}
-                enabled={!isLoading}
+                enabled={!isLoading && isOpen}
               />
               <Suspense fallback={null}>
                 <FramedPainting ref={paintingRef} thumbnailUrl={paintingMetadata.thumbnailUrl} />
@@ -190,7 +200,8 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
             {/* Mint Button */}
             <button
               onClick={handleMint}
-              disabled={isLoading || !glbFile}
+              disabled={isLoading || !glbFile || !isOpen}
+              tabIndex={isOpen ? 0 : -1}
               className={`
                 relative w-full h-[52px] sm:h-[56px] rounded-[26px] sm:rounded-[28px] border
                 backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.2)]

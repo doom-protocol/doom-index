@@ -72,5 +72,4 @@ export const createSignedUploadUrlSchema = z.object({
       network: z.enum(["devnet", "mainnet-beta"]),
     })
     .optional(),
-  group: z.string().optional(),
 });

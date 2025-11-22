@@ -32,7 +32,6 @@ describe("unit/lib/pinata-client", () => {
           paintingHash: "abc123",
           network: "devnet",
         },
-        group: "nft-mints",
       });
 
       expect(result.isOk()).toBe(true);
@@ -50,7 +49,6 @@ describe("unit/lib/pinata-client", () => {
           paintingHash: "abc123",
           network: "devnet",
         },
-        groupId: "nft-mints",
       });
     });
 

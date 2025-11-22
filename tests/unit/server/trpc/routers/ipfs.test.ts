@@ -38,7 +38,6 @@ describe("unit/server/trpc/routers/ipfs", () => {
           paintingHash: "abc123",
           network: "devnet",
         },
-        group: "nft-mints",
       });
 
       expect(result.url).toBe("https://uploads.pinata.cloud/v3/files/signed-url-123");
@@ -53,7 +52,6 @@ describe("unit/server/trpc/routers/ipfs", () => {
           paintingHash: "abc123",
           network: "devnet",
         },
-        group: "nft-mints",
       });
     });
 

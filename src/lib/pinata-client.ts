@@ -17,7 +17,6 @@ export interface CreateSignedUrlOptions {
   expires: number; // Seconds
   name: string;
   keyvalues?: Record<string, string>;
-  group?: string;
 }
 
 /**
@@ -76,7 +75,6 @@ export function createPinataClient(deps: CreatePinataClientDeps = {}): PinataCli
           expires: options.expires,
           name: options.name,
           keyvalues: options.keyvalues,
-          groupId: options.group,
         });
 
         return ok({

@@ -116,7 +116,6 @@ export function useIpfsUpload(): UseIpfsUploadResult {
             network: "devnet",
             walletAddress: metadataParams.walletAddress,
           },
-          group: "nft-mints",
         });
 
         setProgress(20);
@@ -151,7 +150,6 @@ export function useIpfsUpload(): UseIpfsUploadResult {
             paintingHash: metadataParams.paintingHash,
             network: "devnet",
           },
-          group: "nft-mints",
         });
 
         setProgress(80);

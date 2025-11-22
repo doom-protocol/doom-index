@@ -30,6 +30,16 @@ export type ImageResponse = {
   providerMeta: Record<string, unknown>;
 };
 
+/**
+ * Common pagination options used across the application
+ */
+export interface PaginationOptions {
+  limit?: number;
+  cursor?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
 export type ImageGenerationOptions = {
   timeoutMs?: number;
 };
