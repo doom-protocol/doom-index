@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 import { ok, err } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import { createWorldPromptService } from "@/services/world-prompt-service";
-import type { TokenContextService, TokenMetaInput } from "@/services/token-context-service";
+import type { TokenAnalysisService, TokenMetaInput } from "@/services/token-analysis-service";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
 import type { PaintingContext } from "@/types/painting-context";
 
 describe("WorldPromptService (token mode)", () => {
-  let mockTokenContextService: TokenContextService;
+  let mockTokenAnalysisService: TokenAnalysisService;
   let mockWorkersAiClient: WorkersAiClient;
 
   const mockPaintingContext: PaintingContext = {
@@ -36,10 +36,10 @@ describe("WorldPromptService (token mode)", () => {
   };
 
   beforeEach(() => {
-    mockTokenContextService = {
+    mockTokenAnalysisService = {
       generateAndSaveShortContext: mock(() =>
         Promise.resolve(ok(mockShortContext)),
-      ) as unknown as TokenContextService["generateAndSaveShortContext"],
+      ) as unknown as TokenAnalysisService["generateAndSaveShortContext"],
     };
 
     mockWorkersAiClient = {
@@ -63,7 +63,7 @@ describe("WorldPromptService (token mode)", () => {
 
   const createService = () =>
     createWorldPromptService({
-      tokenContextService: mockTokenContextService,
+      tokenAnalysisService: mockTokenAnalysisService,
       workersAiClient: mockWorkersAiClient,
       getMinuteBucket: () => "2025-11-21T10:00",
     });
@@ -118,9 +118,9 @@ describe("WorldPromptService (token mode)", () => {
       message: "context fetch failed",
     };
 
-    mockTokenContextService.generateAndSaveShortContext = mock(() =>
+    mockTokenAnalysisService.generateAndSaveShortContext = mock(() =>
       Promise.resolve(err(contextError)),
-    ) as unknown as TokenContextService["generateAndSaveShortContext"];
+    ) as unknown as TokenAnalysisService["generateAndSaveShortContext"];
 
     const service = createService();
     const result = await service.composeTokenPrompt({
@@ -144,7 +144,7 @@ describe("WorldPromptService (token mode)", () => {
     });
 
     expect(result.isOk()).toBe(true);
-    expect(mockTokenContextService.generateAndSaveShortContext).not.toHaveBeenCalled();
+    expect(mockTokenAnalysisService.generateAndSaveShortContext).not.toHaveBeenCalled();
   });
 
   it("prepends dynamic reference integration instruction when referenceImageUrl is provided", async () => {

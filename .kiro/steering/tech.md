@@ -1,7 +1,7 @@
 ---
 title: DOOM INDEX - 技術スタックと運用
 includes: always
-updated: 2025-11-21
+updated: 2025-11-22
 ---
 
 ## 全体アーキテクチャ
@@ -25,9 +25,14 @@ updated: 2025-11-21
 - `src/app` App Router 構成（API/OGP/アーカイブ含む, Edge 前提）
 - `src/server/trpc` tRPC ルーター・スキーマ・コンテキスト（型安全 API）
 - `src/services` ビジネスロジック（市場データ、生成、状態、収益等）
-  - `src/services/dynamic-prompt` 動的プロンプト生成サービス（Workers AI + Tavily）
+  - `src/services/paintings/` 絵画生成オーケストレーターと関連サービス
+  - `src/services/token-analysis-service.ts` トークン分析サービス
 - `src/lib` 外部統合（R2, Provider, tRPC クライアント, 時刻, ハッシュ, 純関数群）
 - `src/lib/cache` Cloudflare Cache API ヘルパー（開発中）
+- `src/repositories` データアクセス層（D1）
+  - `paintings-repository.ts`
+  - `tokens-repository.ts`
+  - `market-snapshots-repository.ts`
 - `src/db` データベーススキーマ（Drizzle ORM）
   - `src/db/schema/archive.ts` アーカイブインデックステーブル
   - `src/db/schema/token-contexts.ts` トークンコンテキストキャッシュテーブル
@@ -52,14 +57,14 @@ updated: 2025-11-21
 
 ## 依存関係（主要）
 
-- ランタイム/フレームワーク: `next@16`, `react@19`, `typescript@^5.9`, `bun@1.3.2`
+- ランタイム/フレームワーク: `next@16.0.1`, `react@19.2.0`, `typescript@^5.9.3`, `bun@1.3.3`
 - 描画/3D: `three`, `@react-three/fiber`, `@react-three/drei`
 - **API/型安全: `@trpc/server@^11.7`, `@trpc/client@^11.7`, `@trpc/react-query@^11.7`, `@trpc/next@^11.7`**
 - **データベース: `drizzle-orm@^0.44`** - D1（SQLite）用 ORM
-- 状態/バリデーション: `@tanstack/react-query@^5.90`, `zod@^4.1`, `neverthrow@^7.2`
+- 状態/バリデーション: `@tanstack/react-query@^5.90`, `zod@^3.23`, `neverthrow@^7.2`
 - 生成/AI: `ai@^5.0`, `@ai-sdk/openai@^2.0`
 - **環境変数管理: `@t3-oss/env-nextjs@^0.13`** - 型安全な環境変数検証
-- 開発/CF: `wrangler@^4.49`, `@cloudflare/workers-types@^4.202`, `@opennextjs/cloudflare@^1.13`
+- 開発/CF: `wrangler@4.48.0`, `@cloudflare/workers-types@^4.202`, `@opennextjs/cloudflare@1.12.0`
 - 品質: `eslint@9`, `eslint-config-next@16`, `prettier@3`
 
 ## 環境変数

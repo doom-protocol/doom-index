@@ -1,23 +1,23 @@
 /**
- * TokenContextService Integration Tests
+ * TokenAnalysisService Integration Tests
  *
- * Tests the full flow of TokenContextService including:
+ * Tests the full flow of TokenAnalysisService including:
  * - D1 cache hit path
  * - D1 cache miss path (Tavily + Workers AI)
  * - Error handling
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { createTokenContextService } from "@/services/token-context-service";
+import { createTokenAnalysisService } from "@/services/token-analysis-service";
 import { TokensRepository } from "@/repositories/tokens-repository";
 import { createTavilyClient } from "@/lib/tavily-client";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import type { TokenMetaInput } from "@/services/token-context-service";
+import type { TokenMetaInput } from "@/services/token-analysis-service";
 import { getDB } from "@/db";
 
 // TODO: Fix D1 binding mock for integration tests
-describe.skip("TokenContextService Integration", () => {
+describe.skip("TokenAnalysisService Integration", () => {
   beforeEach(() => {
     // Setup: Ensure clean state
   });
@@ -47,7 +47,7 @@ describe.skip("TokenContextService Integration", () => {
       const tokensRepository = new TokensRepository(db);
       const tavilyClient = createTavilyClient();
       const workersAiClient = createWorkersAiClient();
-      const service = createTokenContextService({
+      const service = createTokenAnalysisService({
         tavilyClient,
         workersAiClient,
         tokensRepository,
@@ -107,7 +107,7 @@ describe.skip("TokenContextService Integration", () => {
       const tokensRepository = new TokensRepository(db);
       const tavilyClient = createTavilyClient();
       const workersAiClient = createWorkersAiClient();
-      const service = createTokenContextService({
+      const service = createTokenAnalysisService({
         tavilyClient,
         workersAiClient,
         tokensRepository,
@@ -164,7 +164,7 @@ describe.skip("TokenContextService Integration", () => {
       // Use invalid API key to force error
       const tavilyClient = createTavilyClient({ apiKey: "invalid-key" });
       const workersAiClient = createWorkersAiClient();
-      const service = createTokenContextService({
+      const service = createTokenAnalysisService({
         tavilyClient,
         workersAiClient,
         tokensRepository,

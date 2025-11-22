@@ -1,7 +1,7 @@
 ---
 title: DOOM INDEX - プロジェクト構造と規約
 includes: always
-updated: 2025-11-21
+updated: 2025-11-22
 ---
 
 ## ルート構成（概要）
@@ -55,14 +55,23 @@ updated: 2025-11-21
     - プロンプト合成/正規化/量子化/ハッシュ等の純粋関数
   - 共通: `hash.ts`, `round.ts`, `time.ts`, `runware-client.ts`, `kv.ts`
 - `services/` ビジネスロジック
-  - `generation.ts` 生成エンジン
-  - `market-cap.ts` 指標取得
-  - `prompt.ts` プロンプト作成
-  - `state.ts` 状態管理（R2 永続化）
-  - `revenue.ts` 収益レポート
+  - `image-generation.ts` 画像生成サービス
+  - `token-analysis-service.ts` トークン分析サービス
+  - `world-prompt-service.ts` ワールドプロンプトサービス
   - `viewer.ts` 閲覧者関連
-  - `container.ts` 実行環境 DI（Workers/Next.js）
-  - `archive/` **アーカイブサービス**（アーカイブデータ取得・検索）
+  - `paintings/` 絵画生成関連サービス
+    - `painting-generation-orchestrator.ts` メインオーケストレーター
+    - `token-selection.ts` トークン選択ロジック
+    - `painting-context-builder.ts` 絵画コンテキスト構築
+    - `scoring-engine.ts` スコアリングエンジン
+    - `token-data-fetch.ts` トークンデータ取得
+    - `market-data.ts` 市場データ取得
+    - `storage.ts` ストレージ操作
+    - `list.ts` リスト操作
+- `repositories/` **データアクセス層（D1）**
+  - `paintings-repository.ts`
+  - `tokens-repository.ts`
+  - `market-snapshots-repository.ts`
 - `db/` **データベーススキーマ（Drizzle ORM）**
   - `index.ts` スキーマエクスポートと DB 接続ファクトリ
   - `schema/archive.ts` アーカイブインデックステーブル定義

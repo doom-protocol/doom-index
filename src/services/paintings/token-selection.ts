@@ -262,7 +262,18 @@ export class TokenSelectionService {
 
     const tokenResult = await this.tokensRepository.findById(candidate.id);
 
-    if (tokenResult.isOk() && tokenResult.value === null) {
+    if (tokenResult.isErr()) {
+      logger.error("[TokenSelectionService] Failed to check existing token", {
+        operation: "storeTokenMetadata",
+        candidateId: candidate.id,
+        error: tokenResult.error,
+      });
+      throw new Error(`Failed to check existing token for ${candidate.id}: ${tokenResult.error.message}`);
+    }
+
+    const existingToken = tokenResult.value;
+
+    if (existingToken === null) {
       // Insert new token
       await this.tokensRepository.insert({
         id: candidate.id,
@@ -274,7 +285,7 @@ export class TokenSelectionService {
         createdAt: now,
         updatedAt: now,
       });
-    } else if (tokenResult.isOk() && tokenResult.value) {
+    } else {
       // Update existing token
       await this.tokensRepository.update(candidate.id, {
         updatedAt: now,

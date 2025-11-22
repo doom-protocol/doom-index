@@ -4,7 +4,7 @@ import { createImageGenerationService } from "@/services/image-generation";
 import type { WorldPromptService, PromptComposition } from "@/services/world-prompt-service";
 import type { ImageProvider, ImageRequest } from "@/types/domain";
 import type { PaintingContext } from "@/types/painting-context";
-import type { TokenMetaInput } from "@/services/token-context-service";
+import type { TokenMetaInput } from "@/services/token-analysis-service";
 import type { AppError } from "@/types/app-error";
 import type { VisualParams } from "@/lib/pure/mapping";
 

@@ -25,13 +25,13 @@ export const FALLBACK_SHORT_CONTEXT =
   "A speculative crypto token with unclear fundamentals but strong narrative-driven price action. Symbolic themes: crowds, flickering candles, unstable altars, and volatile market winds.";
 
 /**
- * Token context service interface
+ * Token analysis service interface
  */
-export interface TokenContextService {
+export interface TokenAnalysisService {
   generateAndSaveShortContext(input: TokenMetaInput): Promise<Result<string, AppError>>;
 }
 
-type CreateTokenContextServiceDeps = {
+type CreateTokenAnalysisServiceDeps = {
   tavilyClient: TavilyClient;
   workersAiClient: WorkersAiClient;
   tokensRepository: TokensRepository;
@@ -39,17 +39,17 @@ type CreateTokenContextServiceDeps = {
 };
 
 /**
- * Create token context service
+ * Create token analysis service
  *
  * @param deps - Dependencies including repository and clients
- * @returns Token context service instance
+ * @returns Token analysis service instance
  */
-export function createTokenContextService({
+export function createTokenAnalysisService({
   tavilyClient,
   workersAiClient,
   tokensRepository,
   log = logger,
-}: CreateTokenContextServiceDeps): TokenContextService {
+}: CreateTokenAnalysisServiceDeps): TokenAnalysisService {
   // Validate shortContext quality
   const validateShortContext = (shortContext: string): Result<void, AppError> => {
     const length = shortContext.length;
@@ -82,14 +82,14 @@ export function createTokenContextService({
   };
 
   async function generateAndSaveShortContext(input: TokenMetaInput): Promise<Result<string, AppError>> {
-    log.debug("token-context-service.generate.start", {
+    log.debug("token-analysis-service.generate.start", {
       tokenId: input.id,
       symbol: input.symbol,
       chainId: input.chainId,
     });
 
     // Call Tavily + Workers AI to generate context
-    log.info("token-context-service.generate.start", {
+    log.info("token-analysis-service.generate.start", {
       tokenId: input.id,
       symbol: input.symbol,
     });
@@ -104,7 +104,7 @@ export function createTokenContextService({
     });
 
     if (tavilyResult.isErr()) {
-      log.error("token-context-service.generate.tavily-error", {
+      log.error("token-analysis-service.generate.tavily-error", {
         tokenId: input.id,
         name: input.name,
         symbol: input.symbol,
@@ -118,7 +118,7 @@ export function createTokenContextService({
       return err(tavilyResult.error);
     }
 
-    log.info("token-context-service.generate.tavily-success", {
+    log.info("token-analysis-service.generate.tavily-success", {
       tokenId: input.id,
       symbol: input.symbol,
       articleCount: tavilyResult.value.articles.length,
@@ -126,7 +126,7 @@ export function createTokenContextService({
 
     // Step 3.2: Call Workers AI to generate JSON context from Tavily results
     const systemPrompt = `You are a cryptocurrency token analyst. Analyze the provided token information and generate a structured JSON response with the following field:
-- short_context: A 2-6 sentence English description of the token's purpose, narrative, and key characteristics (50-800 characters)
+- short_context: A 2-6 sentence English description of the token's purpose, narrative, and key characteristics (50-1000 characters)
 
 Respond with JSON only. Do not include any additional text, markdown formatting, or explanations outside the JSON structure.`;
 
@@ -151,7 +151,7 @@ Generate a concise context JSON for this token.`;
     });
 
     if (aiResult.isErr()) {
-      log.error("token-context-service.generate.ai-error", {
+      log.error("token-analysis-service.generate.ai-error", {
         tokenId: input.id,
         name: input.name,
         symbol: input.symbol,
@@ -165,7 +165,7 @@ Generate a concise context JSON for this token.`;
       return err(aiResult.error);
     }
 
-    log.info("token-context-service.generate.ai-success", {
+    log.info("token-analysis-service.generate.ai-success", {
       tokenId: input.id,
       symbol: input.symbol,
       modelId: aiResult.value.modelId,
@@ -177,7 +177,7 @@ Generate a concise context JSON for this token.`;
 
     // Defensively check if short_context exists and is a string
     if (typeof aiContext.short_context !== "string") {
-      log.warn("token-context-service.generate.invalid-response-format", {
+      log.warn("token-analysis-service.generate.invalid-response-format", {
         tokenId: input.id,
         symbol: input.symbol,
         modelId: aiResult.value.modelId,
@@ -192,7 +192,7 @@ Generate a concise context JSON for this token.`;
       const validationResult = validateShortContext(shortContext);
 
       if (validationResult.isErr()) {
-        log.warn("token-context-service.generate.quality-check-failed", {
+        log.warn("token-analysis-service.generate.quality-check-failed", {
           tokenId: input.id,
           symbol: input.symbol,
           error: validationResult.error,
@@ -209,7 +209,7 @@ Generate a concise context JSON for this token.`;
     // Step 3.5: Save shortContext to tokens table
     const saveResult = await tokensRepository.updateShortContext(input.id, validShortContext);
     if (saveResult.isErr()) {
-      log.warn("token-context-service.generate.save-short-context-failed", {
+      log.warn("token-analysis-service.generate.save-short-context-failed", {
         tokenId: input.id,
         symbol: input.symbol,
         error: saveResult.error,
@@ -218,7 +218,7 @@ Generate a concise context JSON for this token.`;
       return err(saveResult.error);
     }
 
-    log.info("token-context-service.generate.short-context-saved", {
+    log.info("token-analysis-service.generate.short-context-saved", {
       tokenId: input.id,
       symbol: input.symbol,
     });

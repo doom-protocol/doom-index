@@ -28,7 +28,7 @@ import { createImageGenerationService } from "@/services/image-generation";
 import { createRunwareProvider } from "@/lib/image-generation-providers/runware";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
 import { createTavilyClient } from "@/lib/tavily-client";
-import { createTokenContextService } from "@/services/token-context-service";
+import { createTokenAnalysisService } from "@/services/token-analysis-service";
 import { CoinGeckoClient } from "@/lib/coingecko-client";
 import { AlternativeMeClient } from "@/lib/alternative-me-client";
 import { createPaintingsService } from "@/services/paintings";
@@ -225,14 +225,14 @@ const main = async () => {
   const paintingsRepository = createLocalPaintingsRepository(db);
 
   // Initialize Services
-  const tokenContextService = createTokenContextService({
+  const tokenAnalysisService = createTokenAnalysisService({
     tavilyClient,
     workersAiClient,
     tokensRepository,
   });
 
   const worldPromptService = createWorldPromptService({
-    tokenContextService,
+    tokenAnalysisService,
     tokensRepository,
     workersAiClient,
   });

@@ -29,7 +29,7 @@ import { createPaintingsService } from "./index";
 import { resolveBucketOrThrow } from "@/lib/r2";
 import { extractIdFromFilename, buildPaintingKey } from "@/utils/paintings";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import { createTokenContextService } from "@/services/token-context-service";
+import { createTokenAnalysisService } from "@/services/token-analysis-service";
 import { createTavilyClient } from "@/lib/tavily-client";
 import type { SelectedToken } from "@/types/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
@@ -163,14 +163,14 @@ export class PaintingGenerationOrchestrator {
       // Initialize Workers AI client and token context service
       const workersAiClient = createWorkersAiClient({ aiBinding: cloudflareEnv.AI });
       const tavilyClient = createTavilyClient();
-      const tokenContextService = createTokenContextService({
+      const tokenAnalysisService = createTokenAnalysisService({
         tavilyClient,
         workersAiClient,
         tokensRepository: this.deps.tokensRepository,
       });
 
       const promptService = createWorldPromptService({
-        tokenContextService,
+        tokenAnalysisService,
         tokensRepository: this.deps.tokensRepository,
         workersAiClient,
       });

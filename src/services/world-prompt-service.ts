@@ -14,8 +14,8 @@ import { getMinuteBucket } from "@/utils/time";
 import { logger } from "@/utils/logger";
 import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
-import type { TokenContextService, TokenMetaInput } from "@/services/token-context-service";
-import { FALLBACK_SHORT_CONTEXT } from "@/services/token-context-service";
+import type { TokenAnalysisService, TokenMetaInput } from "@/services/token-analysis-service";
+import { FALLBACK_SHORT_CONTEXT } from "@/services/token-analysis-service";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
 import type { TokensRepository } from "@/repositories/tokens-repository";
 
@@ -41,7 +41,7 @@ type TokenPromptRequest = {
 };
 
 type WorldPromptServiceDeps = {
-  tokenContextService?: TokenContextService;
+  tokenAnalysisService?: TokenAnalysisService;
   tokensRepository?: TokensRepository;
   workersAiClient?: WorkersAiClient;
   getMinuteBucket?: () => string;
@@ -72,7 +72,7 @@ const numberFormatter = new Intl.NumberFormat("en-US", {
 });
 
 export function createWorldPromptService({
-  tokenContextService,
+  tokenAnalysisService,
   tokensRepository,
   workersAiClient,
   getMinuteBucket: minuteBucketFn = () => getMinuteBucket(),
@@ -304,15 +304,15 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
     }
 
     // 2. Generate if not found
-    if (!tokenContextService) {
+    if (!tokenAnalysisService) {
       log.warn("prompt.compose.token.context.missing-service", {
         tokenId: request.tokenMeta.id,
-        message: "tokenContextService not available, using fallback",
+        message: "tokenAnalysisService not available, using fallback",
       });
       return ok(FALLBACK_SHORT_CONTEXT);
     }
 
-    return tokenContextService.generateAndSaveShortContext(request.tokenMeta);
+    return tokenAnalysisService.generateAndSaveShortContext(request.tokenMeta);
   };
 
   async function composeTokenPrompt(request: TokenPromptRequest): Promise<Result<PromptComposition, AppError>> {
