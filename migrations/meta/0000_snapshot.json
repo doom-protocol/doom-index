@@ -102,38 +102,27 @@
       "indexes": {
         "idx_paintings_ts_id": {
           "name": "idx_paintings_ts_id",
-          "columns": [
-            "ts",
-            "id"
-          ],
+          "columns": ["ts", "id"],
           "isUnique": false
         },
         "idx_paintings_ts": {
           "name": "idx_paintings_ts",
-          "columns": [
-            "ts"
-          ],
+          "columns": ["ts"],
           "isUnique": false
         },
         "idx_paintings_params_hash": {
           "name": "idx_paintings_params_hash",
-          "columns": [
-            "params_hash"
-          ],
+          "columns": ["params_hash"],
           "isUnique": false
         },
         "idx_paintings_seed": {
           "name": "idx_paintings_seed",
-          "columns": [
-            "seed"
-          ],
+          "columns": ["seed"],
           "isUnique": false
         },
         "idx_paintings_r2_key": {
           "name": "idx_paintings_r2_key",
-          "columns": [
-            "r2_key"
-          ],
+          "columns": ["r2_key"],
           "isUnique": true
         }
       },
@@ -212,16 +201,12 @@
       "indexes": {
         "idx_tokens_symbol": {
           "name": "idx_tokens_symbol",
-          "columns": [
-            "symbol"
-          ],
+          "columns": ["symbol"],
           "isUnique": false
         },
         "idx_tokens_coingecko_id": {
           "name": "idx_tokens_coingecko_id",
-          "columns": [
-            "coingecko_id"
-          ],
+          "columns": ["coingecko_id"],
           "isUnique": false
         }
       },
@@ -314,9 +299,7 @@
       "indexes": {
         "idx_market_snapshots_created_at": {
           "name": "idx_market_snapshots_created_at",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         }
       },

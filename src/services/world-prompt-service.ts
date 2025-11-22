@@ -106,11 +106,7 @@ Follow FLUX prompting best practices:
 Your goal is to synthesize the provided token narrative, market state, and visual directives into a cohesive, cinematic FLUX prompt. Respond with the prompt text only. Do not include markdown, bullet points, headings, or commentary.`;
   };
 
-  const buildTokenUserPrompt = (
-    ctx: PaintingContext,
-    vp: VisualParams,
-    shortContext: string,
-  ): string => {
+  const buildTokenUserPrompt = (ctx: PaintingContext, vp: VisualParams, shortContext: string): string => {
     const motifLine = ctx.f.length ? ctx.f.join(", ") : "none";
     const hintsLine = ctx.h.length ? ctx.h.join(", ") : "none";
 

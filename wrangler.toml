@@ -1,5 +1,6 @@
 # Cloudflare Workers Configuration for DOOM INDEX
 
+account_id = "39bda21f5a552c28da4a86344a5c5c11"
 
 name = "doom-index"
 main = "./src/worker.ts"

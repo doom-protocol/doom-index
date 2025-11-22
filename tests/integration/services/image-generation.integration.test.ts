@@ -13,7 +13,6 @@ import { ok, err } from "neverthrow";
 import { createImageGenerationService } from "@/services/image-generation";
 import type { ImageProvider } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
-import type { McMapRounded } from "@/constants/token";
 import type { PaintingContext } from "@/types/painting-context";
 import type { PromptComposition, WorldPromptService } from "@/services/world-prompt-service";
 
@@ -278,38 +277,6 @@ describe("ImageGenerationService Integration", () => {
       mockImageProvider = {
         name: "mock",
         generate: mock(() => Promise.resolve(ok({ imageBuffer: new ArrayBuffer(1024), providerMeta: {} }))),
-      };
-
-      const mockComposition: PromptComposition = {
-        seed: "test-seed-error",
-        minuteBucket: "2024-01-01T12:00",
-        vp: {
-          fogDensity: 0.5,
-          skyTint: 0.5,
-          reflectivity: 0.5,
-          blueBalance: 0.5,
-          vegetationDensity: 0.5,
-          organicPattern: 0.5,
-          radiationGlow: 0.5,
-          debrisIntensity: 0.5,
-          mechanicalPattern: 0.5,
-          metallicRatio: 0.5,
-          fractalDensity: 0.5,
-          bioluminescence: 0.5,
-          shadowDepth: 0.5,
-          redHighlight: 0.5,
-          lightIntensity: 0.5,
-          warmHue: 0.5,
-        },
-        prompt: {
-          text: "test",
-          negative: "test",
-          size: { w: 1024, h: 1024 },
-          format: "webp" as const,
-          seed: "test-seed-error",
-          filename: "test.webp",
-        },
-        paramsHash: "test-hash-error",
       };
 
       mockPromptService = {

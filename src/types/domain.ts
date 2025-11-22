@@ -9,7 +9,6 @@ import type { AppError } from "@/types/app-error";
 export type TokenTicker = string;
 export type McMap = Record<string, number>;
 
-
 export type TokenState = {
   ticker: TokenTicker;
   thumbnailUrl: string;
