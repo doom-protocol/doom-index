@@ -9,7 +9,7 @@ import { getErrorMessage } from "@/utils/error";
 /**
  * Default Workers AI model ID
  */
-const DEFAULT_WORKERS_AI_MODEL = "@cf/meta/llama-3-8b-instruct" as keyof AiModels;
+const DEFAULT_WORKERS_AI_MODEL = "@cf/ibm-granite/granite-4.0-h-micro" as keyof AiModels;
 
 /**
  * Request for text generation
