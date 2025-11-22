@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FC } from "react";
 import useSound from "use-sound";
 import { useHaptic } from "use-haptic";
-import { useLatestPaintingRefetch } from "@/hooks/use-latest-painting";
+import { useLatestPainting, useLatestPaintingRefetch } from "@/hooks/use-latest-painting";
 import { logger } from "@/utils/logger";
 
 const HOUR_MS = 3600000;
@@ -16,6 +16,7 @@ export const HeaderProgress: FC = () => {
   const { triggerHaptic } = useHaptic();
   const [playChime] = useSound("/clock-chime.mp3", { interrupt: true });
   const refetchLatestPainting = useLatestPaintingRefetch();
+  const { dataUpdatedAt } = useLatestPainting();
 
   useEffect(() => {
     let animationFrameId: number | undefined;
@@ -46,9 +47,23 @@ export const HeaderProgress: FC = () => {
         triggerHaptic();
       }
       playChime();
-      refetchLatestPainting().catch(error => {
-        logger.error("header-progress.refetchLatestPainting.failed", { error });
-      });
+
+      // Only refetch if data is stale (older than 1 hour)
+      // React Query handles automatic refetches every hour, so manual refetch is only needed
+      // if the automatic refetch hasn't occurred yet or failed
+      const timeSinceLastUpdate = Date.now() - dataUpdatedAt;
+      const isDataFresh = timeSinceLastUpdate < HOUR_MS;
+
+      if (!isDataFresh) {
+        refetchLatestPainting().catch(error => {
+          logger.error("header-progress.refetchLatestPainting.failed", { error });
+        });
+      } else {
+        logger.debug("header-progress.refetch.skipped", {
+          timeSinceLastUpdate: Math.round(timeSinceLastUpdate / 1000),
+          reason: "data_fresh",
+        });
+      }
     };
 
     const tick = (timestamp: number) => {
@@ -93,7 +108,7 @@ export const HeaderProgress: FC = () => {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [playChime, refetchLatestPainting, triggerHaptic]);
+  }, [playChime, refetchLatestPainting, triggerHaptic, dataUpdatedAt]);
 
   const minutes = Math.floor(displaySecond / 60);
   const seconds = displaySecond % 60;

@@ -62,7 +62,7 @@ type ListArchiveResult = {
 };
 
 /**
- * Archive repository interface
+ * Paintings repository interface
  */
 export interface PaintingsRepository {
   list(options: ListArchiveOptions): Promise<Result<ListArchiveResult, AppError>>;
@@ -76,10 +76,10 @@ type CreatePaintingsRepositoryDeps = {
 };
 
 /**
- * Create archive repository
+ * Create paintings repository
  *
  * @param deps - Dependencies including D1 binding
- * @returns Archive repository instance
+ * @returns Paintings repository instance
  */
 export function createPaintingsRepository({
   d1Binding,

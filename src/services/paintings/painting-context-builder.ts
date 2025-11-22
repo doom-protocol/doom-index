@@ -54,6 +54,10 @@ export class PaintingContextBuilder {
       }
 
       // Calculate volatility score from price changes
+      // Formula: (|priceChange24h| + |priceChange7d| / 7) / 50, clamped to [0, 1]
+      // - Asymmetric weighting: 24h change has full weight, 7d change is averaged (÷7) to prevent over-weighting
+      // - Division by 50 maps typical percent changes (0-50%+) into 0-1 range for classification
+      // - Thresholds: 0.33 → "low", 0.33-0.66 → "medium", 0.66+ → "high" volatility
       const volatilityScore = Math.min(
         1,
         (Math.abs(selectedToken.priceChange24h) + Math.abs(selectedToken.priceChange7d) / 7) / 50,

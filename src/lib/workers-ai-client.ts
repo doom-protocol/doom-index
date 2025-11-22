@@ -55,7 +55,7 @@ export interface WorkersAiClient {
 type CreateWorkersAiClientDeps = {
   aiBinding?: Ai;
   defaultModel?: keyof AiModels;
-  timeoutMs?: number; // Default: 10 seconds for Workers AI
+  timeoutMs?: number; // Default: 30 seconds for Workers AI
   log?: typeof logger;
 };
 
