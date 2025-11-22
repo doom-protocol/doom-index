@@ -260,7 +260,7 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ startDate, endDa
 
   const handleItemClick = (item: Painting) => {
     setIsTransitioning(true);
-    sendGAEvent(GA_EVENTS.ARCHIVE_PAINING_CLICK, { painting_id: item.id });
+    sendGAEvent(GA_EVENTS.ARCHIVE_PAINTING_CLICK, { painting_id: item.id });
     // Wait for fade out animation to complete before showing detail view
     setTimeout(() => {
       setSelectedItem(item);

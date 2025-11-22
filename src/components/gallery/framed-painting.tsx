@@ -392,7 +392,7 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
     if (shouldTrigger) {
       triggerPulse();
       triggerHaptics();
-      if (paintingId) sendGAEvent(GA_EVENTS.GALLERY_PAINING_CLICK, { painting_id: paintingId });
+      if (paintingId) sendGAEvent(GA_EVENTS.GALLERY_PAINTING_CLICK, { painting_id: paintingId });
     }
   };
 

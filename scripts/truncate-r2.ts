@@ -66,14 +66,14 @@ type R2Objects = {
 function createR2ClientFromEnv(): Result<R2Client, AppError> {
   const accessKeyId = process.env.R2_ACCESS_KEY_ID;
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-  const accountId = process.env.CF_ACCOUNT_ID;
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const bucketName = process.env.R2_BUCKET_NAME || "doom-index-storage";
 
   if (!accessKeyId || !secretAccessKey || !accountId) {
     return err({
       type: "InternalError",
       message:
-        "Missing R2 credentials. Set R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and CF_ACCOUNT_ID environment variables.",
+        "Missing R2 credentials. Set R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and CLOUDFLARE_ACCOUNT_ID environment variables.",
     });
   }
 
