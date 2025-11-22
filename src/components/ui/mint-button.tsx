@@ -8,7 +8,7 @@ interface MintButtonProps {
   disabled?: boolean;
 }
 
-export const MintButton: FC<MintButtonProps> = ({ disabled = true }) => {
+export const MintButton: FC<MintButtonProps> = ({ disabled = false }) => {
   const { triggerHaptic } = useHaptic();
 
   const onClick = () => {
@@ -27,10 +27,11 @@ export const MintButton: FC<MintButtonProps> = ({ disabled = true }) => {
         backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.2)] shadow-white/5
         flex items-center justify-center transition-all duration-300 ease-in-out
         touch-manipulation p-0 outline-none pointer-events-auto overflow-hidden
+        transform-gpu will-change-transform
         ${
           disabled
             ? "bg-white/5 cursor-not-allowed opacity-60 active:animate-shake liquid-glass-effect"
-            : "bg-white/8 cursor-pointer opacity-100 hover:bg-white/12 hover:scale-105 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:shadow-white/10 active:scale-95 active:bg-white/15 liquid-glass-effect"
+            : "bg-white/8 cursor-pointer opacity-100 hover:bg-white/12 hover:scale-105 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:shadow-white/10 active:scale-90 active:bg-white/20 active:shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:shadow-white/15 liquid-glass-effect"
         }
       `}
       onClick={onClick}
