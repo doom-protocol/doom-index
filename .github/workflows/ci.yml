@@ -124,6 +124,8 @@ jobs:
       - name: Override NODE_ENV for test
         run: |
           sed -i 's/^NODE_ENV=.*/NODE_ENV="test"/' .dev.vars
+          # Ensure NEXT_PUBLIC_R2_URL is empty for tests to avoid 404 errors from route handler checks
+          sed -i 's|^NEXT_PUBLIC_R2_URL=.*|NEXT_PUBLIC_R2_URL=""|' .dev.vars
 
       - name: Run tests
         run: bun test --env-file=.dev.vars --preload=./tests/preload.ts --bail
