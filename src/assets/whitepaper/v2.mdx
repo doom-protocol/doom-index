@@ -38,6 +38,12 @@ Solana's memecoin markets—where rationality and irrationality collide at light
 
 DOOM INDEX was born to **archive these emotions**—transforming raw market data into paintings that capture what the numbers alone never could: how the market _felt_ at that exact moment.
 
+### The Evolution from v1 to v2
+
+**v1 (Current)** is the proof of concept—fixed 8 tokens, fully automated generation, one new painting every minute. It demonstrates that markets can become art.
+
+**v2 (Coming Soon)** introduces dynamic token selection and cultural archiving. Instead of fixed tokens, the system selects the most culturally relevant memecoin each hour. This creates a living archive that evolves with crypto culture itself.
+
 ---
 
 ## 2. What DOOM INDEX v2 Is
@@ -62,18 +68,36 @@ Crypto culture changes every hour → DOOM INDEX changes with it.
 
 Fully autonomous from trend selection to painting preservation.
 
-![Generation architecture](/diagrams/generation-process.svg)
+![Painting generation pipeline](/diagrams/generation-process.svg)
 
 The system runs on Cloudflare infrastructure:
-
 - **Cron Triggers**: Hourly execution
 - **Workers**: Serverless computation
 - **D1 Database**: Market data storage
 - **R2 Storage**: Image archival
 
+### The Algorithm
+
+**1. Market Observation**
+The system captures the market state through multiple psychological indicators, creating a comprehensive snapshot of collective sentiment.
+
+**2. Dynamic Token Selection**
+Unlike v1's fixed 8 tokens, v2 selects the single most culturally dominant memecoin through a weighted scoring algorithm that considers trending momentum, market impact, and emotional resonance.
+
+**3. Psychological Translation**
+Statistical data is transformed through 10 distinct context components, each mapping market conditions to artistic elements in a medieval allegorical framework.
+
+**4. AI Interpretation**
+Runware FLUX Kontext AI interprets the weighted prompt to create a deterministic painting that captures the market's emotional state.
+
+**5. Permanent Archival**
+Each painting is stored with full market context in Cloudflare D1 and R2, creating an immutable record of financial emotion.
+
 ---
 
 ## 4. How Generation Works
+
+Every hour, the system captures market data and translates it into a painting through a weighted composition algorithm:
 
 ### Step A — Market Observation
 
@@ -99,9 +123,17 @@ Examples:
 - During crashes, death symbols become protagonists
 - When markets euphorize, golden idols move to center stage
 
+**1. Relative Dominance Calculation**
+The token with the highest market cap becomes the reference point. All other tokens are weighted relative to this dominant token—not to fixed thresholds. This means the painting always reflects _which forces are stronger than others_ at that moment.
+
+**2. Non-Linear Emphasis**
+A power function amplifies differences. If FEAR is 2x higher than HOPE, the visual weight difference becomes even more pronounced. This makes dominant emotions clearly visible in the composition.
+
 ### Step C — Translating Data Into Symbols
 
 Convert statistical values → psychology → art language (10 elements)
+
+Each token maps to a visual motif through symbolic mapping. The AI receives a weighted prompt in the format `(element:weight)`, creating a medieval allegorical oil painting where visual presence directly reflects market dominance.
 
 | Context Component | Meaning                              |
 | ----------------- | ------------------------------------ |
@@ -143,25 +175,43 @@ Permanent preservation in Cloudflare D1 + R2
 
 = Record of the doomsday clock
 
+### AI as Interpreter
+
+> _"There are no facts, only interpretations."_
+> — Friedrich Nietzsche
+
+DOOM INDEX doesn't show you "the truth" about markets—it shows you an **interpretation**.
+
+Charts display numbers. Prices show transactions. These are valuable, but they're one way to see markets. DOOM INDEX offers another: **emotional translation**. The AI doesn't analyze or predict. It translates market psychology into visual language, the same way a poet translates feelings into words.
+
+When AI interprets market data through symbolic mapping, you experience the market from a different angle—not as data, but as **atmosphere**.
+
+**Deterministic Output**
+Same market state = same painting. The system uses a hash of the rounded market caps to skip regeneration when nothing significant has changed, ensuring consistency.
+
 ---
 
 ## 5. Cultural Significance
 
-DOOM INDEX is not just art:
+DOOM INDEX v2 represents a fundamental shift in how we understand and archive market psychology. Unlike traditional financial analysis, it creates a living emotional record that evolves with culture itself.
 
-📌 **A Mirror**
-Market psychology reflects directly
-The unconscious of crypto capitalism
+### A Mirror of Collective Unconscious
 
-📌 **A Doomsday Clock**
-When fear dominates, darkness thickens
-A device measuring distance to doom
+Market psychology reflects directly through the selection of culturally dominant tokens. When a particular memecoin captures the zeitgeist—whether through viral marketing, celebrity endorsements, or genuine innovation—it becomes the lens through which the entire market's emotional state is interpreted.
 
-📌 **A Chronicle**
-Future historians will cite it
-The historiography of speculative culture
+### A Doomsday Clock for Financial Sentiment
 
-Crypto's emotions don't vanish. They are archived.
+When fear dominates the market, darkness thickens in the paintings. When hope prevails, light breaks through. Each artwork becomes a visual gauge of collective anxiety levels, providing a real-time emotional barometer that traditional metrics cannot capture.
+
+### A Chronicle of Speculative Culture
+
+Future historians will cite DOOM INDEX as primary source material for understanding the emotional undercurrents of crypto markets. Every painting becomes a timestamp of collective psychology—a permanent record of how thousands of traders felt at that exact moment in time.
+
+### Why This Matters Now
+
+In an era where AI can generate infinite art, scarcity comes from **cultural relevance**. DOOM INDEX v2 doesn't just create art—it creates **historically significant art** by tying each piece to the most culturally dominant narrative of that moment.
+
+Crypto's emotions don't vanish. They are archived, interpreted, and made visible for generations to come.
 
 ---
 

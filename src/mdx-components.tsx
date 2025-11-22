@@ -31,7 +31,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </code>
     ),
     pre: ({ children }: { children?: ReactNode }) => (
-      <pre className="mb-6 whitespace-pre-wrap break-words">{children}</pre>
+      <pre className="mb-6 text-sm whitespace-pre-wrap break-words bg-gray-50 p-4 rounded border border-gray-200 overflow-x-auto">{children}</pre>
     ),
     blockquote: ({ children }: { children?: ReactNode }) => (
       <blockquote className="pl-6 pr-4 py-2 italic mb-6 border-l-4 border-[#666] bg-[#f5f5f5]">{children}</blockquote>
@@ -48,14 +48,18 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     table: ({ children }: { children?: ReactNode }) => (
       <div className="overflow-x-auto mb-6 my-6 w-full">
-        <table className="min-w-full">{children}</table>
+        <table className="min-w-full border-collapse border border-gray-300 bg-white">{children}</table>
       </div>
     ),
-    thead: ({ children }: { children?: ReactNode }) => <thead>{children}</thead>,
+    thead: ({ children }: { children?: ReactNode }) => <thead className="bg-gray-50">{children}</thead>,
     tbody: ({ children }: { children?: ReactNode }) => <tbody>{children}</tbody>,
-    tr: ({ children }: { children?: ReactNode }) => <tr>{children}</tr>,
-    th: ({ children }: { children?: ReactNode }) => <th>{children}</th>,
-    td: ({ children }: { children?: ReactNode }) => <td>{children}</td>,
+    tr: ({ children }: { children?: ReactNode }) => <tr className="border-b border-gray-200">{children}</tr>,
+    th: ({ children }: { children?: ReactNode }) => (
+      <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-900">{children}</th>
+    ),
+    td: ({ children }: { children?: ReactNode }) => (
+      <td className="border border-gray-300 px-4 py-3 text-gray-700">{children}</td>
+    ),
     img: ({ src, alt }: { src?: string; alt?: string }) => (
       <div className="my-6 flex flex-col items-center">
         <img src={src} alt={alt} className="max-w-xs h-auto border border-[#ddd]" />
