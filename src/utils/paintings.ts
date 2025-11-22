@@ -7,29 +7,29 @@ import { env } from "@/env";
 
 /**
  * Build public API path for an R2 object key.
- * If NEXT_PUBLIC_R2_DOMAIN is set, returns absolute URL (e.g. https://assets.domain.com/key)
+ * If NEXT_PUBLIC_R2_URL is set, returns absolute URL (e.g. https://storage.doomindex.fun/key)
  * Otherwise returns relative API path (e.g. /api/r2/key)
  *
  * Supports both formats:
- * - With protocol: "https://storage.doomindex.fun"
+ * - With protocol: "https://storage.doomindex.fun" or "http://localhost:8787/api/r2"
  * - Without protocol: "storage.doomindex.fun" (will default to https, or http for localhost)
  */
 export function buildPublicR2Path(key: string): string {
   const normalized = key.replace(/^\/+/, "");
 
-  if (env.NEXT_PUBLIC_R2_DOMAIN) {
+  if (env.NEXT_PUBLIC_R2_URL) {
     // Remove trailing slashes
-    let domain = env.NEXT_PUBLIC_R2_DOMAIN.replace(/\/+$/, "");
+    let url = env.NEXT_PUBLIC_R2_URL.replace(/\/+$/, "");
 
     // Check if URL already includes protocol
-    if (domain.startsWith("http://") || domain.startsWith("https://")) {
+    if (url.startsWith("http://") || url.startsWith("https://")) {
       // Already has protocol, use as-is
-      return `${domain}/${normalized}`;
+      return `${url}/${normalized}`;
     }
 
     // No protocol, determine based on domain
-    const protocol = domain.startsWith("localhost") ? "http" : "https";
-    return `${protocol}://${domain}/${normalized}`;
+    const protocol = url.startsWith("localhost") ? "http" : "https";
+    return `${protocol}://${url}/${normalized}`;
   }
 
   return `/api/r2/${normalized}`;

@@ -134,18 +134,18 @@ async function getArtworkImageSrc(
   const keyPath = keySegments.join("/");
   let baseImageUrl: string;
 
-  if (env.NEXT_PUBLIC_R2_DOMAIN) {
+  if (env.NEXT_PUBLIC_R2_URL) {
     // Remove trailing slashes
-    let domain = env.NEXT_PUBLIC_R2_DOMAIN.replace(/\/+$/, "");
+    let url = env.NEXT_PUBLIC_R2_URL.replace(/\/+$/, "");
 
     // Check if URL already includes protocol
-    if (domain.startsWith("http://") || domain.startsWith("https://")) {
+    if (url.startsWith("http://") || url.startsWith("https://")) {
       // Already has protocol, use as-is
-      baseImageUrl = `${domain}/${keyPath}`;
+      baseImageUrl = `${url}/${keyPath}`;
     } else {
       // No protocol, determine based on domain
-      const protocol = domain.startsWith("localhost") ? "http" : "https";
-      baseImageUrl = `${protocol}://${domain}/${keyPath}`;
+      const protocol = url.startsWith("localhost") ? "http" : "https";
+      baseImageUrl = `${protocol}://${url}/${keyPath}`;
     }
   } else {
     const origin = new URL(requestUrl).origin;

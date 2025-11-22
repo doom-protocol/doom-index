@@ -29,9 +29,9 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_BASE_URL: z.string().min(1),
-    // R2 Public Domain (e.g., "pub-1234.r2.dev" or "assets.mydomain.com")
-    // If set, images will be served directly from this domain instead of /api/r2
-    NEXT_PUBLIC_R2_DOMAIN: z.string().optional(),
+    // R2 Public URL (e.g., "https://storage.doomindex.fun" or "http://localhost:8787/api/r2")
+    // If set, images will be served directly from this URL instead of /api/r2 endpoint
+    NEXT_PUBLIC_R2_URL: z.string().min(1),
   },
 
   /**
@@ -62,7 +62,7 @@ export const env = createEnv({
     FORCE_TOKEN_LIST: process.env.FORCE_TOKEN_LIST,
     // Client
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
-    NEXT_PUBLIC_R2_DOMAIN: process.env.NEXT_PUBLIC_R2_DOMAIN,
+    NEXT_PUBLIC_R2_URL: process.env.NEXT_PUBLIC_R2_URL,
     // Shared
     IMAGE_MODEL: process.env.IMAGE_MODEL,
     NODE_ENV: process.env.NODE_ENV,
