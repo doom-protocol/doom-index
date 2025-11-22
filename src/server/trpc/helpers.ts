@@ -38,32 +38,6 @@ export function resolveR2BucketOrThrow(ctx: Context, errorContext?: Record<strin
 }
 
 /**
- * Convert Result<T, AppError> to value or throw TRPCError
- *
- * @param result - Result to convert
- * @param ctx - tRPC context for logging
- * @param errorContext - Additional context for error logging
- * @returns Value from Result
- * @throws TRPCError if result is error
- */
-export function resultOrThrow<T>(result: Result<T, AppError>, ctx: Context, errorContext?: Record<string, unknown>): T {
-  if (result.isErr()) {
-    ctx.logger.error("trpc.result.error", {
-      ...errorContext,
-      error: result.error,
-    });
-
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: result.error.message,
-      cause: result.error,
-    });
-  }
-
-  return result.value;
-}
-
-/**
  * Handle Result<T, AppError> with custom error handling
  *
  * @param result - Result to handle
@@ -72,7 +46,7 @@ export function resultOrThrow<T>(result: Result<T, AppError>, ctx: Context, erro
  * @param errorContext - Additional context for error logging
  * @returns Value from Result or result of onError
  */
-export function handleResult<T, R = T>(
+function handleResult<T, R = T>(
   result: Result<T, AppError>,
   ctx: Context,
   onError?: (error: AppError) => R,
@@ -96,4 +70,17 @@ export function handleResult<T, R = T>(
   }
 
   return result.value;
+}
+
+/**
+ * Convert Result<T, AppError> to value or throw TRPCError
+ *
+ * @param result - Result to convert
+ * @param ctx - tRPC context for logging
+ * @param errorContext - Additional context for error logging
+ * @returns Value from Result
+ * @throws TRPCError if result is error
+ */
+export function resultOrThrow<T>(result: Result<T, AppError>, ctx: Context, errorContext?: Record<string, unknown>): T {
+  return handleResult(result, ctx, undefined, errorContext);
 }

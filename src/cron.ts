@@ -1,19 +1,71 @@
 /**
  * Cloudflare Workers Cron Handler
  *
- * Logic for Cron Triggers executed every minute.
- * Calls GenerationService.runMinuteGeneration() to perform
- * image generation and state updates.
+ * Executes every hour to:
+ * 1. Check idempotency (hourBucket)
+ * 2. Select token from trending or force list
+ * 3. Fetch market data and store snapshot
+ * 4. Build painting context
+ * 5. Generate prompt
+ * 6. Generate image
+ * 7. Store painting to R2 and D1
  */
 
-import { createServicesForWorkers } from "./services/container";
-// import { createViewerService } from "./services/viewer";
+import { Result } from "neverthrow";
 import { logger } from "./utils/logger";
 import { getErrorMessage, getErrorStack } from "./utils/error";
+import { PaintingGenerationOrchestrator } from "./services/paintings/painting-generation-orchestrator";
+import { TokenSelectionService } from "./services/paintings/token-selection";
+import { TokenDataFetchService } from "./services/paintings/token-data-fetch";
+import { MarketDataService } from "./services/paintings/market-data";
+import { PaintingContextBuilder } from "./services/paintings/painting-context-builder";
+import { CoinGeckoClient } from "./lib/coingecko-client";
+import { AlternativeMeClient } from "./lib/alternative-me-client";
+import { MarketSnapshotsRepository } from "./repositories/market-snapshots-repository";
+import { TokensRepository } from "./repositories/tokens-repository";
+import { getDB } from "./db";
+import type { AppError } from "./types/app-error";
+import type { PaintingGenerationResult } from "./services/paintings/painting-generation-orchestrator";
+import { env as runtimeEnv } from "./env";
+
+// ============================================================================
+// Hourly Generation Pipeline
+// ============================================================================
 
 /**
- * Processing logic for Cron execution
+ * Create orchestrator with all dependencies
  */
+async function createOrchestrator(env: Cloudflare.Env): Promise<PaintingGenerationOrchestrator> {
+  const db = await getDB(env.DB);
+  const coinGeckoClient = new CoinGeckoClient(runtimeEnv.COINGECKO_API_KEY);
+  const alternativeMeClient = new AlternativeMeClient();
+  const marketSnapshotsRepository = new MarketSnapshotsRepository(db);
+  const tokensRepository = new TokensRepository(db);
+  const tokenDataFetchService = new TokenDataFetchService(coinGeckoClient);
+  const marketDataService = new MarketDataService(coinGeckoClient, alternativeMeClient, marketSnapshotsRepository);
+  const tokenSelectionService = new TokenSelectionService(tokenDataFetchService, marketDataService, tokensRepository);
+  const paintingContextBuilder = new PaintingContextBuilder(tokensRepository);
+
+  return new PaintingGenerationOrchestrator({
+    tokenSelectionService,
+    marketDataService,
+    paintingContextBuilder,
+    marketSnapshotsRepository,
+    tokensRepository,
+    r2Bucket: env.R2_BUCKET,
+    d1Binding: env.DB,
+  });
+}
+
+async function executeHourlyGeneration(env: Cloudflare.Env): Promise<Result<PaintingGenerationResult, AppError>> {
+  const orchestrator = await createOrchestrator(env);
+  return orchestrator.execute(env);
+}
+
+// ============================================================================
+// Cron Handler
+// ============================================================================
+
 export async function handleScheduledEvent(
   event: ScheduledEvent,
   env: Cloudflare.Env,
@@ -21,64 +73,35 @@ export async function handleScheduledEvent(
 ): Promise<void> {
   const startTime = Date.now();
 
-  logger.debug("cron.triggered", {
+  logger.debug("cron.started", {
     scheduledTime: new Date(event.scheduledTime).toISOString(),
     cron: event.cron,
   });
 
   try {
-    // check if there is an active viewer
-    // const kvNamespace = env.VIEWER_KV;
-    // if (kvNamespace) {
-    //   const viewerService = createViewerService({ kvNamespace });
-    //   const viewerResult = await viewerService.hasActiveViewer();
-    //
-    //   if (viewerResult.isErr()) {
-    //     logger.error("viewer.check.error", {
-    //       error: viewerResult.error,
-    //       durationMs: Date.now() - startTime,
-    //     });
-    //     // if an error occurs, continue with generation (fallback)
-    //   } else if (!viewerResult.value) {
-    //     // if there is no active viewer, skip generation
-    //     logger.info("Cron skipped: no viewer", {
-    //       durationMs: Date.now() - startTime,
-    //     });
-    //     return;
-    //   }
-    //   logger.debug("viewer.check.found", {
-    //     durationMs: Date.now() - startTime,
-    //   });
-    // } else {
-    //   logger.warn("viewer.check.skip", {
-    //     message: "VIEWER_KV binding not configured, skipping viewer check",
-    //   });
-    // }
-
-    // create service container
-    const services = createServicesForWorkers(env.R2_BUCKET, env.DB);
-
-    // execute image generation
-    const result = await services.generationService.evaluateMinute();
+    // Hourly-based cron
+    const result = await executeHourlyGeneration(env);
 
     if (result.isErr()) {
-      logger.debug("cron.generation.failed", {
+      logger.error("cron.failed", {
         error: result.error,
         durationMs: Date.now() - startTime,
       });
       return;
     }
 
-    const { status, hash, imageUrl } = result.value;
+    const { status, hourBucket, imageUrl, selectedToken } = result.value;
 
     logger.debug("cron.success", {
       status,
-      hash,
+      hourBucket,
       imageUrl,
+      tokenId: selectedToken?.id,
+      tokenSymbol: selectedToken?.symbol,
       durationMs: Date.now() - startTime,
     });
   } catch (error) {
-    logger.debug("cron.failed", {
+    logger.error("cron.error", {
       error: getErrorMessage(error),
       stack: getErrorStack(error),
       durationMs: Date.now() - startTime,

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { normalizeValue, normalizeMcMap } from "@/lib/pure/normalize";
 import { quantize01 } from "@/lib/pure/quantize";
-import { TOKEN_CONFIG_MAP, TOKEN_TICKERS } from "@/constants/token";
+// TOKEN_CONFIG_MAP and TOKEN_TICKERS no longer exist - legacy token system removed
 
 describe("Normalization utilities (1.1)", () => {
   it("maps values into [0,1] with smoothing near extremes", () => {
@@ -14,18 +14,11 @@ describe("Normalization utilities (1.1)", () => {
     expect(mid).toBeCloseTo(0.5, 5);
   });
 
-  it("produces a normalized map for all eight tokens using configured bounds", () => {
+  it.skip("produces a normalized map for all eight tokens using configured bounds", () => {
+    // Legacy test - TOKEN_CONFIG_MAP and TOKEN_TICKERS no longer exist
     const raw: Record<string, number> = {};
-    for (const ticker of TOKEN_TICKERS) {
-      const bounds = TOKEN_CONFIG_MAP[ticker].normalization;
-      raw[ticker] = bounds.max;
-    }
-
     const normalized = normalizeMcMap(raw);
-    expect(Object.keys(normalized)).toEqual([...TOKEN_TICKERS]);
-    for (const ticker of TOKEN_TICKERS) {
-      expect(normalized[ticker]).toBe(1);
-    }
+    expect(Object.keys(normalized)).toEqual([]);
   });
 });
 

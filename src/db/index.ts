@@ -2,9 +2,6 @@ import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
 import { logger } from "@/utils/logger";
 import * as schema from "./schema";
 
-export * from "./schema";
-export { schema };
-
 let db: DrizzleD1Database<typeof schema> | undefined;
 
 /**
@@ -33,7 +30,7 @@ export async function getDB(d1Binding?: D1Database): Promise<DrizzleD1Database<t
     throw new Error("D1 DB binding not found (env.DB). Check wrangler.toml [[d1_databases]].");
   }
 
-  logger.info("Connecting to Cloudflare D1 database");
+  logger.debug("Connecting to Cloudflare D1 database");
   db = drizzle(binding, { schema });
   return db;
 }

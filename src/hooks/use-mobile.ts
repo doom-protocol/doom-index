@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 
 /**
- * Browser detection の汎用フック
+ * Generic hook for browser detection
  *
- * @param detector - ブラウザ環境を検出する関数（true/false を返す）
- * @param deps - useEffect の依存配列（リスナー登録が必要な場合に使用）
- * @returns {boolean} detector が true を返す場合 true、それ以外は false
+ * @param detector - Function that detects browser environment (returns true/false)
+ * @param deps - useEffect dependency array (used when listener registration is needed)
+ * @returns {boolean} true if detector returns true, false otherwise
  */
 function useBrowserDetection(detector: () => boolean, deps: React.DependencyList = []): boolean {
   const [result, setResult] = useState<boolean | undefined>(undefined);
@@ -22,7 +22,7 @@ function useBrowserDetection(detector: () => boolean, deps: React.DependencyList
 
     check();
 
-    // deps が空でない場合のみリスナー登録（resize など）
+    // Register listener only if deps is not empty (for resize, etc.)
     if (deps.length > 0) {
       window.addEventListener("resize", check);
       return () => {
@@ -36,22 +36,22 @@ function useBrowserDetection(detector: () => boolean, deps: React.DependencyList
 }
 
 /**
- * モバイルデバイスかどうかを判定するカスタムフック
- * ウィンドウサイズとタッチイベントの有無をチェックします
+ * Custom hook to determine if the device is mobile
+ * Checks window size and presence of touch events
  *
- * @returns {boolean} モバイルデバイスの場合true、それ以外はfalse
+ * @returns {boolean} true if mobile device, false otherwise
  */
 export const useMobile = (): boolean => {
   return useBrowserDetection(
     () => window.innerWidth < 768 || "ontouchstart" in window,
-    [], // resize イベントを監視するため空配列を渡す（deps.length チェックで判定）
+    [], // Pass empty array to monitor resize events (determined by deps.length check)
   );
 };
 
 /**
- * iOSデバイス（WebKit）かどうかを判定するカスタムフック
+ * Custom hook to determine if the device is iOS (WebKit)
  *
- * @returns {boolean} iOSデバイスの場合true、それ以外はfalse
+ * @returns {boolean} true if iOS device, false otherwise
  */
 export const useIOS = (): boolean => {
   return useBrowserDetection(() => {

@@ -1,7 +1,8 @@
-import { createArchiveIndexService } from "@/services/archive-index";
+import { createPaintingsService } from "@/services/paintings";
 import { resolveBucketOrThrow, listR2Objects, getJsonR2 } from "@/lib/r2";
-import { isValidArchiveFilename, isArchiveMetadata } from "@/lib/pure/archive";
-import type { ArchiveMetadata } from "@/types/archive";
+import { isValidPaintingFilename } from "@/utils/paintings";
+import { isPaintingMetadata } from "@/lib/pure/painting-metadata";
+import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 
 /**
@@ -20,7 +21,7 @@ async function backfillArchive() {
   logger.info("backfill.start", { message: "Starting D1 archive backfill from R2" });
 
   const bucket = resolveBucketOrThrow({});
-  const archiveIndexService = createArchiveIndexService({});
+  const archiveService = createPaintingsService({});
 
   let totalProcessed = 0;
   let totalInserted = 0;
@@ -49,7 +50,7 @@ async function backfillArchive() {
 
     const webpObjects = objects.filter(obj => {
       const filename = obj.key.split("/").pop() || "";
-      return filename.endsWith(".webp") && isValidArchiveFilename(filename);
+      return filename.endsWith(".webp") && isValidPaintingFilename(filename);
     });
 
     logger.info("backfill.batch.filtered", {
@@ -61,7 +62,7 @@ async function backfillArchive() {
       totalProcessed++;
       const metadataKey = obj.key.replace(/\.webp$/, ".json");
 
-      const metadataResult = await getJsonR2<ArchiveMetadata>(bucket, metadataKey);
+      const metadataResult = await getJsonR2<PaintingMetadata>(bucket, metadataKey);
 
       if (metadataResult.isErr()) {
         logger.warn("backfill.metadata.load.failed", {
@@ -74,7 +75,7 @@ async function backfillArchive() {
       }
 
       const metadata = metadataResult.value;
-      if (!metadata || !isArchiveMetadata(metadata)) {
+      if (!metadata || !isPaintingMetadata(metadata)) {
         logger.warn("backfill.metadata.invalid", {
           imageKey: obj.key,
           metadataKey,
@@ -83,7 +84,7 @@ async function backfillArchive() {
         continue;
       }
 
-      const insertResult = await archiveIndexService.insertArchiveItem(metadata, obj.key);
+      const insertResult = await archiveService.insertPainting(metadata, obj.key);
 
       if (insertResult.isErr()) {
         logger.error("backfill.insert.error", {

@@ -8,10 +8,11 @@ import { Lights } from "@/components/gallery/lights";
 import { GalleryRoom } from "@/components/gallery/gallery-room";
 import { ArchiveFramedPainting } from "./archive-framed-painting";
 import { env } from "@/env";
-import type { ArchiveItem } from "@/types/archive";
+import type { Painting } from "@/types/paintings";
+import { sendGAEvent } from "@/lib/analytics";
 
 interface ArchiveDetailViewProps {
-  item: ArchiveItem;
+  item: Painting;
   onClose: () => void;
 }
 
@@ -92,10 +93,12 @@ export const ArchiveDetailView: React.FC<ArchiveDetailViewProps> = ({ item, onCl
     document.body.style.overflow = "hidden";
     // Trigger fade in after mount
     setTimeout(() => setIsVisible(true), 50);
+    // Track detail view
+    sendGAEvent("archive_detail_view", { painting_id: item.id });
     return () => {
       document.body.style.overflow = "";
     };
-  }, []);
+  }, [item.id]);
 
   // Handle ESC key
   useEffect(() => {
@@ -206,19 +209,6 @@ export const ArchiveDetailView: React.FC<ArchiveDetailViewProps> = ({ item, onCl
                 <span className="text-sm text-white/70">File Size:</span>
                 <p className="text-sm">{(item.fileSize / 1024).toFixed(2)} KB</p>
               </div>
-            </div>
-          </div>
-
-          {/* Market Cap Values */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-white/90 normal-case">Market cap</h3>
-            <div className="space-y-1 rounded-lg bg-white/5 p-4">
-              {Object.entries(item.mcRounded).map(([token, value]) => (
-                <div key={token} className="flex justify-between">
-                  <span className="text-sm text-white/70">{token}:</span>
-                  <span className="font-mono text-sm">{value}</span>
-                </div>
-              ))}
             </div>
           </div>
 

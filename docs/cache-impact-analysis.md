@@ -5,9 +5,13 @@
 本プロジェクトでは **Cloudflare Cache API** を使用して以下のデータをキャッシュしています：
 
 1. **トークン状態データ** (`token.getState`): R2から取得するJSON（TTL: 60秒）
-2. **マーケットキャップデータ** (`mc.getMarketCaps`): Dexscreener API呼び出し結果（TTL: 60秒）
+2. **マーケットキャップデータ** (`mc.getMarketCaps`): **現在はゼロマップのプレースホルダーを返すのみ**（TTL: 60秒）
 3. **R2 JSONオブジェクト** (`r2.getJson`): R2から取得するJSON（TTL: 60秒）
 4. **R2バイナリデータ** (`/api/r2/[...key]`): 画像などのバイナリ（TTL: 60秒）
+
+> **Update (2025-11-21)**  
+> The legacy DexScreener integration has been removed as part of the dynamic-draw rollout.  
+> Historical metrics that reference DexScreener below are kept for context, but the current implementation no longer issues external API calls for `mc.getMarketCaps`.
 
 ## 重要な前提
 

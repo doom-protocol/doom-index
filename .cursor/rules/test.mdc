@@ -3,10 +3,177 @@ globs: tests/**/*
 alwaysApply: false
 ---
 
-# Test rules
-- testを通すことを目的としないで下さい。 anyやunknownによってtestがpassしてもproductの品質が担保できていなかったり、specを満たしていなければ意味がありません。
+# Test Rules
 
-# Test implementation flow
+## 基本方針
+
+- testを通すことを目的としないで下さい。anyやunknownによってtestがpassしてもproductの品質が担保できていなかったり、specを満たしていなければ意味がありません。
+- テストの独立性を確保し、グローバル状態への依存を避けて下さい。
+- 型安全なモック実装を心がけ、必要な場合のみ型アサーションを使用して下さい。
+
+## Test Implementation Flow
 
 1. 境界値などを考慮しながら必要なビジネス要件をすべて満たす様にtest caseを過不足なく書き出す。
-2. 必ず`src/`以下の実装をimportしてtestコードを実行する
+2. 必ず`src/`以下の実装をimportしてtestコードを実行する。
+3. 外部依存は明示的にモックし、テスト実行順序に依存しないようにする。
+
+## Bun Test Mocking Best Practices
+
+### 型安全なモック実装
+
+参考: [Bun Test Mocks](https://bun.com/docs/test/mocks), [Mock Functions Guide](https://bun.com/docs/guides/test/mock-functions)
+
+#### ✅ 良い例: 完全な型定義でモックを作成
+
+```typescript
+import { mock } from "bun:test";
+
+interface UserService {
+  getUser(id: string): Promise<User>;
+  createUser(data: CreateUserData): Promise<User>;
+}
+
+// 型安全なモック
+const mockUserService: UserService = {
+  getUser: mock(async (id: string) => ({ id, name: "Test User" })),
+  createUser: mock(async (data: CreateUserData) => ({ id: "new-id", ...data })),
+};
+```
+
+#### ✅ 良い例: モックの呼び出し履歴を型安全にアクセス
+
+```typescript
+import { mock } from "bun:test";
+
+const mockGenerate = mock((request: ImageRequest) => 
+  Promise.resolve(ok({ imageBuffer: new ArrayBuffer(8) }))
+);
+
+// 型アサーションで安全にアクセス
+const calls = mockGenerate.mock.calls as unknown as Array<[ImageRequest, unknown?]>;
+const request = calls[0]![0];
+
+// または安全なチェック
+const call = mockGenerate.mock.calls[0];
+if (call && call.length > 0 && call[0]) {
+  const request = call[0] as ImageRequest;
+  expect(request.referenceImageUrl).toBe("https://example.com/image.png");
+}
+```
+
+#### ❌ 悪い例: 型アサーションなしの直接アクセス
+
+```typescript
+// TypeScript エラーになる
+const request = mockGenerate.mock.calls[0][0];  // Type error!
+```
+
+### テストの独立性
+
+#### ✅ 良い例: 明示的なパラメータ渡し
+
+```typescript
+it("should fail when API key is not set", async () => {
+  // 明示的に空文字列を渡してテスト
+  const client = createTavilyClient({ apiKey: "" });
+  const result = await client.searchToken(input);
+  expect(result.isErr()).toBe(true);
+});
+```
+
+#### ❌ 悪い例: グローバル状態への依存
+
+```typescript
+it("should fail when API key is not set", async () => {
+  // グローバル状態を変更（他のテストに影響する可能性）
+  delete process.env.TAVILY_API_KEY;
+  const client = createTavilyClient();
+  // env.ts のモジュールキャッシュにより期待通り動作しない
+});
+```
+
+### 外部ライブラリの型定義変更への対応
+
+#### 依存ライブラリ更新時のチェックリスト
+
+```bash
+# 1. 依存関係を更新
+bun update
+
+# 2. 型エラーを即座に検出
+bun run typecheck
+
+# 3. テストの互換性確認
+bun run test
+
+# 4. すべて成功したらコミット
+git add package.json bun.lockb
+git commit -m "chore: update dependencies"
+```
+
+#### モックデータの型定義を最新に保つ
+
+```typescript
+// CoinGecko API の型が変更された場合
+const mockResponse: CoinsMarketsResponse = [
+  {
+    id: "bitcoin",
+    symbol: "btc",
+    name: "Bitcoin",
+    // 型定義の変更に追従
+    max_supply: null,  // number → number | null
+    ath_date: new Date("2021-11-10T14:24:11.849Z"),  // string → Date
+    atl_date: new Date("2013-07-06T00:00:00.000Z"),
+    last_updated: new Date("2025-11-21T00:00:00.000Z"),
+  },
+];
+```
+
+### 型アサーションの使用ガイドライン
+
+#### @ts-expect-error の適切な使用
+
+```typescript
+// ✅ 良い例: 理由を明記
+// @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+const client = createWorkersAiClient({ aiBinding: mockAiBinding });
+
+// ✅ 良い例: テスト用の型互換性問題
+// @ts-expect-error - BunSQLiteDatabase type mismatch but works at runtime
+repository = new MarketSnapshotsRepository(db as any);
+```
+
+#### as any の使用は最小限に
+
+```typescript
+// ❌ 避ける: 理由なく as any を使用
+const result = someFunction() as any;
+
+// ✅ 良い例: 具体的な型を指定
+const result = someFunction() as SpecificType;
+
+// ✅ より良い例: unknown を経由して安全に変換
+const result = someFunction() as unknown as SpecificType;
+```
+
+### モックのクリーンアップ
+
+```typescript
+import { beforeEach, afterEach, mock } from "bun:test";
+
+beforeEach(() => {
+  // テストごとにモックをリセット
+});
+
+afterEach(() => {
+  // 念のためクリーンアップ
+  mock.restore();
+});
+```
+
+## 参考リンク
+
+- [Bun Test Mocks Documentation](https://bun.com/docs/test/mocks)
+- [Bun Mock Functions Guide](https://bun.com/docs/guides/test/mock-functions)
+- [Test Error Analysis Report](../docs/test-error-analysis-2025-11.md)
+- [The Art of Mocking in Backend Testing](https://medium.com/@iqzaardiansyah/the-art-of-mocking-in-backend-testing-7af23b0d5881)

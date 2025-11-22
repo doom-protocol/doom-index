@@ -246,9 +246,13 @@ export async function getOrSet<T>(key: string, compute: () => Promise<T>, option
 }
 
 /**
- * Text-based cache helpers (for string values)
+ * Generic cache getter with custom response parser
  */
-export async function getText(key: string, options?: Omit<CacheOptions, "ttlSeconds">): Promise<string | null> {
+async function getCached<T>(
+  key: string,
+  parser: (response: Response) => Promise<T>,
+  options?: Omit<CacheOptions, "ttlSeconds">,
+): Promise<T | null> {
   const cache = resolveCache();
   if (!cache) {
     return null;
@@ -260,13 +264,20 @@ export async function getText(key: string, options?: Omit<CacheOptions, "ttlSeco
     if (!response) {
       return null;
     }
-    return await response.text();
+    return await parser(response);
   } catch {
     return null;
   }
 }
 
-export async function setText(key: string, value: string, options: CacheOptions): Promise<void> {
+/**
+ * Generic cache setter with custom response builder
+ */
+async function setCached(
+  key: string,
+  buildResponse: (cacheKey: string) => Response,
+  options: CacheOptions,
+): Promise<void> {
   const cache = resolveCache();
   if (!cache) {
     return;
@@ -274,16 +285,32 @@ export async function setText(key: string, value: string, options: CacheOptions)
 
   try {
     const cacheKey = createCacheKey(key, options.namespace);
-    const response = new Response(value, {
-      headers: {
-        "Content-Type": "text/plain",
-        "Cache-Control": `public, max-age=${options.ttlSeconds}`,
-      },
-    });
+    const response = buildResponse(cacheKey);
     await cache.put(cacheKey, response);
   } catch {
     // Gracefully degrade
   }
+}
+
+/**
+ * Text-based cache helpers (for string values)
+ */
+export async function getText(key: string, options?: Omit<CacheOptions, "ttlSeconds">): Promise<string | null> {
+  return getCached(key, response => response.text(), options);
+}
+
+export async function setText(key: string, value: string, options: CacheOptions): Promise<void> {
+  await setCached(
+    key,
+    () =>
+      new Response(value, {
+        headers: {
+          "Content-Type": "text/plain",
+          "Cache-Control": `public, max-age=${options.ttlSeconds}`,
+        },
+      }),
+    options,
+  );
 }
 
 export async function updateText(key: string, value: string, options: CacheOptions): Promise<void> {
@@ -294,41 +321,21 @@ export async function updateText(key: string, value: string, options: CacheOptio
  * Binary cache helpers (for ArrayBuffer values)
  */
 export async function getBinary(key: string, options?: Omit<CacheOptions, "ttlSeconds">): Promise<ArrayBuffer | null> {
-  const cache = resolveCache();
-  if (!cache) {
-    return null;
-  }
-
-  try {
-    const cacheKey = createCacheKey(key, options?.namespace);
-    const response = await cache.match(cacheKey);
-    if (!response) {
-      return null;
-    }
-    return await response.arrayBuffer();
-  } catch {
-    return null;
-  }
+  return getCached(key, response => response.arrayBuffer(), options);
 }
 
 export async function setBinary(key: string, value: ArrayBuffer, options: CacheOptions): Promise<void> {
-  const cache = resolveCache();
-  if (!cache) {
-    return;
-  }
-
-  try {
-    const cacheKey = createCacheKey(key, options.namespace);
-    const response = new Response(value, {
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Cache-Control": `public, max-age=${options.ttlSeconds}`,
-      },
-    });
-    await cache.put(cacheKey, response);
-  } catch {
-    // Gracefully degrade
-  }
+  await setCached(
+    key,
+    () =>
+      new Response(value, {
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "Cache-Control": `public, max-age=${options.ttlSeconds}`,
+        },
+      }),
+    options,
+  );
 }
 
 export async function updateBinary(key: string, value: ArrayBuffer, options: CacheOptions): Promise<void> {

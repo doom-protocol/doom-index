@@ -58,21 +58,21 @@ DOOM INDEX は、**「買われた瞬間にアートが変わる」**という�
 
 ### 5. 技術構成（Vercel フル運用）
 
-| 層            | 技術スタック                                           |
-| ------------- | ------------------------------------------------------ |
-| Frontend      | Next.js（App Router）+ React Three Fiber + Tailwind v4 |
-| Scheduler     | Vercel Scheduled Function（cron @ 1min）               |
-| API           | Vercel Edge Function（Dexscreener → AI 生成呼び出し）  |
-| AI Repository | 抽象化層：Runware / Replicate / OpenAI 切替可          |
-| Data          | Dexscreener API（price, MC, volume）                   |
-| State         | React Query（フェッチとキャッシュ制御）                |
-| Storage       | Vercel Blob（最新画像キャッシュ）                      |
+| 層            | 技術スタック                                                |
+| ------------- | ----------------------------------------------------------- |
+| Frontend      | Next.js（App Router）+ React Three Fiber + Tailwind v4      |
+| Scheduler     | Vercel Scheduled Function（cron @ 1min）                    |
+| API           | Vercel Edge Function（CoinGecko → Workers AI 生成呼び出し） |
+| AI Repository | 抽象化層：Runware / Replicate / OpenAI 切替可               |
+| Data          | CoinGecko API / D1 Market Snapshots                         |
+| State         | React Query（フェッチとキャッシュ制御）                     |
+| Storage       | Vercel Blob（最新画像キャッシュ）                           |
 
 ---
 
 ### 6. 生成ロジック
 
-1. 各トークンの MC を取得（Dexscreener）
+1. 各トークンの MC を取得（CoinGecko または内部スナップショット）
 2. 全トークンの `MC_i` を正規化 → `[0..1]`
 3. 連続比較：全トークンが前回と同値 → `skip`
 4. 差分があれば、新しい AI プロンプトを構築し、画像生成

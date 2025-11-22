@@ -1,4 +1,4 @@
-import Article from "@/assets/whitepaper/v1.mdx";
+import Article from "@/assets/whitepaper/v2.mdx";
 
 const MDXArticle = () => {
   return (

@@ -17,13 +17,18 @@ import {
   Texture,
 } from "three";
 import type { GLTF } from "three-stdlib";
-import type { ArchiveItem } from "@/types/archive";
-import { calculatePlaneDimensions, handlePointerMoveForDrag, isValidPointerEvent } from "@/utils/three";
+import type { Painting } from "@/types/paintings";
+import {
+  calculatePlaneDimensions,
+  handlePointerMoveForDrag,
+  handlePointerUpForClick,
+  isValidPointerEvent,
+} from "@/utils/three";
 
 interface ArchiveFramedPaintingProps {
-  item: ArchiveItem;
+  item: Painting;
   framePosition?: [number, number, number];
-  onPointerClick?: (item: ArchiveItem, event: ThreeEvent<PointerEvent>) => void;
+  onPointerClick?: (item: Painting, event: ThreeEvent<PointerEvent>) => void;
 }
 
 interface PaintingContentProps {
@@ -440,28 +445,18 @@ export const ArchiveFramedPainting: React.FC<ArchiveFramedPaintingProps> = ({
   };
 
   const handlePointerUp = (event: ThreeEvent<PointerEvent>): boolean => {
-    if (!isValidPointerEvent(event, activePointerIdRef.current)) {
-      return false;
-    }
-
-    const shouldTrigger =
-      pointerDownPositionRef.current !== null &&
-      !hasPointerMovedRef.current &&
-      (event.pointerType === "touch" || event.button === 0);
-
-    resetPointerState();
-
-    if (!shouldTrigger) {
-      return false;
-    }
-
-    event.stopPropagation();
-
-    if (onPointerClick) {
-      onPointerClick(item, event);
-    }
-
-    return true;
+    return handlePointerUpForClick(
+      event,
+      pointerDownPositionRef,
+      hasPointerMovedRef,
+      activePointerIdRef,
+      resetPointerState,
+      e => {
+        if (onPointerClick) {
+          onPointerClick(item, e);
+        }
+      },
+    );
   };
 
   const handlePointerCancel = (event: ThreeEvent<PointerEvent>) => {

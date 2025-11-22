@@ -1,11 +1,11 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8c330f5a-e54e-49b5-bdca-73814ce1ce18",
+  "id": "0ce680f5-3dea-4a72-ab66-2b355111e286",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "archive_items": {
-      "name": "archive_items",
+    "paintings": {
+      "name": "paintings",
       "columns": {
         "id": {
           "name": "id",
@@ -70,13 +70,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "mc_rounded_json": {
-          "name": "mc_rounded_json",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "visual_params_json": {
           "name": "visual_params_json",
           "type": "text",
@@ -100,30 +93,207 @@
         }
       },
       "indexes": {
-        "idx_archive_ts_id": {
-          "name": "idx_archive_ts_id",
+        "idx_paintings_ts_id": {
+          "name": "idx_paintings_ts_id",
           "columns": ["ts", "id"],
           "isUnique": false
         },
-        "idx_archive_ts": {
-          "name": "idx_archive_ts",
+        "idx_paintings_ts": {
+          "name": "idx_paintings_ts",
           "columns": ["ts"],
           "isUnique": false
         },
-        "idx_archive_params_hash": {
-          "name": "idx_archive_params_hash",
+        "idx_paintings_params_hash": {
+          "name": "idx_paintings_params_hash",
           "columns": ["params_hash"],
           "isUnique": false
         },
-        "idx_archive_seed": {
-          "name": "idx_archive_seed",
+        "idx_paintings_seed": {
+          "name": "idx_paintings_seed",
           "columns": ["seed"],
           "isUnique": false
         },
-        "idx_archive_r2_key": {
-          "name": "idx_archive_r2_key",
+        "idx_paintings_r2_key": {
+          "name": "idx_paintings_r2_key",
           "columns": ["r2_key"],
           "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "tokens": {
+      "name": "tokens",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "symbol": {
+          "name": "symbol",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "coingecko_id": {
+          "name": "coingecko_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "logo_url": {
+          "name": "logo_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "short_context": {
+          "name": "short_context",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "categories": {
+          "name": "categories",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_tokens_symbol": {
+          "name": "idx_tokens_symbol",
+          "columns": ["symbol"],
+          "isUnique": false
+        },
+        "idx_tokens_coingecko_id": {
+          "name": "idx_tokens_coingecko_id",
+          "columns": ["coingecko_id"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "market_snapshots": {
+      "name": "market_snapshots",
+      "columns": {
+        "hour_bucket": {
+          "name": "hour_bucket",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "total_market_cap_usd": {
+          "name": "total_market_cap_usd",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "total_volume_usd": {
+          "name": "total_volume_usd",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "market_cap_change_percentage_24h_usd": {
+          "name": "market_cap_change_percentage_24h_usd",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "btc_dominance": {
+          "name": "btc_dominance",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "eth_dominance": {
+          "name": "eth_dominance",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "active_cryptocurrencies": {
+          "name": "active_cryptocurrencies",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "markets": {
+          "name": "markets",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fear_greed_index": {
+          "name": "fear_greed_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_market_snapshots_created_at": {
+          "name": "idx_market_snapshots_created_at",
+          "columns": ["created_at"],
+          "isUnique": false
         }
       },
       "foreignKeys": {},

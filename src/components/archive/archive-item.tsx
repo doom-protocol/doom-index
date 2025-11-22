@@ -2,16 +2,16 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import type { ArchiveItem } from "@/types/archive";
-import { ArchiveItemSkeleton } from "./archive-item-skeleton";
+import type { Painting } from "@/types/paintings";
+import { PaintingSkeleton } from "./archive-item-skeleton";
 import { logger } from "@/utils/logger";
 
-interface ArchiveItemProps {
-  item: ArchiveItem;
+interface PaintingProps {
+  item: Painting;
   onClick?: () => void;
 }
 
-export const ArchiveItemComponent: React.FC<ArchiveItemProps> = ({ item, onClick }) => {
+export const PaintingComponent: React.FC<PaintingProps> = ({ item, onClick }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const timeLabel = (() => {
@@ -61,7 +61,7 @@ export const ArchiveItemComponent: React.FC<ArchiveItemProps> = ({ item, onClick
       </div>
       {isLoading && !hasError && (
         <div className="absolute inset-0 z-10">
-          <ArchiveItemSkeleton />
+          <PaintingSkeleton />
         </div>
       )}
       {hasError ? (

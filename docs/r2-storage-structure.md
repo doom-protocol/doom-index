@@ -7,15 +7,16 @@
 DOOM INDEX は Cloudflare R2 を永続ストレージとして使用し、以下のデータを保存します：
 
 - **画像アーカイブ**: 生成された絵画画像とそのメタデータ
-- **アプリケーション状態**: グローバル状態とトークンごとの状態
+
+> **Note**: 以前は `state/` フォルダにアプリケーション状態を保存していましたが、dynamic-draw と dynamic-prompt の実装により、状態管理は Cloudflare D1 データベースに移行されました。`state/` フォルダは legacy として残されており、フロントエンドとの互換性のために一時的に読み取り専用で使用されています。
 
 ## ストレージ構造
 
 ```
 r2://doom-index-storage/
-├── state/
-│   ├── global.json                    # グローバル状態
-│   └── {ticker}.json                  # トークンごとの状態（例: co2.json, fear.json）
+├── state/ (LEGACY - read-only for backward compatibility)
+│   ├── global.json                    # グローバル状態 (deprecated)
+│   └── {ticker}.json                  # トークンごとの状態 (deprecated)
 └── images/
     └── {YYYY}/
         └── {MM}/
@@ -26,13 +27,15 @@ r2://doom-index-storage/
 
 ## フォルダとファイルの詳細
 
-### `state/` フォルダ
+### `state/` フォルダ (LEGACY)
 
-アプリケーションの状態を保存するフォルダです。
+> **Deprecated**: このフォルダは legacy として残されています。dynamic-draw と dynamic-prompt の実装により、アプリケーション状態は Cloudflare D1 データベース（`paintings`, `market_snapshots`, `tokens` テーブル）に移行されました。
+>
+> 現在は、フロントエンドとの互換性のために読み取り専用で使用されていますが、将来的には完全に削除される予定です。
 
-#### `state/global.json`
+#### `state/global.json` (DEPRECATED)
 
-グローバル状態を保存するファイルです。
+グローバル状態を保存するファイルです（deprecated）。
 
 **構造**:
 
@@ -56,9 +59,9 @@ r2://doom-index-storage/
 }
 ```
 
-#### `state/{ticker}.json`
+#### `state/{ticker}.json` (DEPRECATED)
 
-各トークンの状態を保存するファイルです。`{ticker}` はトークンのティッカーシンボル（例: `co2`, `fear`, `hope`）です。
+各トークンの状態を保存するファイルです（deprecated）。`{ticker}` はトークンのティッカーシンボル（例: `co2`, `fear`, `hope`）です。
 
 **構造**:
 
@@ -209,13 +212,14 @@ R2に保存されたファイルは、以下のURL形式でアクセスできま
 
 ### プログラムからのアクセス
 
-R2へのアクセスは、以下のサービスを通じて行われます：
+R2へのアクセスは、以下の方法で行われます：
 
-- **`ArchiveStorageService`**: 画像とメタデータの保存
-- **`ArchiveListService`**: 画像リストの取得（日付範囲でのフィルタリング対応）
-- **`StateService`**: アプリケーション状態の読み書き
+- **画像とメタデータ**: `PaintingsRepository` を通じて D1 データベースと R2 ストレージに保存
+- **アプリケーション状態**: Cloudflare D1 データベース（`paintings`, `market_snapshots`, `tokens` テーブル）を通じて管理
 
-詳細は各サービスの実装を参照してください。
+> **Note**: 以前は `StateService` を使用して R2 の `state/` フォルダに状態を保存していましたが、dynamic-draw と dynamic-prompt の実装により、D1 データベースベースの状態管理に移行されました。`StateService` は削除されています。
+
+詳細は各リポジトリとサービスの実装を参照してください。
 
 ## 注意事項
 

@@ -1,8 +1,11 @@
 import { z } from "zod";
-import { TOKEN_TICKERS } from "@/constants/token";
 
-// Token Ticker Schema
-export const tokenTickerSchema = z.enum(TOKEN_TICKERS as unknown as [string, ...string[]]);
+/**
+ * Legacy Token Ticker Schema
+ * @deprecated This schema is for backward compatibility only.
+ * The legacy 8-token system has been removed.
+ */
+export const tokenTickerSchema = z.string();
 
 // Viewer Schemas
 export const viewerRegisterSchema = z.object({
@@ -15,6 +18,10 @@ export const viewerRemoveSchema = z.object({
 });
 
 // Token Schemas
+/**
+ * Legacy token state schema
+ * @deprecated This schema is for backward compatibility only.
+ */
 export const tokenGetStateSchema = z.object({
   ticker: tokenTickerSchema,
 });
@@ -24,8 +31,8 @@ export const r2GetObjectSchema = z.object({
   key: z.array(z.string().min(1)).min(1, "At least one key segment is required"),
 });
 
-// Archive Schemas
-export const archiveListSchema = z
+// Paintings Schemas
+export const paintingsListSchema = z
   .object({
     limit: z.number().int().min(1).max(100).optional(),
     cursor: z.string().optional(),
@@ -52,11 +59,3 @@ export const archiveListSchema = z
       path: ["startDate"],
     },
   );
-
-// 型推論ヘルパー
-export type TokenTicker = z.infer<typeof tokenTickerSchema>;
-export type ViewerRegisterInput = z.infer<typeof viewerRegisterSchema>;
-export type ViewerRemoveInput = z.infer<typeof viewerRemoveSchema>;
-export type TokenGetStateInput = z.infer<typeof tokenGetStateSchema>;
-export type R2GetObjectInput = z.infer<typeof r2GetObjectSchema>;
-export type ArchiveListInput = z.infer<typeof archiveListSchema>;

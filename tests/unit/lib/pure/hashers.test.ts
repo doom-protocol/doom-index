@@ -6,17 +6,15 @@ import {
   buildGenerationFileName,
   stableStringify,
 } from "@/lib/pure/hash";
-import { TOKEN_TICKERS, type TokenTicker } from "@/constants/token";
 import type { VisualParams } from "@/lib/pure/mapping";
 
-const createMcMap = (base: number): Record<TokenTicker, number> =>
-  TOKEN_TICKERS.reduce(
-    (acc, ticker, idx) => {
-      acc[ticker] = base + idx * 10;
-      return acc;
-    },
-    {} as Record<TokenTicker, number>,
-  );
+const createMcMap = (base: number): Record<string, number> => {
+  const map: Record<string, number> = {};
+  for (let i = 0; i < 8; i++) {
+    map[`TOKEN${i}`] = base + i * 10;
+  }
+  return map;
+};
 
 const createVisualParams = (value: number): VisualParams => ({
   fogDensity: value,
@@ -51,7 +49,7 @@ describe("hash tooling (1.2)", () => {
     const hashB = await hashRoundedMap(mapB);
     expect(hashA).toBe(hashB);
 
-    const mapC = { ...mapA, CO2: mapA.CO2 + 1 };
+    const mapC = { ...mapA, TOKEN0: (mapA.TOKEN0 ?? 0) + 1 };
     const hashC = await hashRoundedMap(mapC);
     expect(hashC).not.toBe(hashA);
   });

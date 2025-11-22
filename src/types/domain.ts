@@ -1,14 +1,12 @@
 import type { Result } from "neverthrow";
-import type { TokenTicker, McMap } from "@/constants/token";
 import type { AppError } from "@/types/app-error";
 
-export type { TokenTicker, McMap };
-
-export type GlobalState = {
-  prevHash: string | null;
-  lastTs: string | null;
-  imageUrl?: string | null;
-};
+/**
+ * Legacy type aliases for backward compatibility
+ * @deprecated These types are for backward compatibility only.
+ * The legacy 8-token system has been removed.
+ */
+export type TokenTicker = string;
 
 export type TokenState = {
   ticker: TokenTicker;
@@ -24,6 +22,7 @@ export type ImageRequest = {
   format: "webp" | "png";
   seed: string;
   model?: string;
+  referenceImageUrl?: string;
 };
 
 export type ImageResponse = {
@@ -38,11 +37,4 @@ export type ImageGenerationOptions = {
 export interface ImageProvider {
   name: string;
   generate(input: ImageRequest, options?: ImageGenerationOptions): Promise<Result<ImageResponse, AppError>>;
-}
-
-export interface StateService {
-  readGlobalState(): Promise<Result<GlobalState | null, AppError>>;
-  writeGlobalState(state: GlobalState): Promise<Result<void, AppError>>;
-  readTokenState(ticker: TokenTicker): Promise<Result<TokenState | null, AppError>>;
-  writeTokenStates(states: TokenState[]): Promise<Result<void, AppError>>;
 }

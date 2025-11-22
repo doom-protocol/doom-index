@@ -11,6 +11,7 @@ import { logger } from "@/utils/logger";
 import { useIOS, useMobile } from "@/hooks/use-mobile";
 import { FloatingWhitepaper } from "./floating-whitepaper";
 import WhitepaperViewer from "./whitepaper-viewer";
+import { sendGAEvent } from "@/lib/analytics";
 
 interface AboutSceneProps extends PropsWithChildren {
   initialCameraPosition?: [number, number, number];
@@ -140,6 +141,11 @@ export const AboutScene: React.FC<AboutSceneProps> = ({ children, initialCameraP
     setWebglError(true);
   };
 
+  // Track whitepaper view
+  useEffect(() => {
+    sendGAEvent("whitepaper_view");
+  }, []);
+
   const orbitTarget = useMemo<[number, number, number]>(() => [0, 0.8, 4.0], []);
 
   // Fixed aspect ratio (A4 paper ratio: 210:297 ≈ 0.707)
@@ -235,7 +241,7 @@ export const AboutScene: React.FC<AboutSceneProps> = ({ children, initialCameraP
     };
   }, [PAPER_ASPECT_RATIO]);
 
-  // WebGLエラー時のみフォールバック表示
+  // Show fallback only when WebGL error occurs
   if (webglError) {
     return <WebGLErrorFallback paperSize={webglErrorPaperSize}>{children}</WebGLErrorFallback>;
   }

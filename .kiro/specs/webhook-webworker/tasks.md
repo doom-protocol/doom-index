@@ -1,0 +1,59 @@
+# Implementation Plan
+
+- [ ] 1. 監視対象設定の定数定義
+  - QuickNode WebSocket URL の定義
+  - NFT コントラクトアドレスの定義
+  - SPL トークン mint アドレスの定義
+  - DEX プログラム ID の定義
+  - _Requirements: 4.1, 4.2, 4.3, 4.4_
+
+- [ ] 2. Web Worker の基本構造実装
+- [ ] 2.1 WebSocket 接続機能の実装
+  - QuickNode WebSocket への接続確立
+  - 接続状態の管理と監視
+  - 接続パラメータの設定
+  - _Requirements: 1.1, 1.2, 2.1, 2.2_
+- [ ] 2.2 ブロックチェーンイベントのフィルタリング機能
+  - logsSubscribe メッセージの送信
+  - logsNotification の受信処理
+  - NFT mint イベントの判定ロジック
+  - SPL トークン購入イベントの判定ロジック
+  - _Requirements: 1.3, 1.4, 2.3, 2.4, 5.1_
+- [ ] 2.3 エラー処理と再接続機能
+  - WebSocket エラー検知
+  - 指数バックオフによる自動再接続
+  - 接続失敗時のステータス通知
+  - 最大リトライ数の設定
+  - _Requirements: 1.5, 1.6, 2.6, 5.3_
+
+- [ ] 3. React Hook の実装
+- [ ] 3.1 Web Worker 管理機能の実装
+  - useOnchainMonitor カスタムフックの作成
+  - Web Worker の生成とライフサイクル管理
+  - 監視設定の Worker への送信
+  - Worker からのメッセージ受信処理
+  - _Requirements: 2.1, 2.2, 3.1, 4.1_
+- [ ] 3.2 トースト通知機能の実装
+  - Sonner を使用した通知表示
+  - liquid glass スタイルの適用
+  - NFT mint イベントの通知表示
+  - SPL トークン購入イベントの通知表示
+  - _Requirements: 3.1, 3.2, 3.3, 3.4_
+
+- [ ] 4. 統合とテスト
+- [ ] 4.1 既存コンポーネントへの統合
+  - React コンポーネントへの OnchainMonitor Hook の組み込み
+  - 監視対象定数のインポートと利用
+  - パフォーマンスへの影響確認
+  - _Requirements: 2.5, 3.4, 4.1_
+- [ ] 4.2 単体テストの実装 (P)
+  - Web Worker のメッセージ処理テスト
+  - イベントフィルタリングロジックのテスト
+  - React Hook の動作テスト
+  - 定数値の検証テスト
+  - _Requirements: 2.3, 2.4, 3.1, 3.2, 4.1_
+- [ ] 4.3 統合テストの実装 (P)
+  - Web Worker とメインスレッドの通信テスト
+  - エンドツーエンドのイベント検知フロー
+  - WebSocket 接続と再接続のテスト
+  - _Requirements: 1.1, 1.3, 1.4, 3.1, 3.2, 5.2_

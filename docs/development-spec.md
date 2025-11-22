@@ -1,16 +1,23 @@
-## DOOM INDEX — 開発要件定義書（Cloudflare Workers / Result 設計 / 実装特化 最終版）
+## DOOM INDEX — 開発要件定義書（Cloudflare Workers / Result 設計 / 実装特化）
 
-### 0. 方針
+> **Note**: このドキュメントは legacy として残されています。最新の実装は dynamic-draw と dynamic-prompt の仕様を参照してください。
+>
+> - [dynamic-draw requirements](../.kiro/specs/dynamic-draw/requirements.md)
+> - [dynamic-draw design](../.kiro/specs/dynamic-draw/design.md)
+> - [dynamic-prompt requirements](../.kiro/specs/dynamic-prompt/requirements.md)
+> - [dynamic-prompt design](../.kiro/specs/dynamic-prompt/design.md)
 
-- **Runtime**: Cloudflare Workers。1 分間隔の Cron Triggers を利用。Next.js は Pages（Cloudflare Pages）でホスティング。
+### 0. 方針（LEGACY）
+
+- **Runtime**: Cloudflare Workers。**1 時間間隔**の Cron Triggers を利用（dynamic-draw 実装により変更）。Next.js は Pages（Cloudflare Pages）でホスティング。
 - **層構造**:
   - `lib/`: 腐敗防止層（SDK/Provider/軽ユーティリティ/型）。ラッパは最小限。`fetch` を素直に使う。
   - `services/`: ドメインロジック。`neverthrow.Result` で成功/失敗を戻す。
-  - `workers/`: Cloudflare Workers エントリポイント（Cron / API）。I/O だけして `services` を呼ぶ。分岐・判断は持たない。
+  - `src/cron.ts`: Cloudflare Workers エントリポイント（Cron）。I/O だけして `services` を呼ぶ。分岐・判断は持たない。
   - `app/api/*`: Next.js API Routes（読み取り専用）。書き込みは Workers が担当。
-- **生成制御**: 1 分 Cron 固定（Cloudflare Cron Triggers）。丸め後 MC 群が前回と完全一致なら skip。
-- **永続化**: DB なし。Cloudflare R2 に画像・state・prompt registry。
-- **再現性**: 同一（丸め MC 群＋分バケット＋ PromptVersion）→ 同一 seed → 同一画像。
+- **生成制御**: **1 時間 Cron 固定**（Cloudflare Cron Triggers）。hourBucket による冪等性チェック（dynamic-draw 実装により変更）。
+- **永続化**: **Cloudflare D1 データベース**（`paintings`, `tokens`, `token_contexts`, `market_snapshots` テーブル）と Cloudflare R2（画像のみ）（dynamic-draw 実装により変更）。
+- **再現性**: 同一（PaintingContext + TokenContext + hourBucket）→ 同一 seed → 同一画像。
 - **3D 演出**: 暗闇の館内、真上からのスポット 1 基で正面の 1 枚だけが浮かぶ。
 
 ---
@@ -52,8 +59,6 @@ src/
       ImageProvider.ts  # interface（Result）
     providers/
       runware.ts
-      replicate.ts
-      openai.ts
       index.ts          # resolveProvider()
     promptRegistry.ts   # PromptVersion 読み出し（R2 直）
     pure/               # なるべく純関数
@@ -83,13 +88,16 @@ wrangler.toml           # Cloudflare Workers 設定
 
 ---
 
-### 2. ランタイム & Cloudflare Workers
+### 2. ランタイム & Cloudflare Workers（LEGACY）
 
-- **Cloudflare Workers**: Cron Triggers で 1 分間隔実行。`workers/cron.ts` が `services` を呼び出し。
-- **Cloudflare Pages**: Next.js をホスティング。API Routes は読み取り専用（R2 から state/MC を取得）。
-- **Cloudflare R2**: 画像・state・prompt registry の永続化。S3 互換 API で `fetch` ベースのアクセス。
+> **Note**: 以下の内容は legacy です。最新の実装では、1 時間間隔の Cron Triggers、CoinGecko API、D1 データベースベースの状態管理を使用しています。
+
+- **Cloudflare Workers**: Cron Triggers で **1 時間間隔**実行（dynamic-draw 実装により変更）。`src/cron.ts` が `services` を呼び出し。
+- **Cloudflare Pages**: Next.js をホスティング。API Routes は読み取り専用（D1 と R2 から状態とメタデータを取得）。
+- **Cloudflare D1**: トークン情報、市場スナップショット、絵画メタデータの永続化（dynamic-draw 実装により追加）。
+- **Cloudflare R2**: 画像の永続化（state は D1 に移行）。
 - **画像生成 Provider**: HTTP fetch ベースの API のみ使用（Workers 互換）。SDK は使わない。
-- **Cron Triggers 設定**: `wrangler.toml` で `crons = ["* * * * *"]`（毎分実行）を定義。
+- **Cron Triggers 設定**: `wrangler.toml` で `crons = ["0 * * * *"]`（毎時 0 分実行）を定義（dynamic-draw 実装により変更）。
 
 ---
 
@@ -149,8 +157,12 @@ export type AppError = ExternalApiError | StorageError | ValidationError | Inter
 - 素の `fetch` を使う（ラッパ禁止）。
 - 返却は `priceUsd`（liquidity 最大の pair）→ MC までやって `number` で返す。
 
+> **Note**  
+> The DexScreener integration shown below is legacy documentation.  
+> As of the dynamic-draw rollout we no longer call DexScreener; references are preserved here for historical context.
+
 ```ts
-// lib/dexScreener.ts
+// (legacy) lib/dexScreener.ts
 import { Result, ok, err } from "neverthrow";
 import type { AppError } from "@/src/services/errors";
 
@@ -270,7 +282,7 @@ export type GenInput = {
 };
 export type GenOutput = { imageBuffer: ArrayBuffer; providerMeta: unknown };
 export interface ImageProvider {
-  name: "runware" | "replicate" | "openai";
+  name: "runware";
   generate(input: GenInput): Promise<Result<GenOutput, AppError>>;
 }
 ```
@@ -329,11 +341,13 @@ export async function composePrompt(mcRounded: McMapRounded): Promise<
 >;
 ```
 
-#### 7.3 StateService
+#### 7.3 StateService (DEPRECATED)
 
-- `state/global.json` の `{ prevHash, lastTs }` 読み書き
-- `state/{ticker}.json` の各トークン state 書き出し
-- すべて `Result` で返す
+> **Deprecated**: `StateService` は削除されました。dynamic-draw と dynamic-prompt の実装により、状態管理は Cloudflare D1 データベース（`paintings`, `market_snapshots`, `tokens` テーブル）に移行されました。
+
+- ~~`state/global.json` の `{ prevHash, lastTs }` 読み書き~~（D1 の `paintings` テーブルに移行）
+- ~~`state/{ticker}.json` の各トークン state 書き出し~~（D1 の `tokens` テーブルに移行）
+- ~~すべて `Result` で返す~~
 
 #### 7.4 GenerationService（要）
 

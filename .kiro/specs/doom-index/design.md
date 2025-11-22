@@ -67,7 +67,7 @@ GalleryScene --> FramedPainting
 - Storage: Cloudflare R2（画像・グローバル state・トークン state・prompt registry）
 - Client State: React Query（MC の 10 秒リフレッシュ、画像 URL の即時反映）
 - Logging: `utils/logger`（info/ debug/ warn/ error）＋ JSON ライクな payload（Cloudflare Logs で確認）
-- Testing: `bun test` / `bun:test` と Bun 組み込みモック、`wrangler dev` でローカル Workers テスト
+- Testing: `bun run test`と Bun 組み込みモック、`wrangler dev` でローカル Workers テスト
 - Secrets Management: Cloudflare Workers Secrets（`wrangler secret put`）
 
 ### Key Design Decisions
@@ -627,6 +627,6 @@ Deploy --> Observe[Observe Cloudflare Logs and Visual Output]
 - **UpdateConfig**: `wrangler.toml` で `crons = ["* * * * *"]`、R2 Binding、Secrets を設定。`open-next.config.ts` で `defineCloudflareConfig()` を定義。
 - **MigrateStorage**: Vercel Blob の既存データを R2 に移行（`state/global.json`、`state/{ticker}.json`、`images/*.webp`）。
 - **UpdateServices**: `lib/blob.ts` → `lib/r2.ts` に変更。`services` の R2 Binding 対応。`workers/cron.ts` を新規作成。
-- **Validate**: `bun test` で既存テストを通過。`wrangler dev` でローカル Workers を起動し、Cron 実行を確認。
+- **Validate**: `bun run test` で既存テストを通過。`wrangler dev` でローカル Workers を起動し、Cron 実行を確認。
 - **Deploy**: `opennextjs-cloudflare build` → `wrangler deploy` で Cloudflare Pages と Workers にデプロイ。
 - **Observe**: Cloudflare Logs で Cron 実行ログを監視。初回 24 時間はログ監視を強化する。

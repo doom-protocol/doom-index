@@ -1,25 +1,15 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import { createArchiveListService } from "@/services/archive-list";
+import { createPaintingsService } from "@/services/paintings";
 import { createTestR2Bucket } from "../../lib/memory-r2";
-import type { ArchiveMetadata } from "@/types/archive";
+import type { PaintingMetadata } from "@/types/paintings";
 
-function createTestMetadata(id: string, imageKey: string, timestamp?: string): ArchiveMetadata {
+function createTestMetadata(id: string, imageKey: string, timestamp?: string): PaintingMetadata {
   return {
     id,
     timestamp: timestamp || "2025-11-14T12:00:00Z",
     minuteBucket: timestamp || "2025-11-14T12:00:00Z",
     paramsHash: "abc12345",
     seed: "def456789012",
-    mcRounded: {
-      CO2: 1000000,
-      ICE: 2000000,
-      FOREST: 3000000,
-      NUKE: 4000000,
-      MACHINE: 5000000,
-      PANDEMIC: 6000000,
-      FEAR: 7000000,
-      HOPE: 8000000,
-    },
     visualParams: {
       fogDensity: 0.5,
       skyTint: 0.6,
@@ -93,7 +83,7 @@ describe("Archive List Service - Date Filtering", () => {
 
   describe("listImages with date filtering", () => {
     it("should filter by single date prefix", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({
         prefix: "images/2025/11/14/",
       });
@@ -106,7 +96,7 @@ describe("Archive List Service - Date Filtering", () => {
     });
 
     it("should filter by date range using startDate and endDate", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({
         startDate: "2025-11-14",
         endDate: "2025-11-15",
@@ -126,7 +116,7 @@ describe("Archive List Service - Date Filtering", () => {
     });
 
     it("should exclude items after endDate using startAfter", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({
         prefix: "images/2025/11/",
         startAfter: "images/2025/11/15/DOOM_202511151201_abc12345_def456789012.webp",
@@ -141,7 +131,7 @@ describe("Archive List Service - Date Filtering", () => {
     });
 
     it("should handle date range spanning multiple days", async () => {
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({
         startDate: "2025-11-14",
         endDate: "2025-11-16",

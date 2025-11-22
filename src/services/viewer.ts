@@ -11,7 +11,7 @@ type ViewerServiceDeps = {
   log?: typeof logger;
 };
 
-export type ViewerService = {
+type ViewerService = {
   registerViewer(sessionId: string): Promise<Result<void, AppError>>;
   updateViewer(sessionId: string): Promise<Result<void, AppError>>;
   removeViewer(sessionId: string): Promise<Result<void, AppError>>;

@@ -1,4 +1,4 @@
-import { initTRPC, TRPCError } from "@trpc/server";
+import { initTRPC } from "@trpc/server";
 import { ZodError } from "zod";
 import type { Context } from "./context";
 
@@ -14,7 +14,7 @@ const t = initTRPC.context<Context>().create({
   },
 });
 
-// ロギングミドルウェア
+// Logging middleware
 const loggingMiddleware = t.middleware(async ({ path, type, next, ctx }) => {
   const start = Date.now();
   const result = await next();
@@ -30,14 +30,10 @@ const loggingMiddleware = t.middleware(async ({ path, type, next, ctx }) => {
   return result;
 });
 
-// 基本プロシージャ（ロギング付き）
+// Basic procedure (with logging)
 export const publicProcedure = t.procedure.use(loggingMiddleware);
 
-// ルーター作成ヘルパー
+// Router creation helper
 export const router = t.router;
 
-// ミドルウェア作成ヘルパー
-export const middleware = t.middleware;
-
-// TRPCErrorをエクスポート
-export { TRPCError };
+// Middleware creation helper

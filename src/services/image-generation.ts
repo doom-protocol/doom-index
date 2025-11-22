@@ -1,0 +1,158 @@
+/**
+ * Image Generation Orchestration Service
+ *
+ * Coordinates the image generation pipeline:
+ * 1. Generate prompt from market cap data
+ * 2. Request image from provider
+ * 3. Return generation result with metadata
+ *
+ * This service focuses solely on the generation aspect,
+ * leaving storage and indexing to other services.
+ */
+
+import { err, ok, Result } from "neverthrow";
+import { logger } from "@/utils/logger";
+import { env } from "@/env";
+import type { ImageProvider } from "@/types/domain";
+import type { AppError } from "@/types/app-error";
+import type { WorldPromptService, PromptComposition } from "@/services/world-prompt-service";
+import type { PaintingContext } from "@/types/painting-context";
+import type { TokenMetaInput } from "@/services/token-analysis-service";
+
+type ImageGenerationResult = {
+  composition: PromptComposition;
+  imageBuffer: ArrayBuffer;
+  providerMeta: Record<string, unknown>;
+};
+
+type ImageGenerationService = {
+  generateTokenImage(input: TokenImageGenerationInput): Promise<Result<ImageGenerationResult, AppError>>;
+};
+
+type ImageGenerationDeps = {
+  promptService: WorldPromptService;
+  imageProvider: ImageProvider;
+  generationTimeoutMs?: number;
+  log?: typeof logger;
+};
+
+type TokenImageGenerationInput = {
+  paintingContext: PaintingContext;
+  tokenMeta: TokenMetaInput;
+  referenceImageUrl?: string | null;
+};
+
+/**
+ * Create image generation orchestration service
+ *
+ * @param deps - Service dependencies
+ * @returns Image generation service
+ */
+export function createImageGenerationService({
+  promptService,
+  imageProvider,
+  generationTimeoutMs = 90_000,
+  log = logger,
+}: ImageGenerationDeps): ImageGenerationService {
+  /**
+   * Generate image from token context
+   *
+   * @returns Generation result with image buffer and metadata
+   */
+  const sanitizeReferenceImageUrl = (url?: string | null): string | null => {
+    if (!url) return null;
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return null;
+      }
+      parsed.protocol = "https:";
+      return parsed.toString();
+    } catch {
+      return null;
+    }
+  };
+
+  const logPromptDetails = (composition: PromptComposition, referenceImageUrl: string | null) => {
+    log.info("image-generation.composition", {
+      visualParams: composition.vp,
+      paramsHash: composition.paramsHash,
+      seed: composition.seed,
+      size: `${composition.prompt.size.w}x${composition.prompt.size.h}`,
+      referenceImageUrl,
+    });
+
+    // Requirement: Prompt text and Runware params (referenceImages url)
+    log.info("image-generation.prompt", {
+      prompt: composition.prompt.text,
+      // negative: composition.prompt.negative, // Reduce noise, user asked for prompt text primarily
+      referenceImageUrl: referenceImageUrl ?? "None",
+      model: env.IMAGE_MODEL,
+      seed: composition.prompt.seed,
+    });
+  };
+
+  const requestImage = async (
+    composition: PromptComposition,
+    options?: { referenceImageUrl?: string | null },
+  ): Promise<Result<ImageGenerationResult, AppError>> => {
+    const sanitizedReference = sanitizeReferenceImageUrl(options?.referenceImageUrl);
+    logPromptDetails(composition, sanitizedReference);
+
+    const imageResult = await imageProvider.generate(
+      {
+        prompt: composition.prompt.text,
+        negative: composition.prompt.negative,
+        width: composition.prompt.size.w,
+        height: composition.prompt.size.h,
+        format: composition.prompt.format,
+        seed: composition.prompt.seed,
+        model: env.IMAGE_MODEL,
+        ...(sanitizedReference ? { referenceImageUrl: sanitizedReference } : {}),
+      },
+      {
+        timeoutMs: generationTimeoutMs,
+      },
+    );
+
+    if (imageResult.isErr()) {
+      log.debug("image-generation.failure", {
+        paramsHash: composition.paramsHash,
+        seed: composition.seed,
+        referenceImageUrl: sanitizedReference,
+        errorType: imageResult.error.type,
+        errorMessage: imageResult.error.message,
+      });
+      return err(imageResult.error);
+    }
+
+    log.debug("image-generation.success", {
+      paramsHash: composition.paramsHash,
+      seed: composition.seed,
+      bufferSize: imageResult.value.imageBuffer.byteLength,
+      referenceImageUrl: sanitizedReference,
+    });
+
+    return ok({
+      composition,
+      imageBuffer: imageResult.value.imageBuffer,
+      providerMeta: imageResult.value.providerMeta,
+    });
+  };
+
+  async function generateTokenImage(
+    input: TokenImageGenerationInput,
+  ): Promise<Result<ImageGenerationResult, AppError>> {
+    const promptResult = await promptService.composeTokenPrompt({
+      paintingContext: input.paintingContext,
+      tokenMeta: input.tokenMeta,
+      referenceImageUrl: input.referenceImageUrl,
+    });
+
+    if (promptResult.isErr()) return err(promptResult.error);
+
+    return requestImage(promptResult.value, { referenceImageUrl: input.referenceImageUrl });
+  }
+
+  return { generateTokenImage };
+}

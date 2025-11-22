@@ -112,7 +112,7 @@ watermark, text, logo, oversaturated colors, low detail hands, extra limbs
 ### TypeScript API
 
 ```typescript
-import { buildSDXLPrompt, buildGenericPayload, toWeightedFragments } from "@/lib/pure/doom-prompt";
+import { buildSDXLPrompt, buildGenericPayload, toWeightedFragments } from "@/lib/pure/weighted-prompt";
 import type { McMap } from "@/constants/token";
 
 const mc: McMap = {
@@ -151,19 +151,15 @@ bun scripts/generate.ts --provider smart
 # カスタムMarket Cap値
 bun scripts/generate.ts --mc "CO2=1300000,ICE=200000,FOREST=900000,NUKE=50000,MACHINE=1450000,PANDEMIC=700000,FEAR=1100000,HOPE=400000"
 
-# 特定のモデルを指定
-bun scripts/generate.ts --provider smart --model "dall-e-3"
-
 # Runwareモデルを使用
-bun scripts/generate.ts --provider runware-sdk --model "civitai:38784@44716"
+bun scripts/generate.ts --model "runware:100@1"
 
 # カスタムサイズ
 bun scripts/generate.ts --w 1024 --h 1024
 
 # すべてのオプション
 bun scripts/generate.ts \
-  --provider smart \
-  --model "dall-e-3" \
+  --model "runware:100@1" \
   --mc "CO2=1300000,ICE=200000,FOREST=900000,NUKE=50000,MACHINE=1450000,PANDEMIC=700000,FEAR=1100000,HOPE=400000" \
   --w 1280 \
   --h 720 \
@@ -205,25 +201,23 @@ bun scripts/generate.ts \
 ### プロバイダー選択
 
 - **Smart Provider**: モデル名から自動選択（推奨）
-- **AI SDK**: OpenAIモデル（dall-e-3など）
-- **Runware SDK**: CivitAIモデルなど任意のモデル
+- **Runware SDK**: Runwareモデル
 
 ### テスト
 
 ```bash
 # 全テスト実行
-bun test
+bun run test
 
 # プロンプト生成のみ
-bun test tests/lib/pure/doom-prompt.test.ts
+bun run test tests/lib/pure/doom-prompt.test.ts
 
 # サービス統合テスト
-bun test tests/services/prompt.compose.test.ts
+bun run test tests/services/prompt.compose.test.ts
 ```
 
 ## 参考
 
 - [Smart Provider Documentation](./smart-provider.md)
 - [Image Providers Documentation](./image-providers.md)
-- [AI SDK Documentation](https://sdk.vercel.ai/docs/ai-sdk-core/image-generation)
 - [Runware Documentation](https://runware.ai/docs/en/image-inference/models)

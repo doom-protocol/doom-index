@@ -13,7 +13,7 @@ const DEFAULT_TWEET_LINES = [
 
 const TWITTER_INTENT_URL = "https://twitter.com/intent/tweet";
 
-export const buildTweetIntentUrl = ({ shareUrl, lines = DEFAULT_TWEET_LINES }: TweetIntentOptions): string => {
+const buildTweetIntentUrl = ({ shareUrl, lines = DEFAULT_TWEET_LINES }: TweetIntentOptions): string => {
   const url = new URL(TWITTER_INTENT_URL);
   const candidateLines = [...lines];
 

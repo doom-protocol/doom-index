@@ -9,5 +9,6 @@
     "source.organizeImports.biome": "explicit"
   },
   "typescript.preferences.includePackageJsonAutoImports": "auto",
-  "typescript.suggest.autoImports": true
+  "typescript.suggest.autoImports": true,
+  "cSpell.words": ["Kontext", "runware"]
 }

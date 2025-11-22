@@ -1,25 +1,15 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import { createArchiveListService } from "@/services/archive-list";
+import { createPaintingsService } from "@/services/paintings";
 import { createTestR2Bucket } from "../../lib/memory-r2";
-import type { ArchiveMetadata } from "@/types/archive";
+import type { PaintingMetadata } from "@/types/paintings";
 
-function createTestMetadata(id: string, imageKey: string, timestamp: string): ArchiveMetadata {
+function createTestMetadata(id: string, imageKey: string, timestamp: string): PaintingMetadata {
   return {
     id,
     timestamp,
     minuteBucket: timestamp,
     paramsHash: "abc12345",
     seed: "def456789012",
-    mcRounded: {
-      CO2: 1000000,
-      ICE: 2000000,
-      FOREST: 3000000,
-      NUKE: 4000000,
-      MACHINE: 5000000,
-      PANDEMIC: 6000000,
-      FEAR: 7000000,
-      HOPE: 8000000,
-    },
     visualParams: {
       fogDensity: 0.5,
       skyTint: 0.6,
@@ -92,7 +82,7 @@ describe("Archive List Service - Response Construction", () => {
         });
       }
 
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
@@ -131,7 +121,7 @@ describe("Archive List Service - Response Construction", () => {
         });
       }
 
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({ limit: 20 });
 
       expect(result.isOk()).toBe(true);
@@ -164,7 +154,7 @@ describe("Archive List Service - Response Construction", () => {
         contentType: "application/json",
       });
 
-      const service = createArchiveListService({ r2Bucket: bucket });
+      const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);

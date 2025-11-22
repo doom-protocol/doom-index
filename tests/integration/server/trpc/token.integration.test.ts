@@ -1,7 +1,7 @@
 import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { createMockContext } from "../../../unit/server/trpc/helpers";
-import { TOKEN_TICKERS } from "@/constants/token";
+// TOKEN_TICKERS no longer exists - legacy token system removed
 import { get } from "@/lib/cache";
 import {
   createMockCache,
@@ -26,25 +26,25 @@ describe("Token Integration", () => {
     restoreCacheMock(originalCaches);
   });
 
-  it("should fetch token state for all tickers", async () => {
+  it("should fetch token state for single ticker", async () => {
     const ctx = createMockContext();
     const caller = appRouter.createCaller(ctx);
 
-    for (const ticker of TOKEN_TICKERS) {
-      try {
-        const result = await caller.token.getState({ ticker });
+    try {
+      const result = await caller.token.getState({ ticker: "CO2" });
 
-        // nullまたはTokenStateを返す
-        if (result !== null) {
-          expect(result).toHaveProperty("ticker");
-          expect(result).toHaveProperty("thumbnailUrl");
-          expect(result).toHaveProperty("updatedAt");
-          expect(result.ticker).toBe(ticker);
-        }
-      } catch (error) {
-        // R2が利用できない場合はスキップ
-        console.log(`Skipping test for ${ticker}: R2 not available`, error);
+      // Should return null or TokenState
+      expect(result === null || typeof result === "object").toBe(true);
+
+      if (result !== null) {
+        expect(result).toHaveProperty("ticker");
+        expect(result).toHaveProperty("thumbnailUrl");
+        expect(result).toHaveProperty("updatedAt");
+        expect(result.ticker).toBe("CO2");
       }
+    } catch (error) {
+      // R2が利用できない場合はスキップ
+      console.log("Skipping test: R2 not available", error);
     }
   });
 
@@ -93,6 +93,7 @@ describe("Token Integration", () => {
 
       // Verify cache was set with ticker in key
       const cached = await get<typeof mockTokenState>("token:getState:CO2", {
+        namespace: undefined,
         logger: ctx.logger,
       });
       expect(cached).not.toBeNull();

@@ -26,15 +26,13 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     li: ({ children }: { children?: ReactNode }) => <li className="leading-7">{children}</li>,
     code: ({ children }: { children?: ReactNode }) => (
-      <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-900 border border-gray-300">
-        {children}
-      </code>
+      <code className="p-0 rounded text-[0.6rem] font-mono">{children}</code>
     ),
     pre: ({ children }: { children?: ReactNode }) => (
-      <pre className="mb-6 whitespace-pre-wrap break-words">{children}</pre>
+      <pre className="mb-6 text-xs whitespace-pre-wrap break-words p-1 overflow-x-auto">{children}</pre>
     ),
     blockquote: ({ children }: { children?: ReactNode }) => (
-      <blockquote className="pl-6 pr-4 py-2 italic mb-6 border-l-4 border-[#666] bg-[#f5f5f5]">{children}</blockquote>
+      <blockquote className="pl-3 italic border-l-4 border-[#666] bg-[#f5f5f5]">{children}</blockquote>
     ),
     a: ({ children, href }: { children?: ReactNode; href?: string }) => (
       <a
@@ -47,15 +45,24 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </a>
     ),
     table: ({ children }: { children?: ReactNode }) => (
-      <div className="overflow-x-auto mb-6 my-6 w-full">
-        <table className="min-w-full">{children}</table>
+      <div className="overflow-x-auto">
+        <table
+          className="w-fit border-collapse border border-gray-300 bg-white text-sm"
+          style={{ tableLayout: "auto" }}
+        >
+          {children}
+        </table>
       </div>
     ),
-    thead: ({ children }: { children?: ReactNode }) => <thead>{children}</thead>,
+    thead: ({ children }: { children?: ReactNode }) => <thead className="bg-gray-50">{children}</thead>,
     tbody: ({ children }: { children?: ReactNode }) => <tbody>{children}</tbody>,
-    tr: ({ children }: { children?: ReactNode }) => <tr>{children}</tr>,
-    th: ({ children }: { children?: ReactNode }) => <th>{children}</th>,
-    td: ({ children }: { children?: ReactNode }) => <td>{children}</td>,
+    tr: ({ children }: { children?: ReactNode }) => <tr className="border-b border-gray-200">{children}</tr>,
+    th: ({ children }: { children?: ReactNode }) => (
+      <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-900">{children}</th>
+    ),
+    td: ({ children }: { children?: ReactNode }) => (
+      <td className="border border-gray-300 px-4 py-3 text-gray-700">{children}</td>
+    ),
     img: ({ src, alt }: { src?: string; alt?: string }) => (
       <div className="my-6 flex flex-col items-center">
         <img src={src} alt={alt} className="max-w-xs h-auto border border-[#ddd]" />

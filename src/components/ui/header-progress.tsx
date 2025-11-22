@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState, type FC } from "react";
 import useSound from "use-sound";
 import { useHaptic } from "use-haptic";
-import { useGlobalStateRefetch } from "@/hooks/use-global-state";
+import { useLatestPainting, useLatestPaintingRefetch } from "@/hooks/use-latest-painting";
 import { logger } from "@/utils/logger";
+import { GENERATION_INTERVAL_MS } from "@/constants";
 
-const MINUTE_MS = 60000;
+const INTERVAL_MS = GENERATION_INTERVAL_MS;
 const HAPTIC_WINDOW_START_REMAINING_SECOND = 10;
 
 export const HeaderProgress: FC = () => {
@@ -15,11 +16,14 @@ export const HeaderProgress: FC = () => {
 
   const { triggerHaptic } = useHaptic();
   const [playChime] = useSound("/clock-chime.mp3", { interrupt: true });
-  const refetchGlobalState = useGlobalStateRefetch();
+  const refetchLatestPainting = useLatestPaintingRefetch();
+  const { dataUpdatedAt } = useLatestPainting();
+
+  const intervalLabel = "Next Generation";
 
   useEffect(() => {
     let animationFrameId: number | undefined;
-    let minuteStartPerf = performance.now() - (Date.now() % MINUTE_MS);
+    let intervalStartPerf = performance.now() - (Date.now() % INTERVAL_MS);
     let lastDisplayedSecond = -1;
 
     const updateProgressWidth = (ratio: number) => {
@@ -31,48 +35,62 @@ export const HeaderProgress: FC = () => {
 
     const syncInitialState = () => {
       const now = Date.now();
-      const elapsedInMinute = now % MINUTE_MS;
-      minuteStartPerf = performance.now() - elapsedInMinute;
-      const initialProgress = elapsedInMinute / MINUTE_MS;
-      const initialRemainingSeconds = Math.min(59, Math.floor((MINUTE_MS - elapsedInMinute) / 1000));
+      const elapsedInInterval = now % INTERVAL_MS;
+      intervalStartPerf = performance.now() - elapsedInInterval;
+      const initialProgress = elapsedInInterval / INTERVAL_MS;
+      const initialRemainingSeconds = Math.floor((INTERVAL_MS - elapsedInInterval) / 1000);
 
       updateProgressWidth(initialProgress);
       lastDisplayedSecond = initialRemainingSeconds;
       setDisplaySecond(initialRemainingSeconds);
     };
 
-    const handleMinuteBoundary = (previousSecond: number) => {
+    const handleIntervalBoundary = (previousSecond: number) => {
       if (previousSecond !== 0) {
         triggerHaptic();
       }
       playChime();
-      refetchGlobalState().catch(error => {
-        logger.error("header-progress.refetchGlobalState.failed", { error });
-      });
+
+      // Only refetch if data is stale (older than interval)
+      // React Query handles automatic refetches, so manual refetch is only needed
+      // if the automatic refetch hasn't occurred yet or failed
+      const timeSinceLastUpdate = Date.now() - dataUpdatedAt;
+      const isDataFresh = timeSinceLastUpdate < INTERVAL_MS;
+
+      if (!isDataFresh) {
+        refetchLatestPainting().catch(error => {
+          logger.error("header-progress.refetchLatestPainting.failed", { error });
+        });
+      } else {
+        logger.debug("header-progress.refetch.skipped", {
+          timeSinceLastUpdate: Math.round(timeSinceLastUpdate / 1000),
+          reason: "data_fresh",
+        });
+      }
     };
 
     const tick = (timestamp: number) => {
-      let elapsedMs = timestamp - minuteStartPerf;
+      let elapsedMs = timestamp - intervalStartPerf;
 
       if (elapsedMs < 0) {
-        minuteStartPerf = timestamp;
+        intervalStartPerf = timestamp;
         elapsedMs = 0;
       }
 
-      if (elapsedMs >= MINUTE_MS) {
-        const wraps = Math.floor(elapsedMs / MINUTE_MS);
+      if (elapsedMs >= INTERVAL_MS) {
+        const wraps = Math.floor(elapsedMs / INTERVAL_MS);
         for (let i = 0; i < wraps; i += 1) {
-          handleMinuteBoundary(lastDisplayedSecond);
+          handleIntervalBoundary(lastDisplayedSecond);
         }
-        minuteStartPerf += wraps * MINUTE_MS;
-        elapsedMs = timestamp - minuteStartPerf;
+        intervalStartPerf += wraps * INTERVAL_MS;
+        elapsedMs = timestamp - intervalStartPerf;
         lastDisplayedSecond = -1;
       }
 
-      updateProgressWidth(elapsedMs / MINUTE_MS);
+      updateProgressWidth(elapsedMs / INTERVAL_MS);
 
-      const remainingMs = Math.max(0, MINUTE_MS - elapsedMs);
-      const nextRemainingSeconds = Math.min(59, Math.floor(remainingMs / 1000));
+      const remainingMs = Math.max(0, INTERVAL_MS - elapsedMs);
+      const nextRemainingSeconds = Math.floor(remainingMs / 1000);
 
       if (nextRemainingSeconds !== lastDisplayedSecond) {
         if (nextRemainingSeconds <= HAPTIC_WINDOW_START_REMAINING_SECOND && nextRemainingSeconds > 0) {
@@ -93,14 +111,16 @@ export const HeaderProgress: FC = () => {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [playChime, refetchGlobalState, triggerHaptic]);
+  }, [playChime, refetchLatestPainting, triggerHaptic, dataUpdatedAt]);
 
-  const secondsLabel = displaySecond.toString().padStart(2, "0");
+  const minutes = Math.floor(displaySecond / 60);
+  const seconds = displaySecond % 60;
+  const timeLabel = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 
   return (
     <div className="flex h-[68px] flex-col items-center gap-2">
-      <span className="text-white/60 text-sm font-cinzel-decorative tracking-wide">Next Generation</span>
-      <span className="font-mono text-sm text-white/70 tabular-nums">{secondsLabel} s</span>
+      <span className="text-white/60 text-sm font-cinzel-decorative tracking-wide">{intervalLabel}</span>
+      <span className="font-mono text-sm text-white/70 tabular-nums">{timeLabel}</span>
       <div className="h-1 w-32 overflow-hidden rounded-full bg-white/20">
         <div ref={progressBarRef} className="h-full bg-white" />
       </div>

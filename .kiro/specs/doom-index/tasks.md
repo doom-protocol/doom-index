@@ -305,7 +305,7 @@
 - **Acceptance Criteria**:
   - `normalize`, `quantize`, `mapping`, `prompt`, `seed`, `paramsHash`, `filename` の Unit Tests が実装されている
   - 同一入力で同一出力を返すことを検証する
-  - `bun test` で全テストが通過する
+  - `bun run test` で全テストが通過する
 - **Dependencies**: Task 1.4
 - **Estimated Effort**: 2h
 - **Files**:
@@ -318,7 +318,7 @@
   - `runMinuteGeneration` のモックテストが実装されている
   - `prevHash === nowHash` で skip することを検証する
   - 生成時に全トークン state が同一 URL を指すことを検証する
-  - `bun test` で全テストが通過する
+  - `bun run test` で全テストが通過する
 - **Dependencies**: Task 2.4
 - **Estimated Effort**: 3h
 - **Files**:

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
 
 export const DateFilter: React.FC = () => {
   const router = useRouter();
@@ -19,6 +20,7 @@ export const DateFilter: React.FC = () => {
       params.delete("startDate");
     }
     params.delete("cursor"); // Reset cursor when filter changes
+    sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, { filter_type: "date", filter_value: newStartDate || "cleared" });
     router.push(`/archive?${params.toString()}`);
   };
 
@@ -31,6 +33,7 @@ export const DateFilter: React.FC = () => {
       params.delete("endDate");
     }
     params.delete("cursor"); // Reset cursor when filter changes
+    sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, { filter_type: "date", filter_value: newEndDate || "cleared" });
     router.push(`/archive?${params.toString()}`);
   };
 
@@ -39,6 +42,7 @@ export const DateFilter: React.FC = () => {
     params.delete("startDate");
     params.delete("endDate");
     params.delete("cursor");
+    sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, { filter_type: "date", filter_value: "cleared" });
     router.push(`/archive?${params.toString()}`);
   };
 

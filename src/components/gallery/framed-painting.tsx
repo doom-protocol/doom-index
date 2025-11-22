@@ -18,11 +18,18 @@ import {
 } from "three";
 import type { GLTF } from "three-stdlib";
 import { openTweetIntent } from "@/utils/twitter";
-import { calculatePlaneDimensions, handlePointerMoveForDrag, isValidPointerEvent } from "@/utils/three";
+import {
+  calculatePlaneDimensions,
+  handlePointerMoveForDrag,
+  handlePointerUpForClick,
+  isValidPointerEvent,
+} from "@/utils/three";
+import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
 
 interface FramedPaintingProps {
   thumbnailUrl: string;
   framePosition?: [number, number, number];
+  paintingId?: string;
 }
 
 interface PaintingContentProps {
@@ -31,6 +38,7 @@ interface PaintingContentProps {
   onPointerMove: (event: ThreeEvent<PointerEvent>) => void;
   onPointerUp: (event: ThreeEvent<PointerEvent>) => boolean;
   onPointerCancel: (event: ThreeEvent<PointerEvent>) => void;
+  paintingId?: string;
 }
 
 const PULSE_DURATION = 0.6;
@@ -135,6 +143,7 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
   onPointerMove,
   onPointerUp,
   onPointerCancel,
+  paintingId,
 }) => {
   const paintingMeshRef = useRef<Mesh>(null);
   const previousPaintingMeshRef = useRef<Mesh>(null);
@@ -383,6 +392,7 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
     if (shouldTrigger) {
       triggerPulse();
       triggerHaptics();
+      if (paintingId) sendGAEvent(GA_EVENTS.GALLERY_PAINING_CLICK, { painting_id: paintingId });
     }
   };
 
@@ -466,6 +476,7 @@ PaintingContent.displayName = "PaintingContent";
 export const FramedPainting: React.FC<FramedPaintingProps> = ({
   thumbnailUrl,
   framePosition = DEFAULT_FRAME_POSITION,
+  paintingId,
 }) => {
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null);
   const activePointerIdRef = useRef<number | null>(null);
@@ -502,28 +513,18 @@ export const FramedPainting: React.FC<FramedPaintingProps> = ({
   };
 
   const handlePointerUp = (event: ThreeEvent<PointerEvent>): boolean => {
-    if (!isValidPointerEvent(event, activePointerIdRef.current)) {
-      return false;
-    }
-
-    const shouldTrigger =
-      pointerDownPositionRef.current !== null &&
-      !hasPointerMovedRef.current &&
-      (event.pointerType === "touch" || event.button === 0);
-
-    resetPointerState();
-
-    if (!shouldTrigger) {
-      return false;
-    }
-
-    event.stopPropagation();
-
-    window.setTimeout(() => {
-      openTweetIntent();
-    }, PULSE_DURATION * 1000);
-
-    return true;
+    return handlePointerUpForClick(
+      event,
+      pointerDownPositionRef,
+      hasPointerMovedRef,
+      activePointerIdRef,
+      resetPointerState,
+      () => {
+        window.setTimeout(() => {
+          openTweetIntent();
+        }, PULSE_DURATION * 1000);
+      },
+    );
   };
 
   const handlePointerCancel = (event: ThreeEvent<PointerEvent>) => {
@@ -546,6 +547,7 @@ export const FramedPainting: React.FC<FramedPaintingProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
+        paintingId={paintingId}
       />
     </PaintingGroup>
   );
