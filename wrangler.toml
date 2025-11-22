@@ -15,8 +15,14 @@ compatibility_flags = [
 # command = "bun run build:cf"
 
 # Cron Triggers
+# NOTE: This cron interval should match NEXT_PUBLIC_GENERATION_INTERVAL_MS for optimal performance
+# Current setting: Every 10 minutes (600000ms)
+# If you change NEXT_PUBLIC_GENERATION_INTERVAL_MS, update this cron schedule accordingly:
+#   - 10 min (600000ms):  "*/10 * * * *"
+#   - 30 min (1800000ms): "*/30 * * * *"
+#   - 1 hour (3600000ms): "0 * * * *"
 [triggers]
-crons = ["0 * * * *"] # Every hour (dynamic-draw feature)
+crons = ["*/10 * * * *"] # Every 10 minutes (matches NEXT_PUBLIC_GENERATION_INTERVAL_MS=600000)
 
 [[routes]]
 pattern = "doomindex.fun"
@@ -66,6 +72,7 @@ LOG_LEVEL = "INFO"
 NEXTJS_ENV = "production"
 NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
 IMAGE_MODEL = "runware:106@1"
+NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000 # 10 minutes
 
 [observability]
 enabled = false
@@ -123,3 +130,4 @@ LOG_LEVEL = "INFO"
 NEXTJS_ENV = "development"
 NEXT_PUBLIC_BASE_URL = "http://localhost:8787"
 IMAGE_MODEL = "runware:106@1"
+NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000 # 10 minutes
