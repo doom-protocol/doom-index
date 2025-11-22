@@ -1,0 +1,190 @@
+export const metadata = {
+  title: "DOOM INDEX v2 — A Market-Driven Generative Art Protocol",
+  authors: ["DOOM INDEX Research Team"],
+  date: "November 22, 2025",
+  version: "v2.1",
+  description: "A decentralized emotional archive of crypto market psychology — a mirror and a doomsday clock.",
+};
+
+<div className="paper-header">
+  <div className="paper-metadata">
+    <div className="paper-date">{metadata.date}</div>
+    <div className="paper-version">{metadata.version}</div>
+  </div>
+  <h1 className="paper-title">{metadata.title}</h1>
+  <div className="paper-authors">
+    {metadata.authors.map((author, i) => (
+      <span key={i} className="paper-author">
+        {author}
+      </span>
+    ))}
+  </div>
+  <div className="paper-epigraph">
+    <em>"A decentralized archive of financial emotions."</em>
+  </div>
+</div>
+
+## 1. Motivation
+
+Markets are emotional. Behind every price movement lives fear, hope, greed, anxiety, euphoria—the full spectrum of human feeling compressed into numbers.
+
+But emotions are invisible. Charts show lines, not sentiment. Prices capture transactions, not psychology.
+
+**What if we could make financial emotions visible?**
+
+Generative AI can translate data into forms humans perceive. Language becomes images. Numbers become narratives. So why not translate market psychology into paintings?
+
+Solana's memecoin markets—where rationality and irrationality collide at light speed—are the purest expression of collective financial emotion. Every buy is hope. Every sell is doubt. Every spike is euphoria, every crash is panic.
+
+DOOM INDEX was born to **archive these emotions**—transforming raw market data into paintings that capture what the numbers alone never could: how the market _felt_ at that exact moment.
+
+---
+
+## 2. What DOOM INDEX v2 Is
+
+v2 marks a radical shift:
+
+| v1                  | v2                                        |
+| ------------------- | ----------------------------------------- |
+| Fixed 8 tokens      | **Dynamically varying "1 token symbolizing the moment"** |
+| Market capture → art | **Psychological translation → symbolic art** |
+| Prototype           | **Cultural archive**                      |
+
+### Key Concept
+
+> **The most culturally dominant memecoin at this moment becomes the protagonist of the painting.**
+
+Crypto culture changes every hour → DOOM INDEX changes with it.
+
+---
+
+## 3. Architecture
+
+Fully autonomous from trend selection to painting preservation.
+
+![Generation architecture](/diagrams/generation-process.svg)
+
+The system runs on Cloudflare infrastructure:
+
+- **Cron Triggers**: Hourly execution
+- **Workers**: Serverless computation
+- **D1 Database**: Market data storage
+- **R2 Storage**: Image archival
+
+---
+
+## 4. How Generation Works
+
+### Step A — Market Observation
+
+Obtain collective psychological indicators from CoinGecko / Alternative.me
+
+| Metric             | Psychological Meaning                 |
+| ------------------ | ------------------------------------- |
+| Trending rank      | "Gaze intensity" — interest as heat   |
+| Volume / MCap      | "Dominance" — how much it moves the world |
+| Volatility         | "Instability" — emotional turbulence  |
+| Fear & Greed Index | Market emotional polarity             |
+
+### Step B — Symbol Token Selection
+
+Select what most symbolizes the current moment
+
+```
+finalScore = 0.50*trend + 0.35*impact + 0.15*mood
+```
+
+Examples:
+
+- During crashes, death symbols become protagonists
+- When markets euphorize, golden idols move to center stage
+
+### Step C — Translating Data Into Symbols
+
+Convert statistical values → psychology → art language (10 elements)
+
+| Context Component | Meaning                              |
+| ----------------- | ------------------------------------ |
+| Market Climate    | Weather = mood                       |
+| Archetype         | Story the token carries              |
+| Event Pressure    | Ritual intensity (worship / condemnation) |
+| Composition       | Rising → heaven / Falling → abyss   |
+| Palette           | Greed=Gold / Fear=Burgundy           |
+| Dynamics          | Vortex of chaos, or tranquility      |
+| Motifs            | Cryptic allegorical icons            |
+| Texture           | Heavy or fluid                       |
+| Light Narrative   | Salvation or judgment                |
+| Symbolic Density  | Pressure filling the world           |
+
+### Step D — Allegorical Prompt Generation
+
+Convert to literary financial poetry
+
+```
+A high medieval allegory of {Archetype},
+under a {Climate} market mood,
+{Motifs}, {Dynamics},
+oil painting, allegorical, dramatic lighting.
+(seed={deterministicHash})
+```
+
+### Step E — Image Generation
+
+Psychological depiction by Runware FLUX Kontext AI
+
+- Greed → Light intensifies
+- Fear → Darkness deepens
+- High volatility → Brush strokes become rough
+- When eras shift → The painting moves
+
+### Step F — Archival
+
+Permanent preservation in Cloudflare D1 + R2
+
+= Record of the doomsday clock
+
+---
+
+## 5. Cultural Significance
+
+DOOM INDEX is not just art:
+
+📌 **A Mirror**
+Market psychology reflects directly
+The unconscious of crypto capitalism
+
+📌 **A Doomsday Clock**
+When fear dominates, darkness thickens
+A device measuring distance to doom
+
+📌 **A Chronicle**
+Future historians will cite it
+The historiography of speculative culture
+
+Crypto's emotions don't vanish. They are archived.
+
+---
+
+## 6. Roadmap
+
+| Phase | Content                          | Status      |
+| ----- | -------------------------------- | ----------- |
+| v2    | Dynamic Token Model              | ✔ Complete  |
+| v2.2  | Token Archetype Expansion        | In progress |
+| v3    | DOOM DAO (Cultural editing rights) | In preparation |
+| v3+   | Season NFTs (Preserving decisive moments) | In preparation |
+
+---
+
+## 7. Credits
+
+- **Developed on**: [Solana](https://solana.com) blockchain
+- **Powered by**: [pump.fun](https://pump.fun) & [dev.fun](https://dev.fun)
+- **Built for**: The meme economy, the art world, and everyone in between
+
+---
+
+<div style={{ textAlign: "center", marginTop: "4rem", opacity: 0.6, fontSize: "0.9rem" }}>
+  <p>DOOM INDEX v2.1 — November 2025</p>
+  <p>A decentralized archive of financial emotions.</p>
+</div>
