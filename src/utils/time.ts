@@ -29,6 +29,23 @@ export function getHourBucket(date: Date = new Date()): string {
 }
 
 /**
+ * Returns an ISO-like interval bucket string that is stable within the specified interval.
+ * The interval is defined by NEXT_PUBLIC_GENERATION_INTERVAL_MS environment variable.
+ * Example: "2025-11-09T12:00" (for 10-minute intervals)
+ */
+export function getIntervalBucket(date: Date = new Date(), intervalMs: number = 600000): string {
+  const copy = new Date(date.getTime());
+  // Calculate which interval this timestamp falls into
+  const intervalMinutes = Math.floor(intervalMs / (1000 * 60));
+  const minutesSinceEpoch = Math.floor(copy.getTime() / (1000 * 60));
+  const intervalStartMinutes = Math.floor(minutesSinceEpoch / intervalMinutes) * intervalMinutes;
+  const intervalStartTime = new Date(intervalStartMinutes * 60 * 1000);
+
+  // Return ISO string up to minutes
+  return intervalStartTime.toISOString().slice(0, 16);
+}
+
+/**
  * Create timeout promise
  * Returns a promise that resolves to a TimeoutError after the specified duration
  *

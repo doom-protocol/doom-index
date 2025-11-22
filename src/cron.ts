@@ -2,7 +2,7 @@
  * Cloudflare Workers Cron Handler
  *
  * Executes at the interval specified by NEXT_PUBLIC_GENERATION_INTERVAL_MS to:
- * 1. Check idempotency (hourBucket)
+ * 1. Check idempotency (intervalBucket)
  * 2. Select token from trending or force list
  * 3. Fetch market data and store snapshot
  * 4. Build painting context

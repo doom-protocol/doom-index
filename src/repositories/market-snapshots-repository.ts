@@ -22,7 +22,8 @@ export class MarketSnapshotsRepository {
   constructor(private readonly db: MarketSnapshotsDb) {}
 
   /**
-   * Find snapshot by hourBucket (Requirement 10)
+   * Find snapshot by intervalBucket (Requirement 10)
+   * Note: hourBucket field now contains interval-based buckets, not hour-based
    */
   async findByHourBucket(hourBucket: string): Promise<Result<MarketSnapshot | null, AppError>> {
     try {

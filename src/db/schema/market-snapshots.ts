@@ -7,7 +7,7 @@ import { sqliteTable, text, real, integer, index } from "drizzle-orm/sqlite-core
 export const marketSnapshots = sqliteTable(
   "market_snapshots",
   {
-    hourBucket: text("hour_bucket").primaryKey().notNull(), // Hour bucket (e.g., "2025-11-21T15")
+    hourBucket: text("hour_bucket").primaryKey().notNull(), // Interval bucket based on GENERATION_INTERVAL_MS (e.g., "2025-11-21T15:00" for 10min intervals)
     totalMarketCapUsd: real("total_market_cap_usd").notNull(), // Global market cap (USD)
     totalVolumeUsd: real("total_volume_usd").notNull(), // Global volume (USD)
     marketCapChangePercentage24hUsd: real("market_cap_change_percentage_24h_usd").notNull(), // Global market cap 24h change (%)

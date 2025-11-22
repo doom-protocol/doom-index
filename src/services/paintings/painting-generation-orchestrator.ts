@@ -1,8 +1,8 @@
 /**
  * Painting Generation Orchestrator
  *
- * Orchestrates the hourly painting generation pipeline:
- * 1. Generate hourBucket and check idempotency
+ * Orchestrates the interval-based painting generation pipeline:
+ * 1. Generate intervalBucket and check idempotency
  * 2. Select token from trending or force list
  * 3. Fetch market data and store snapshot
  * 4. Build painting context
@@ -15,7 +15,8 @@
 
 import { Result, ok, err } from "neverthrow";
 import type { AppError } from "@/types/app-error";
-import { getHourBucket } from "@/utils/time";
+import { getIntervalBucket } from "@/utils/time";
+import { GENERATION_INTERVAL_MS } from "@/constants";
 import { logger } from "@/utils/logger";
 import { TokenSelectionService } from "./token-selection";
 import { MarketDataService } from "./market-data";
@@ -75,7 +76,7 @@ export class PaintingGenerationOrchestrator {
    */
   async execute(cloudflareEnv: Cloudflare.Env): Promise<Result<PaintingGenerationResult, AppError>> {
     try {
-      const hourBucket = getHourBucket();
+      const hourBucket = getIntervalBucket(new Date(), GENERATION_INTERVAL_MS);
       logger.debug(`[PaintingGenerationOrchestrator] Starting execution for hourBucket: ${hourBucket}`);
 
       // Step 1: Check idempotency (Requirement 10)
