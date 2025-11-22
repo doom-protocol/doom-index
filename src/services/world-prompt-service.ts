@@ -242,6 +242,37 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
     const motifLine = ctx.f.length ? ctx.f.join(", ") : "none";
     const hintsLine = ctx.h.length ? ctx.h.join(", ") : "none";
 
+    // Determine trend sentiment and atmospheric interaction
+    const isTokenPositive = ctx.s.p7 >= 0;
+    let atmosphereInstruction = "";
+
+    if (isTokenPositive) {
+      if (ctx.c === "euphoria") {
+        atmosphereInstruction =
+          "Harmonious: The world is in a Golden Age. The landscape is lush, radiant, and divine. The token motif shines in perfect harmony with the glorious environment.";
+      } else if (ctx.c === "despair" || ctx.c === "panic" || ctx.c === "cooling") {
+        atmosphereInstruction =
+          "Contrast: The world is gloomy, stormy, or decaying (reflecting the market), BUT the token motif is miraculously shining, rising, or blooming amidst the darkness. A beacon of hope in a dark landscape.";
+      } else {
+        // transition
+        atmosphereInstruction =
+          "Mixed: The world is in flux, but the token motif is clearly strengthening and rising, standing out against the uncertain background.";
+      }
+    } else {
+      // Token Negative
+      if (ctx.c === "euphoria") {
+        atmosphereInstruction =
+          "Contrast: The world is beautiful, sunny, and prosperous (reflecting the market), BUT the token motif is burning, falling, decaying, or crumbling. A tragedy in paradise.";
+      } else if (ctx.c === "despair" || ctx.c === "panic" || ctx.c === "cooling") {
+        atmosphereInstruction =
+          "Harmonious: Total Apocalypse. The world is dark and dying, and the token motif is also suffering—burning, drowning, or fading away. Absolute synchronization of doom.";
+      } else {
+        // transition
+        atmosphereInstruction =
+          "Mixed: The world is shifting, but the token motif is visibly weak, fading, or cracking under pressure.";
+      }
+    }
+
     // Get primary element from archetype/climate mapping
     const primaryElementKey = getSymbolicElementForArchetypeClimate(ctx.a, ctx.c);
     const primaryElement = SYMBOLIC_ELEMENTS[primaryElementKey];
@@ -264,37 +295,55 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
     if (vp.fogDensity > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["dense toxic smog in the sky"],
-        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.fogDensity * PROMPT_TUNING.secondaryElement.weightScale),
+        weight: Math.min(
+          PROMPT_TUNING.secondaryElement.weightMax,
+          vp.fogDensity * PROMPT_TUNING.secondaryElement.weightScale,
+        ),
       });
     }
     if (vp.blueBalance > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["glittering blue glaciers and cold reflections"],
-        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.blueBalance * PROMPT_TUNING.secondaryElement.weightScale),
+        weight: Math.min(
+          PROMPT_TUNING.secondaryElement.weightMax,
+          vp.blueBalance * PROMPT_TUNING.secondaryElement.weightScale,
+        ),
       });
     }
     if (vp.vegetationDensity > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["lush emerald forests and living roots"],
-        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.vegetationDensity * PROMPT_TUNING.secondaryElement.weightScale),
+        weight: Math.min(
+          PROMPT_TUNING.secondaryElement.weightMax,
+          vp.vegetationDensity * PROMPT_TUNING.secondaryElement.weightScale,
+        ),
       });
     }
     if (vp.radiationGlow > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["blinding nuclear flash on the horizon"],
-        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.radiationGlow * PROMPT_TUNING.secondaryElement.weightScale),
+        weight: Math.min(
+          PROMPT_TUNING.secondaryElement.weightMax,
+          vp.radiationGlow * PROMPT_TUNING.secondaryElement.weightScale,
+        ),
       });
     }
     if (vp.mechanicalPattern > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["colossal dystopian machine towers and metal grids"],
-        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.mechanicalPattern * PROMPT_TUNING.secondaryElement.weightScale),
+        weight: Math.min(
+          PROMPT_TUNING.secondaryElement.weightMax,
+          vp.mechanicalPattern * PROMPT_TUNING.secondaryElement.weightScale,
+        ),
       });
     }
     if (vp.bioluminescence > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["bioluminescent spores and organic clusters"],
-        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.bioluminescence * PROMPT_TUNING.secondaryElement.weightScale),
+        weight: Math.min(
+          PROMPT_TUNING.secondaryElement.weightMax,
+          vp.bioluminescence * PROMPT_TUNING.secondaryElement.weightScale,
+        ),
       });
     }
     if (vp.shadowDepth > PROMPT_TUNING.secondaryElement.threshold || ctx.c === "despair" || ctx.c === "panic") {
@@ -334,9 +383,12 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
       `- Token Archetype: ${ctx.a}`,
       `- Event: ${ctx.e.k} (intensity ${ctx.e.i})`,
       `- Trend Direction: ${ctx.d.dir} (${ctx.d.vol} volatility)`,
+      `- Price Change (7d): ${ctx.s.p7.toFixed(2)}%`,
       `- Volatility Index: ${numberFormatter.format(ctx.s.vol)}`,
       ``,
       `Visual Directives:`,
+      `- Atmosphere & Lighting: ${atmosphereInstruction}`,
+      `- Camera: Wide shot, panoramic view of the landscape`,
       `- Composition: ${ctx.o}`,
       `- Palette: ${ctx.p}`,
       `- Motifs: ${motifLine}`,

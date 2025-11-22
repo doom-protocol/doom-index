@@ -199,7 +199,24 @@ export class TokenSelectionService {
           },
         }));
 
-        logger.info(`[TokenSelectionService] Selection Process (Top 5 Candidates):`, { candidates: topCandidates });
+        logger.info(
+          `[TokenSelectionService] Selection Process (Top 5 Candidates): ${JSON.stringify(
+            {
+              candidates: topCandidates.map(c => ({
+                rank: c.rank,
+                symbol: c.symbol,
+                scores: {
+                  trend: c.scores.trend,
+                  impact: c.scores.impact,
+                  mood: c.scores.mood,
+                  final: c.scores.final,
+                },
+              })),
+            },
+            null,
+            2,
+          )}`,
+        );
 
         selected = scoredCandidates[0].candidate;
 

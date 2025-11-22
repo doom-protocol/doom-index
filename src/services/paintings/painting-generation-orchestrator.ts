@@ -85,7 +85,7 @@ export class PaintingGenerationOrchestrator {
       }
 
       if (existingSnapshot.value !== null) {
-        if (env.NODE_ENV !== "production") {
+        if (env.NEXT_PUBLIC_BASE_URL !== "https://doomindex.fun") {
           logger.info(
             `[PaintingGenerationOrchestrator] Development mode: processing duplicate hourBucket: ${hourBucket}`,
           );
