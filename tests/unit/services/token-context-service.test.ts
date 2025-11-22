@@ -432,5 +432,50 @@ describe("TokenContextService", () => {
 
       expect(result.isOk()).toBe(true);
     });
+
+    it("should use FALLBACK_SHORT_CONTEXT if generated context is not a string", async () => {
+      mockTavilyClient.searchToken = mock(() =>
+        Promise.resolve(
+          ok({
+            articles: [],
+            combinedText: "Some text",
+          }),
+        ),
+      ) as unknown as TavilyClient["searchToken"];
+
+      // AI returns invalid type (not a string)
+      const mockAiResponse = {
+        short_context: 12345, // Invalid type
+      };
+
+      mockWorkersAiClient.generateJson = mock(() =>
+        Promise.resolve(
+          ok({
+            modelId: "@cf/meta/llama-3.1-8b-instruct",
+            value: mockAiResponse,
+          }),
+        ),
+      ) as unknown as WorkersAiClient["generateJson"];
+
+      const service = createTokenContextService({
+        tavilyClient: mockTavilyClient,
+        workersAiClient: mockWorkersAiClient,
+        tokensRepository: mockTokensRepository,
+      });
+
+      const result = await service.generateAndSaveShortContext({
+        id: "new-token",
+        name: "New Token",
+        symbol: "NEW",
+        chainId: "ethereum",
+        contractAddress: null,
+        createdAt: "2024-01-01T00:00:00Z",
+      });
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value).toBe(FALLBACK_SHORT_CONTEXT);
+      }
+    });
   });
 });

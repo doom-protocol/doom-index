@@ -173,22 +173,37 @@ Generate a concise context JSON for this token.`;
 
     // Step 3.3: Map AI response to TokenContext and validate quality
     const aiContext = aiResult.value.value;
-    const shortContext = aiContext.short_context;
+    let validShortContext: string;
 
-    // Step 3.4: Validate shortContext quality
-    const validationResult = validateShortContext(shortContext);
-    let validShortContext = shortContext;
-
-    if (validationResult.isErr()) {
-      log.warn("token-context-service.generate.quality-check-failed", {
+    // Defensively check if short_context exists and is a string
+    if (typeof aiContext.short_context !== "string") {
+      log.warn("token-context-service.generate.invalid-response-format", {
         tokenId: input.id,
         symbol: input.symbol,
-        error: validationResult.error,
-        shortContextLength: shortContext.length,
+        modelId: aiResult.value.modelId,
+        receivedValue: aiContext,
         action: "using_fallback_context",
       });
-      // Use fallback context if validation fails
       validShortContext = FALLBACK_SHORT_CONTEXT;
+    } else {
+      const shortContext = aiContext.short_context;
+
+      // Step 3.4: Validate shortContext quality
+      const validationResult = validateShortContext(shortContext);
+
+      if (validationResult.isErr()) {
+        log.warn("token-context-service.generate.quality-check-failed", {
+          tokenId: input.id,
+          symbol: input.symbol,
+          error: validationResult.error,
+          shortContextLength: shortContext.length,
+          action: "using_fallback_context",
+        });
+        // Use fallback context if validation fails
+        validShortContext = FALLBACK_SHORT_CONTEXT;
+      } else {
+        validShortContext = shortContext;
+      }
     }
 
     // Step 3.5: Save shortContext to tokens table
