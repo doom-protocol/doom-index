@@ -175,20 +175,32 @@ export const viewerRouter = router({
     while (!opts.signal?.aborted) {
       await new Promise(resolve => setTimeout(resolve, 30000));
 
-      if (opts.signal?.aborted) break;
+      if (opts.signal?.aborted) {
+        ctx.logger.debug("trpc.viewer.onCountUpdate.signal-aborted", {
+          reason: "Client connection aborted",
+        });
+        break;
+      }
 
       try {
         const result = await viewerService.countActiveViewers();
         if (result.isOk()) {
           yield { count: result.value, timestamp: Date.now() };
+        } else {
+          ctx.logger.warn("trpc.viewer.onCountUpdate.count-failed", {
+            error: result.error,
+          });
         }
       } catch (error) {
         ctx.logger.error("trpc.viewer.onCountUpdate.loop.error", {
-          error,
+          error: error instanceof Error ? error.message : String(error),
         });
+        // Continue the loop even if there's an error
       }
     }
 
-    ctx.logger.debug("trpc.viewer.onCountUpdate.disconnected");
+    ctx.logger.debug("trpc.viewer.onCountUpdate.disconnected", {
+      reason: "Client disconnected normally",
+    });
   }),
 });

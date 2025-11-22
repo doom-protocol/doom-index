@@ -87,13 +87,22 @@ async function remove() {
 }
 
 // Setup tRPC subscription for viewer count updates
-function setupViewerCountSubscription() {
-  debugLog("Connecting to tRPC viewer count subscription");
+function setupViewerCountSubscription(retryCount = 0) {
+  const maxRetries = 10;
+  const baseDelay = 1000; // 1 second base delay
+  const maxDelay = 30000; // Maximum 30 seconds
+
+  // Calculate exponential backoff delay
+  const delay = Math.min(baseDelay * Math.pow(2, retryCount), maxDelay);
+
+  debugLog(`Connecting to tRPC viewer count subscription (attempt ${retryCount + 1})`);
 
   try {
     const subscription = trpc.viewer.onCountUpdate.subscribe(undefined, {
       onData: data => {
         debugLog("Received count update from tRPC", data.count);
+        // Reset retry count on successful data reception
+        retryCount = 0;
         // Forward to main thread
         self.postMessage({
           type: "viewer-count",
@@ -102,23 +111,42 @@ function setupViewerCountSubscription() {
         });
       },
       onError: error => {
-        debugLog("tRPC subscription error", error);
-        // Retry after 5 seconds
-        setTimeout(setupViewerCountSubscription, 5000);
+        debugLog("tRPC subscription error", {
+          error: error instanceof Error ? error.message : String(error),
+          retryCount,
+          willRetry: retryCount < maxRetries,
+        });
+
+        if (retryCount < maxRetries) {
+          setTimeout(() => setupViewerCountSubscription(retryCount + 1), delay);
+        } else {
+          debugLog("Max retry attempts reached, stopping reconnection");
+        }
       },
       onComplete: () => {
-        debugLog("tRPC subscription completed, reconnecting...");
-        // Retry after 5 seconds
-        setTimeout(setupViewerCountSubscription, 5000);
+        debugLog("tRPC subscription completed, reconnecting...", { retryCount });
+        if (retryCount < maxRetries) {
+          setTimeout(() => setupViewerCountSubscription(retryCount + 1), delay);
+        } else {
+          debugLog("Max retry attempts reached, stopping reconnection");
+        }
       },
     });
 
     // Store subscription for cleanup
     return subscription;
   } catch (error) {
-    debugLog("Failed to setup tRPC subscription", error);
-    // Retry after 5 seconds
-    setTimeout(setupViewerCountSubscription, 5000);
+    debugLog("Failed to setup tRPC subscription", {
+      error: error instanceof Error ? error.message : String(error),
+      retryCount,
+      willRetry: retryCount < maxRetries,
+    });
+
+    if (retryCount < maxRetries) {
+      setTimeout(() => setupViewerCountSubscription(retryCount + 1), delay);
+    } else {
+      debugLog("Max retry attempts reached, stopping reconnection");
+    }
   }
 }
 
