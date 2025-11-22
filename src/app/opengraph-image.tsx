@@ -136,7 +136,7 @@ async function getArtworkImageSrc(
 
   if (env.NEXT_PUBLIC_R2_URL) {
     // Remove trailing slashes
-    let url = env.NEXT_PUBLIC_R2_URL.replace(/\/+$/, "");
+    const url = env.NEXT_PUBLIC_R2_URL.replace(/\/+$/, "");
 
     // Check if URL already includes protocol
     if (url.startsWith("http://") || url.startsWith("https://")) {
