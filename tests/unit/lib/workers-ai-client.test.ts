@@ -141,6 +141,42 @@ describe("WorkersAiClient", () => {
         expect(result.error.timeoutMs).toBe(500);
       }
     }, 3000); // Test timeout of 3 seconds
+
+    it("should handle OpenAI Chat Completion format response", async () => {
+      const openAiResponse = {
+        id: "chatcmpl-1f13e71e6bc1489d9f8ec6e413f03be5",
+        object: "chat.completion",
+        created: 1763835637,
+        model: "@cf/ibm-granite/granite-4.0-h-micro",
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: "assistant",
+              content: "Generated text from OpenAI format",
+            },
+          },
+        ],
+      };
+      // Cast to AiTextGenerationOutput since our client now handles both formats
+      const openAiMock = mock(() => Promise.resolve(openAiResponse as unknown as AiTextGenerationOutput));
+      mockAiBinding = createMockAiBinding(openAiMock);
+      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const client = createWorkersAiClient({ aiBinding: mockAiBinding });
+      const request: TextGenerationRequest = {
+        systemPrompt: "You are a helpful assistant.",
+        userPrompt: "Say hello",
+      };
+
+      const result = await client.generateText(request);
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.text).toBe("Generated text from OpenAI format");
+        expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro" as keyof AiModels);
+      }
+      expect(openAiMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("generateJson", () => {

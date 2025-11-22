@@ -178,10 +178,29 @@ export function createWorkersAiClient({
   };
 
   /**
-   * Type guard to check if a value is AiTextGenerationOutput
+   * Type guard to check if a value is AiTextGenerationOutput or OpenAI Chat Completion format
    */
   function isTextGenerationOutput(value: AiTextGenerationOutput | TimeoutError): value is AiTextGenerationOutput {
-    return "response" in value && typeof value.response === "string";
+    // Check traditional Workers AI format
+    if ("response" in value && typeof value.response === "string") {
+      return true;
+    }
+
+    // Check OpenAI Chat Completion format
+    if (
+      "choices" in value &&
+      Array.isArray(value.choices) &&
+      value.choices.length > 0 &&
+      value.choices[0] &&
+      "message" in value.choices[0] &&
+      value.choices[0].message &&
+      "content" in value.choices[0].message &&
+      typeof value.choices[0].message.content === "string"
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   async function generateText(input: TextGenerationRequest): Promise<Result<TextGenerationResult, AppError>> {
@@ -248,7 +267,23 @@ export function createWorkersAiClient({
         });
       }
 
-      const text = result.response ?? "";
+      // Extract text from either Workers AI format or OpenAI Chat Completion format
+      let text = "";
+      if ("response" in result && typeof result.response === "string") {
+        // Traditional Workers AI format
+        text = result.response ?? "";
+      } else if (
+        "choices" in result &&
+        Array.isArray(result.choices) &&
+        result.choices.length > 0 &&
+        result.choices[0] &&
+        "message" in result.choices[0] &&
+        result.choices[0].message &&
+        "content" in result.choices[0].message
+      ) {
+        // OpenAI Chat Completion format
+        text = result.choices[0].message.content ?? "";
+      }
 
       log.debug("workers-ai.generate-text.success", {
         modelId: model,
