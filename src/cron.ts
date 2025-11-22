@@ -16,6 +16,7 @@
 import { Result } from "neverthrow";
 import { logger } from "./utils/logger";
 import { getErrorMessage, getErrorStack } from "./utils/error";
+import { reportError } from "./lib/error-reporter";
 import { PaintingGenerationOrchestrator } from "./services/paintings/painting-generation-orchestrator";
 import { TokenSelectionService } from "./services/paintings/token-selection";
 import { TokenDataFetchService } from "./services/paintings/token-data-fetch";
@@ -94,6 +95,9 @@ export async function handleScheduledEvent(
         error: result.error,
         durationMs: Date.now() - startTime,
       });
+
+      // Report critical failures to Slack
+      await reportError(result.error, "Cron Job Failed (Painting Generation)");
       return;
     }
 
@@ -113,5 +117,8 @@ export async function handleScheduledEvent(
       stack: getErrorStack(error),
       durationMs: Date.now() - startTime,
     });
+
+    // Report unexpected exceptions to Slack
+    await reportError(error, "Cron Job Exception");
   }
 }

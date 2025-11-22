@@ -2,6 +2,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { createContext } from "@/server/trpc/context";
 import { logger } from "@/utils/logger";
+import { reportError } from "@/lib/error-reporter";
 
 // Note: OpenNext Cloudflare requires edge runtime functions to be defined separately.
 // Since Cloudflare Workers run on edge runtime by default, we don't need to explicitly
@@ -22,6 +23,11 @@ const handler = async (req: Request) => {
           cause: error.cause,
         },
       });
+
+      // Only report internal server errors to Slack
+      if (error.code === "INTERNAL_SERVER_ERROR") {
+        reportError(error, `TRPC Internal Error at ${path}`);
+      }
     },
   });
 

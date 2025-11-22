@@ -21,6 +21,7 @@ export const env = createEnv({
     TAVILY_API_KEY: z.string().optional(),
     COINGECKO_API_KEY: z.string().optional(),
     FORCE_TOKEN_LIST: z.string().optional(),
+    SLACK_WEBHOOK_URL: z.string().optional(),
   },
 
   /**
@@ -60,6 +61,7 @@ export const env = createEnv({
     TAVILY_API_KEY: process.env.TAVILY_API_KEY,
     COINGECKO_API_KEY: process.env.COINGECKO_API_KEY,
     FORCE_TOKEN_LIST: process.env.FORCE_TOKEN_LIST,
+    SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL,
     // Client
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     NEXT_PUBLIC_R2_URL: process.env.NEXT_PUBLIC_R2_URL,
