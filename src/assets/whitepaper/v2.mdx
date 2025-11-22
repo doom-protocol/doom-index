@@ -1,9 +1,8 @@
 export const metadata = {
-  title: "DOOM INDEX v2 — A Market-Driven Generative Art Protocol",
+  title: "DOOM INDEX — A Market-Driven Generative Art Protocol",
   authors: ["DOOM INDEX Research Team"],
   date: "November 22, 2025",
-  version: "v2.1",
-  description: "A decentralized emotional archive of crypto market psychology — a mirror and a doomsday clock.",
+  version: "v2.0",
 };
 
 <div className="paper-header">
@@ -38,119 +37,60 @@ Solana's memecoin markets—where rationality and irrationality collide at light
 
 DOOM INDEX was born to **archive these emotions**—transforming raw market data into paintings that capture what the numbers alone never could: how the market _felt_ at that exact moment.
 
-### The Evolution from v1 to v2
+---
 
-**v1 (Current)** is the proof of concept—fixed 8 tokens, fully automated generation, one new painting every minute. It demonstrates that markets can become art.
+## 2. What DOOM INDEX Is
 
-**v2 (Coming Soon)** introduces dynamic token selection and cultural archiving. Instead of fixed tokens, the system selects the most culturally relevant memecoin each hour. This creates a living archive that evolves with crypto culture itself.
+**DOOM INDEX is a decentralized archive of financial emotions—an onchain system where AI generates paintings every hour, translating the collective psychology of trending memecoins into visual art.**
+
+The system dynamically selects the most culturally dominant memecoin each hour. When a token captures the zeitgeist—through viral marketing, celebrity endorsements, or genuine innovation—it becomes the protagonist of that hour's painting.
+
+**Market emotion becomes visual emotion.** Every painting is a timestamp of collective psychology—a permanent record of how thousands of traders felt at that exact moment in time.
 
 ---
 
-## 2. What DOOM INDEX v2 Is
+## 3. How the Painting Is Generated
 
-v2 marks a radical shift:
-
-| v1                  | v2                                        |
-| ------------------- | ----------------------------------------- |
-| Fixed 8 tokens      | **Dynamically varying "1 token symbolizing the moment"** |
-| Market capture → art | **Psychological translation → symbolic art** |
-| Prototype           | **Cultural archive**                      |
-
-### Key Concept
-
-> **The most culturally dominant memecoin at this moment becomes the protagonist of the painting.**
-
-Crypto culture changes every hour → DOOM INDEX changes with it.
-
----
-
-## 3. Architecture
-
-Fully autonomous from trend selection to painting preservation.
+Every hour, the system captures trending token data and translates it into a painting through a weighted composition algorithm:
 
 ![Painting generation pipeline](/diagrams/generation-process.svg)
 
-The system runs on Cloudflare infrastructure:
-- **Cron Triggers**: Hourly execution
-- **Workers**: Serverless computation
-- **D1 Database**: Market data storage
-- **R2 Storage**: Image archival
-
 ### The Algorithm
 
-**1. Market Observation**
-The system captures the market state through multiple psychological indicators, creating a comprehensive snapshot of collective sentiment.
-
-**2. Dynamic Token Selection**
-Unlike v1's fixed 8 tokens, v2 selects the single most culturally dominant memecoin through a weighted scoring algorithm that considers trending momentum, market impact, and emotional resonance.
-
-**3. Psychological Translation**
-Statistical data is transformed through 10 distinct context components, each mapping market conditions to artistic elements in a medieval allegorical framework.
-
-**4. AI Interpretation**
-Runware FLUX Kontext AI interprets the weighted prompt to create a deterministic painting that captures the market's emotional state.
-
-**5. Permanent Archival**
-Each painting is stored with full market context in Cloudflare D1 and R2, creating an immutable record of financial emotion.
-
----
-
-## 4. How Generation Works
-
-Every hour, the system captures market data and translates it into a painting through a weighted composition algorithm:
-
-### Step A — Market Observation
-
-Obtain collective psychological indicators from CoinGecko / Alternative.me
-
-| Metric             | Psychological Meaning                 |
-| ------------------ | ------------------------------------- |
-| Trending rank      | "Gaze intensity" — interest as heat   |
-| Volume / MCap      | "Dominance" — how much it moves the world |
-| Volatility         | "Instability" — emotional turbulence  |
-| Fear & Greed Index | Market emotional polarity             |
-
-### Step B — Symbol Token Selection
-
-Select what most symbolizes the current moment
+**1. Market Observation & Token Selection**
+The system monitors CoinGecko trending data and selects the most culturally dominant memecoin through a weighted scoring algorithm:
 
 ```
 finalScore = 0.50*trend + 0.35*impact + 0.15*mood
 ```
 
-Examples:
+**2. Psychological Translation**
+Market data (volume, volatility, sentiment) is transformed through 10 context components, each mapping conditions to artistic elements in a medieval allegorical framework.
 
-- During crashes, death symbols become protagonists
-- When markets euphorize, golden idols move to center stage
+**3. Weighted Medieval Allegory**
+The selected token maps to a visual archetype. The AI receives a weighted prompt in the format `(element:weight)`, creating a medieval allegorical oil painting where visual presence directly reflects market dominance.
 
-**1. Relative Dominance Calculation**
-The token with the highest market cap becomes the reference point. All other tokens are weighted relative to this dominant token—not to fixed thresholds. This means the painting always reflects _which forces are stronger than others_ at that moment.
+**4. Deterministic Output**
+Same market state = same painting. The system uses a hash of the rounded market caps to skip regeneration when nothing significant has changed, ensuring consistency.
 
-**2. Non-Linear Emphasis**
-A power function amplifies differences. If FEAR is 2x higher than HOPE, the visual weight difference becomes even more pronounced. This makes dominant emotions clearly visible in the composition.
+### The 10 Context Components
 
-### Step C — Translating Data Into Symbols
+Market data transforms into artistic language through these elements:
 
-Convert statistical values → psychology → art language (10 elements)
-
-Each token maps to a visual motif through symbolic mapping. The AI receives a weighted prompt in the format `(element:weight)`, creating a medieval allegorical oil painting where visual presence directly reflects market dominance.
-
-| Context Component | Meaning                              |
-| ----------------- | ------------------------------------ |
-| Market Climate    | Weather = mood                       |
-| Archetype         | Story the token carries              |
+| Context Component | Meaning                                   |
+| ----------------- | ----------------------------------------- |
+| Market Climate    | Weather = mood                            |
+| Archetype         | Story the token carries                   |
 | Event Pressure    | Ritual intensity (worship / condemnation) |
-| Composition       | Rising → heaven / Falling → abyss   |
-| Palette           | Greed=Gold / Fear=Burgundy           |
-| Dynamics          | Vortex of chaos, or tranquility      |
-| Motifs            | Cryptic allegorical icons            |
-| Texture           | Heavy or fluid                       |
-| Light Narrative   | Salvation or judgment                |
-| Symbolic Density  | Pressure filling the world           |
+| Composition       | Rising → heaven / Falling → abyss         |
+| Palette           | Greed=Gold / Fear=Burgundy                |
+| Dynamics          | Vortex of chaos, or tranquility           |
+| Motifs            | Cryptic allegorical icons                 |
+| Texture           | Heavy or fluid                            |
+| Light Narrative   | Salvation or judgment                     |
+| Symbolic Density  | Pressure filling the world                |
 
-### Step D — Allegorical Prompt Generation
-
-Convert to literary financial poetry
+These components combine into a weighted prompt:
 
 ```
 A high medieval allegory of {Archetype},
@@ -159,21 +99,6 @@ under a {Climate} market mood,
 oil painting, allegorical, dramatic lighting.
 (seed={deterministicHash})
 ```
-
-### Step E — Image Generation
-
-Psychological depiction by Runware FLUX Kontext AI
-
-- Greed → Light intensifies
-- Fear → Darkness deepens
-- High volatility → Brush strokes become rough
-- When eras shift → The painting moves
-
-### Step F — Archival
-
-Permanent preservation in Cloudflare D1 + R2
-
-= Record of the doomsday clock
 
 ### AI as Interpreter
 
@@ -191,42 +116,65 @@ Same market state = same painting. The system uses a hash of the rounded market 
 
 ---
 
-## 5. Cultural Significance
+## 5. Future Plans: Beyond v2
 
-DOOM INDEX v2 represents a fundamental shift in how we understand and archive market psychology. Unlike traditional financial analysis, it creates a living emotional record that evolves with culture itself.
+### Where We're Going
 
-### A Mirror of Collective Unconscious
+DOOM INDEX proves that markets can be art. But there's room to evolve. Right now, every painting is archived but the community has no voice in what matters most.
 
-Market psychology reflects directly through the selection of culturally dominant tokens. When a particular memecoin captures the zeitgeist—whether through viral marketing, celebrity endorsements, or genuine innovation—it becomes the lens through which the entire market's emotional state is interpreted.
+**Future versions will introduce DOOM DAO and Season NFTs** to address this.
 
-### A Doomsday Clock for Financial Sentiment
+### DOOM DAO: Community Governance (Coming Soon)
 
-When fear dominates the market, darkness thickens in the paintings. When hope prevails, light breaks through. Each artwork becomes a visual gauge of collective anxiety levels, providing a real-time emotional barometer that traditional metrics cannot capture.
+Holding **$DOOM** tokens will grant governance power over key areas:
 
-### A Chronicle of Speculative Culture
+**1. Index Composition** — Decide which tokens can influence the painting. Should certain token categories be prioritized? The community votes.
 
-Future historians will cite DOOM INDEX as primary source material for understanding the emotional undercurrents of crypto markets. Every painting becomes a timestamp of collective psychology—a permanent record of how thousands of traders felt at that exact moment in time.
+**2. Historical Curation** — Every season (~30-90 days), the DAO votes on which moments to preserve. "Best DOOM" captures the most apocalyptic painting, "Least DOOM" the most hopeful. These will be immortalized as NFTs.
 
-### Why This Matters Now
+**3. Model Evolution** — Should DOOM INDEX train a custom art style? Which visual direction should it explore? The community decides the aesthetic future.
 
-In an era where AI can generate infinite art, scarcity comes from **cultural relevance**. DOOM INDEX v2 doesn't just create art—it creates **historically significant art** by tying each piece to the most culturally dominant narrative of that moment.
+### Season NFTs: Preserving History
 
-Crypto's emotions don't vanish. They are archived, interpreted, and made visible for generations to come.
+The system logs every painting with full market data. The community nominates historically significant moments, and the DAO votes on which matter most. Winners get regenerated in ultra-high resolution (4K-8K) and minted as permanent NFTs on Solana.
+
+Each NFT becomes a **timestamp of collective psychology**—proof that on a specific date, the market felt a certain way and looked like this.
+
+### Why $DOOM Will Have Value
+
+**$DOOM = The right to curate internet capital market history**
+
+The value of DOOM INDEX doesn't come from hype—it comes from a structural intersection of **AI × Art × Collective Memory**.
+
+Here's why this matters:
+
+#### 1. AI Evolution = Permanent Art Value Increase
+
+DOOM INDEX paintings aren't static—they evolve with AI technology itself. Better AI models produce better paintings from the same market data. Prompt algorithms continuously improve. Season NFTs become **cultural snapshots of AI capability at that moment**.
+
+**As AI gets better, the archive gets more valuable.** Since NFTs don't degrade, this "continuous quality increase" creates long-term value for the entire archive.
+
+#### 2. Community as Market Memory Editors
+
+Hourly generation equals infinite output, but only a few moments get preserved. $DOOM holders decide which moments to immortalize as NFTs, which tokens should enter the index, which direction the visual style evolves, and ultimately what history gets written.
+
+**$DOOM = Editorial rights to market history.** As Season NFTs accumulate, these editorial rights gain compounding cultural and economic value.
+
+#### 3. The Art × Meme Crossroads
+
+DOOM INDEX isn't just art. It's not just memecoin. It's where **market volatility becomes emotion**. Meme market volatility translates into painting emotion. Every screenshot shared on X creates self-propagating presence.
+
+In crypto culture, strong context creates art value while strong memes create crypto value. DOOM INDEX has both. It sits at the rare intersection where **cultural capital meets meme capital**.
 
 ---
 
-## 6. Roadmap
-
-| Phase | Content                          | Status      |
-| ----- | -------------------------------- | ----------- |
-| v2    | Dynamic Token Model              | ✔ Complete  |
-| v2.2  | Token Archetype Expansion        | In progress |
-| v3    | DOOM DAO (Cultural editing rights) | In preparation |
-| v3+   | Season NFTs (Preserving decisive moments) | In preparation |
+**In Summary**, $DOOM value is built on three reinforcing layers: AI progress lifts archive quality forever, DAO curation creates scarcity from infinity, and the Art × Meme position captures maximum cultural attention. This isn't just price—it's the infrastructure for **markets recording their own history**.
 
 ---
 
-## 7. Credits
+---
+
+## 6. Credits
 
 - **Developed on**: [Solana](https://solana.com) blockchain
 - **Powered by**: [pump.fun](https://pump.fun) & [dev.fun](https://dev.fun)
@@ -235,6 +183,6 @@ Crypto's emotions don't vanish. They are archived, interpreted, and made visible
 ---
 
 <div style={{ textAlign: "center", marginTop: "4rem", opacity: 0.6, fontSize: "0.9rem" }}>
-  <p>DOOM INDEX v2.1 — November 2025</p>
+  <p>DOOM INDEX v2.0 — November 2025</p>
   <p>A decentralized archive of financial emotions.</p>
 </div>

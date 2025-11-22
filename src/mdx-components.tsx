@@ -26,15 +26,17 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     li: ({ children }: { children?: ReactNode }) => <li className="leading-7">{children}</li>,
     code: ({ children }: { children?: ReactNode }) => (
-      <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-900 border border-gray-300">
+      <code className="p-0 rounded text-[0.6rem] font-mono">
         {children}
       </code>
     ),
     pre: ({ children }: { children?: ReactNode }) => (
-      <pre className="mb-6 text-sm whitespace-pre-wrap break-words bg-gray-50 p-4 rounded border border-gray-200 overflow-x-auto">{children}</pre>
+      <pre className="mb-6 text-xs whitespace-pre-wrap break-words p-1 overflow-x-auto">
+        {children}
+      </pre>
     ),
     blockquote: ({ children }: { children?: ReactNode }) => (
-      <blockquote className="pl-6 pr-4 py-2 italic mb-6 border-l-4 border-[#666] bg-[#f5f5f5]">{children}</blockquote>
+      <blockquote className="pl-3 italic border-l-4 border-[#666] bg-[#f5f5f5]">{children}</blockquote>
     ),
     a: ({ children, href }: { children?: ReactNode; href?: string }) => (
       <a
@@ -47,8 +49,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </a>
     ),
     table: ({ children }: { children?: ReactNode }) => (
-      <div className="overflow-x-auto mb-6 my-6 w-full">
-        <table className="min-w-full border-collapse border border-gray-300 bg-white">{children}</table>
+      <div className="overflow-x-auto">
+        <table className="w-fit border-collapse border border-gray-300 bg-white text-sm" style={{ tableLayout: 'auto' }}>{children}</table>
       </div>
     ),
     thead: ({ children }: { children?: ReactNode }) => <thead className="bg-gray-50">{children}</thead>,
