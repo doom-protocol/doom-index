@@ -1,7 +1,7 @@
 /**
  * Cloudflare Workers Cron Handler
  *
- * Executes every hour to:
+ * Executes at the interval specified by NEXT_PUBLIC_GENERATION_INTERVAL_MS to:
  * 1. Check idempotency (hourBucket)
  * 2. Select token from trending or force list
  * 3. Fetch market data and store snapshot
@@ -9,6 +9,8 @@
  * 5. Generate prompt
  * 6. Generate image
  * 7. Store painting to R2 and D1
+ *
+ * NOTE: The cron trigger in wrangler.toml must match NEXT_PUBLIC_GENERATION_INTERVAL_MS
  */
 
 import { Result } from "neverthrow";
@@ -28,7 +30,8 @@ import type { AppError } from "./types/app-error";
 import type { PaintingGenerationResult } from "./services/paintings/painting-generation-orchestrator";
 import { env as runtimeEnv } from "./env";
 
-// Generation interval from environment variable (default: 10 minutes)
+// Generation interval from environment variable (default: 10 minutes = 600000ms)
+// This is used for logging purposes only. The actual execution frequency is controlled by the cron trigger.
 const GENERATION_INTERVAL_MINUTES = Number(runtimeEnv.NEXT_PUBLIC_GENERATION_INTERVAL_MS || 600000) / (1000 * 60);
 
 // ============================================================================
@@ -81,27 +84,6 @@ export async function handleScheduledEvent(
     cron: event.cron,
     generationIntervalMinutes: GENERATION_INTERVAL_MINUTES,
   });
-
-  // Skip execution if the generation interval doesn't align with the scheduled time
-  // This allows controlling generation frequency via environment variable
-  const generationIntervalMs = GENERATION_INTERVAL_MINUTES * 60 * 1000; // Convert to milliseconds
-  const scheduledTime = new Date(event.scheduledTime).getTime();
-  const baseTime = new Date("2025-01-01T00:00:00Z").getTime(); // Fixed reference point
-  const timeSinceBase = scheduledTime - baseTime;
-  const shouldExecute = timeSinceBase % generationIntervalMs === 0;
-
-  if (!shouldExecute) {
-    logger.debug("cron.skipped", {
-      reason: "generation_interval_not_aligned",
-      scheduledTime: new Date(event.scheduledTime).toISOString(),
-      generationIntervalMinutes: GENERATION_INTERVAL_MINUTES,
-      generationIntervalMs,
-      timeSinceBase,
-      remainder: timeSinceBase % generationIntervalMs,
-      durationMs: Date.now() - startTime,
-    });
-    return;
-  }
 
   try {
     // Execute painting generation
