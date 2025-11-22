@@ -3,15 +3,6 @@ import { drizzle } from "drizzle-orm/bun-sqlite";
 import * as schema from "./schema";
 
 /**
- * Create a local SQLite database instance using Bun's native SQLite driver
- * Used for local testing and scripts without D1
- */
-export const createLocalDb = (dbPath: string = "local-test.db") => {
-  const sqlite = new Database(dbPath);
-  return drizzle(sqlite, { schema });
-};
-
-/**
  * Setup local database with schema tables
  * Creates tables if they don't exist
  */

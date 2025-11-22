@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import type { ArchiveListResponse } from "@/services/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
@@ -75,15 +75,26 @@ export const useLatestPainting = () => {
  * Useful for UI components that need to force an update (e.g. after a progress bar completes)
  */
 export const useLatestPaintingRefetch = () => {
-  const { refetch } = useLatestPainting();
+  const queryClient = useQueryClient();
 
   return async () => {
     logger.debug("use-latest-painting.refetch.triggered");
-    const result = await refetch({ cancelRefetch: false });
-    logger.debug("use-latest-painting.refetch.completed", {
-      success: result.isSuccess,
-      paintingId: result.data?.id ?? "none",
+
+    // Invalidate the query to trigger a refetch
+    await queryClient.invalidateQueries({
+      queryKey: ["paintings", "latest"],
     });
-    return result;
+
+    // Wait for the query to refetch
+    await queryClient.refetchQueries({
+      queryKey: ["paintings", "latest"],
+    });
+
+    logger.debug("use-latest-painting.refetch.completed", {
+      paintingId: "refetch-triggered",
+    });
+
+    // Return undefined to match the original interface (refetch doesn't return data)
+    return undefined;
   };
 };

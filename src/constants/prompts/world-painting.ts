@@ -50,7 +50,7 @@ export const SYMBOLIC_ELEMENTS = {
  * Mapping of archetype and climate to symbolic visual elements.
  * Used to determine which elements should appear based on token characteristics.
  */
-export const ARCHETYPE_CLIMATE_ELEMENT_MAP: Record<string, Record<string, keyof typeof SYMBOLIC_ELEMENTS>> = {
+const ARCHETYPE_CLIMATE_ELEMENT_MAP: Record<string, Record<string, keyof typeof SYMBOLIC_ELEMENTS>> = {
   "l1-sovereign": {
     euphoria: "radiant golden divine light breaking the clouds",
     cooling: "glittering blue glaciers and cold reflections",
@@ -98,7 +98,7 @@ export const ARCHETYPE_CLIMATE_ELEMENT_MAP: Record<string, Record<string, keyof 
 /**
  * Default symbolic element when archetype/climate combination is not found.
  */
-export const DEFAULT_SYMBOLIC_ELEMENT: keyof typeof SYMBOLIC_ELEMENTS = "lush emerald forests and living roots";
+const DEFAULT_SYMBOLIC_ELEMENT: keyof typeof SYMBOLIC_ELEMENTS = "lush emerald forests and living roots";
 
 /**
  * Get symbolic element for a given archetype and climate combination.

@@ -20,13 +20,13 @@ import type { WorldPromptService, PromptComposition } from "@/services/world-pro
 import type { PaintingContext } from "@/types/painting-context";
 import type { TokenMetaInput } from "@/services/token-context-service";
 
-export type ImageGenerationResult = {
+type ImageGenerationResult = {
   composition: PromptComposition;
   imageBuffer: ArrayBuffer;
   providerMeta: Record<string, unknown>;
 };
 
-export type ImageGenerationService = {
+type ImageGenerationService = {
   generateTokenImage(input: TokenImageGenerationInput): Promise<Result<ImageGenerationResult, AppError>>;
 };
 

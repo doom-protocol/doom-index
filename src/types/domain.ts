@@ -7,7 +7,6 @@ import type { AppError } from "@/types/app-error";
  * The legacy 8-token system has been removed.
  */
 export type TokenTicker = string;
-export type McMap = Record<string, number>;
 
 export type TokenState = {
   ticker: TokenTicker;

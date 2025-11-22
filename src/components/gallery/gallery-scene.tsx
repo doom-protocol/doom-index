@@ -27,7 +27,7 @@ const HEADER_HEIGHT = 56;
 
 export const GalleryScene: React.FC<GallerySceneProps> = ({
   cameraPreset: initialCameraPreset = "painting",
-  showDashboard = true,
+  showDashboard = false,
   isHelpOpen: externalIsHelpOpen,
   onHelpToggle: externalOnHelpToggle,
 }) => {
@@ -47,6 +47,12 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
   };
 
   const previousThumbnailUrlRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (showDashboard && process.env.NODE_ENV !== "production") {
+      console.warn("RealtimeDashboard is deprecated — set showDashboard to false or restore implementation");
+    }
+  }, [showDashboard]);
+
   useEffect(() => {
     if (previousThumbnailUrlRef.current === undefined) {
       previousThumbnailUrlRef.current = thumbnailUrl;

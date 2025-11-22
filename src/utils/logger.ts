@@ -1,6 +1,6 @@
 import { env } from "@/env";
 
-export enum LogLevel {
+enum LogLevel {
   ERROR = "ERROR",
   WARN = "WARN",
   INFO = "INFO",
@@ -98,5 +98,3 @@ export const logger = {
    */
   getLevels: () => LOG_LEVELS,
 };
-
-export type Logger = typeof logger;

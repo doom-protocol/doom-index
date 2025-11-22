@@ -6,7 +6,7 @@ import type { VisualParams } from "@/lib/pure/mapping";
 /**
  * Base token data shared between candidate and selected tokens
  */
-export type TokenBase = {
+type TokenBase = {
   id: string;
   symbol: string;
   name: string;

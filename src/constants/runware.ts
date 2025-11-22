@@ -11,7 +11,7 @@
  * Runware AIR Model Configuration
  * Format: runware:aid@version
  */
-export type RunwareAirModel = {
+type RunwareAirModel = {
   /** Model identifier in Runware AIR format */
   model: `runware:${number}@${number}`;
   /** Human-readable model name */
@@ -20,13 +20,11 @@ export type RunwareAirModel = {
   description?: string;
 };
 
-export type RunwareModel = RunwareAirModel;
-
 /**
  * Predefined Runware AIR Models
  * Add your frequently used models here for easy reference
  */
-export const RUNWARE_AIR_MODELS = {
+const RUNWARE_AIR_MODELS = {
   /** Default model: FLUX.1 Kontext [dev] - High-quality image generation with extended context */
   DEFAULT: {
     model: "runware:106@1",
@@ -56,17 +54,3 @@ export const DEFAULT_IMAGE_SIZE = 1024;
  * Default timeout for Runware API requests (in milliseconds)
  */
 export const DEFAULT_RUNWARE_TIMEOUT = 30_000;
-
-/**
- * Type guard to check if a model string is a valid Runware AIR format
- */
-export const isRunwareAirModel = (model: string): model is `runware:${number}@${number}` => {
-  return model.startsWith("runware:");
-};
-
-/**
- * Type guard to check if a model string is a valid Runware model
- */
-export const isRunwareModel = (model: string): boolean => {
-  return isRunwareAirModel(model);
-};

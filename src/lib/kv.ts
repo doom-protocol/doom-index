@@ -11,7 +11,7 @@ import { err, ok, Result } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import { getErrorMessage } from "@/utils/error";
 
-export type KvPutOptions = {
+type KvPutOptions = {
   expirationTtl?: number;
   expiration?: number;
 };
@@ -34,23 +34,6 @@ export async function putKv(
       op: "put",
       key,
       message: `KV put failed: ${getErrorMessage(error)}`,
-    });
-  }
-}
-
-/**
- * Get a value from KV namespace
- */
-export async function getKv(kvNamespace: KVNamespace, key: string): Promise<Result<string | null, AppError>> {
-  try {
-    const value = await kvNamespace.get(key);
-    return ok(value);
-  } catch (error) {
-    return err({
-      type: "StorageError",
-      op: "get",
-      key,
-      message: `KV get failed: ${getErrorMessage(error)}`,
     });
   }
 }

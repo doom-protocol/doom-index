@@ -26,16 +26,16 @@ describe("Token Integration", () => {
     restoreCacheMock(originalCaches);
   });
 
-  it.skip("should fetch token state for all tickers", async () => {
-    // Legacy test - TOKEN_TICKERS no longer exists
+  it("should fetch token state for single ticker", async () => {
     const ctx = createMockContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Test with a single ticker instead
     try {
       const result = await caller.token.getState({ ticker: "CO2" });
 
-      // nullまたはTokenStateを返す
+      // Should return null or TokenState
+      expect(result === null || typeof result === "object").toBe(true);
+
       if (result !== null) {
         expect(result).toHaveProperty("ticker");
         expect(result).toHaveProperty("thumbnailUrl");
@@ -93,6 +93,7 @@ describe("Token Integration", () => {
 
       // Verify cache was set with ticker in key
       const cached = await get<typeof mockTokenState>("token:getState:CO2", {
+        namespace: undefined,
         logger: ctx.logger,
       });
       expect(cached).not.toBeNull();

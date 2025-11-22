@@ -19,7 +19,7 @@ export type TavilyQueryInput = {
 /**
  * Tavily article structure
  */
-export type TavilyArticle = {
+type TavilyArticle = {
   title: string;
   content: string;
   url: string;

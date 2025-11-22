@@ -11,7 +11,7 @@ import type { Texture } from "three";
 /**
  * Threshold for pointer drag detection (in pixels)
  */
-export const POINTER_DRAG_THRESHOLD = 6;
+const POINTER_DRAG_THRESHOLD = 6;
 
 /**
  * Validate pointer event for multi-touch handling

@@ -34,7 +34,7 @@ export type PromptComposition = {
   paramsHash: string;
 };
 
-export type TokenPromptRequest = {
+type TokenPromptRequest = {
   paintingContext: PaintingContext;
   tokenMeta?: TokenMetaInput;
   referenceImageUrl?: string | null;

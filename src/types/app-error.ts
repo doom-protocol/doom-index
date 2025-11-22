@@ -1,4 +1,4 @@
-export type ExternalApiError = {
+type ExternalApiError = {
   type: "ExternalApiError";
   provider: "ImageProvider" | "WorkersAI" | "Tavily" | "coingecko" | "alternative.me" | "runware";
   status?: number;
@@ -6,7 +6,7 @@ export type ExternalApiError = {
   ticker?: string;
 };
 
-export type StorageError = {
+type StorageError = {
   type: "StorageError";
   op: "get" | "put" | "delete" | "list";
   key: string;
@@ -14,14 +14,14 @@ export type StorageError = {
   message: string;
 };
 
-export type ValidationError = {
+type ValidationError = {
   type: "ValidationError";
   message: string;
   details?: unknown;
   status?: number;
 };
 
-export type InternalError = {
+type InternalError = {
   type: "InternalError";
   message: string;
   cause?: unknown;

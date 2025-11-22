@@ -31,7 +31,7 @@ const MARKET_CAP_CHANGE_PANIC_THRESHOLD = -1.5;
 /**
  * Token Selection Options
  */
-export type TokenSelectionOptions = {
+type TokenSelectionOptions = {
   forceTokenList?: string; // FORCE_TOKEN_LIST env var
   excludeRecentlySelected?: boolean; // Default: true
   recentSelectionWindowHours?: number; // Default: 24

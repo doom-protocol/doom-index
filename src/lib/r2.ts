@@ -26,20 +26,7 @@ export function joinR2Key(segments: string[]): string {
     .join("/");
 }
 
-export type R2PutOptions = {
-  contentType?: string;
-  httpMetadata?: {
-    contentType?: string;
-    cacheControl?: string;
-  };
-};
-
-export type R2GetResult = {
-  text: () => Promise<string>;
-  arrayBuffer: () => Promise<ArrayBuffer>;
-};
-
-export type R2ListParams = {
+type R2ListParams = {
   limit?: number;
   cursor?: string;
   prefix?: string;

@@ -46,7 +46,7 @@ export function resolveR2BucketOrThrow(ctx: Context, errorContext?: Record<strin
  * @param errorContext - Additional context for error logging
  * @returns Value from Result or result of onError
  */
-export function handleResult<T, R = T>(
+function handleResult<T, R = T>(
   result: Result<T, AppError>,
   ctx: Context,
   onError?: (error: AppError) => R,

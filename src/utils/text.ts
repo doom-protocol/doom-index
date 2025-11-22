@@ -38,33 +38,6 @@ export function estimateTokenCount(text: string): { charBased: number; wordBased
 }
 
 /**
- * Extract text from AI response object
- * Handles various response formats including Workers AI and other AI APIs
- *
- * @param response - Response from AI API (can be string or object)
- * @returns Extracted text or null if not found
- */
-export function extractTextFromResponse(response: unknown): string | null {
-  if (typeof response === "string") {
-    return response;
-  }
-
-  if (response && typeof response === "object") {
-    const obj = response as Record<string, unknown>;
-    // Workers AI text generation returns { response: string }
-    if (typeof obj.response === "string") {
-      return obj.response;
-    }
-    // Fallback for other formats
-    if (typeof obj.text === "string") {
-      return obj.text;
-    }
-  }
-
-  return null;
-}
-
-/**
  * Parse JSON from text, handling markdown code blocks and extra text
  * Robustly extracts JSON even when surrounded by other text or markdown formatting
  *

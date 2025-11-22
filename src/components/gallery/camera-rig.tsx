@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Vector3 } from "three";
 
@@ -79,14 +79,4 @@ export const CameraRig: React.FC<CameraRigProps> = ({ preset = "painting" }) => 
   });
 
   return null;
-};
-
-export const useCameraRig = () => {
-  const [preset, setPreset] = useState<CameraPreset>("painting");
-
-  const moveTo = (newPreset: CameraPreset) => {
-    setPreset(newPreset);
-  };
-
-  return { preset, moveTo };
 };

@@ -34,7 +34,7 @@ function toRangeTs(startDate?: string, endDate?: string) {
   return { startTs, endExclusiveTs };
 }
 
-export type ArchiveIndexRow = {
+type ArchiveIndexRow = {
   id: string;
   timestamp: string;
   minuteBucket: string;
@@ -48,14 +48,14 @@ export type ArchiveIndexRow = {
   negative: string;
 };
 
-export type ListArchiveOptions = {
+type ListArchiveOptions = {
   limit: number;
   cursor?: string;
   startDate?: string;
   endDate?: string;
 };
 
-export type ListArchiveResult = {
+type ListArchiveResult = {
   items: ArchiveIndexRow[];
   cursor?: string;
   hasMore: boolean;

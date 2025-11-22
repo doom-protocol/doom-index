@@ -1,4 +1,4 @@
-import { initTRPC, TRPCError } from "@trpc/server";
+import { initTRPC } from "@trpc/server";
 import { ZodError } from "zod";
 import type { Context } from "./context";
 
@@ -37,7 +37,3 @@ export const publicProcedure = t.procedure.use(loggingMiddleware);
 export const router = t.router;
 
 // Middleware creation helper
-export const middleware = t.middleware;
-
-// Export TRPCError
-export { TRPCError };

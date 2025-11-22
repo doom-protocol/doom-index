@@ -2,9 +2,6 @@ import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
 import { logger } from "@/utils/logger";
 import * as schema from "./schema";
 
-export * from "./schema";
-export { schema };
-
 let db: DrizzleD1Database<typeof schema> | undefined;
 
 /**

@@ -59,15 +59,3 @@ export const paintingsListSchema = z
       path: ["startDate"],
     },
   );
-
-// Type inference helpers
-/**
- * Legacy TokenTicker type
- * @deprecated This type is for backward compatibility only.
- */
-export type TokenTicker = z.infer<typeof tokenTickerSchema>;
-export type ViewerRegisterInput = z.infer<typeof viewerRegisterSchema>;
-export type ViewerRemoveInput = z.infer<typeof viewerRemoveSchema>;
-export type TokenGetStateInput = z.infer<typeof tokenGetStateSchema>;
-export type R2GetObjectInput = z.infer<typeof r2GetObjectSchema>;
-export type PaintingsListInput = z.infer<typeof paintingsListSchema>;

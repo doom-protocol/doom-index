@@ -18,7 +18,7 @@ import { logger } from "@/utils/logger";
 /**
  * Painting Context Input
  */
-export type PaintingContextInput = {
+type PaintingContextInput = {
   selectedToken: SelectedToken;
   marketSnapshot: MarketSnapshot;
 };

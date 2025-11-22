@@ -5,7 +5,7 @@ import { logger } from "@/utils/logger";
 /**
  * Fear & Greed Index Response
  */
-export type FearGreedIndexResponse = {
+type FearGreedIndexResponse = {
   value: number; // 0-100
   valueClassification: "Extreme Fear" | "Fear" | "Neutral" | "Greed" | "Extreme Greed";
   timestamp: number; // Unix epoch seconds

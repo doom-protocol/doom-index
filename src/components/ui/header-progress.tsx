@@ -52,10 +52,10 @@ export const HeaderProgress: FC = () => {
     };
 
     const tick = (timestamp: number) => {
-      let elapsedMs = timestamp - minuteStartPerf;
+      let elapsedMs = timestamp - hourStartPerf;
 
       if (elapsedMs < 0) {
-        minuteStartPerf = timestamp;
+        hourStartPerf = timestamp;
         elapsedMs = 0;
       }
 
@@ -65,7 +65,7 @@ export const HeaderProgress: FC = () => {
           handleHourBoundary(lastDisplayedSecond);
         }
         hourStartPerf += wraps * HOUR_MS;
-        elapsedMs = timestamp - minuteStartPerf;
+        elapsedMs = timestamp - hourStartPerf;
         lastDisplayedSecond = -1;
       }
 

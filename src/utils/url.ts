@@ -25,7 +25,3 @@ export function getBaseUrl(): string {
   const isProduction = process.env.NODE_ENV === "production";
   return isProduction ? "https://doomindex.fun" : "http://localhost:8787";
 }
-
-export function getPumpFunUrl(address: string): string {
-  return `https://pump.fun/${address}`;
-}

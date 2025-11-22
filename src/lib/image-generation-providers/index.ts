@@ -9,7 +9,7 @@ import { createMockImageProvider } from "./mock";
  */
 
 // Mock provider is for testing only
-export type ProviderNameWithMock = "mock";
+type ProviderNameWithMock = "mock";
 
 /**
  * Creates the default Runware image provider

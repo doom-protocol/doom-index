@@ -1,7 +1,7 @@
 /**
  * Clamp value to [0, 1] range
  */
-export const clamp01 = (value: number): number => {
+const clamp01 = (value: number): number => {
   if (!Number.isFinite(value)) return 0;
   if (value <= 0) return 0;
   if (value >= 1) return 1;

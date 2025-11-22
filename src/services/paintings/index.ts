@@ -19,18 +19,18 @@ import type { PaintingsRepository } from "@/repositories/paintings-repository";
 import * as storage from "./storage";
 import * as list from "./list";
 
-export type PaintingsServiceDeps = {
+type PaintingsServiceDeps = {
   r2Bucket?: R2Bucket;
   d1Binding?: D1Database;
   archiveRepository?: PaintingsRepository;
 };
 
-export type ArchiveStorageResult = {
+type ArchiveStorageResult = {
   imageUrl: string;
   metadataUrl: string;
 };
 
-export type ArchiveListOptions = {
+type ArchiveListOptions = {
   limit?: number;
   cursor?: string;
   prefix?: string;
@@ -96,23 +96,3 @@ export function createPaintingsService({
     getPaintingById: id => repo.findById(id),
   };
 }
-
-// Re-export types for convenience
-export type { PaintingCursor } from "@/repositories/paintings-repository";
-export { encodeCursor, decodeCursor } from "@/repositories/paintings-repository";
-
-// Legacy exports for backward compatibility (deprecated)
-/** @deprecated Use createPaintingsService instead */
-export { createPaintingsService as createArchiveStorageService };
-/** @deprecated Use createPaintingsService instead */
-export { createPaintingsService as createArchiveIndexService };
-/** @deprecated Use createPaintingsService instead */
-export { createPaintingsService as createArchiveListService };
-
-// Legacy type exports (deprecated)
-/** @deprecated Import from @/services/paintings instead */
-export type ArchiveStorageService = Pick<PaintingsService, "storeImageWithMetadata">;
-/** @deprecated Import from @/services/paintings instead */
-export type ArchiveIndexService = Pick<PaintingsService, "insertPainting" | "getPaintingById">;
-/** @deprecated Import from @/services/paintings instead */
-export type ArchiveListService = Pick<PaintingsService, "listImages">;

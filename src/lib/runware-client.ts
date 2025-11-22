@@ -8,7 +8,7 @@ const API_BASE_URL = "https://api.runware.ai/v1";
  */
 export const FLUX_KONTEXT_DEV_MODEL = "runware:106@1";
 
-export type RunwareImageInferenceRequest = {
+type RunwareImageInferenceRequest = {
   taskType: "imageInference";
   taskUUID: string;
   model: string;
@@ -56,7 +56,7 @@ export type RunwareImageInferenceRequest = {
   checkNSFW?: boolean;
 };
 
-export type RunwareImageInferenceResponse = {
+type RunwareImageInferenceResponse = {
   taskType: "imageInference";
   taskUUID: string;
   imageUUID: string;
@@ -68,7 +68,7 @@ export type RunwareImageInferenceResponse = {
   cost?: number;
 };
 
-export type RunwareClientOptions = {
+type RunwareClientOptions = {
   apiKey: string;
   timeoutMs?: number;
 };

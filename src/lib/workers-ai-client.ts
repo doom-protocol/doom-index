@@ -24,7 +24,7 @@ export type TextGenerationRequest = {
 /**
  * Text generation result
  */
-export type TextGenerationResult = {
+type TextGenerationResult = {
   text: string;
   modelId: keyof AiModels;
 };
@@ -39,7 +39,7 @@ export type JsonGenerationRequest<_T> = TextGenerationRequest & {
 /**
  * JSON generation result wrapper
  */
-export type JsonGenerationResult<T> = {
+type JsonGenerationResult<T> = {
   value: T;
   modelId?: keyof AiModels;
 };
