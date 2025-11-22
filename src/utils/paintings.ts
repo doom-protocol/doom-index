@@ -3,12 +3,35 @@
  * For complex validation and business logic, see lib/pure/archive-*.ts
  */
 
+import { env } from "@/env";
+
 /**
  * Build public API path for an R2 object key.
- * Do not encode segments to avoid double-encoding with Next route params.
+ * If NEXT_PUBLIC_R2_DOMAIN is set, returns absolute URL (e.g. https://assets.domain.com/key)
+ * Otherwise returns relative API path (e.g. /api/r2/key)
+ *
+ * Supports both formats:
+ * - With protocol: "https://storage.doomindex.fun"
+ * - Without protocol: "storage.doomindex.fun" (will default to https, or http for localhost)
  */
 export function buildPublicR2Path(key: string): string {
   const normalized = key.replace(/^\/+/, "");
+
+  if (env.NEXT_PUBLIC_R2_DOMAIN) {
+    // Remove trailing slashes
+    let domain = env.NEXT_PUBLIC_R2_DOMAIN.replace(/\/+$/, "");
+
+    // Check if URL already includes protocol
+    if (domain.startsWith("http://") || domain.startsWith("https://")) {
+      // Already has protocol, use as-is
+      return `${domain}/${normalized}`;
+    }
+
+    // No protocol, determine based on domain
+    const protocol = domain.startsWith("localhost") ? "http" : "https";
+    return `${protocol}://${domain}/${normalized}`;
+  }
+
   return `/api/r2/${normalized}`;
 }
 

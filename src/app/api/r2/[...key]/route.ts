@@ -2,6 +2,7 @@ import { resolveR2BucketAsync, joinR2Key } from "@/lib/r2";
 import { NextResponse } from "next/server";
 import { get, set } from "@/lib/cache";
 import { logger } from "@/utils/logger";
+import { env } from "@/env";
 
 type CachedResponse = {
   body: string; // Base64 encoded for binary data
@@ -16,6 +17,11 @@ type CachedResponse = {
  * so it cannot use tRPC streaming which requires tRPC client.
  *
  * URL format: /api/r2/key1/key2/file.webp
+ *
+ * NOTE: This endpoint is primarily for local development use.
+ * - When NEXT_PUBLIC_R2_DOMAIN is configured (production), this endpoint returns 404.
+ *   Images are served directly from the public R2 bucket (e.g., https://storage.doomindex.fun).
+ * - When NEXT_PUBLIC_R2_DOMAIN is not set (local dev), this endpoint serves images via R2 binding.
  */
 export async function GET(req: Request, { params }: { params: Promise<{ key: string[] }> }): Promise<Response> {
   const startTime = Date.now();
@@ -25,6 +31,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
     url: requestUrl,
     method: req.method,
   });
+
+  // If R2 public domain is configured, this endpoint should not be used
+  // All images should be served directly from the public bucket
+  if (env.NEXT_PUBLIC_R2_DOMAIN) {
+    logger.warn("[R2 Route] Endpoint disabled - Public R2 domain is configured", {
+      publicDomain: env.NEXT_PUBLIC_R2_DOMAIN,
+      url: requestUrl,
+    });
+    return NextResponse.json(
+      {
+        error: "This endpoint is disabled. Images are served directly from the public R2 bucket.",
+        publicDomain: env.NEXT_PUBLIC_R2_DOMAIN,
+      },
+      { status: 404 },
+    );
+  }
 
   const { key } = await params;
 

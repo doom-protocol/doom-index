@@ -1,7 +1,24 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, beforeEach, afterEach, mock } from "bun:test";
+
+// Mock env module before importing dependent modules
+let mockR2Domain: string | undefined = undefined;
+
+mock.module("@/env", () => ({
+  env: {
+    get NEXT_PUBLIC_R2_DOMAIN() {
+      return mockR2Domain;
+    },
+  },
+}));
+
+// Import after mocking
 import { buildPaintingKey, isValidPaintingFilename, extractIdFromFilename, buildPublicR2Path } from "@/utils/paintings";
 
 describe("buildPublicR2Path", () => {
+  beforeEach(() => {
+    mockR2Domain = undefined;
+  });
+
   it("should build public R2 path from key", () => {
     expect(buildPublicR2Path("images/2025/11/14/test.webp")).toBe("/api/r2/images/2025/11/14/test.webp");
   });
@@ -9,6 +26,40 @@ describe("buildPublicR2Path", () => {
   it("should normalize leading slashes", () => {
     expect(buildPublicR2Path("/images/2025/11/14/test.webp")).toBe("/api/r2/images/2025/11/14/test.webp");
     expect(buildPublicR2Path("///images/2025/11/14/test.webp")).toBe("/api/r2/images/2025/11/14/test.webp");
+  });
+
+  it("should use NEXT_PUBLIC_R2_DOMAIN when set", () => {
+    mockR2Domain = "assets.example.com";
+    expect(buildPublicR2Path("images/2025/11/14/test.webp")).toBe(
+      "https://assets.example.com/images/2025/11/14/test.webp",
+    );
+  });
+
+  it("should handle localhost domain with http", () => {
+    mockR2Domain = "localhost:8080";
+    expect(buildPublicR2Path("images/test.webp")).toBe("http://localhost:8080/images/test.webp");
+  });
+
+  it("should normalize trailing slashes in domain", () => {
+    mockR2Domain = "assets.example.com/";
+    expect(buildPublicR2Path("images/test.webp")).toBe("https://assets.example.com/images/test.webp");
+  });
+
+  it("should handle domain with https:// protocol", () => {
+    mockR2Domain = "https://storage.doomindex.fun";
+    expect(buildPublicR2Path("images/2025/11/14/test.webp")).toBe(
+      "https://storage.doomindex.fun/images/2025/11/14/test.webp",
+    );
+  });
+
+  it("should handle domain with https:// protocol and trailing slash", () => {
+    mockR2Domain = "https://storage.doomindex.fun/";
+    expect(buildPublicR2Path("images/test.webp")).toBe("https://storage.doomindex.fun/images/test.webp");
+  });
+
+  it("should handle domain with http:// protocol (localhost)", () => {
+    mockR2Domain = "http://localhost:8080";
+    expect(buildPublicR2Path("images/test.webp")).toBe("http://localhost:8080/images/test.webp");
   });
 });
 

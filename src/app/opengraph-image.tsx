@@ -13,6 +13,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getBaseUrl } from "@/utils/url";
 import { logger } from "@/utils/logger";
 import { createPaintingsRepository } from "@/repositories/paintings-repository";
+import { env } from "@/env";
 
 // Route Segment Config
 export const dynamic = "force-dynamic";
@@ -129,9 +130,27 @@ async function getArtworkImageSrc(
 
   logger.info("ogp.step4-build-url");
   // Step 4: Build image URL and fetch with Cloudflare Image Transformations
-  const origin = new URL(requestUrl).origin;
   const keySegments = imageKey.split("/").map(segment => encodeURIComponent(segment));
-  const baseImageUrl = `${origin}/api/r2/${keySegments.join("/")}`;
+  const keyPath = keySegments.join("/");
+  let baseImageUrl: string;
+
+  if (env.NEXT_PUBLIC_R2_DOMAIN) {
+    // Remove trailing slashes
+    let domain = env.NEXT_PUBLIC_R2_DOMAIN.replace(/\/+$/, "");
+
+    // Check if URL already includes protocol
+    if (domain.startsWith("http://") || domain.startsWith("https://")) {
+      // Already has protocol, use as-is
+      baseImageUrl = `${domain}/${keyPath}`;
+    } else {
+      // No protocol, determine based on domain
+      const protocol = domain.startsWith("localhost") ? "http" : "https";
+      baseImageUrl = `${protocol}://${domain}/${keyPath}`;
+    }
+  } else {
+    const origin = new URL(requestUrl).origin;
+    baseImageUrl = `${origin}/api/r2/${keyPath}`;
+  }
 
   logger.info("ogp.step4-url-built", { baseImageUrl });
 
