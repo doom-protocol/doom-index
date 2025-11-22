@@ -31,7 +31,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   const isNextDisabled = !hasNextPage || isLoading;
 
   return (
-    <div className="fixed bottom-[120px] left-1/2 z-[1000] flex -translate-x-1/2 items-center gap-2 rounded-lg border border-white/10 bg-black/80 px-3 py-1.5 backdrop-blur-xl">
+    <div className="fixed bottom-[60px] left-1/2 z-[1000] flex -translate-x-1/2 items-center gap-2 rounded-lg border border-white/10 bg-black/60 px-3 py-1.5 backdrop-blur-xl opacity-60 hover:opacity-100 transition-opacity duration-200">
       <button
         type="button"
         onClick={onPrevious}

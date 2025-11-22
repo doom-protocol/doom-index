@@ -11,39 +11,40 @@ export const DateFilter: React.FC = () => {
   const startDate = searchParams.get("startDate") || "";
   const endDate = searchParams.get("endDate") || "";
 
-  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newStartDate = e.target.value;
+  const updateURL = (newStartDate?: string, newEndDate?: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (newStartDate) {
       params.set("startDate", newStartDate);
     } else {
       params.delete("startDate");
     }
-    params.delete("cursor"); // Reset cursor when filter changes
-    sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, { filter_type: "date", filter_value: newStartDate || "cleared" });
-    router.push(`/archive?${params.toString()}`);
-  };
-
-  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEndDate = e.target.value;
-    const params = new URLSearchParams(searchParams.toString());
     if (newEndDate) {
       params.set("endDate", newEndDate);
     } else {
       params.delete("endDate");
     }
     params.delete("cursor"); // Reset cursor when filter changes
-    sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, { filter_type: "date", filter_value: newEndDate || "cleared" });
+    const filterValue = newStartDate || newEndDate ? `${newStartDate || ""}-${newEndDate || ""}` : "cleared";
+    sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, { filter_type: "date", filter_value: filterValue });
     router.push(`/archive?${params.toString()}`);
   };
 
+  const handleStartDateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    if (newValue !== startDate) {
+      updateURL(newValue, endDate);
+    }
+  };
+
+  const handleEndDateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    if (newValue !== endDate) {
+      updateURL(startDate, newValue);
+    }
+  };
+
   const handleClear = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("startDate");
-    params.delete("endDate");
-    params.delete("cursor");
-    sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, { filter_type: "date", filter_value: "cleared" });
-    router.push(`/archive?${params.toString()}`);
+    updateURL("", "");
   };
 
   return (
@@ -57,8 +58,8 @@ export const DateFilter: React.FC = () => {
             <input
               id="startDate"
               type="date"
-              value={startDate}
-              onChange={handleStartDateChange}
+              defaultValue={startDate}
+              onBlur={handleStartDateBlur}
               className="w-36 rounded border border-white/20 bg-white/10 px-2 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none"
             />
           </div>
@@ -70,8 +71,8 @@ export const DateFilter: React.FC = () => {
             <input
               id="endDate"
               type="date"
-              value={endDate}
-              onChange={handleEndDateChange}
+              defaultValue={endDate}
+              onBlur={handleEndDateBlur}
               min={startDate || undefined}
               className="w-36 rounded border border-white/20 bg-white/10 px-2 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none"
             />

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FC, type SVGProps } from "react";
+import { useHaptic } from "use-haptic";
 
 import { PumpFunIcon } from "@/components/icons/pump-fun-icon";
 import { GitHubIcon } from "@/components/icons/github-icon";
@@ -47,10 +48,12 @@ interface HeaderProps {
 export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
+  const { triggerHaptic } = useHaptic();
 
   const toggleMenu = useCallback(() => {
+    triggerHaptic();
     setIsMenuOpen(prev => !prev);
-  }, []);
+  }, [triggerHaptic]);
 
   const closeMenu = useCallback(() => {
     setIsMenuOpen(false);
