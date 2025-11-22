@@ -146,4 +146,56 @@ describe("WorldPromptService (token mode)", () => {
     expect(result.isOk()).toBe(true);
     expect(mockTokenContextService.generateAndSaveShortContext).not.toHaveBeenCalled();
   });
+
+  it("prepends dynamic reference integration instruction when referenceImageUrl is provided", async () => {
+    const service = createService();
+
+    const result = await service.composeTokenPrompt({
+      paintingContext: mockPaintingContext,
+      tokenMeta,
+      referenceImageUrl: "https://example.com/logo.png",
+    });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      const composition = result.value;
+      // meme-ascendant + central-altar
+      expect(composition.prompt.text).toMatch(
+        /^Use the reference image as a worshipped idol symbol hovering above the central altar\./i,
+      );
+    }
+  });
+
+  it("removes 'logo' from negative prompt when referenceImageUrl is provided", async () => {
+    const service = createService();
+
+    const result = await service.composeTokenPrompt({
+      paintingContext: mockPaintingContext,
+      tokenMeta,
+      referenceImageUrl: "https://example.com/logo.png",
+    });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      const composition = result.value;
+      expect(composition.prompt.negative).not.toContain("logo");
+      expect(composition.prompt.negative).toContain("watermark");
+      expect(composition.prompt.negative).toContain("text");
+    }
+  });
+
+  it("keeps 'logo' in negative prompt when referenceImageUrl is not provided", async () => {
+    const service = createService();
+
+    const result = await service.composeTokenPrompt({
+      paintingContext: mockPaintingContext,
+      tokenMeta,
+    });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      const composition = result.value;
+      expect(composition.prompt.negative).toContain("logo");
+    }
+  });
 });

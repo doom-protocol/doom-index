@@ -12,20 +12,22 @@ type MarketSnapshotsRepositoryStub = Pick<MarketSnapshotsRepository, "upsert">;
 
 const createGlobalResponse = (overrides: Partial<GlobalMarketDataResponse["data"]> = {}): GlobalMarketDataResponse => ({
   data: {
+    active_cryptocurrencies: overrides.active_cryptocurrencies ?? 10_000,
+    upcoming_icos: overrides.upcoming_icos ?? 0,
+    ongoing_icos: overrides.ongoing_icos ?? 0,
+    ended_icos: overrides.ended_icos ?? 0,
+    markets: overrides.markets ?? 500,
+    // @ts-expect-error - Spreading test overrides with CoinGecko API types
     total_market_cap: { usd: 2_000_000_000_000, ...overrides.total_market_cap },
+    // @ts-expect-error - Spreading test overrides with CoinGecko API types
     total_volume: { usd: 100_000_000_000, ...overrides.total_volume },
-    market_cap_change_percentage_24h_usd: overrides.market_cap_change_percentage_24h_usd ?? 2.5,
     market_cap_percentage: {
       btc: 50,
       eth: 20,
       ...overrides.market_cap_percentage,
     },
-    active_cryptocurrencies: overrides.active_cryptocurrencies ?? 10_000,
-    markets: overrides.markets ?? 500,
+    market_cap_change_percentage_24h_usd: overrides.market_cap_change_percentage_24h_usd ?? 2.5,
     updated_at: overrides.updated_at ?? 1_700_000_000,
-    upcoming_icos: overrides.upcoming_icos ?? 0,
-    ongoing_icos: overrides.ongoing_icos ?? 0,
-    ended_icos: overrides.ended_icos ?? 0,
   },
 });
 

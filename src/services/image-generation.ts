@@ -158,6 +158,7 @@ export function createImageGenerationService({
     const promptResult = await promptService.composeTokenPrompt({
       paintingContext: input.paintingContext,
       tokenMeta: input.tokenMeta,
+      referenceImageUrl: input.referenceImageUrl,
     });
 
     if (promptResult.isErr()) return err(promptResult.error);

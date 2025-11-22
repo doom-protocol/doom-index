@@ -6,7 +6,7 @@ import { useHaptic } from "use-haptic";
 import { useLatestPaintingRefetch } from "@/hooks/use-latest-painting";
 import { logger } from "@/utils/logger";
 
-const MINUTE_MS = 60000;
+const HOUR_MS = 3600000;
 const HAPTIC_WINDOW_START_REMAINING_SECOND = 10;
 
 export const HeaderProgress: FC = () => {
@@ -19,7 +19,7 @@ export const HeaderProgress: FC = () => {
 
   useEffect(() => {
     let animationFrameId: number | undefined;
-    let minuteStartPerf = performance.now() - (Date.now() % MINUTE_MS);
+    let hourStartPerf = performance.now() - (Date.now() % HOUR_MS);
     let lastDisplayedSecond = -1;
 
     const updateProgressWidth = (ratio: number) => {
@@ -31,17 +31,17 @@ export const HeaderProgress: FC = () => {
 
     const syncInitialState = () => {
       const now = Date.now();
-      const elapsedInMinute = now % MINUTE_MS;
-      minuteStartPerf = performance.now() - elapsedInMinute;
-      const initialProgress = elapsedInMinute / MINUTE_MS;
-      const initialRemainingSeconds = Math.min(59, Math.floor((MINUTE_MS - elapsedInMinute) / 1000));
+      const elapsedInHour = now % HOUR_MS;
+      hourStartPerf = performance.now() - elapsedInHour;
+      const initialProgress = elapsedInHour / HOUR_MS;
+      const initialRemainingSeconds = Math.min(3599, Math.floor((HOUR_MS - elapsedInHour) / 1000));
 
       updateProgressWidth(initialProgress);
       lastDisplayedSecond = initialRemainingSeconds;
       setDisplaySecond(initialRemainingSeconds);
     };
 
-    const handleMinuteBoundary = (previousSecond: number) => {
+    const handleHourBoundary = (previousSecond: number) => {
       if (previousSecond !== 0) {
         triggerHaptic();
       }
@@ -59,19 +59,19 @@ export const HeaderProgress: FC = () => {
         elapsedMs = 0;
       }
 
-      if (elapsedMs >= MINUTE_MS) {
-        const wraps = Math.floor(elapsedMs / MINUTE_MS);
+      if (elapsedMs >= HOUR_MS) {
+        const wraps = Math.floor(elapsedMs / HOUR_MS);
         for (let i = 0; i < wraps; i += 1) {
-          handleMinuteBoundary(lastDisplayedSecond);
+          handleHourBoundary(lastDisplayedSecond);
         }
-        minuteStartPerf += wraps * MINUTE_MS;
+        hourStartPerf += wraps * HOUR_MS;
         elapsedMs = timestamp - minuteStartPerf;
         lastDisplayedSecond = -1;
       }
 
-      updateProgressWidth(elapsedMs / MINUTE_MS);
+      updateProgressWidth(elapsedMs / HOUR_MS);
 
-      const remainingMs = Math.max(0, MINUTE_MS - elapsedMs);
+      const remainingMs = Math.max(0, HOUR_MS - elapsedMs);
       const nextRemainingSeconds = Math.min(59, Math.floor(remainingMs / 1000));
 
       if (nextRemainingSeconds !== lastDisplayedSecond) {
@@ -95,12 +95,14 @@ export const HeaderProgress: FC = () => {
     };
   }, [playChime, refetchLatestPainting, triggerHaptic]);
 
-  const secondsLabel = displaySecond.toString().padStart(2, "0");
+  const minutes = Math.floor(displaySecond / 60);
+  const seconds = displaySecond % 60;
+  const timeLabel = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 
   return (
     <div className="flex h-[68px] flex-col items-center gap-2">
-      <span className="text-white/60 text-sm font-cinzel-decorative tracking-wide">Next Generation</span>
-      <span className="font-mono text-sm text-white/70 tabular-nums">{secondsLabel} s</span>
+      <span className="text-white/60 text-sm font-cinzel-decorative tracking-wide">1h</span>
+      <span className="font-mono text-sm text-white/70 tabular-nums">{timeLabel}</span>
       <div className="h-1 w-32 overflow-hidden rounded-full bg-white/20">
         <div ref={progressBarRef} className="h-full bg-white" />
       </div>

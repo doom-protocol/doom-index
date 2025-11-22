@@ -52,3 +52,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local database
+local-test.db
+local-test-*.db

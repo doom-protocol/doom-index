@@ -47,6 +47,8 @@ export type PaintingGenerationResult = {
   seed?: string;
 };
 
+import type { PaintingsService } from "./index";
+
 /**
  * Painting Generation Orchestrator Dependencies
  */
@@ -56,6 +58,7 @@ type OrchestratorDeps = {
   paintingContextBuilder: PaintingContextBuilder;
   marketSnapshotsRepository: MarketSnapshotsRepository;
   tokensRepository: TokensRepository;
+  paintingsService?: PaintingsService; // Optional injected service
   r2Bucket?: R2Bucket;
   d1Binding?: D1Database;
 };
@@ -210,10 +213,12 @@ export class PaintingGenerationOrchestrator {
       });
 
       // Step 7: Store painting (Requirement 9)
-      const paintingsService = createPaintingsService({
-        r2Bucket: bucket,
-        d1Binding,
-      });
+      const paintingsService =
+        this.deps.paintingsService ??
+        createPaintingsService({
+          r2Bucket: bucket,
+          d1Binding,
+        });
 
       const metadataId = extractIdFromFilename(finalComposition.prompt.filename);
       const timestamp = `${finalComposition.minuteBucket}:00Z`;

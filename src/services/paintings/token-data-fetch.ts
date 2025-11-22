@@ -91,12 +91,18 @@ export class TokenDataFetchService {
       }
 
       const trending = trendingResult.value;
+      logger.debug("[TokenDataFetchService] Trending search", { trending });
 
       // Extract CoinGecko IDs from trending search (max 15)
-      const ids = (trending.coins ?? []).slice(0, 15).map((coin, index) => ({
-        id: coin.item?.id ?? "",
-        rank: index + 1,
-      }));
+      const ids = (trending.coins ?? []).slice(0, 15).map((coin, index) => {
+        // Handle nested item structure if present (API behavior vs SDK types)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const id = (coin as any).item?.id ?? (coin as any).id ?? "";
+        return {
+          id,
+          rank: index + 1,
+        };
+      });
 
       const validIds = ids.filter(item => item.id.length > 0);
       if (validIds.length === 0) {

@@ -2,7 +2,7 @@
  * Runware Configuration Constants
  *
  * Centralized configuration for Runware image generation models.
- * Supports both Runware AIR format (runware:aid@version) and Civitai format (civitai:modelId@versionId).
+ * Supports Runware AIR format (runware:aid@version).
  *
  * @see https://docs.runware.ai/en/image-inference/models/air-models
  */
@@ -20,20 +20,7 @@ export type RunwareAirModel = {
   description?: string;
 };
 
-/**
- * Civitai Model Configuration
- * Format: civitai:modelId@versionId
- */
-export type CivitaiModel = {
-  /** Model identifier in Civitai format */
-  model: `civitai:${number}@${number}`;
-  /** Human-readable model name */
-  name: string;
-  /** Model description */
-  description?: string;
-};
-
-export type RunwareModel = RunwareAirModel | CivitaiModel;
+export type RunwareModel = RunwareAirModel;
 
 /**
  * Predefined Runware AIR Models
@@ -53,19 +40,6 @@ export const RUNWARE_AIR_MODELS = {
     description: "FLUX.1 Schnell model for fast image generation",
   },
 } as const satisfies Record<string, RunwareAirModel>;
-
-/**
- * Predefined Civitai Models
- * Add your frequently used Civitai models here for easy reference
- */
-export const CIVITAI_MODELS = {
-  /** Example Civitai model */
-  EXAMPLE: {
-    model: "civitai:38784@44716",
-    name: "Civitai Example",
-    description: "Example Civitai model",
-  },
-} as const satisfies Record<string, CivitaiModel>;
 
 /**
  * Default model to use when no model is specified
@@ -91,15 +65,8 @@ export const isRunwareAirModel = (model: string): model is `runware:${number}@${
 };
 
 /**
- * Type guard to check if a model string is a valid Civitai format
- */
-export const isCivitaiModel = (model: string): model is `civitai:${number}@${number}` => {
-  return /^civitai:\d+@\d+$/.test(model);
-};
-
-/**
  * Type guard to check if a model string is a valid Runware model
  */
 export const isRunwareModel = (model: string): boolean => {
-  return isRunwareAirModel(model) || isCivitaiModel(model);
+  return isRunwareAirModel(model);
 };

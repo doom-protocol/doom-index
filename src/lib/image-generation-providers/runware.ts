@@ -5,7 +5,7 @@ import { logger } from "@/utils/logger";
 import { base64ToArrayBuffer } from "@/utils/image";
 import { getErrorMessage } from "@/utils/error";
 import { env } from "@/env";
-import { RunwareClient } from "@/lib/runware-client";
+import { RunwareClient, FLUX_KONTEXT_DEV_MODEL } from "@/lib/runware-client";
 import { DEFAULT_RUNWARE_MODEL, DEFAULT_IMAGE_SIZE, DEFAULT_RUNWARE_TIMEOUT } from "@/constants/runware";
 
 /**
@@ -34,7 +34,12 @@ export const createRunwareProvider = (): ImageProvider => ({
       });
 
       const seedInt = input.seed ? parseInt(input.seed.substring(0, 8), 16) : undefined;
-      const model = input.model || DEFAULT_RUNWARE_MODEL;
+
+      // For image-to-image, always use FLUX.1 Kontext [dev] model
+      // Otherwise, use the provided model or default
+      const isImageToImage = Boolean(input.referenceImageUrl);
+      const model = isImageToImage ? FLUX_KONTEXT_DEV_MODEL : input.model || DEFAULT_RUNWARE_MODEL;
+
       const width = DEFAULT_IMAGE_SIZE;
       const height = DEFAULT_IMAGE_SIZE;
 
@@ -43,8 +48,10 @@ export const createRunwareProvider = (): ImageProvider => ({
         timeoutMs,
         promptSample: input.prompt.substring(0, 80),
         hasReferenceImage: Boolean(input.referenceImageUrl),
+        isImageToImage,
       });
 
+      // For FLUX Kontext models with reference images, use optimized parameters
       const images = await runware.requestImages({
         positivePrompt: input.prompt,
         negativePrompt: input.negative,
@@ -54,8 +61,15 @@ export const createRunwareProvider = (): ImageProvider => ({
         numberResults: 1,
         outputFormat: input.format === "png" ? "PNG" : "WEBP",
         outputType: ["base64Data"],
+        steps: isImageToImage ? 18 : undefined,
+        CFGScale: isImageToImage ? 2.5 : undefined,
+        scheduler: isImageToImage ? "Default" : undefined,
+        includeCost: true,
+        checkNSFW: true,
         ...(seedInt !== undefined && { seed: seedInt }),
-        ...(input.referenceImageUrl ? { referenceImageUrl: input.referenceImageUrl } : {}),
+        ...(input.referenceImageUrl && {
+          referenceImages: [input.referenceImageUrl],
+        }),
       });
 
       const image = images?.[0];

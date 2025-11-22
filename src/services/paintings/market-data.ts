@@ -32,7 +32,8 @@ export class MarketDataService {
         return err(globalResult.error);
       }
 
-      const global = globalResult.value.data;
+      const globalResponse = globalResult.value;
+      const global = globalResponse.data || {};
 
       // Fetch Fear & Greed Index (optional, continue on failure)
       let fearGreedIndex: number | null = null;
@@ -45,16 +46,20 @@ export class MarketDataService {
         logger.warn("[MarketDataService] Failed to fetch Fear & Greed Index, continuing without it");
       }
 
+      // Use type assertion for properties that might be missing in SDK types but present in API
+      const totalMarketCap = global.total_market_cap as Record<string, number> | undefined;
+      const totalVolume = global.total_volume as Record<string, number> | undefined;
+
       const snapshot: MarketSnapshot = {
-        totalMarketCapUsd: global.total_market_cap.usd,
-        totalVolumeUsd: global.total_volume.usd,
-        marketCapChangePercentage24hUsd: global.market_cap_change_percentage_24h_usd,
-        btcDominance: global.market_cap_percentage.btc,
-        ethDominance: global.market_cap_percentage.eth,
-        activeCryptocurrencies: global.active_cryptocurrencies,
-        markets: global.markets,
+        totalMarketCapUsd: totalMarketCap?.usd ?? 0,
+        totalVolumeUsd: totalVolume?.usd ?? 0,
+        marketCapChangePercentage24hUsd: global.market_cap_change_percentage_24h_usd ?? 0,
+        btcDominance: global.market_cap_percentage?.btc ?? 0,
+        ethDominance: global.market_cap_percentage?.eth ?? 0,
+        activeCryptocurrencies: global.active_cryptocurrencies ?? 0,
+        markets: global.markets ?? 0,
         fearGreedIndex,
-        updatedAt: global.updated_at,
+        updatedAt: global.updated_at ?? Math.floor(Date.now() / 1000),
       };
 
       logger.info("[MarketDataService] Fetched global market data successfully");

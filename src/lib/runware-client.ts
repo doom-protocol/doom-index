@@ -22,8 +22,31 @@ export type RunwareImageInferenceRequest = {
   seed?: number;
   numberResults?: number;
   /**
-   * Optional reference image URL (e.g. token logo) for image-to-image / guided generation.
-   * This is passed through to Runware's FLUX kontext models when provided.
+   * Reference images array for FLUX Kontext models.
+   * Used to provide reference images that will be integrated into the generated image.
+   * Can be specified as:
+   * - Array of UUID v4 strings of previously uploaded images
+   * - Array of public URLs pointing to images
+   * - Array of data URI strings (data:image/png;base64,...)
+   * - Array of base64 encoded image strings
+   */
+  referenceImages?: string[];
+  /**
+   * Seed image for image-to-image transformation (legacy parameter).
+   * @deprecated Use referenceImages instead for FLUX Kontext models
+   */
+  seedImage?: string;
+  /**
+   * Transformation strength for image-to-image (0.0 to 1.0).
+   * Controls how much noise is added to the input image in latent space.
+   * Lower values preserve more of the original image, higher values allow more creative deviation.
+   * For FLUX models, values below 0.8 typically have minimal effect.
+   * Default: 0.8
+   */
+  strength?: number;
+  /**
+   * @deprecated Use referenceImages instead. This parameter is kept for backward compatibility
+   * and will be mapped to referenceImages internally.
    */
   referenceImageUrl?: string;
   outputFormat?: "JPEG" | "PNG" | "WEBP";
@@ -52,7 +75,7 @@ export type RunwareClientOptions = {
 
 /**
  * Runware API Client using fetch (compatible with Cloudflare Workers)
- * Text-to-image generation only
+ * Supports both text-to-image and image-to-image generation
  */
 export class RunwareClient {
   private apiKey: string;
@@ -64,22 +87,40 @@ export class RunwareClient {
   }
 
   /**
-   * Generate images from text prompt
+   * Generate images from text prompt or transform images using image-to-image
    */
   async requestImages(
     params: Omit<RunwareImageInferenceRequest, "taskType" | "taskUUID">,
   ): Promise<RunwareImageInferenceResponse[]> {
     const taskUUID = crypto.randomUUID();
+
+    // Map referenceImageUrl/seedImage to referenceImages array for FLUX Kontext models
+    // Priority: referenceImages > seedImage > referenceImageUrl
+    const referenceImages = params.referenceImages
+      ? params.referenceImages
+      : params.seedImage
+        ? [params.seedImage]
+        : params.referenceImageUrl
+          ? [params.referenceImageUrl]
+          : undefined;
+
     const request: RunwareImageInferenceRequest = {
       taskType: "imageInference",
       taskUUID,
       ...params,
+      referenceImages,
+      // Remove deprecated parameters from request
+      seedImage: undefined,
+      referenceImageUrl: undefined,
     };
 
     logger.debug("runware.requestImages.start", {
       taskUUID,
       model: params.model,
       promptSample: params.positivePrompt.substring(0, 80),
+      hasReferenceImages: Boolean(referenceImages),
+      referenceImagesCount: referenceImages?.length ?? 0,
+      strength: params.strength,
     });
 
     const controller = new AbortController();

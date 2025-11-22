@@ -68,7 +68,7 @@ type CreateWorkersAiClientDeps = {
 export function createWorkersAiClient({
   aiBinding,
   defaultModel = DEFAULT_WORKERS_AI_MODEL,
-  timeoutMs = 10_000, // 10 seconds default timeout for Workers AI
+  timeoutMs = 30_000, // 30 seconds default timeout for Workers AI
   log = logger,
 }: CreateWorkersAiClientDeps = {}): WorkersAiClient {
   // Resolve AI binding from Cloudflare context
@@ -84,14 +84,96 @@ export function createWorkersAiClient({
     });
 
     try {
-      const { env } = await getCloudflareContext({ async: true });
-      const binding = (env as Cloudflare.Env).AI;
-      if (!binding) {
-        return err(contextError("AI binding is not configured on Cloudflare environment"));
+      // Try to get binding from Cloudflare context
+      const ctx = await getCloudflareContext({ async: true });
+      const binding = (ctx.env as Cloudflare.Env).AI;
+      if (binding) {
+        return ok(binding);
       }
-      return ok(binding);
+    } catch {
+      // Ignore context resolution errors, will try fallback
+    }
+
+    // If binding is not found, check for REST API credentials
+    if (!process.env.CLOUDFLARE_ACCOUNT_ID || !process.env.CLOUDFLARE_API_TOKEN) {
+      return err(
+        contextError(
+          "AI binding is not configured and Cloudflare REST API credentials are missing (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)",
+        ),
+      );
+    }
+
+    // Return null to indicate REST API usage
+    // The caller should handle this case
+    return err(contextError("AI binding not found, falling back to REST API"));
+  };
+
+  const runRestApi = async (
+    model: string,
+    input: AiTextGenerationInput,
+    requestTimeoutMs: number = timeoutMs,
+  ): Promise<Result<AiTextGenerationOutput, AppError>> => {
+    if (!process.env.CLOUDFLARE_ACCOUNT_ID || !process.env.CLOUDFLARE_API_TOKEN) {
+      return err({
+        type: "ConfigurationError",
+        message: "Cloudflare REST API credentials are missing",
+        missingVar: "CLOUDFLARE_API_TOKEN",
+      });
+    }
+
+    const url = `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/${model}`;
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), requestTimeoutMs);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "Unknown error");
+        return err({
+          type: "ExternalApiError",
+          provider: "WorkersAI",
+          message: `REST API error: ${response.status} ${response.statusText} - ${errorText}`,
+        });
+      }
+
+      const data = (await response.json()) as { result: { response: string }; success: boolean; errors: unknown[] };
+
+      if (!data.success || !data.result) {
+        return err({
+          type: "ExternalApiError",
+          provider: "WorkersAI",
+          message: `REST API returned unsuccessful response: ${JSON.stringify(data.errors)}`,
+        });
+      }
+
+      return ok({
+        response: data.result.response,
+      });
     } catch (error) {
-      return err(contextError(`Failed to resolve Cloudflare context: ${getErrorMessage(error)}`));
+      if (error instanceof Error && error.name === "AbortError") {
+        return err({
+          type: "TimeoutError",
+          message: `REST API request timed out after ${requestTimeoutMs}ms`,
+          timeoutMs: requestTimeoutMs,
+        });
+      }
+      return err({
+        type: "ExternalApiError",
+        provider: "WorkersAI",
+        message: getErrorMessage(error),
+      });
     }
   };
 
@@ -103,11 +185,32 @@ export function createWorkersAiClient({
   }
 
   async function generateText(input: TextGenerationRequest): Promise<Result<TextGenerationResult, AppError>> {
+    const model = input.model ?? input.modelId ?? defaultModel;
+    const inputOptions: AiTextGenerationInput = {
+      messages: [
+        { role: "system", content: input.systemPrompt },
+        { role: "user", content: input.userPrompt },
+      ],
+    };
+
     const aiResult = await resolveAiBinding();
-    if (aiResult.isErr()) return err(aiResult.error);
+
+    // If AI binding resolution failed, check if we can use REST API
+    if (aiResult.isErr()) {
+      if (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN) {
+        log.debug("workers-ai.generate-text.fallback-rest", { modelId: model });
+        const restResult = await runRestApi(model, inputOptions);
+        if (restResult.isErr()) return err(restResult.error);
+
+        return ok({
+          text: restResult.value.response ?? "",
+          modelId: model,
+        });
+      }
+      return err(aiResult.error);
+    }
 
     const ai = aiResult.value;
-    const model = input.model ?? input.modelId ?? defaultModel;
 
     log.debug("workers-ai.generate-text.start", {
       modelId: model,
@@ -116,13 +219,6 @@ export function createWorkersAiClient({
     });
 
     try {
-      const inputOptions: AiTextGenerationInput = {
-        messages: [
-          { role: "system", content: input.systemPrompt },
-          { role: "user", content: input.userPrompt },
-        ],
-      };
-
       const requestPromise = ai.run(model, inputOptions) as Promise<AiTextGenerationOutput>;
 
       const timeoutPromise = createTimeoutPromise(timeoutMs, `Workers AI request timed out after ${timeoutMs}ms`);

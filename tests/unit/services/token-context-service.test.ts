@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 import { ok, err } from "neverthrow";
 import type { AppError } from "@/types/app-error";
-import { createTokenContextService } from "@/services/token-context-service";
+import { createTokenContextService, FALLBACK_SHORT_CONTEXT } from "@/services/token-context-service";
 import type { TavilyClient } from "@/lib/tavily-client";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
 import type { TokensRepository } from "@/repositories/tokens-repository";
@@ -281,7 +281,7 @@ describe("TokenContextService", () => {
       }
     });
 
-    it("should validate shortContext length and return error if too short", async () => {
+    it("should use FALLBACK_SHORT_CONTEXT if generated context is too short", async () => {
       mockTavilyClient.searchToken = mock(() =>
         Promise.resolve(
           ok({
@@ -326,13 +326,13 @@ describe("TokenContextService", () => {
         createdAt: "2024-01-01T00:00:00Z",
       });
 
-      expect(result.isErr()).toBe(true);
-      if (result.isErr()) {
-        expect(result.error.type).toBe("ValidationError");
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value).toBe(FALLBACK_SHORT_CONTEXT);
       }
     });
 
-    it("should validate shortContext length and return error if too long", async () => {
+    it("should use FALLBACK_SHORT_CONTEXT if generated context is too long", async () => {
       mockTavilyClient.searchToken = mock(() =>
         Promise.resolve(
           ok({
@@ -348,8 +348,8 @@ describe("TokenContextService", () => {
         ),
       ) as unknown as TavilyClient["searchToken"];
 
-      // AI returns too long context (> 500 chars)
-      const longContext = "A".repeat(501);
+      // AI returns too long context (> 1000 chars)
+      const longContext = "A".repeat(1001);
       const mockAiResponse = {
         short_context: longContext,
       };
@@ -378,9 +378,9 @@ describe("TokenContextService", () => {
         createdAt: "2024-01-01T00:00:00Z",
       });
 
-      expect(result.isErr()).toBe(true);
-      if (result.isErr()) {
-        expect(result.error.type).toBe("ValidationError");
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value).toBe(FALLBACK_SHORT_CONTEXT);
       }
     });
 

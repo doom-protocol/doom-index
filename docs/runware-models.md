@@ -4,10 +4,9 @@
 
 ## 概要
 
-Runwareは2つのモデル形式をサポートしています：
+Runwareは以下のモデル形式をサポートしています：
 
 1. **Runware AIR Models**: `runware:aid@version` 形式
-2. **Civitai Models**: `civitai:modelId@versionId` 形式
 
 すべてのモデル設定は `src/constants/runware.ts` で一元管理されています。
 
@@ -18,7 +17,6 @@ Runwareは2つのモデル形式をサポートしています：
 ```typescript
 import {
   RUNWARE_AIR_MODELS,
-  CIVITAI_MODELS,
   DEFAULT_RUNWARE_MODEL,
   DEFAULT_IMAGE_SIZE,
   DEFAULT_RUNWARE_TIMEOUT,
@@ -30,7 +28,6 @@ const model = DEFAULT_RUNWARE_MODEL; // "runware:106@1" (FLUX.1 Kontext [dev])
 // 事前定義されたモデルを使用
 const kontextModel = RUNWARE_AIR_MODELS.DEFAULT.model; // "runware:106@1" (FLUX.1 Kontext [dev])
 const schnellModel = RUNWARE_AIR_MODELS.FLUX_SCHNELL.model; // "runware:100@1" (FLUX.1 [schnell])
-const civitaiModel = CIVITAI_MODELS.EXAMPLE.model; // "civitai:38784@44716"
 
 // デフォルト設定
 const size = DEFAULT_IMAGE_SIZE; // 1024
@@ -40,14 +37,13 @@ const timeout = DEFAULT_RUNWARE_TIMEOUT; // 30000 (30秒)
 ### 型ガード関数
 
 ```typescript
-import { isRunwareAirModel, isCivitaiModel, isRunwareModel } from "@/constants/runware";
+import { isRunwareAirModel, isRunwareModel } from "@/constants/runware";
 
 const model1 = "runware:100@1";
-const model2 = "civitai:38784@44716";
-const model3 = "dall-e-3";
+const model2 = "runware:106@1";
 
 isRunwareAirModel(model1); // true
-isCivitaiModel(model2); // true
+isRunwareAirModel(model2); // true
 isRunwareModel(model1); // true
 isRunwareModel(model2); // true
 isRunwareModel(model3); // false
@@ -80,26 +76,6 @@ export const RUNWARE_AIR_MODELS = {
 } as const satisfies Record<string, RunwareAirModel>;
 ```
 
-### Civitai モデルの追加
-
-`src/constants/runware.ts` の `CIVITAI_MODELS` に追加します：
-
-```typescript
-export const CIVITAI_MODELS = {
-  EXAMPLE: {
-    model: "civitai:38784@44716",
-    name: "Civitai Example",
-    description: "Example Civitai model",
-  },
-  // 新しいモデルを追加
-  ANIME_STYLE: {
-    model: "civitai:12345@67890",
-    name: "Anime Style",
-    description: "Anime-style image generation model",
-  },
-} as const satisfies Record<string, CivitaiModel>;
-```
-
 ## 環境変数での設定
 
 デフォルトモデルは環境変数 `IMAGE_MODEL` で上書きできます：
@@ -107,8 +83,6 @@ export const CIVITAI_MODELS = {
 ```bash
 # .env または .dev.vars
 IMAGE_MODEL=runware:200@1
-# または
-IMAGE_MODEL=civitai:12345@67890
 ```
 
 環境変数が設定されていない場合は、`DEFAULT_RUNWARE_MODEL` が使用されます。
@@ -141,9 +115,6 @@ bun scripts/generate.ts --model "runware:100@1"
 
 # 特定のRunware AIRモデルを使用
 bun scripts/generate.ts --model "runware:200@1"
-
-# Civitaiモデルを使用
-bun scripts/generate.ts --model "civitai:38784@44716"
 ```
 
 ### コード内での使用
@@ -178,7 +149,7 @@ const fastResult = await provider.generate({
 
 ## ベストプラクティス
 
-1. **定数を使用する**: ハードコードされた文字列の代わりに、`RUNWARE_AIR_MODELS` や `CIVITAI_MODELS` の定数を使用してください。
+1. **定数を使用する**: ハードコードされた文字列の代わりに、`RUNWARE_AIR_MODELS` の定数を使用してください。
 
    ```typescript
    // ❌ 悪い例
@@ -206,4 +177,3 @@ const fastResult = await provider.generate({
 ## 参考リンク
 
 - [Runware AIR Models Documentation](https://docs.runware.ai/en/image-inference/models/air-models)
-- [Civitai Models](https://civitai.com/)

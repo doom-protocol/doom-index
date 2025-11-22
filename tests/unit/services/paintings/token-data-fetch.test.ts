@@ -42,11 +42,12 @@ describe("TokenDataFetchService", () => {
         low_24h: 48000,
         ath: 69000,
         ath_change_percentage: -15,
-        ath_date: new Date("2021-11-10T00:00:00Z"),
+        ath_date: "2021-11-10T00:00:00Z",
         atl: 67,
         atl_change_percentage: 70000,
-        atl_date: new Date("2013-07-06T00:00:00Z"),
-        last_updated: new Date("2025-11-21T00:00:00Z"),
+        atl_date: "2013-07-06T00:00:00Z",
+        roi: null,
+        last_updated: "2025-11-21T00:00:00Z",
       },
     ]);
 
@@ -100,7 +101,21 @@ describe("TokenDataFetchService", () => {
 
   it("fetchTrendingTokens enriches candidates with trending rank", async () => {
     const trending = ok<TrendingSearchResponse, never>({
-      coins: [{ item: { id: "bitcoin", symbol: "btc", name: "Bitcoin", market_cap_rank: 1 } }],
+      coins: [
+        {
+          id: "bitcoin",
+          coin_id: 1,
+          name: "Bitcoin",
+          symbol: "btc",
+          market_cap_rank: 1,
+          thumb: "https://example.com/thumb.png",
+          small: "https://example.com/small.png",
+          large: "https://example.com/large.png",
+          slug: "bitcoin",
+          price_btc: 1,
+          score: 100,
+        },
+      ],
     });
 
     const markets = ok<CoinsMarketsResponse, never>([
@@ -124,11 +139,12 @@ describe("TokenDataFetchService", () => {
         low_24h: 48000,
         ath: 69000,
         ath_change_percentage: -15,
-        ath_date: new Date("2021-11-10T00:00:00Z"),
+        ath_date: "2021-11-10T00:00:00Z",
         atl: 67,
         atl_change_percentage: 70000,
-        atl_date: new Date("2013-07-06T00:00:00Z"),
-        last_updated: new Date("2025-11-21T00:00:00Z"),
+        atl_date: "2013-07-06T00:00:00Z",
+        roi: null,
+        last_updated: "2025-11-21T00:00:00Z",
       },
     ]);
 

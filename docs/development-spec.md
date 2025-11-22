@@ -59,8 +59,6 @@ src/
       ImageProvider.ts  # interface（Result）
     providers/
       runware.ts
-      replicate.ts
-      openai.ts
       index.ts          # resolveProvider()
     promptRegistry.ts   # PromptVersion 読み出し（R2 直）
     pure/               # なるべく純関数
@@ -284,7 +282,7 @@ export type GenInput = {
 };
 export type GenOutput = { imageBuffer: ArrayBuffer; providerMeta: unknown };
 export interface ImageProvider {
-  name: "runware" | "replicate" | "openai";
+  name: "runware";
   generate(input: GenInput): Promise<Result<GenOutput, AppError>>;
 }
 ```

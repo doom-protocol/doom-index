@@ -2,7 +2,14 @@ import { err, ok, Result } from "neverthrow";
 import { normalizeMcMap } from "@/lib/pure/normalize";
 import { mapToVisualParams, type VisualParams } from "@/lib/pure/mapping";
 import { hashVisualParams, seedForMinute, buildGenerationFileName } from "@/lib/pure/hash";
-import { WORLD_PAINTING_NEGATIVE_PROMPT } from "@/constants/prompts/world-painting";
+import {
+  WORLD_PAINTING_NEGATIVE_PROMPT,
+  MEDIEVAL_ALLEGORICAL_OPENING,
+  MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION,
+  MEDIEVAL_FIGURES_ELEMENT,
+  SYMBOLIC_ELEMENTS,
+  getSymbolicElementForArchetypeClimate,
+} from "@/constants/prompts/world-painting";
 import { getMinuteBucket } from "@/utils/time";
 import { logger } from "@/utils/logger";
 import type { AppError } from "@/types/app-error";
@@ -30,6 +37,7 @@ export type PromptComposition = {
 export type TokenPromptRequest = {
   paintingContext: PaintingContext;
   tokenMeta?: TokenMetaInput;
+  referenceImageUrl?: string | null;
 };
 
 type WorldPromptServiceDeps = {
@@ -63,10 +71,6 @@ const numberFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-const integerFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-});
-
 export function createWorldPromptService({
   tokenContextService,
   tokensRepository,
@@ -86,51 +90,173 @@ export function createWorldPromptService({
     return { vp, paramsHash, minuteBucket, seed, filename };
   };
 
-  const summarizeVisualParams = (vp: VisualParams): string => {
-    return Object.entries(vp)
-      .map(([key, value]) => `- ${key}: ${numberFormatter.format(value)}`)
-      .join("\n");
+  const getReferenceIntegrationInstruction = (ctx: PaintingContext): string => {
+    // Determine role based on archetype
+    let role = "divine sacred logo";
+    switch (ctx.a) {
+      case "l1-sovereign":
+        role = "divine royal seal";
+        break;
+      case "meme-ascendant":
+        role = "worshipped idol symbol";
+        break;
+      case "ai-oracle":
+        role = "glowing holographic glyph";
+        break;
+      case "perp-liquidity":
+        role = "golden financial emblem";
+        break;
+      case "privacy":
+        role = "shadowy encrypted sigil";
+        break;
+      case "political":
+        role = "grand political crest";
+        break;
+      default:
+        role = "mysterious ancient symbol";
+    }
+
+    // Determine placement based on composition
+    let placement = "floating high in the sky";
+    switch (ctx.o) {
+      case "central-altar":
+        placement = "hovering above the central altar";
+        break;
+      case "procession":
+        placement = "emblazoned on banners carried by the crowd";
+        break;
+      case "citadel-panorama":
+        placement = "etched into the highest tower of the citadel";
+        break;
+      case "storm-battlefield":
+        placement = "shining through the storm clouds above the battlefield";
+        break;
+      case "cosmic-horizon":
+        placement = "hanging in the sky like a celestial body";
+        break;
+    }
+
+    return `Use the reference image as a ${role} ${placement}.`;
   };
 
-  const buildTokenSystemPrompt = (): string => {
-    return `You are an AI art director specializing in FLUX image generation for DOOM INDEX, a generative art project that visualizes cryptocurrency market dynamics as allegorical paintings.
+  const buildTokenSystemPrompt = (hasReferenceImage: boolean): string => {
+    const referenceImageInstruction = hasReferenceImage
+      ? `\n5. IMPORTANT: A reference image (token logo) is provided. You MUST incorporate this image into the painting. Include explicit instructions like: "(token logo integrated into the scene:1.20)" or "(token symbol visible in the composition:1.15)" or similar phrasing that ensures the reference image is prominently featured and seamlessly blended into the allegorical scene.`
+      : "";
 
-Follow FLUX prompting best practices:
-- Use the "Subject + Action + Style + Context" framework
-- Front-load the most important elements
-- Use natural language for symbolic relationships
-- Provide direct specifications for composition, palette, lighting, and atmosphere
-- Focus on what should appear (avoid negations)
-- Aim for 80-180 words for optimal FLUX steering
+    return `You are an AI art director specializing in medieval allegorical oil painting prompts for DOOM INDEX, a generative art project that visualizes cryptocurrency market dynamics as allegorical paintings.
 
-Your goal is to synthesize the provided token narrative, market state, and visual directives into a cohesive, cinematic FLUX prompt. Respond with the prompt text only. Do not include markdown, bullet points, headings, or commentary.`;
+CRITICAL: You must follow this exact prompt structure and tone:
+
+1. Start with: "${MEDIEVAL_ALLEGORICAL_OPENING}"
+
+2. Then list weighted elements in parentheses format: (element description:weight_value)
+   - Each element should be a symbolic visual element related to the token's narrative
+   - Use weight values between 0.50 and 1.50 (format as 2 decimal places like 1.00, 0.75, etc.)
+   - Include elements that reflect the token's archetype, market climate, and visual directives
+   - Always include: ${MEDIEVAL_FIGURES_ELEMENT}${referenceImageInstruction}
+
+3. End with the fixed style description: "${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}"
+
+4. The tone must be:
+   - Medieval/Renaissance allegorical painting style
+   - Symbolic and metaphorical (not literal)
+   - Cohesive single landscape with multiple forces visible
+   - Weighted by real-time market power
+
+Example structure:
+"${MEDIEVAL_ALLEGORICAL_OPENING}
+(token-specific symbolic element:1.00),
+(another symbolic element:0.75),
+${MEDIEVAL_FIGURES_ELEMENT}${hasReferenceImage ? ",\n(token logo integrated into the scene:1.20)," : ""}
+${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}"
+
+Respond with ONLY the prompt text in this exact format. Do not include markdown, bullet points, headings, commentary, or negative prompts.`;
   };
 
-  const buildTokenUserPrompt = (ctx: PaintingContext, vp: VisualParams, shortContext: string): string => {
+  const buildTokenUserPrompt = (
+    ctx: PaintingContext,
+    vp: VisualParams,
+    shortContext: string,
+    referenceImageUrl?: string | null,
+  ): string => {
     const motifLine = ctx.f.length ? ctx.f.join(", ") : "none";
     const hintsLine = ctx.h.length ? ctx.h.join(", ") : "none";
 
+    // Get primary element from archetype/climate mapping
+    const primaryElementKey = getSymbolicElementForArchetypeClimate(ctx.a, ctx.c);
+    const primaryElement = SYMBOLIC_ELEMENTS[primaryElementKey];
+    const primaryWeight = Math.max(0.75, Math.min(1.5, ctx.s.vol * 1.5 + 0.5)).toFixed(2);
+
+    // Calculate secondary elements based on visual params and context
+    const secondaryElements: Array<{ text: string; weight: number }> = [];
+
+    if (vp.fogDensity > 0.3) {
+      secondaryElements.push({
+        text: SYMBOLIC_ELEMENTS["dense toxic smog in the sky"],
+        weight: Math.min(1.5, vp.fogDensity * 1.5),
+      });
+    }
+    if (vp.blueBalance > 0.3) {
+      secondaryElements.push({
+        text: SYMBOLIC_ELEMENTS["glittering blue glaciers and cold reflections"],
+        weight: Math.min(1.5, vp.blueBalance * 1.5),
+      });
+    }
+    if (vp.vegetationDensity > 0.3) {
+      secondaryElements.push({
+        text: SYMBOLIC_ELEMENTS["lush emerald forests and living roots"],
+        weight: Math.min(1.5, vp.vegetationDensity * 1.5),
+      });
+    }
+    if (vp.radiationGlow > 0.3) {
+      secondaryElements.push({
+        text: SYMBOLIC_ELEMENTS["blinding nuclear flash on the horizon"],
+        weight: Math.min(1.5, vp.radiationGlow * 1.5),
+      });
+    }
+    if (vp.mechanicalPattern > 0.3) {
+      secondaryElements.push({
+        text: SYMBOLIC_ELEMENTS["colossal dystopian machine towers and metal grids"],
+        weight: Math.min(1.5, vp.mechanicalPattern * 1.5),
+      });
+    }
+    if (vp.bioluminescence > 0.3) {
+      secondaryElements.push({
+        text: SYMBOLIC_ELEMENTS["bioluminescent spores and organic clusters"],
+        weight: Math.min(1.5, vp.bioluminescence * 1.5),
+      });
+    }
+    if (vp.shadowDepth > 0.3 || ctx.c === "despair" || ctx.c === "panic") {
+      secondaryElements.push({
+        text: SYMBOLIC_ELEMENTS["oppressive darkness with many red eyes"],
+        weight: Math.min(1.5, (vp.shadowDepth || 0.5) * 1.5),
+      });
+    }
+    if (vp.lightIntensity > 0.3 || ctx.c === "euphoria") {
+      secondaryElements.push({
+        text: SYMBOLIC_ELEMENTS["radiant golden divine light breaking the clouds"],
+        weight: Math.min(1.5, (vp.lightIntensity || 0.5) * 1.5),
+      });
+    }
+
+    // Sort by weight descending and limit to top 5-7 elements
+    secondaryElements.sort((a, b) => b.weight - a.weight);
+    const selectedElements = secondaryElements.slice(0, 6);
+
     return [
+      `Generate a medieval allegorical oil painting prompt following the exact structure specified.`,
+      ``,
       `Token Context:`,
-      `- Name: ${ctx.t.n}`,
-      `- Chain: ${ctx.t.c}`,
+      `- Name: ${ctx.t.n} (${ctx.t.c})`,
       `- Short Narrative: ${shortContext}`,
       ``,
       `Market Dynamics:`,
       `- Market Climate: ${ctx.c}`,
       `- Token Archetype: ${ctx.a}`,
-      `- Event: ${ctx.e.k} (${ctx.e.i} intensity)`,
+      `- Event: ${ctx.e.k} (intensity ${ctx.e.i})`,
       `- Trend Direction: ${ctx.d.dir} (${ctx.d.vol} volatility)`,
-      `- Global Market Snapshot:`,
-      `  - Total MC: ${integerFormatter.format(ctx.m.mc)} USD`,
-      `  - Dominance baseline: ${integerFormatter.format(ctx.m.bd)} USD`,
-      `  - Flight-to-quality: ${ctx.m.fg === null ? "unknown" : `${integerFormatter.format(ctx.m.fg)} USD`}`,
-      `- Token Metrics:`,
-      `  - Price: ${numberFormatter.format(ctx.s.p)} USD`,
-      `  - 7d Anchor: ${numberFormatter.format(ctx.s.p7)} USD`,
-      `  - Market Cap: ${integerFormatter.format(ctx.s.mc)} USD`,
-      `  - Volume: ${integerFormatter.format(ctx.s.v)} USD`,
-      `  - Volatility Index: ${integerFormatter.format(ctx.s.vol)}`,
+      `- Volatility Index: ${numberFormatter.format(ctx.s.vol)}`,
       ``,
       `Visual Directives:`,
       `- Composition: ${ctx.o}`,
@@ -138,11 +264,29 @@ Your goal is to synthesize the provided token narrative, market state, and visua
       `- Motifs: ${motifLine}`,
       `- Narrative Hints: ${hintsLine}`,
       ``,
-      `Market Map Derived Controls:`,
-      summarizeVisualParams(vp),
+      `Primary Symbolic Element (based on archetype and climate):`,
+      `- "${primaryElement}" (weight: ${primaryWeight})`,
+      ``,
+      `Secondary Symbolic Elements (based on visual params):`,
+      ...selectedElements.map(el => `- "${el.text}" (weight: ${el.weight.toFixed(2)})`),
       ``,
       `Instructions:`,
-      `Describe a single cohesive FLUX-ready painting capturing the token's emotional arc, market tension, and symbolic motifs. Keep the prose flowing, cinematic, and evocative. Reference composition, palette, atmosphere, and key symbolism explicitly.`,
+      `Create a prompt that starts with "${MEDIEVAL_ALLEGORICAL_OPENING}"`,
+      `Then list 4-8 weighted elements in parentheses format: (element:weight),`,
+      `Include the primary element with weight ${primaryWeight},`,
+      `Include relevant secondary elements from the list above,`,
+      `Always include: ${MEDIEVAL_FIGURES_ELEMENT},`,
+      ...(referenceImageUrl
+        ? [
+            ``,
+            `CRITICAL: A reference image (token logo) is provided and MUST be integrated into the painting.`,
+            `Include an explicit element like: "(token logo integrated into the scene:1.20)" or "(token symbol visible in the composition:1.15)" or "(token emblem seamlessly blended into the allegorical landscape:1.25)".`,
+            `The reference image should be prominently featured and naturally incorporated into the medieval allegorical scene.`,
+          ]
+        : []),
+      `End with: "${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}"`,
+      `Use symbolic, metaphorical language. Elements should reflect the token's narrative, market state, and visual directives.`,
+      `Respond with ONLY the prompt text, no additional commentary.`,
     ].join("\n");
   };
 
@@ -202,9 +346,10 @@ Your goal is to synthesize the provided token narrative, market state, and visua
       }
 
       const shortContext = shortContextResult.value;
+      const hasReferenceImage = Boolean(request.referenceImageUrl);
 
-      const systemPrompt = buildTokenSystemPrompt();
-      const userPrompt = buildTokenUserPrompt(paintingContext, vp, shortContext);
+      const systemPrompt = buildTokenSystemPrompt(hasReferenceImage);
+      const userPrompt = buildTokenUserPrompt(paintingContext, vp, shortContext, request.referenceImageUrl);
 
       const aiResult = await workersAiClient.generateText({
         systemPrompt,
@@ -223,7 +368,22 @@ Your goal is to synthesize the provided token narrative, market state, and visua
       }
 
       const generatedText = aiResult.value.text.trim();
-      const promptText = `${generatedText}\n\ncontrols: paramsHash=${paramsHash}, seed=${seed}`;
+
+      // For image-to-image with reference image, prepend dynamic instruction
+      // to integrate the token logo into the scene based on context
+      const promptPrefix = hasReferenceImage ? `${getReferenceIntegrationInstruction(paintingContext)} ` : "";
+
+      const promptText = `${promptPrefix}${generatedText}\n\ncontrols: paramsHash=${paramsHash}, seed=${seed}`;
+
+      // For image-to-image with reference image, remove "logo" from negative prompt
+      // to allow the token logo to be integrated into the scene
+      const negativePrompt = hasReferenceImage
+        ? WORLD_PAINTING_NEGATIVE_PROMPT.replace(/\s*,\s*\blogo\b\s*,?/gi, ",")
+            .replace(/\s*,\s*,\s*/g, ",")
+            .replace(/^,\s*|\s*,$/g, "")
+            .replace(/\s+/g, " ")
+            .trim()
+        : WORLD_PAINTING_NEGATIVE_PROMPT;
 
       const composition: PromptComposition = {
         seed,
@@ -231,7 +391,7 @@ Your goal is to synthesize the provided token narrative, market state, and visua
         vp,
         prompt: {
           text: promptText,
-          negative: WORLD_PAINTING_NEGATIVE_PROMPT,
+          negative: negativePrompt,
           size: DEFAULT_IMAGE_SIZE,
           format: "webp",
           seed,

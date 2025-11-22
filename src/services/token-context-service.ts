@@ -66,13 +66,13 @@ export function createTokenContextService({
       });
     }
 
-    if (length > 500) {
+    if (length > 1000) {
       return err({
         type: "ValidationError",
-        message: `shortContext is too long (${length} characters, maximum 500). Consider using FALLBACK_SHORT_CONTEXT.`,
+        message: `shortContext is too long (${length} characters, maximum 1000). Consider using FALLBACK_SHORT_CONTEXT.`,
         details: {
           length,
-          maxLength: 500,
+          maxLength: 1000,
           recommendation: "Use FALLBACK_SHORT_CONTEXT",
         },
       });
@@ -126,7 +126,7 @@ export function createTokenContextService({
 
     // Step 3.2: Call Workers AI to generate JSON context from Tavily results
     const systemPrompt = `You are a cryptocurrency token analyst. Analyze the provided token information and generate a structured JSON response with the following field:
-- short_context: A 2-4 sentence English description of the token's purpose, narrative, and key characteristics (50-500 characters)
+- short_context: A 2-6 sentence English description of the token's purpose, narrative, and key characteristics (50-800 characters)
 
 Respond with JSON only. Do not include any additional text, markdown formatting, or explanations outside the JSON structure.`;
 
@@ -177,18 +177,22 @@ Generate a concise context JSON for this token.`;
 
     // Step 3.4: Validate shortContext quality
     const validationResult = validateShortContext(shortContext);
+    let validShortContext = shortContext;
+
     if (validationResult.isErr()) {
       log.warn("token-context-service.generate.quality-check-failed", {
         tokenId: input.id,
         symbol: input.symbol,
         error: validationResult.error,
         shortContextLength: shortContext.length,
+        action: "using_fallback_context",
       });
-      return err(validationResult.error);
+      // Use fallback context if validation fails
+      validShortContext = FALLBACK_SHORT_CONTEXT;
     }
 
     // Step 3.5: Save shortContext to tokens table
-    const saveResult = await tokensRepository.updateShortContext(input.id, shortContext);
+    const saveResult = await tokensRepository.updateShortContext(input.id, validShortContext);
     if (saveResult.isErr()) {
       log.warn("token-context-service.generate.save-short-context-failed", {
         tokenId: input.id,
@@ -204,7 +208,7 @@ Generate a concise context JSON for this token.`;
       symbol: input.symbol,
     });
 
-    return ok(shortContext);
+    return ok(validShortContext);
   }
 
   return {

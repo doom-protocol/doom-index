@@ -24,7 +24,7 @@ NEXT_PUBLIC_BASE_URL=http://localhost:8787
 
 # Image Generation Model (optional)
 # Default: runware:106@1
-# Options: runware:106@1, civitai:38784@44716, etc.
+# Options: runware:106@1, etc.
 IMAGE_MODEL=runware:106@1
 
 # Log Level (optional)
@@ -34,7 +34,6 @@ LOG_LEVEL=DEBUG
 
 # API Keys (required)
 RUNWARE_API_KEY=your_runware_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here  # Optional, for OpenAI models
 
 # External API Keys (optional)
 COINGECKO_API_KEY=your_coingecko_api_key_here  # Optional, for higher rate limits
@@ -50,7 +49,6 @@ For Cloudflare Workers, create a `.dev.vars` file:
 ```bash
 # Same as .env but for local Cloudflare Workers development
 RUNWARE_API_KEY=your_runware_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
 COINGECKO_API_KEY=your_coingecko_api_key_here
 TAVILY_API_KEY=your_tavily_api_key_here
 FORCE_TOKEN_LIST=bitcoin,ethereum,solana
@@ -136,8 +134,8 @@ Generate images locally using the CLI script:
 bun run generate
 
 
-# Generate with Runware/CivitAI model
-bun run generate --model "civitai:38784@44716"
+# Generate with Runware model
+bun run generate --model "runware:100@1"
 
 # Use mock provider for testing (no API key required)
 bun run generate --provider mock
@@ -152,7 +150,7 @@ bun run generate --output ./my-outputs
 ### Available Options
 
 - `--provider <name>`: Image provider (mock) - default: runware (from env)
-- `--model <name>`: Model name (dall-e-3, runware:100@1, civitai:xxx@xxx, etc.)
+- `--model <name>`: Model name (runware:100@1, etc.)
 - `--w, --width <num>`: Image width - default: 1280
 - `--h, --height <num>`: Image height - default: 720
 - `--format <fmt>`: Output format (webp, png) - default: webp
@@ -741,7 +739,6 @@ The project uses Runware as the primary image generation provider, with support 
 ### Supported Models
 
 - **Runware Models**: `runware:100@1`, `runware:101@1`, etc.
-- **CivitAI Models**: `civitai:38784@44716`, etc.
 
 ### Configuration
 
@@ -749,7 +746,6 @@ Set the `IMAGE_MODEL` environment variable to specify the model:
 
 ```bash
 IMAGE_MODEL=runware:100@1  # Default
-IMAGE_MODEL=civitai:38784@44716  # CivitAI model
 ```
 
 ### Mock Provider (Testing Only)
