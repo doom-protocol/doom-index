@@ -47,7 +47,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     table: ({ children }: { children?: ReactNode }) => (
       <div className="overflow-x-auto">
         <table
-          className="w-fit border-collapse border border-gray-300 bg-white text-sm"
+          className="w-fit border-collapse border border-gray-300 bg-white text-xs md:text-sm"
           style={{ tableLayout: "auto" }}
         >
           {children}
@@ -58,10 +58,10 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     tbody: ({ children }: { children?: ReactNode }) => <tbody>{children}</tbody>,
     tr: ({ children }: { children?: ReactNode }) => <tr className="border-b border-gray-200">{children}</tr>,
     th: ({ children }: { children?: ReactNode }) => (
-      <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-900">{children}</th>
+      <th className="border border-gray-300 px-2 py-2 md:px-4 md:py-3 text-left font-semibold text-gray-900 text-xs md:text-sm">{children}</th>
     ),
     td: ({ children }: { children?: ReactNode }) => (
-      <td className="border border-gray-300 px-4 py-3 text-gray-700">{children}</td>
+      <td className="border border-gray-300 px-2 py-2 md:px-4 md:py-3 text-gray-700 text-xs md:text-sm">{children}</td>
     ),
     img: ({ src, alt }: { src?: string; alt?: string }) => (
       <div className="my-6 flex flex-col items-center">
