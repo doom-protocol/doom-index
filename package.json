@@ -26,7 +26,7 @@
     "db:push:prod": "NODE_ENV=production bun run db:push",
     "db:studio": "drizzle-kit studio",
     "db:studio:prod": "NODE_ENV=production bun run db:studio",
-    "preview": "opennextjs-cloudflare preview --env dev --test-scheduled",
+    "preview": "opennextjs-cloudflare preview --env=dev --test-scheduled",
     "upload": "opennextjs-cloudflare upload",
     "deploy": "opennextjs-cloudflare deploy"
   },
