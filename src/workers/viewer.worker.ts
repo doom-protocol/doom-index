@@ -1,73 +1,151 @@
-import { isBotUserAgent } from "@/utils/user-agent";
+// Standalone Web Worker for viewer tracking
 import { createVanillaTRPCClient } from "@/lib/trpc/vanilla-client";
 
-// generate sessionId when Worker starts
-const sessionId = crypto.randomUUID();
+const VIEWER_HEARTBEAT_INTERVAL = 60_000; // Heartbeat every 60 seconds
 
-// Initialize tRPC client
-const trpc = createVanillaTRPCClient();
+// Debug logging helper
+function debugLog(message: string, data?: unknown) {
+  console.log(`[ViewerWorker] ${message}`, data ?? "");
+}
+
+// Generate sessionId when Worker starts
+function generateSessionId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+const sessionId = generateSessionId();
+debugLog("Worker session ID generated", { sessionId });
+
+// Simple bot detection
+function isBotUserAgent(userAgent: string): boolean {
+  const botPatterns = ["bot", "spider", "crawler", "scraper", "headless", "chrome-headless", "phantomjs", "selenium"];
+  return botPatterns.some(pattern => userAgent.toLowerCase().includes(pattern));
+}
+
+// Initialize tRPC client (use self.location in Worker context)
+const trpc = createVanillaTRPCClient({
+  baseUrl: self.location.origin,
+});
 
 /**
  * Check if this is a valid browser request
  */
 function isValidBrowserRequest(): boolean {
-  // Check if navigator is available (should be in Web Worker context)
-  if (typeof navigator === "undefined") {
-    return false;
-  }
-
+  if (typeof navigator === "undefined") return false;
   const userAgent = navigator.userAgent;
   const isBot = isBotUserAgent(userAgent);
   return !isBot;
 }
 
-async function ping(): Promise<void> {
-  // Skip ping if this is not a valid browser request
+async function ping() {
   if (!isValidBrowserRequest()) {
+    debugLog("Ping skipped - invalid browser");
+    return;
+  }
+
+  if (!sessionId) {
+    debugLog("ERROR: sessionId is not available!");
     return;
   }
 
   try {
     const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : undefined;
-
-    await trpc.viewer.register.mutate({
+    const pingData = {
       sessionId,
       userAgent,
+    };
+
+    debugLog("Sending ping with data", pingData);
+
+    await trpc.viewer.register.mutate(pingData);
+
+    debugLog("Heartbeat sent successfully", { sessionId });
+  } catch (error) {
+    debugLog("Heartbeat failed", {
+      sessionId,
+      error: error instanceof Error ? error.message : String(error),
     });
-  } catch {
-    // ignore error (will retry in next heartbeat)
   }
 }
 
-async function remove(): Promise<void> {
-  // Skip remove if this is not a valid browser request
-  if (!isValidBrowserRequest()) {
-    return;
+async function remove() {
+  if (!isValidBrowserRequest()) return;
+  try {
+    await trpc.viewer.remove.mutate({ sessionId });
+  } catch (error) {
+    debugLog("Remove failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
+}
+
+// Setup tRPC subscription for viewer count updates
+function setupViewerCountSubscription() {
+  debugLog("Connecting to tRPC viewer count subscription");
 
   try {
-    await trpc.viewer.remove.mutate({
-      sessionId,
+    const subscription = trpc.viewer.onCountUpdate.subscribe(undefined, {
+      onData: data => {
+        debugLog("Received count update from tRPC", data.count);
+        // Forward to main thread
+        self.postMessage({
+          type: "viewer-count",
+          count: data.count,
+          updatedAt: data.timestamp,
+        });
+      },
+      onError: error => {
+        debugLog("tRPC subscription error", error);
+        // Retry after 5 seconds
+        setTimeout(setupViewerCountSubscription, 5000);
+      },
+      onComplete: () => {
+        debugLog("tRPC subscription completed, reconnecting...");
+        // Retry after 5 seconds
+        setTimeout(setupViewerCountSubscription, 5000);
+      },
     });
-  } catch {
-    // ignore error
+
+    // Store subscription for cleanup
+    return subscription;
+  } catch (error) {
+    debugLog("Failed to setup tRPC subscription", error);
+    // Retry after 5 seconds
+    setTimeout(setupViewerCountSubscription, 5000);
   }
 }
 
-// Only send ping if this is a valid browser request
+// Start worker
 if (isValidBrowserRequest()) {
-  // send ping immediately when Worker starts
+  debugLog("Worker started", { sessionId });
+
+  // Send initial ping
   ping();
 
-  // send heartbeat every 30 seconds
-  const timer = setInterval(ping, 30_000);
+  // Setup heartbeat interval
+  const pingTimer = setInterval(ping, VIEWER_HEARTBEAT_INTERVAL);
 
-  // clean up timer and remove viewer when Worker ends
+  // Setup tRPC subscription for real-time viewer count updates
+  const subscription = setupViewerCountSubscription();
+
+  // Cleanup
   const cleanup = () => {
-    clearInterval(timer);
+    clearInterval(pingTimer);
+    if (subscription) {
+      subscription.unsubscribe();
+    }
     remove();
   };
 
   self.addEventListener("beforeunload", cleanup);
   self.addEventListener("pagehide", cleanup);
 }
+
+debugLog("File loaded and executing");

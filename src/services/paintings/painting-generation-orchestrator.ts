@@ -275,7 +275,7 @@ export class PaintingGenerationOrchestrator {
       const imageUrl = storeResult.value.imageUrl;
       const finalMetadata: PaintingMetadata = { ...metadata, imageUrl };
 
-      // Step 9: Index in D1 (non-blocking error)
+      // Step 9: Index in D1
       const r2Key = buildPaintingKey(finalComposition.minuteBucket, finalComposition.prompt.filename);
       const indexResult = await paintingsService.insertPainting(finalMetadata, r2Key);
       if (indexResult.isErr()) {
@@ -283,7 +283,8 @@ export class PaintingGenerationOrchestrator {
           error: indexResult.error,
           id: finalMetadata.id,
         });
-        // Continue execution even if indexing fails
+        // Return error to ensure cron failure is detected
+        return err(indexResult.error);
       }
 
       logger.info(`[PaintingGenerationOrchestrator] Completed successfully`, {

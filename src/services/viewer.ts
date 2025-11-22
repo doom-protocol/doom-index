@@ -16,6 +16,7 @@ type ViewerService = {
   updateViewer(sessionId: string): Promise<Result<void, AppError>>;
   removeViewer(sessionId: string): Promise<Result<void, AppError>>;
   hasActiveViewer(): Promise<Result<boolean, AppError>>;
+  countActiveViewers(): Promise<Result<number, AppError>>;
 };
 
 export function createViewerService({ kvNamespace, log = logger }: ViewerServiceDeps): ViewerService {
@@ -81,10 +82,64 @@ export function createViewerService({ kvNamespace, log = logger }: ViewerService
     return ok(hasActiveViewer);
   }
 
+  async function countActiveViewers(): Promise<Result<number, AppError>> {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    let totalCount = 0;
+    let cursor: string | undefined = undefined;
+    const limit = 1000; // Maximum keys per page
+
+    // Iterate through all pages until list_complete is true
+    while (true) {
+      const listResult = await listKv(kvNamespace, VIEWER_KEY_PREFIX, limit, cursor);
+      if (listResult.isErr()) {
+        return err(listResult.error);
+      }
+
+      const result = listResult.value;
+      const keys = result.keys;
+
+      // Count active viewers (not expired)
+      const activeCount = keys.filter(keyInfo => {
+        // If expiration is not set, consider it as active (shouldn't happen with our TTL)
+        if (keyInfo.expiration === undefined) {
+          return true;
+        }
+        // Check if expiration is in the future
+        return keyInfo.expiration > nowSeconds;
+      }).length;
+
+      totalCount += activeCount;
+
+      // If list is complete, we're done
+      if (result.list_complete) {
+        break;
+      }
+
+      // Otherwise, continue with the cursor
+      if ("cursor" in result && result.cursor) {
+        cursor = result.cursor;
+      } else {
+        // No cursor but list is not complete - this shouldn't happen, but break to avoid infinite loop
+        log.debug("viewer.service.count", {
+          warning: "list_complete is false but no cursor provided",
+          totalCount,
+        });
+        break;
+      }
+    }
+
+    log.debug("viewer.service.count", {
+      count: totalCount,
+    });
+
+    return ok(totalCount);
+  }
+
   return {
     registerViewer,
     updateViewer,
     removeViewer,
     hasActiveViewer,
+    countActiveViewers,
   };
 }

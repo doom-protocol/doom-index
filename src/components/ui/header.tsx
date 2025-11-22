@@ -11,6 +11,7 @@ import { ArchiveIcon } from "@/components/icons/archive-icon";
 import { GITHUB_URL, X_URL } from "@/constants";
 
 import { HeaderProgress } from "./header-progress";
+import { ViewerCountBadge } from "./viewer-count-badge";
 
 type NavLinkConfig = {
   href: string;
@@ -101,12 +102,17 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
       <div className="container mx-auto md:px-4 px-2 py-3">
         <div className="grid w-full gap-y-3 md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-x-6 md:gap-y-0">
           <div className="flex items-center justify-between md:justify-start">
-            <Link
-              href="/"
-              className="text-white text-xl font-bold font-cinzel-decorative hover:text-white/80 transition-colors"
-            >
-              DOOM INDEX
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                className="text-white text-xl font-bold font-cinzel-decorative hover:text-white/80 transition-colors"
+              >
+                DOOM INDEX
+              </Link>
+              <div className="md:hidden">
+                <ViewerCountBadge />
+              </div>
+            </div>
             <div ref={menuContainerRef} className="relative flex items-center md:hidden">
               <button
                 type="button"
@@ -172,6 +178,7 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
           </div>
           <div className="hidden justify-end md:flex">
             <nav className="flex items-center justify-end gap-3" aria-label="Navigation Links">
+              <ViewerCountBadge />
               <Link
                 href="/about"
                 aria-label="About"

@@ -106,4 +106,89 @@ export const viewerRouter = router({
 
     return { success: true };
   }),
+
+  activeCount: publicProcedure.query(async ({ ctx }) => {
+    if (!ctx.kvNamespace) {
+      ctx.logger.error("trpc.viewer.activeCount.error", {
+        message: "VIEWER_KV binding is not configured",
+      });
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "KV not configured",
+      });
+    }
+
+    const viewerService = createViewerService({
+      kvNamespace: ctx.kvNamespace,
+    });
+
+    const result = await viewerService.countActiveViewers();
+
+    if (result.isErr()) {
+      ctx.logger.error("trpc.viewer.activeCount.error", {
+        error: result.error,
+      });
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to count active viewers",
+        cause: result.error,
+      });
+    }
+
+    ctx.logger.debug("trpc.viewer.activeCount.success", {
+      count: result.value,
+    });
+
+    return {
+      count: result.value,
+      ttlSeconds: 60, // VIEWER_TTL_SECONDS from service
+    };
+  }),
+
+  onCountUpdate: publicProcedure.subscription(async function* (opts) {
+    const { ctx } = opts;
+
+    if (!ctx.kvNamespace) {
+      ctx.logger.error("trpc.viewer.onCountUpdate.error", {
+        message: "VIEWER_KV binding is not configured",
+      });
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "KV not configured",
+      });
+    }
+
+    const viewerService = createViewerService({
+      kvNamespace: ctx.kvNamespace,
+    });
+
+    // Send initial count
+    const initialResult = await viewerService.countActiveViewers();
+    if (initialResult.isOk()) {
+      yield { count: initialResult.value, timestamp: Date.now() };
+    }
+
+    // Send updates every 30 seconds using a loop
+    while (!opts.signal?.aborted) {
+      await new Promise(resolve => setTimeout(resolve, 30000));
+
+      if (opts.signal?.aborted) break;
+
+      try {
+        const result = await viewerService.countActiveViewers();
+        if (result.isOk()) {
+          yield { count: result.value, timestamp: Date.now() };
+        }
+      } catch (error) {
+        ctx.logger.error("trpc.viewer.onCountUpdate.loop.error", {
+          error,
+        });
+      }
+    }
+
+    ctx.logger.debug("trpc.viewer.onCountUpdate.disconnected");
+  }),
 });

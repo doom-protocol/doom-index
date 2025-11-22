@@ -7,8 +7,39 @@ import { useTRPCClient } from "@/lib/trpc/client";
 
 import { GENERATION_INTERVAL_MS } from "@/constants";
 
-// Default to env var or 1 hour
-const REFETCH_INTERVAL = GENERATION_INTERVAL_MS;
+const MIN_REFETCH_INTERVAL_MS = 30_000;
+const STALE_POLL_INTERVAL_MS = 60_000;
+const POST_GENERATION_DELAY_MS = 15_000;
+
+const clampInterval = (value: number): number => Math.max(MIN_REFETCH_INTERVAL_MS, value);
+
+const computeRefetchDelay = (lastTimestamp?: string | null): number => {
+  if (!GENERATION_INTERVAL_MS || GENERATION_INTERVAL_MS <= 0) {
+    return STALE_POLL_INTERVAL_MS;
+  }
+
+  if (!lastTimestamp) {
+    return MIN_REFETCH_INTERVAL_MS;
+  }
+
+  const lastUpdated = Date.parse(lastTimestamp);
+  if (!Number.isFinite(lastUpdated)) {
+    return STALE_POLL_INTERVAL_MS;
+  }
+
+  const now = Date.now();
+  const age = now - lastUpdated;
+
+  if (age >= GENERATION_INTERVAL_MS) {
+    return clampInterval(STALE_POLL_INTERVAL_MS);
+  }
+
+  const elapsedInWindow = now % GENERATION_INTERVAL_MS;
+  const msUntilNextBoundary = GENERATION_INTERVAL_MS - elapsedInWindow;
+  const delay = msUntilNextBoundary + POST_GENERATION_DELAY_MS;
+
+  return clampInterval(delay);
+};
 
 /**
  * Hook to fetch the latest painting
@@ -44,7 +75,11 @@ export const useLatestPainting = () => {
       }
     },
     staleTime: 0, // Always check for updates when the interval hits
-    refetchInterval: REFETCH_INTERVAL,
+    refetchInterval: query => {
+      const latest = query.state.data;
+      return computeRefetchDelay(latest?.timestamp ?? null);
+    },
+    refetchIntervalInBackground: true,
     retry: 3,
   });
 

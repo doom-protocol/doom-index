@@ -2,24 +2,33 @@
 
 import { useEffect, useRef } from "react";
 import { logger } from "@/utils/logger";
+import { viewerCountStore } from "@/lib/viewer-count-store";
+
+type ViewerCountMessage = {
+  type: "viewer-count";
+  count: number;
+  updatedAt: number;
+};
 
 export function useViewer() {
   const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      return;
+    }
 
     logger.debug("viewer.start");
 
     let w: Worker | null = null;
     try {
-      // start Web Worker (sessionId generation and heartbeat sending are automatically started in the Worker)
-      w = new Worker(new URL("@/workers/viewer.worker", import.meta.url), { type: "module" });
+      // Start Web Worker which handles WebSocket connection and Heartbeat
+      w = new Worker(new URL("@/workers/viewer.worker", import.meta.url));
       workerRef.current = w;
 
       // Add error handler to catch Worker errors
       w.addEventListener("error", event => {
-        logger.debug("viewer.worker.error", {
+        logger.error("viewer.worker.error", {
           message: event.message,
           filename: event.filename,
           lineno: event.lineno,
@@ -28,19 +37,26 @@ export function useViewer() {
         });
       });
 
-      // Add message handler for debugging
+      // Add message handler for viewer count updates from WebSocket via Worker
       w.addEventListener("message", event => {
-        logger.debug("viewer.worker.message", event.data);
+        const data = event.data;
+
+        // Handle viewer count updates
+        if (data && typeof data === "object" && "type" in data && data.type === "viewer-count") {
+          const message = data as ViewerCountMessage;
+          console.log("[useViewer] Received count update from worker:", message.count);
+          viewerCountStore.update(message.count, message.updatedAt);
+        }
       });
 
       logger.debug("viewer.started");
     } catch (error) {
-      logger.debug("viewer.start.failed", { error });
+      logger.error("viewer.start.failed", { error });
       return; // Early return if worker creation failed
     }
 
-    // handle page unload (terminate Worker)
-    const onUnload = () => {
+    // cleanup
+    return () => {
       const worker = workerRef.current;
       if (worker) {
         logger.debug("viewer.terminate");
@@ -48,15 +64,7 @@ export function useViewer() {
         workerRef.current = null;
       }
     };
-
-    // watch page unload events
-    window.addEventListener("pagehide", onUnload);
-    window.addEventListener("beforeunload", onUnload);
-
-    // cleanup
-    return () => {
-      onUnload();
-      workerRef.current = null;
-    };
   }, []); // dependency array is empty (only run once on mount)
+
+  return null;
 }

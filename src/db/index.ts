@@ -12,9 +12,16 @@ let db: DrizzleD1Database<typeof schema> | undefined;
  * @returns DrizzleD1Database instance
  */
 export async function getDB(d1Binding?: D1Database): Promise<DrizzleD1Database<typeof schema>> {
+  // If explicit binding is provided, always create a new instance (or update cache)
+  // This ensures that in Cron/Worker context, we use the fresh binding passed from env
+  if (d1Binding) {
+    db = drizzle(d1Binding, { schema });
+    return db;
+  }
+
   if (db) return db;
 
-  let binding = d1Binding;
+  let binding: D1Database | undefined = d1Binding;
   if (!binding) {
     try {
       const { getCloudflareContext } = await import("@opennextjs/cloudflare");

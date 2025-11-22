@@ -96,13 +96,26 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   });
 
   const headers = new Headers();
-  object.writeHttpMetadata?.(headers);
 
-  if (!headers.has("Content-Type")) {
-    const contentType = object.httpMetadata?.contentType;
-    if (contentType) {
-      headers.set("Content-Type", contentType);
-    }
+  // Manually set headers from httpMetadata to avoid serialization issues
+  if (object.httpMetadata?.contentType) {
+    headers.set("Content-Type", object.httpMetadata.contentType);
+  }
+
+  if (object.httpMetadata?.contentEncoding) {
+    headers.set("Content-Encoding", object.httpMetadata.contentEncoding);
+  }
+
+  if (object.httpMetadata?.contentLanguage) {
+    headers.set("Content-Language", object.httpMetadata.contentLanguage);
+  }
+
+  if (object.httpMetadata?.contentDisposition) {
+    headers.set("Content-Disposition", object.httpMetadata.contentDisposition);
+  }
+
+  if (object.httpMetadata?.cacheControl) {
+    headers.set("Cache-Control", object.httpMetadata.cacheControl);
   }
 
   if (typeof object.size === "number") {

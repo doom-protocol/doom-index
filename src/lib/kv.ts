@@ -62,12 +62,14 @@ export async function listKv(
   kvNamespace: KVNamespace,
   prefix: string,
   limit?: number,
+  cursor?: string,
 ): Promise<Result<KVNamespaceListResult<unknown, string>, AppError>> {
   try {
     return ok(
       await kvNamespace.list({
         prefix,
         limit,
+        cursor,
       }),
     );
   } catch (error) {

@@ -6,6 +6,14 @@ A decentralized archive of financial emotions. AI generates one painting every h
 
 DOOM INDEX dynamically selects trending tokens from CoinGecko and generates a unique artwork every hour based on their market data, fear & greed index, and contextual analysis.
 
+## Tools
+
+- [Tavily](https://app.tavily.com/home)
+- [Alternative.me](https://alternative.me/fear-and-greed-index)
+- [CoinGecko](https://www.coingecko.com/en/api)
+- [Cloudflare](https://dash.cloudflare.com/)
+- [Runware](https://runware.com/)
+
 ## Development
 
 ### Setup
