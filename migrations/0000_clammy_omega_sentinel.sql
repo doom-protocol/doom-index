@@ -8,7 +8,6 @@ CREATE TABLE `paintings` (
 	`r2_key` text NOT NULL,
 	`image_url` text NOT NULL,
 	`file_size` integer NOT NULL,
-	`mc_rounded_json` text,
 	`visual_params_json` text NOT NULL,
 	`prompt` text NOT NULL,
 	`negative` text NOT NULL

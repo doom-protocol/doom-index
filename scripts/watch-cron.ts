@@ -22,8 +22,8 @@ const parseArgs = (): Args => {
   const args = process.argv.slice(2);
   const parsed: Partial<Args> = {
     port: 8787,
-    interval: 60, // 1 minute
-    cron: "0 * * * *", // Every minute
+    interval: 120, // 2 minutes
+    cron: "*/2 * * * *", // Every 2 minutes
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -53,13 +53,13 @@ Usage: bun scripts/watch-cron.ts [options]
 
 Options:
   --port, -p <number>     Server port (default: 8787)
-  --interval, -i <number> Interval in seconds (default: 60)
-  --cron, -c <string>     Cron expression (default: "0 * * * *")
+  --interval, -i <number> Interval in seconds (default: 120)
+  --cron, -c <string>     Cron expression (default: "*/2 * * * *")
   --help, -h              Show this help
 
 Examples:
   bun scripts/watch-cron.ts
-  bun scripts/watch-cron.ts --port 8787 --interval 60
+  bun scripts/watch-cron.ts --port 8787 --interval 120
   bun scripts/watch-cron.ts --interval 30
         `);
         process.exit(0);

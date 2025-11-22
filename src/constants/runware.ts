@@ -53,4 +53,4 @@ export const DEFAULT_IMAGE_SIZE = 1024;
 /**
  * Default timeout for Runware API requests (in milliseconds)
  */
-export const DEFAULT_RUNWARE_TIMEOUT = 30_000;
+export const DEFAULT_RUNWARE_TIMEOUT = 90_000;

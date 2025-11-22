@@ -1,7 +1,5 @@
 # Cloudflare Workers Configuration for DOOM INDEX
 
-account_id = "7046457855b37423c07b1b0c6014fe33"
-
 name = "doom-index"
 main = "./src/worker.ts"
 
@@ -12,9 +10,9 @@ compatibility_flags = [
  "global_fetch_strictly_public",
 ]
 
-# Custom build settings
-[build]
-command = "bun run build:cf"
+# This cause the redundant build when using opennextjs-cloudflare build in local
+# [build]
+# command = "bun run build:cf"
 
 # Cron Triggers
 [triggers]
@@ -67,7 +65,7 @@ NODE_ENV = "production"
 LOG_LEVEL = "INFO"
 NEXTJS_ENV = "production"
 NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
-IMAGE_MODEL = "runware:100@1"
+IMAGE_MODEL = "runware:106@1"
 
 [observability]
 enabled = false
@@ -121,7 +119,7 @@ service = "doom-index-dev"
 
 [env.dev.vars]
 NODE_ENV = "development"
-LOG_LEVEL = "DEBUG"
+LOG_LEVEL = "INFO"
 NEXTJS_ENV = "development"
 NEXT_PUBLIC_BASE_URL = "http://localhost:8787"
-IMAGE_MODEL = "runware:100@1"
+IMAGE_MODEL = "runware:106@1"

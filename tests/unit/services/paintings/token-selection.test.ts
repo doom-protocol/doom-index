@@ -149,10 +149,85 @@ describe("TokenSelectionService", () => {
     });
 
     const result = await service.selectToken();
-    expect(result.isErr()).toBe(true);
-    if (result.isErr()) {
-      expect(result.error.message).toMatch(/No token candidates available after filtering/);
+    // After filtering, only stablecoin remains, which gets filtered out
+    // Then fresh token is filtered as recently selected, leaving 0 candidates
+    // Fallback should select from candidates before recent filter (fresh token)
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value.id).toBe("fresh");
     }
+  });
+
+  it("falls back to unfiltered candidates when all tokens are recently selected", async () => {
+    const inserted: Array<Record<string, unknown>> = [];
+    const service = createService({
+      tokenDataFetchService: {
+        fetchTrendingTokens: async () =>
+          okResult([
+            createCandidate({
+              id: "alpha",
+              symbol: "ALP",
+              priceChange24h: 12,
+              volume24hUsd: 50_000_000,
+              marketCapUsd: 500_000_000,
+              categories: ["l1"],
+              trendingRankCgSearch: 1,
+            }),
+            createCandidate({
+              id: "beta",
+              symbol: "BET",
+              priceChange24h: 8,
+              volume24hUsd: 30_000_000,
+              marketCapUsd: 300_000_000,
+              categories: ["defi"],
+              trendingRankCgSearch: 2,
+            }),
+          ]),
+      },
+      tokensRepository: {
+        findRecentlySelected: async () =>
+          okResult([
+            {
+              id: "alpha",
+              symbol: "ALPHA",
+              name: "Alpha Token",
+              shortContext: null,
+              coingeckoId: "alpha",
+              logoUrl: null,
+              categories: "[]",
+              createdAt: 0,
+              updatedAt: Date.now(),
+            },
+            {
+              id: "beta",
+              symbol: "BETA",
+              name: "Beta Token",
+              shortContext: null,
+              coingeckoId: "beta",
+              logoUrl: null,
+              categories: "[]",
+              createdAt: 0,
+              updatedAt: Date.now(),
+            },
+          ]),
+        findById: async () => okResult(null),
+        insert: async token => {
+          inserted.push(token);
+          return okResult(undefined);
+        },
+      },
+    });
+
+    const result = await service.selectToken({ excludeRecentlySelected: true });
+
+    // Should fallback to unfiltered candidates and select the highest scoring one
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value.id).toBe("alpha");
+      expect(result.value.scores.final).toBeGreaterThan(0);
+    }
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0]).toMatchObject({ id: "alpha", categories: JSON.stringify(["l1"]) });
   });
 
   it("respects FORCE_TOKEN_LIST priority ordering", async () => {

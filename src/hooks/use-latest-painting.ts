@@ -5,8 +5,10 @@ import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import { useTRPCClient } from "@/lib/trpc/client";
 
-// 1 hour in milliseconds
-const REFETCH_INTERVAL = 3600000;
+import { GENERATION_INTERVAL_MS } from "@/constants";
+
+// Default to env var or 1 hour
+const REFETCH_INTERVAL = GENERATION_INTERVAL_MS;
 
 /**
  * Hook to fetch the latest painting

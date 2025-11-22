@@ -109,6 +109,9 @@ export class TokenSelectionService {
         candidates = candidates.filter(c => !this.stablecoinSymbols.has(c.symbol));
       }
 
+      // Store candidates before recently selected filter for fallback
+      const candidatesBeforeRecentFilter = [...candidates];
+
       // Exclude recently selected tokens (Requirement 1D)
       if (excludeRecentlySelected && !forceTokenList) {
         const recentTokensResult = await this.tokensRepository.findRecentlySelected(recentSelectionWindowHours);
@@ -122,6 +125,14 @@ export class TokenSelectionService {
             );
           }
         }
+      }
+
+      // If all candidates were filtered out, fallback to candidates before recent filter
+      if (candidates.length === 0 && candidatesBeforeRecentFilter.length > 0) {
+        logger.warn(
+          `[TokenSelectionService] All candidates were recently selected. Falling back to unfiltered candidates to ensure token selection.`,
+        );
+        candidates = candidatesBeforeRecentFilter;
       }
 
       if (candidates.length === 0) {
@@ -167,11 +178,38 @@ export class TokenSelectionService {
         // Sort by final score descending
         scoredCandidates.sort((a, b) => b.scores.final - a.scores.final);
 
-        selected = scoredCandidates[0].candidate;
+        // Log top candidates for transparency (Requirement: Selection process and reason)
+        const topCandidates = scoredCandidates.slice(0, 5).map((c, i) => ({
+          rank: i + 1,
+          symbol: c.candidate.symbol,
+          scores: {
+            trend: c.scores.trend.toFixed(2),
+            impact: c.scores.impact.toFixed(2),
+            mood: c.scores.mood.toFixed(2),
+            final: c.scores.final.toFixed(3),
+          },
+        }));
 
         logger.info(
-          `[TokenSelectionService] Selected token: ${selected.id} (finalScore: ${scoredCandidates[0].scores.final.toFixed(3)})`,
+          `[TokenSelectionService] Selection Process (Top 5 Candidates):\n${topCandidates
+            .map(
+              c =>
+                `${c.rank}. ${c.symbol} (Final: ${c.scores.final}, Trend: ${c.scores.trend}, Impact: ${c.scores.impact}, Mood: ${c.scores.mood})`,
+            )
+            .join("\n")}`,
         );
+
+        selected = scoredCandidates[0].candidate;
+
+        // Log selected token details (Requirement: Selected token info)
+        logger.info(`[TokenSelectionService] Selected Token:`, {
+          name: selected.name,
+          ticker: selected.symbol,
+          price: selected.priceUsd,
+          change24h: `${selected.priceChange24h.toFixed(2)}%`,
+          marketCap: selected.marketCapUsd,
+          finalScore: scoredCandidates[0].scores.final.toFixed(3),
+        });
 
         // Store token metadata
         await this.storeTokenMetadata(selected);

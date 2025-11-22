@@ -91,7 +91,21 @@ export class TokenDataFetchService {
       }
 
       const trending = trendingResult.value;
-      logger.debug("[TokenDataFetchService] Trending search", { trending });
+
+      // Log simplified trending data for better visibility
+      const trendingSummary = {
+        coins: (trending.coins ?? []).slice(0, 15).map((coin, index) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const item = (coin as any).item;
+          return {
+            rank: index + 1,
+            id: item?.id,
+            symbol: item?.symbol,
+            name: item?.name,
+          };
+        }),
+      };
+      logger.debug("[TokenDataFetchService] Trending search summary", { trending: trendingSummary });
 
       // Extract CoinGecko IDs from trending search (max 15)
       const ids = (trending.coins ?? []).slice(0, 15).map((coin, index) => {
@@ -110,7 +124,9 @@ export class TokenDataFetchService {
         return ok([]);
       }
 
-      logger.info(`[TokenDataFetchService] Found ${ids.length} trending tokens`);
+      // Log trending tokens list (Requirement: All trending token list)
+      const trendingListStr = trendingSummary.coins.map(c => `${c.rank}. ${c.symbol} (${c.name})`).join(", ");
+      logger.info(`[TokenDataFetchService] Trending tokens: ${trendingListStr}`);
 
       // Fetch details for trending tokens
       const candidatesResult = await this.fetchTokenDetails(

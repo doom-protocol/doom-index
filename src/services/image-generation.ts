@@ -12,7 +12,6 @@
 
 import { err, ok, Result } from "neverthrow";
 import { logger } from "@/utils/logger";
-import { estimateTokenCount } from "@/utils/text";
 import { env } from "@/env";
 import type { ImageProvider } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
@@ -52,7 +51,7 @@ type TokenImageGenerationInput = {
 export function createImageGenerationService({
   promptService,
   imageProvider,
-  generationTimeoutMs = 15_000,
+  generationTimeoutMs = 90_000,
   log = logger,
 }: ImageGenerationDeps): ImageGenerationService {
   /**
@@ -83,25 +82,13 @@ export function createImageGenerationService({
       referenceImageUrl,
     });
 
-    const promptTokens = estimateTokenCount(composition.prompt.text);
-    const negativeTokens = estimateTokenCount(composition.prompt.negative);
-    const totalTokens = {
-      charBased: promptTokens.charBased + negativeTokens.charBased,
-      wordBased: promptTokens.wordBased + negativeTokens.wordBased,
-    };
-
+    // Requirement: Prompt text and Runware params (referenceImages url)
     log.info("image-generation.prompt", {
       prompt: composition.prompt.text,
-      negative: composition.prompt.negative,
-      seed: composition.prompt.seed,
+      // negative: composition.prompt.negative, // Reduce noise, user asked for prompt text primarily
+      referenceImageUrl: referenceImageUrl ?? "None",
       model: env.IMAGE_MODEL,
-      size: `${composition.prompt.size.w}x${composition.prompt.size.h}`,
-      referenceImageUrl,
-      tokens: {
-        prompt: promptTokens,
-        negative: negativeTokens,
-        total: totalTokens,
-      },
+      seed: composition.prompt.seed,
     });
   };
 

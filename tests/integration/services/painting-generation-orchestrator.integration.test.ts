@@ -19,6 +19,11 @@ import type { AppError } from "@/types/app-error";
 import type { SelectedToken, MarketSnapshot } from "@/types/paintings";
 import type { PaintingContext } from "@/types/painting-context";
 
+// Mock env module
+mock.module("@/env", () => ({
+  env: { NODE_ENV: "development" },
+}));
+
 const mockSelectedToken: SelectedToken = {
   id: "bitcoin",
   symbol: "BTC",
@@ -134,6 +139,11 @@ describe("PaintingGenerationOrchestrator Integration", () => {
 
   describe("execute", () => {
     it("should skip execution when hourBucket already exists (idempotency)", async () => {
+      // Mock env module to return production mode for this test
+      mock.module("@/env", () => ({
+        env: { NODE_ENV: "production" },
+      }));
+
       // Mock existing snapshot
       mockMarketSnapshotsRepository.findByHourBucket = mock(() =>
         Promise.resolve(ok(mockMarketSnapshot)),

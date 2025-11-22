@@ -21,7 +21,7 @@ function getLocalDb(): string {
 
 export default process.env.NODE_ENV === "production"
   ? defineConfig({
-      schema: "./src/db/index.ts",
+      schema: "./src/db/schema/index.ts",
       out: "./migrations",
       dialect: "sqlite",
       driver: "d1-http",
@@ -32,7 +32,7 @@ export default process.env.NODE_ENV === "production"
       },
     })
   : defineConfig({
-      schema: "./src/db/index.ts",
+      schema: "./src/db/schema/index.ts",
       dialect: "sqlite",
       out: "./migrations",
       dbCredentials: {

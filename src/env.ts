@@ -43,6 +43,7 @@ export const env = createEnv({
     IMAGE_MODEL: z.string().optional(),
     LOG_LEVEL: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]).default("DEBUG"),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    NEXT_PUBLIC_GENERATION_INTERVAL_MS: z.coerce.number().default(3600000),
   },
 
   /**
@@ -62,6 +63,7 @@ export const env = createEnv({
     IMAGE_MODEL: process.env.IMAGE_MODEL,
     NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL,
+    NEXT_PUBLIC_GENERATION_INTERVAL_MS: process.env.NEXT_PUBLIC_GENERATION_INTERVAL_MS,
   },
 
   /**

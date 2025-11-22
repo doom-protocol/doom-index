@@ -85,6 +85,8 @@ curl "http://localhost:8787/__scheduled?cron=0+*+*+*+*"
 bun run deploy
 ```
 
+> **Note**: When using `bun run preview` with OpenNextJS Cloudflare, environment variable loading behaves differently than direct `wrangler dev`. See [OpenNextJS Environment Variables](./docs/opennextjs-env-vars.md) for details about development environment detection and configuration.
+
 ### Database Management
 
 ```bash
@@ -769,6 +771,7 @@ Additional documentation is available in the `docs/` directory:
 - [Weighted Prompt System](./docs/weighted-prompt-system.md) – Prompt generation details
 - [Runware Models](./docs/runware-models.md) – Available models and configurations
 - [Cache Impact Analysis](./docs/cache-impact-analysis.md) – Caching strategy
+- [OpenNextJS Environment Variables](./docs/opennextjs-env-vars.md) – Environment variable handling in OpenNextJS Cloudflare
 
 ### Design Specifications
 

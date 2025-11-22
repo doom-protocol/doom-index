@@ -76,7 +76,7 @@ export class PaintingGenerationOrchestrator {
   async execute(cloudflareEnv: Cloudflare.Env): Promise<Result<PaintingGenerationResult, AppError>> {
     try {
       const hourBucket = getHourBucket();
-      logger.info(`[PaintingGenerationOrchestrator] Starting execution for hourBucket: ${hourBucket}`);
+      logger.debug(`[PaintingGenerationOrchestrator] Starting execution for hourBucket: ${hourBucket}`);
 
       // Step 1: Check idempotency (Requirement 10)
       const existingSnapshot = await this.deps.marketSnapshotsRepository.findByHourBucket(hourBucket);
@@ -85,11 +85,17 @@ export class PaintingGenerationOrchestrator {
       }
 
       if (existingSnapshot.value !== null) {
-        logger.info(`[PaintingGenerationOrchestrator] Skipping duplicate hourBucket: ${hourBucket}`);
-        return ok({
-          status: "skipped",
-          hourBucket,
-        });
+        if (env.NODE_ENV !== "production") {
+          logger.info(
+            `[PaintingGenerationOrchestrator] Development mode: processing duplicate hourBucket: ${hourBucket}`,
+          );
+        } else {
+          logger.info(`[PaintingGenerationOrchestrator] Skipping duplicate hourBucket: ${hourBucket}`);
+          return ok({
+            status: "skipped",
+            hourBucket,
+          });
+        }
       }
 
       // Step 2: Select token (Requirement 1D)
@@ -109,7 +115,7 @@ export class PaintingGenerationOrchestrator {
       }
 
       const selectedToken = tokenSelectionResult.value;
-      logger.info(`[PaintingGenerationOrchestrator] Selected token: ${selectedToken.id} (${selectedToken.symbol})`, {
+      logger.debug(`[PaintingGenerationOrchestrator] Selected token: ${selectedToken.id} (${selectedToken.symbol})`, {
         tokenId: selectedToken.id,
         symbol: selectedToken.symbol,
         name: selectedToken.name,
@@ -127,6 +133,15 @@ export class PaintingGenerationOrchestrator {
       }
 
       const marketSnapshot = marketDataResult.value;
+
+      // Requirement: market snapshot (global market data) & fear & greed value
+      logger.info(`[PaintingGenerationOrchestrator] Market Snapshot:`, {
+        fearAndGreedIndex: marketSnapshot.fearGreedIndex ?? "Unknown",
+        btcDominance: `${marketSnapshot.btcDominance.toFixed(2)}%`,
+        marketCapChange24h: `${marketSnapshot.marketCapChangePercentage24hUsd.toFixed(2)}%`,
+        totalVolume: marketSnapshot.totalVolumeUsd,
+      });
+
       const storeSnapshotResult = await this.deps.marketDataService.storeMarketSnapshot(marketSnapshot, hourBucket);
       if (storeSnapshotResult.isErr()) {
         logger.error(`[PaintingGenerationOrchestrator] Market snapshot storage failed`, {
@@ -149,7 +164,7 @@ export class PaintingGenerationOrchestrator {
       }
 
       const paintingContext = contextResult.value;
-      logger.info(`[PaintingGenerationOrchestrator] Built painting context`, {
+      logger.debug(`[PaintingGenerationOrchestrator] Built painting context`, {
         climate: paintingContext.c,
         archetype: paintingContext.a,
         composition: paintingContext.o,
@@ -206,7 +221,7 @@ export class PaintingGenerationOrchestrator {
       }
 
       const { composition: finalComposition, imageBuffer } = imageResult.value;
-      logger.info(`[PaintingGenerationOrchestrator] Generated image`, {
+      logger.debug(`[PaintingGenerationOrchestrator] Generated image`, {
         paramsHash: finalComposition.paramsHash,
         seed: finalComposition.seed,
         bufferSize: imageBuffer.byteLength,

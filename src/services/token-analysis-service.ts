@@ -221,6 +221,7 @@ Generate a concise context JSON for this token.`;
     log.info("token-analysis-service.generate.short-context-saved", {
       tokenId: input.id,
       symbol: input.symbol,
+      shortContext: validShortContext, // Requirement: Short context output
     });
 
     return ok(validShortContext);

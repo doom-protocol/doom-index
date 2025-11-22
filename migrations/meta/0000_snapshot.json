@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "490ffd00-993c-498d-8bad-2359f18b15e2",
+  "id": "0ce680f5-3dea-4a72-ab66-2b355111e286",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "paintings": {
@@ -68,13 +68,6 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        },
-        "mc_rounded_json": {
-          "name": "mc_rounded_json",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
         "visual_params_json": {
