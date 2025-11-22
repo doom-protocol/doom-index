@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach, afterEach, mock } from "bun:test";
 import { createPaintingsService } from "@/services/paintings";
 import { createTestR2Bucket } from "../../lib/memory-r2";
 import type { PaintingMetadata } from "@/types/paintings";
+import { buildPublicR2Path } from "@/utils/paintings";
 
 const TEST_IMAGE_KEYS = [
   "images/2025/11/14/DOOM_202511141200_abc12345_def456789012.webp",
@@ -62,12 +63,27 @@ describe("Archive List Service", () => {
   afterEach(() => {
     // Clean up environment variables after each test
     delete process.env.NEXT_PUBLIC_R2_URL;
+
+    // Restore original module
+    mock.restore();
   });
 
   beforeEach(() => {
     const client = createTestR2Bucket();
     bucket = client.bucket;
     store = client.store;
+
+    // Mock buildPublicR2Path to ensure consistent behavior in tests
+    mock.module("@/utils/paintings", () => ({
+      buildPublicR2Path: mock((key: string) => `/api/r2/${key.replace(/^\/+/, "")}`),
+      buildPaintingKey: mock((dateString: string, filename: string) => {
+        const dateMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!dateMatch) {
+          throw new Error(`Invalid date format: ${dateString}. Expected YYYY-MM-DD or ISO timestamp.`);
+        }
+        return `images/${dateMatch[1]}/${dateMatch[2]}/${dateMatch[3]}/${filename}`;
+      }),
+    }));
 
     // Mock D1 database using Drizzle ORM's expected API
     // @ts-expect-error - Mock D1 database for testing
@@ -134,8 +150,6 @@ describe("Archive List Service", () => {
 
   describe("listImages", () => {
     it("should list images with default limit", async () => {
-      // Ensure NEXT_PUBLIC_R2_URL is not set for R2 fallback testing
-      process.env.NEXT_PUBLIC_R2_URL = "";
       // @ts-expect-error - Mock D1 database for testing
       const service = createPaintingsService({ r2Bucket: bucket, d1Binding: mockD1 });
       const result = await service.listImages({});
@@ -149,8 +163,6 @@ describe("Archive List Service", () => {
     });
 
     it("should respect limit parameter", async () => {
-      // Ensure NEXT_PUBLIC_R2_URL is not set for R2 fallback testing
-      process.env.NEXT_PUBLIC_R2_URL = "";
       const service = // @ts-expect-error - Mock D1 database for testing
         createPaintingsService({ r2Bucket: bucket, d1Binding: mockD1 });
       const result = await service.listImages({ limit: 3 });
@@ -162,8 +174,6 @@ describe("Archive List Service", () => {
     });
 
     it("should enforce maximum limit of 100", async () => {
-      // Ensure NEXT_PUBLIC_R2_URL is not set for R2 fallback testing
-      process.env.NEXT_PUBLIC_R2_URL = "";
       const service = // @ts-expect-error - Mock D1 database for testing
         createPaintingsService({ r2Bucket: bucket, d1Binding: mockD1 });
       const result = await service.listImages({ limit: 200 });
@@ -175,8 +185,6 @@ describe("Archive List Service", () => {
     });
 
     it("should filter only .webp files", async () => {
-      // Ensure NEXT_PUBLIC_R2_URL is not set for R2 fallback testing
-      process.env.NEXT_PUBLIC_R2_URL = "";
       // Add a non-webp file
       store.set("images/2025/11/14/test.png", {
         content: new TextEncoder().encode("fake png").buffer,
@@ -195,8 +203,6 @@ describe("Archive List Service", () => {
     });
 
     it("should support cursor-based pagination with key-based cursor", async () => {
-      // Ensure NEXT_PUBLIC_R2_URL is not set for R2 fallback testing
-      process.env.NEXT_PUBLIC_R2_URL = "";
       const service = // @ts-expect-error - Mock D1 database for testing
         createPaintingsService({ r2Bucket: bucket, d1Binding: mockD1 });
       const firstPage = await service.listImages({ limit: 2 });
@@ -210,14 +216,12 @@ describe("Archive List Service", () => {
           const firstPageKeys = firstPage.value.items.map(item => item.imageUrl.replace("/api/r2/", ""));
           const secondPageKeys = secondPage.value.items.map(item => item.imageUrl.replace("/api/r2/", ""));
           expect(firstPageKeys).not.toEqual(secondPageKeys);
-          expect(secondPageKeys[0]).toBe(`/api/r2/${TEST_IMAGE_KEYS[2]}`);
+          expect(secondPageKeys[0]).toBe(`${TEST_IMAGE_KEYS[2]}`);
         }
       }
     });
 
     it("should return hasMore when truncated", async () => {
-      // Ensure NEXT_PUBLIC_R2_URL is not set for R2 fallback testing
-      process.env.NEXT_PUBLIC_R2_URL = "";
       const service = // @ts-expect-error - Mock D1 database for testing
         createPaintingsService({ r2Bucket: bucket, d1Binding: mockD1 });
       const result = await service.listImages({ limit: 2 });
@@ -233,8 +237,6 @@ describe("Archive List Service", () => {
     });
 
     it("should use images/ prefix", async () => {
-      // Ensure NEXT_PUBLIC_R2_URL is not set for R2 fallback testing
-      process.env.NEXT_PUBLIC_R2_URL = "";
       // Add a file outside images/ prefix
       store.set("other/file.webp", {
         content: new TextEncoder().encode("fake image").buffer,
