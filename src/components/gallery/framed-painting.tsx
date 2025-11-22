@@ -24,10 +24,12 @@ import {
   handlePointerUpForClick,
   isValidPointerEvent,
 } from "@/utils/three";
+import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
 
 interface FramedPaintingProps {
   thumbnailUrl: string;
   framePosition?: [number, number, number];
+  paintingId?: string;
 }
 
 interface PaintingContentProps {
@@ -36,6 +38,7 @@ interface PaintingContentProps {
   onPointerMove: (event: ThreeEvent<PointerEvent>) => void;
   onPointerUp: (event: ThreeEvent<PointerEvent>) => boolean;
   onPointerCancel: (event: ThreeEvent<PointerEvent>) => void;
+  paintingId?: string;
 }
 
 const PULSE_DURATION = 0.6;
@@ -140,6 +143,7 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
   onPointerMove,
   onPointerUp,
   onPointerCancel,
+  paintingId,
 }) => {
   const paintingMeshRef = useRef<Mesh>(null);
   const previousPaintingMeshRef = useRef<Mesh>(null);
@@ -388,6 +392,7 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
     if (shouldTrigger) {
       triggerPulse();
       triggerHaptics();
+      if (paintingId) sendGAEvent(GA_EVENTS.GALLERY_PAINING_CLICK, { painting_id: paintingId });
     }
   };
 
@@ -471,6 +476,7 @@ PaintingContent.displayName = "PaintingContent";
 export const FramedPainting: React.FC<FramedPaintingProps> = ({
   thumbnailUrl,
   framePosition = DEFAULT_FRAME_POSITION,
+  paintingId,
 }) => {
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null);
   const activePointerIdRef = useRef<number | null>(null);
@@ -541,6 +547,7 @@ export const FramedPainting: React.FC<FramedPaintingProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
+        paintingId={paintingId}
       />
     </PaintingGroup>
   );

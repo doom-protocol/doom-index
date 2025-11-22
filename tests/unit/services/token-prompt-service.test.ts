@@ -161,7 +161,7 @@ describe("WorldPromptService (token mode)", () => {
       const composition = result.value;
       // meme-ascendant + central-altar
       expect(composition.prompt.text).toMatch(
-        /^Use the reference image as a worshipped idol symbol hovering above the central altar\./i,
+        /^Use the reference image as a worshipped idol symbol prominently displayed on the sacred altar stone\./i,
       );
     }
   });

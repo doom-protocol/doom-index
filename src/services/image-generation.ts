@@ -116,11 +116,12 @@ export function createImageGenerationService({
     );
 
     if (imageResult.isErr()) {
-      log.error("image-generation.failure", {
+      log.debug("image-generation.failure", {
         paramsHash: composition.paramsHash,
         seed: composition.seed,
         referenceImageUrl: sanitizedReference,
-        error: imageResult.error,
+        errorType: imageResult.error.type,
+        errorMessage: imageResult.error.message,
       });
       return err(imageResult.error);
     }

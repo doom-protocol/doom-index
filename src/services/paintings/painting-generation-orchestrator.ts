@@ -219,6 +219,10 @@ export class PaintingGenerationOrchestrator {
       if (imageResult.isErr()) {
         logger.error(`[PaintingGenerationOrchestrator] Image generation failed`, {
           error: imageResult.error,
+          tokenId: selectedToken.id,
+          tokenSymbol: selectedToken.symbol,
+          hourBucket,
+          referenceImageUrl: selectedToken.logoUrl,
         });
         return err(imageResult.error);
       }

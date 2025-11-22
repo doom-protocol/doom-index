@@ -8,6 +8,10 @@ import {
   MEDIEVAL_FIGURES_ELEMENT,
   SYMBOLIC_ELEMENTS,
   getSymbolicElementForArchetypeClimate,
+  NARRATIVE_MOMENTS,
+  getNarrativeMomentKey,
+  getActionElement,
+  CHARACTER_NARRATIVES,
 } from "@/constants/prompts/world-painting";
 import { getMinuteBucket } from "@/utils/time";
 import { logger } from "@/utils/logger";
@@ -61,9 +65,16 @@ export type WorldPromptService = {
  * Flow:
  * - Market Cap → VisualParams normalization
  * - VisualParams → Hash, seed, and filename determination
- * - World painting prompt composition using weighted-prompt
+ * - World painting prompt composition using FLUX framework
+ *
+ * FLUX Prompt Framework (Subject + Action + Style + Context):
+ * - Context-focused prompts for landscapes: Setting → Atmosphere → Style → Technical
+ * - Word order matters: Front-load important elements
+ * - Positive framing: Avoid negative prompts, use positive alternatives
+ * - Enhancement layers: Foundation + Visual + Technical + Atmospheric
  *
  * @see https://docs.bfl.ai/guides/prompting_summary
+ * @see docs/flux-prompting-guide.md
  */
 const DEFAULT_IMAGE_SIZE = PROMPT_TUNING.imageSize;
 
@@ -175,59 +186,96 @@ export function createWorldPromptService({
         role = "mysterious ancient symbol";
     }
 
-    // Determine placement based on composition
-    let placement = "floating high in the sky";
+    // Determine placement based on composition - vary positions to avoid repetitive sky placements
+    let placement = "carved into an ancient stone monument at the scene's center";
     switch (ctx.o) {
       case "central-altar":
-        placement = "hovering above the central altar";
+        placement = "prominently displayed on the sacred altar stone";
         break;
       case "procession":
-        placement = "emblazoned on banners carried by the crowd";
+        placement = "emblazoned on the lead figure's shield and armor";
         break;
       case "citadel-panorama":
-        placement = "etched into the highest tower of the citadel";
+        placement = "carved into the foundation stones of the main gate";
         break;
       case "storm-battlefield":
-        placement = "shining through the storm clouds above the battlefield";
+        placement = "etched into the commander's banner pole";
         break;
       case "cosmic-horizon":
-        placement = "hanging in the sky like a celestial body";
+        placement = "reflected in the surface of a mystical pool at the foreground";
         break;
     }
 
-    return `Use the reference image as a ${role} ${placement}.`;
+    return `Use the reference image as a ${role} ${placement}. Ensure the token logo is subtly integrated into the classical oil painting composition without dominating the overall renaissance master style.`;
   };
 
   const buildTokenSystemPrompt = (hasReferenceImage: boolean): string => {
     const referenceImageInstruction = hasReferenceImage
-      ? `\n5. IMPORTANT: A reference image (token logo) is provided. You MUST incorporate this image into the painting. Include explicit instructions like: "(token logo integrated into the scene:1.20)" or "(token symbol visible in the composition:1.15)" or similar phrasing that ensures the reference image is prominently featured and seamlessly blended into the allegorical scene.`
+      ? `\n\n5. IMAGE-TO-IMAGE (i2i) REQUIREMENTS:
+   - A reference image (token logo) is provided. You MUST incorporate this image into the painting.
+   - CRITICAL: Explicitly state style preservation: "maintaining classical oil painting technique with visible brushwork and impasto texture"
+   - Include explicit integration instructions like: "(token logo integrated into the scene as divine royal seal:1.20)"
+   - The reference image must be rendered in the same classical oil painting style as the rest of the composition.
+   - Be comprehensive: Specify what to change (logo integration) and what to maintain (oil painting style, composition, atmosphere).`
       : "";
 
-    return `You are an AI art director specializing in medieval allegorical oil painting prompts for DOOM INDEX, a generative art project that visualizes cryptocurrency market dynamics as allegorical paintings.
+    return `You are an AI art director specializing in FLUX-optimized medieval allegorical oil painting prompts for DOOM INDEX, a generative art project that visualizes cryptocurrency market dynamics as allegorical paintings.
 
-CRITICAL: You must follow this exact prompt structure and tone:
+CRITICAL: Follow FLUX Prompt Framework (Subject + Action + Style + Context) with context-focused structure for landscapes.
 
-1. Start with: "${MEDIEVAL_ALLEGORICAL_OPENING}"
+FLUX PROMPT STRUCTURE (Context-Focused for Landscapes):
+1. SETTING (Scene/Context) - Lead with the scene/setting
+2. MAIN ACTION - The decisive moment being captured
+3. SUPPORTING ELEMENTS - Figures, objects, symbols with actions
+4. ATMOSPHERE - Lighting, weather, mood
+5. STYLE - Artistic technique and medium
 
-2. Then list weighted elements in parentheses format: (element description:weight_value)
-   - Each element should be a symbolic visual element related to the token's narrative
-   - Use weight values between 0.50 and 1.50 (format as 2 decimal places like 1.00, 0.75, etc.)
-   - Include elements that reflect the token's archetype, market climate, and visual directives
-   - Always include: ${MEDIEVAL_FIGURES_ELEMENT}${referenceImageInstruction}
+WORD ORDER MATTERS: Front-load the most important elements. FLUX pays more attention to what comes first.
 
-3. End with the fixed style description: "${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}"
+PROMPT COMPOSITION RULES:
 
-4. The tone must be:
-   - Medieval/Renaissance allegorical painting style
-   - Symbolic and metaphorical (not literal)
-   - Cohesive single landscape with multiple forces visible
-   - Weighted by real-time market power
+1. Start with the scene/setting (context-focused approach):
+   "${MEDIEVAL_ALLEGORICAL_OPENING}"
+
+2. Then describe the MAIN ACTION (the decisive moment):
+   - Use active verbs: "ascending", "collapsing", "emerging", "clashing"
+   - Capture a specific moment in time, not a static state
+   - Example: "a divine monarch ascending a thousand-step stairway to heaven, golden crown being placed"
+
+3. Add SUPPORTING ELEMENTS with weighted format: (element description:weight_value)
+   - Each element should describe an action or transformation, not just a static object
+   - Use weight values between 0.50 and 1.50 (format as 2 decimal places)
+   - Include figures with specific actions: "jubilant crowds throwing flowers" not just "crowds"
+   - Always include: ${MEDIEVAL_FIGURES_ELEMENT}
+   ${referenceImageInstruction}
+
+4. Add ATMOSPHERIC LAYER:
+   - Lighting conditions, weather, time of day
+   - Mood and emotional tone
+   - Color palette hints
+
+5. End with STYLE DESCRIPTION:
+   "${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}"
+
+POSITIVE FRAMING:
+- Use positive descriptions instead of negative prompts
+- Instead of "no chaos" → "peaceful order"
+- Instead of "without modern elements" → "classical medieval elements"
+
+NARRATIVE FOCUS:
+- Tell a story with a decisive moment
+- Show actions happening, not just static scenes
+- Use temporal elements: "transforming", "emerging", "collapsing"
+- Create visual causality: show what causes what
 
 Example structure:
 "${MEDIEVAL_ALLEGORICAL_OPENING}
-(token-specific symbolic element:1.00),
-(another symbolic element:0.75),
-${MEDIEVAL_FIGURES_ELEMENT}${hasReferenceImage ? ",\n(token logo integrated into the scene:1.20)," : ""}
+a divine monarch ascending a thousand-step stairway to heaven, golden crown being placed by celestial hands,
+(jubilant crowds throwing flowers and golden coins:1.20),
+(priests blessing the ascent with sacred oils:1.10),
+(angels descending with crowns and banners:1.15),
+${MEDIEVAL_FIGURES_ELEMENT}${hasReferenceImage ? ",\n(token logo integrated into the scene as divine royal seal, maintaining classical oil painting technique:1.25)," : ""}
+radiant golden light breaking through clouds, rainbow halos surrounding the monarch, warm sunrise colors,
 ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}"
 
 Respond with ONLY the prompt text in this exact format. Do not include markdown, bullet points, headings, commentary, or negative prompts.`;
@@ -242,36 +290,13 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
     const motifLine = ctx.f.length ? ctx.f.join(", ") : "none";
     const hintsLine = ctx.h.length ? ctx.h.join(", ") : "none";
 
-    // Determine trend sentiment and atmospheric interaction
+    // Get narrative moment based on market dynamics
     const isTokenPositive = ctx.s.p7 >= 0;
-    let atmosphereInstruction = "";
+    const narrativeMomentKey = getNarrativeMomentKey(isTokenPositive, ctx.c, ctx.s.vol);
+    const narrativeMoment = NARRATIVE_MOMENTS[narrativeMomentKey];
 
-    if (isTokenPositive) {
-      if (ctx.c === "euphoria") {
-        atmosphereInstruction =
-          "Harmonious: The world is in a Golden Age. The landscape is lush, radiant, and divine. The token motif shines in perfect harmony with the glorious environment.";
-      } else if (ctx.c === "despair" || ctx.c === "panic" || ctx.c === "cooling") {
-        atmosphereInstruction =
-          "Contrast: The world is gloomy, stormy, or decaying (reflecting the market), BUT the token motif is miraculously shining, rising, or blooming amidst the darkness. A beacon of hope in a dark landscape.";
-      } else {
-        // transition
-        atmosphereInstruction =
-          "Mixed: The world is in flux, but the token motif is clearly strengthening and rising, standing out against the uncertain background.";
-      }
-    } else {
-      // Token Negative
-      if (ctx.c === "euphoria") {
-        atmosphereInstruction =
-          "Contrast: The world is beautiful, sunny, and prosperous (reflecting the market), BUT the token motif is burning, falling, decaying, or crumbling. A tragedy in paradise.";
-      } else if (ctx.c === "despair" || ctx.c === "panic" || ctx.c === "cooling") {
-        atmosphereInstruction =
-          "Harmonious: Total Apocalypse. The world is dark and dying, and the token motif is also suffering—burning, drowning, or fading away. Absolute synchronization of doom.";
-      } else {
-        // transition
-        atmosphereInstruction =
-          "Mixed: The world is shifting, but the token motif is visibly weak, fading, or cracking under pressure.";
-      }
-    }
+    // Get action element based on price change
+    const priceAction = getActionElement(ctx.s.p7);
 
     // Get primary element from archetype/climate mapping
     const primaryElementKey = getSymbolicElementForArchetypeClimate(ctx.a, ctx.c);
@@ -371,8 +396,27 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
     secondaryElements.sort((a, b) => b.weight - a.weight);
     const selectedElements = secondaryElements.slice(0, PROMPT_TUNING.secondaryElement.maxElements);
 
+    // Determine character action based on context
+    let characterAction = "";
+    if (ctx.c === "euphoria" && isTokenPositive) {
+      characterAction = CHARACTER_NARRATIVES.crowd_action.celebrate;
+    } else if (ctx.c === "panic" || ctx.c === "despair") {
+      characterAction = CHARACTER_NARRATIVES.crowd_action.flee;
+    } else if (ctx.s.vol > 0.5) {
+      characterAction = CHARACTER_NARRATIVES.crowd_action.revolt;
+    } else {
+      characterAction = CHARACTER_NARRATIVES.crowd_action.worship;
+    }
+
     return [
-      `Generate a medieval allegorical oil painting prompt following the exact structure specified.`,
+      `Generate a FLUX-optimized medieval allegorical oil painting prompt following the exact structure specified.`,
+      ``,
+      `FLUX PROMPT STRUCTURE (Context-Focused for Landscapes):`,
+      `1. SETTING (Scene/Context) - Lead with the scene`,
+      `2. MAIN ACTION - The decisive moment being captured`,
+      `3. SUPPORTING ELEMENTS - Figures, objects, symbols with actions (use weighted format)`,
+      `4. ATMOSPHERE - Lighting, weather, mood`,
+      `5. STYLE - Artistic technique and medium`,
       ``,
       `Token Context:`,
       `- Name: ${ctx.t.n} (${ctx.t.c})`,
@@ -386,9 +430,14 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
       `- Price Change (7d): ${ctx.s.p7.toFixed(2)}%`,
       `- Volatility Index: ${numberFormatter.format(ctx.s.vol)}`,
       ``,
+      `NARRATIVE MOMENT (${narrativeMomentKey}):`,
+      `- Scene: ${narrativeMoment.scene}`,
+      `- Main Action: ${narrativeMoment.mainAction}${priceAction ? `, ${priceAction}` : ""}`,
+      `- Figures: ${narrativeMoment.figures}, ${characterAction}`,
+      `- Atmosphere: ${narrativeMoment.atmosphere}`,
+      `- Symbols: ${narrativeMoment.symbols}`,
+      ``,
       `Visual Directives:`,
-      `- Atmosphere & Lighting: ${atmosphereInstruction}`,
-      `- Camera: Wide shot, panoramic view of the landscape`,
       `- Composition: ${ctx.o}`,
       `- Palette: ${ctx.p}`,
       `- Motifs: ${motifLine}`,
@@ -400,23 +449,38 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
       `Secondary Symbolic Elements (based on visual params):`,
       ...selectedElements.map(el => `- "${el.text}" (weight: ${el.weight.toFixed(2)})`),
       ``,
-      `Instructions:`,
-      `Create a prompt that starts with "${MEDIEVAL_ALLEGORICAL_OPENING}"`,
-      `Then list 4-8 weighted elements in parentheses format: (element:weight),`,
-      `Include the primary element with weight ${primaryWeight},`,
-      `Include relevant secondary elements from the list above,`,
-      `Always include: ${MEDIEVAL_FIGURES_ELEMENT},`,
+      `PROMPT COMPOSITION INSTRUCTIONS:`,
+      `1. Start with: "${MEDIEVAL_ALLEGORICAL_OPENING}"`,
+      `2. Then describe the MAIN ACTION: "${narrativeMoment.mainAction}"${priceAction ? `, "${priceAction}"` : ""}`,
+      `3. Add SUPPORTING ELEMENTS in weighted format: (element description:weight_value)`,
+      `   - Include: "${narrativeMoment.figures}" (weight: 1.15)`,
+      `   - Include: "${characterAction}" (weight: 1.10)`,
+      `   - Include primary element: "${primaryElement}" (weight: ${primaryWeight})`,
+      `   - Include relevant secondary elements from the list above`,
+      `   - Always include: ${MEDIEVAL_FIGURES_ELEMENT}`,
+      `4. Add ATMOSPHERIC LAYER: "${narrativeMoment.atmosphere}"`,
+      `5. Add SYMBOLIC ELEMENTS: "${narrativeMoment.symbols}" (weight: 1.05)`,
       ...(referenceImageUrl
         ? [
             ``,
-            `CRITICAL: A reference image (token logo) is provided and MUST be integrated into the painting.`,
-            `Include an explicit element like: "(token logo integrated into the scene:1.20)" or "(token symbol visible in the composition:1.15)" or "(token emblem seamlessly blended into the allegorical landscape:1.25)".`,
-            `The reference image should be prominently featured and naturally incorporated into the medieval allegorical scene.`,
+            `6. IMAGE-TO-IMAGE (i2i) REQUIREMENTS:`,
+            `   - A reference image (token logo) is provided and MUST be integrated.`,
+            `   - Include: "(token logo integrated into the scene as ${ctx.a === "l1-sovereign" ? "divine royal seal" : ctx.a === "meme-ascendant" ? "worshipped idol symbol" : "divine sacred logo"}, maintaining classical oil painting technique:1.10)"`,
+            `   - ALWAYS include style preservation: "(maintaining classical oil painting technique with visible brushwork and impasto texture:1.5)" and "(preserving traditional renaissance master style throughout entire composition:1.4)"`,
+            `   - Be comprehensive: Specify what to change (logo integration) and what to maintain (oil painting style, composition, atmosphere).`,
           ]
         : []),
-      `End with: "${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}"`,
-      `Use symbolic, metaphorical language. Elements should reflect the token's narrative, market state, and visual directives.`,
-      `Respond with ONLY the prompt text, no additional commentary.`,
+      `7. End with: "${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}"`,
+      ``,
+      `CRITICAL REMINDERS:`,
+      `- Use active verbs: "ascending", "collapsing", "emerging", "clashing"`,
+      `- Capture a specific moment in time, not a static state`,
+      `- Use positive framing: describe what you want to see, not what to avoid`,
+      `- Front-load the most important elements (word order matters in FLUX)`,
+      `- Tell a story with a decisive moment`,
+      `- Show actions happening, not just static scenes`,
+      ``,
+      `Respond with ONLY the prompt text in the exact format specified. Do not include markdown, bullet points, headings, commentary, or negative prompts.`,
     ].join("\n");
   };
 

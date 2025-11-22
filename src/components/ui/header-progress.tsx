@@ -19,7 +19,7 @@ export const HeaderProgress: FC = () => {
   const refetchLatestPainting = useLatestPaintingRefetch();
   const { dataUpdatedAt } = useLatestPainting();
 
-  const intervalLabel = INTERVAL_MS === 3600000 ? "1h" : INTERVAL_MS === 60000 ? "1m" : "Next Generation";
+  const intervalLabel = "Next Generation";
 
   useEffect(() => {
     let animationFrameId: number | undefined;

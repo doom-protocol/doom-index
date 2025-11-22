@@ -10,6 +10,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import type { Painting } from "@/types/paintings";
 import { useTRPCClient } from "@/lib/trpc/client";
 import { logger } from "@/utils/logger";
+import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
 
 interface ArchiveContentProps {
   startDate?: string;
@@ -245,18 +246,21 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ startDate, endDa
 
   const handleNext = () => {
     if (hasNextPage) {
+      sendGAEvent(GA_EVENTS.ARCHIVE_PAGE_CHANGE, { page: pageNumber + 1, direction: "next" });
       updateURL(pageNumber + 1);
     }
   };
 
   const handlePrevious = () => {
     if (hasPreviousPage) {
+      sendGAEvent(GA_EVENTS.ARCHIVE_PAGE_CHANGE, { page: pageNumber - 1, direction: "prev" });
       updateURL(pageNumber - 1);
     }
   };
 
   const handleItemClick = (item: Painting) => {
     setIsTransitioning(true);
+    sendGAEvent(GA_EVENTS.ARCHIVE_PAINING_CLICK, { painting_id: item.id });
     // Wait for fade out animation to complete before showing detail view
     setTimeout(() => {
       setSelectedItem(item);

@@ -9,6 +9,7 @@ import { GalleryRoom } from "@/components/gallery/gallery-room";
 import { ArchiveFramedPainting } from "./archive-framed-painting";
 import { env } from "@/env";
 import type { Painting } from "@/types/paintings";
+import { sendGAEvent } from "@/lib/analytics";
 
 interface ArchiveDetailViewProps {
   item: Painting;
@@ -92,10 +93,12 @@ export const ArchiveDetailView: React.FC<ArchiveDetailViewProps> = ({ item, onCl
     document.body.style.overflow = "hidden";
     // Trigger fade in after mount
     setTimeout(() => setIsVisible(true), 50);
+    // Track detail view
+    sendGAEvent("archive_detail_view", { painting_id: item.id });
     return () => {
       document.body.style.overflow = "";
     };
-  }, []);
+  }, [item.id]);
 
   // Handle ESC key
   useEffect(() => {

@@ -141,7 +141,10 @@ describe("PaintingGenerationOrchestrator Integration", () => {
     it("should skip execution when hourBucket already exists (idempotency)", async () => {
       // Mock env module to return production mode for this test
       mock.module("@/env", () => ({
-        env: { NODE_ENV: "production" },
+        env: {
+          NODE_ENV: "production",
+          NEXT_PUBLIC_BASE_URL: "https://doomindex.fun",
+        },
       }));
 
       // Mock existing snapshot
