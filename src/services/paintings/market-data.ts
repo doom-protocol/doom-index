@@ -41,7 +41,7 @@ export class MarketDataService {
 
       if (fgiResult.isOk()) {
         fearGreedIndex = fgiResult.value.value;
-        logger.info(`[MarketDataService] Fetched Fear & Greed Index: ${fearGreedIndex}`);
+        logger.debug(`[MarketDataService] Fetched Fear & Greed Index: ${fearGreedIndex}`);
       } else {
         logger.warn("[MarketDataService] Failed to fetch Fear & Greed Index, continuing without it");
       }
@@ -62,7 +62,7 @@ export class MarketDataService {
         updatedAt: global.updated_at ?? Math.floor(Date.now() / 1000),
       };
 
-      logger.info("[MarketDataService] Fetched global market data successfully");
+      logger.debug("[MarketDataService] Fetched global market data successfully");
       return ok(snapshot);
     } catch (error) {
       logger.error("[MarketDataService] Failed to fetch global market data", { error });

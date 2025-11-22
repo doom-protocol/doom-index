@@ -89,7 +89,7 @@ export function createTokenAnalysisService({
     });
 
     // Call Tavily + Workers AI to generate context
-    log.info("token-analysis-service.generate.start", {
+    log.debug("token-analysis-service.generate.start", {
       tokenId: input.id,
       symbol: input.symbol,
     });
@@ -118,7 +118,7 @@ export function createTokenAnalysisService({
       return err(tavilyResult.error);
     }
 
-    log.info("token-analysis-service.generate.tavily-success", {
+    log.debug("token-analysis-service.generate.tavily-success", {
       tokenId: input.id,
       symbol: input.symbol,
       articleCount: tavilyResult.value.articles.length,
@@ -140,6 +140,12 @@ Search Results:
 ${tavilyResult.value.combinedText}
 
 Generate a concise context JSON for this token.`;
+
+    // Log the prompts sent to LLM (Requirement: Prompt used for short context)
+    log.info("token-analysis-service.generate.ai-prompt", {
+      systemPrompt,
+      userPrompt,
+    });
 
     type TokenContextJson = {
       short_context: string;
@@ -165,7 +171,7 @@ Generate a concise context JSON for this token.`;
       return err(aiResult.error);
     }
 
-    log.info("token-analysis-service.generate.ai-success", {
+    log.debug("token-analysis-service.generate.ai-success", {
       tokenId: input.id,
       symbol: input.symbol,
       modelId: aiResult.value.modelId,

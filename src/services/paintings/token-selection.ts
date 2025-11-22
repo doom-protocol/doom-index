@@ -28,6 +28,8 @@ const MARKET_CAP_CHANGE_COOLING_THRESHOLD = 0.5;
 const MARKET_CAP_CHANGE_DESPAIR_THRESHOLD = -5;
 const MARKET_CAP_CHANGE_PANIC_THRESHOLD = -1.5;
 
+import { MarketSnapshot } from "@/types/paintings";
+
 /**
  * Token Selection Options
  */
@@ -35,6 +37,7 @@ export type TokenSelectionOptions = {
   forceTokenList?: string; // FORCE_TOKEN_LIST env var
   excludeRecentlySelected?: boolean; // Default: true
   recentSelectionWindowHours?: number; // Default: 24
+  marketSnapshot?: MarketSnapshot; // Optional provided snapshot to avoid redundant fetch
 };
 
 /**
@@ -65,15 +68,21 @@ export class TokenSelectionService {
         forceTokenList,
         excludeRecentlySelected = true,
         recentSelectionWindowHours = DEFAULT_RECENT_SELECTION_WINDOW_HOURS,
+        marketSnapshot: providedSnapshot,
       } = options;
 
-      // Fetch market data for mood score calculation
-      const marketDataResult = await this.marketDataService.fetchGlobalMarketData();
-      if (marketDataResult.isErr()) {
-        return err(marketDataResult.error);
+      // Fetch market data for mood score calculation if not provided
+      let marketSnapshot: MarketSnapshot;
+      if (providedSnapshot) {
+        marketSnapshot = providedSnapshot;
+      } else {
+        const marketDataResult = await this.marketDataService.fetchGlobalMarketData();
+        if (marketDataResult.isErr()) {
+          return err(marketDataResult.error);
+        }
+        marketSnapshot = marketDataResult.value;
       }
 
-      const marketSnapshot = marketDataResult.value;
       const marketClimate = this.classifyMarketClimate(marketSnapshot);
 
       // Get candidates based on source
@@ -120,7 +129,7 @@ export class TokenSelectionService {
           const beforeFilter = candidates.length;
           candidates = candidates.filter(c => !recentIds.has(c.id));
           if (candidates.length < beforeFilter) {
-            logger.info(
+            logger.debug(
               `[TokenSelectionService] Excluded ${beforeFilter - candidates.length} recently selected tokens`,
             );
           }
@@ -183,21 +192,14 @@ export class TokenSelectionService {
           rank: i + 1,
           symbol: c.candidate.symbol,
           scores: {
-            trend: c.scores.trend.toFixed(2),
-            impact: c.scores.impact.toFixed(2),
-            mood: c.scores.mood.toFixed(2),
-            final: c.scores.final.toFixed(3),
+            trend: Number(c.scores.trend.toFixed(2)),
+            impact: Number(c.scores.impact.toFixed(2)),
+            mood: Number(c.scores.mood.toFixed(2)),
+            final: Number(c.scores.final.toFixed(3)),
           },
         }));
 
-        logger.info(
-          `[TokenSelectionService] Selection Process (Top 5 Candidates):\n${topCandidates
-            .map(
-              c =>
-                `${c.rank}. ${c.symbol} (Final: ${c.scores.final}, Trend: ${c.scores.trend}, Impact: ${c.scores.impact}, Mood: ${c.scores.mood})`,
-            )
-            .join("\n")}`,
-        );
+        logger.info(`[TokenSelectionService] Selection Process (Top 5 Candidates):`, { candidates: topCandidates });
 
         selected = scoredCandidates[0].candidate;
 

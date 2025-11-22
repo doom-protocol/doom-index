@@ -250,7 +250,7 @@ export function createWorkersAiClient({
 
       const text = result.response ?? "";
 
-      log.info("workers-ai.generate-text.success", {
+      log.debug("workers-ai.generate-text.success", {
         modelId: model,
         textLength: text.length,
       });
@@ -316,7 +316,7 @@ export function createWorkersAiClient({
       return err(parseResult.error);
     }
 
-    log.info("workers-ai.generate-json.success", {
+    log.debug("workers-ai.generate-json.success", {
       modelId: textResult.value.modelId ?? "unknown",
     });
 

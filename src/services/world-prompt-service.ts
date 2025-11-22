@@ -1,6 +1,5 @@
 import { err, ok, Result } from "neverthrow";
-import { normalizeMcMap } from "@/lib/pure/normalize";
-import { mapToVisualParams, type VisualParams } from "@/lib/pure/mapping";
+import { type VisualParams } from "@/lib/pure/mapping";
 import { hashVisualParams, seedForMinute, buildGenerationFileName } from "@/lib/pure/hash";
 import {
   WORLD_PAINTING_NEGATIVE_PROMPT,
@@ -18,6 +17,7 @@ import type { TokenAnalysisService, TokenMetaInput } from "@/services/token-anal
 import { FALLBACK_SHORT_CONTEXT } from "@/services/token-analysis-service";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
 import type { TokensRepository } from "@/repositories/tokens-repository";
+import { PROMPT_TUNING } from "@/constants/prompt-params";
 
 export type PromptComposition = {
   seed: string;
@@ -65,7 +65,7 @@ export type WorldPromptService = {
  *
  * @see https://docs.bfl.ai/guides/prompting_summary
  */
-const DEFAULT_IMAGE_SIZE = { w: 1024, h: 1024 } as const;
+const DEFAULT_IMAGE_SIZE = PROMPT_TUNING.imageSize;
 
 const numberFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
@@ -78,12 +78,71 @@ export function createWorldPromptService({
   getMinuteBucket: minuteBucketFn = () => getMinuteBucket(),
   log = logger,
 }: WorldPromptServiceDeps = {}): WorldPromptService {
-  const buildPromptMetadata = async () => {
-    // Legacy mcRounded system is deprecated - use default visual params
-    const normalized = normalizeMcMap({});
-    const vp = mapToVisualParams(normalized);
-    const paramsHash = await hashVisualParams(vp);
+  /**
+   * Generate VisualParams deterministically based on context
+   *
+   * Inputs:
+   * - minuteBucket: string minute ISO (e.g. "2025-11-21T10:00")
+   * - ctx.t.c (chain), ctx.a (archetype), ctx.o (composition)
+   *
+   * Method:
+   * - Build a seed string: `${minute}:${chain}:${archetype}:${composition}`
+   * - Compute SHA-256 and normalize bytes to [0, 1] by dividing each byte by 255
+   * - Map the first 16 normalized values to the 16 VisualParams fields
+   *
+   * Ranges:
+   * - All VisualParams fields are floats in [0.0, 1.0]
+   * - Downstream, these values are used with simple thresholds (e.g. > 0.3)
+   *   and weight scaling up to 1.5 (see buildTokenUserPrompt)
+   *
+   * Determinism and reproducibility:
+   * - For a given (minuteBucket, chain, archetype, composition), the same
+   *   VisualParams are produced. Any change to those inputs will change the
+   *   params, hash, and seed.
+   *
+   * Note on distribution:
+   * - Using single bytes (0-255)/255 yields [0, 1] values. If a broader spread
+   *   is desired across parameters, consider combining two bytes per field and
+   *   normalizing a 16-bit integer by 65535 for each param. That keeps
+   *   determinism while improving granularity.
+   */
+  const generateVisualParams = async (ctx: PaintingContext, minuteBucket: string): Promise<VisualParams> => {
+    // Create a deterministic seed string from context
+    // Use token symbol, archetype, composition, and minute bucket
+    const seedInput = `${minuteBucket}:${ctx.t.c}:${ctx.a}:${ctx.o}`;
+
+    // Use simple hash function to generate values
+    const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seedInput));
+    const bytes = new Uint8Array(hashBuffer);
+
+    // Helper to get float 0-1 from byte index
+    const getVal = (idx: number) => bytes[idx % bytes.length] / 255;
+
+    return {
+      fogDensity: getVal(0),
+      skyTint: getVal(1),
+      reflectivity: getVal(2),
+      blueBalance: getVal(3),
+      vegetationDensity: getVal(4),
+      organicPattern: getVal(5),
+      radiationGlow: getVal(6),
+      debrisIntensity: getVal(7),
+      mechanicalPattern: getVal(8),
+      metallicRatio: getVal(9),
+      fractalDensity: getVal(10),
+      bioluminescence: getVal(11),
+      shadowDepth: getVal(12),
+      redHighlight: getVal(13),
+      lightIntensity: getVal(14),
+      warmHue: getVal(15),
+    };
+  };
+
+  const buildPromptMetadata = async (ctx: PaintingContext) => {
     const minuteBucket = minuteBucketFn();
+    // Generate visual params based on context instead of legacy map
+    const vp = await generateVisualParams(ctx, minuteBucket);
+    const paramsHash = await hashVisualParams(vp);
     const seed = await seedForMinute(minuteBucket, paramsHash);
     const filename = buildGenerationFileName(minuteBucket, paramsHash, seed);
 
@@ -186,63 +245,82 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
     // Get primary element from archetype/climate mapping
     const primaryElementKey = getSymbolicElementForArchetypeClimate(ctx.a, ctx.c);
     const primaryElement = SYMBOLIC_ELEMENTS[primaryElementKey];
-    const primaryWeight = Math.max(0.75, Math.min(1.5, ctx.s.vol * 1.5 + 0.5)).toFixed(2);
+    const primaryWeight = Math.max(
+      PROMPT_TUNING.primaryElement.minWeight,
+      Math.min(
+        PROMPT_TUNING.primaryElement.maxWeight,
+        ctx.s.vol * PROMPT_TUNING.primaryElement.volatilityScale + PROMPT_TUNING.primaryElement.offset,
+      ),
+    ).toFixed(2);
 
     // Calculate secondary elements based on visual params and context
     const secondaryElements: Array<{ text: string; weight: number }> = [];
 
-    if (vp.fogDensity > 0.3) {
+    // Selection rule:
+    // - Include an element when its associated vp value exceeds ~0.3
+    // Weight rule:
+    // - weight = min(1.5, vpValue * 1.5)  → yields weights in (0.0, 1.5]
+    // Some elements also depend on market climate (e.g. despair/panic/euphoria)
+    if (vp.fogDensity > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["dense toxic smog in the sky"],
-        weight: Math.min(1.5, vp.fogDensity * 1.5),
+        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.fogDensity * PROMPT_TUNING.secondaryElement.weightScale),
       });
     }
-    if (vp.blueBalance > 0.3) {
+    if (vp.blueBalance > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["glittering blue glaciers and cold reflections"],
-        weight: Math.min(1.5, vp.blueBalance * 1.5),
+        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.blueBalance * PROMPT_TUNING.secondaryElement.weightScale),
       });
     }
-    if (vp.vegetationDensity > 0.3) {
+    if (vp.vegetationDensity > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["lush emerald forests and living roots"],
-        weight: Math.min(1.5, vp.vegetationDensity * 1.5),
+        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.vegetationDensity * PROMPT_TUNING.secondaryElement.weightScale),
       });
     }
-    if (vp.radiationGlow > 0.3) {
+    if (vp.radiationGlow > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["blinding nuclear flash on the horizon"],
-        weight: Math.min(1.5, vp.radiationGlow * 1.5),
+        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.radiationGlow * PROMPT_TUNING.secondaryElement.weightScale),
       });
     }
-    if (vp.mechanicalPattern > 0.3) {
+    if (vp.mechanicalPattern > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["colossal dystopian machine towers and metal grids"],
-        weight: Math.min(1.5, vp.mechanicalPattern * 1.5),
+        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.mechanicalPattern * PROMPT_TUNING.secondaryElement.weightScale),
       });
     }
-    if (vp.bioluminescence > 0.3) {
+    if (vp.bioluminescence > PROMPT_TUNING.secondaryElement.threshold) {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["bioluminescent spores and organic clusters"],
-        weight: Math.min(1.5, vp.bioluminescence * 1.5),
+        weight: Math.min(PROMPT_TUNING.secondaryElement.weightMax, vp.bioluminescence * PROMPT_TUNING.secondaryElement.weightScale),
       });
     }
-    if (vp.shadowDepth > 0.3 || ctx.c === "despair" || ctx.c === "panic") {
+    if (vp.shadowDepth > PROMPT_TUNING.secondaryElement.threshold || ctx.c === "despair" || ctx.c === "panic") {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["oppressive darkness with many red eyes"],
-        weight: Math.min(1.5, (vp.shadowDepth || 0.5) * 1.5),
+        weight: Math.min(
+          PROMPT_TUNING.secondaryElement.weightMax,
+          (vp.shadowDepth || PROMPT_TUNING.secondaryElement.climateShadowFallback) *
+            PROMPT_TUNING.secondaryElement.weightScale,
+        ),
       });
     }
-    if (vp.lightIntensity > 0.3 || ctx.c === "euphoria") {
+    if (vp.lightIntensity > PROMPT_TUNING.secondaryElement.threshold || ctx.c === "euphoria") {
       secondaryElements.push({
         text: SYMBOLIC_ELEMENTS["radiant golden divine light breaking the clouds"],
-        weight: Math.min(1.5, (vp.lightIntensity || 0.5) * 1.5),
+        weight: Math.min(
+          PROMPT_TUNING.secondaryElement.weightMax,
+          (vp.lightIntensity || PROMPT_TUNING.secondaryElement.climateLightFallback) *
+            PROMPT_TUNING.secondaryElement.weightScale,
+        ),
       });
     }
 
     // Sort by weight descending and limit to top 5-7 elements
     secondaryElements.sort((a, b) => b.weight - a.weight);
-    const selectedElements = secondaryElements.slice(0, 6);
+    const selectedElements = secondaryElements.slice(0, PROMPT_TUNING.secondaryElement.maxElements);
 
     return [
       `Generate a medieval allegorical oil painting prompt following the exact structure specified.`,
@@ -326,7 +404,7 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
 
     try {
       const { paintingContext } = request;
-      const { vp, paramsHash, minuteBucket, seed, filename } = await buildPromptMetadata();
+      const { vp, paramsHash, minuteBucket, seed, filename } = await buildPromptMetadata(paintingContext);
 
       log.debug("prompt.compose.token.start", {
         tokenName: paintingContext.t.n,

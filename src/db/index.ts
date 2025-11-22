@@ -30,7 +30,7 @@ export async function getDB(d1Binding?: D1Database): Promise<DrizzleD1Database<t
     throw new Error("D1 DB binding not found (env.DB). Check wrangler.toml [[d1_databases]].");
   }
 
-  logger.info("Connecting to Cloudflare D1 database");
+  logger.debug("Connecting to Cloudflare D1 database");
   db = drizzle(binding, { schema });
   return db;
 }

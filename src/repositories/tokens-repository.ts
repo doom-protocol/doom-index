@@ -147,7 +147,7 @@ export class TokensRepository {
         .where(gte(tokens.updatedAt, cutoffTimestamp))
         .orderBy(desc(tokens.updatedAt));
 
-      logger.info(`[TokensRepository] Found ${result.length} recently selected tokens`);
+      logger.debug(`[TokensRepository] Found ${result.length} recently selected tokens`);
       return ok(result);
     } catch (error) {
       logger.error(`[TokensRepository] Failed to find recently selected tokens`, { error });

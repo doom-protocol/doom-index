@@ -92,7 +92,7 @@ export async function handleScheduledEvent(
 
     const { status, hourBucket, imageUrl, selectedToken } = result.value;
 
-    logger.info("cron.success", {
+    logger.debug("cron.success", {
       status,
       hourBucket,
       imageUrl,

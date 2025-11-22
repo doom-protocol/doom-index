@@ -125,7 +125,7 @@ export function createImageGenerationService({
       return err(imageResult.error);
     }
 
-    log.info("image-generation.success", {
+    log.debug("image-generation.success", {
       paramsHash: composition.paramsHash,
       seed: composition.seed,
       bufferSize: imageResult.value.imageBuffer.byteLength,

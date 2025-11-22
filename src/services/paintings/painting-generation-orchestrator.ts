@@ -98,32 +98,8 @@ export class PaintingGenerationOrchestrator {
         }
       }
 
-      // Step 2: Select token (Requirement 1D)
-      // FORCE_TOKEN_LIST is optional env var, accessed via process.env or Cloudflare env
-      const forceTokenList = env.FORCE_TOKEN_LIST;
-      const tokenSelectionResult = await this.deps.tokenSelectionService.selectToken({
-        forceTokenList,
-        excludeRecentlySelected: true,
-        recentSelectionWindowHours: 24,
-      });
-
-      if (tokenSelectionResult.isErr()) {
-        logger.error(`[PaintingGenerationOrchestrator] Token selection failed`, {
-          error: tokenSelectionResult.error,
-        });
-        return err(tokenSelectionResult.error);
-      }
-
-      const selectedToken = tokenSelectionResult.value;
-      logger.debug(`[PaintingGenerationOrchestrator] Selected token: ${selectedToken.id} (${selectedToken.symbol})`, {
-        tokenId: selectedToken.id,
-        symbol: selectedToken.symbol,
-        name: selectedToken.name,
-        source: selectedToken.source,
-        scores: selectedToken.scores,
-      });
-
-      // Step 3: Fetch and store market data (Requirement 3, 9)
+      // Step 2: Fetch global market data (Requirement 3)
+      // We fetch this early to pass to token selection for mood scoring
       const marketDataResult = await this.deps.marketDataService.fetchGlobalMarketData();
       if (marketDataResult.isErr()) {
         logger.error(`[PaintingGenerationOrchestrator] Market data fetch failed`, {
@@ -142,6 +118,33 @@ export class PaintingGenerationOrchestrator {
         totalVolume: marketSnapshot.totalVolumeUsd,
       });
 
+      // Step 3: Select token (Requirement 1D)
+      // FORCE_TOKEN_LIST is optional env var, accessed via process.env or Cloudflare env
+      const forceTokenList = env.FORCE_TOKEN_LIST;
+      const tokenSelectionResult = await this.deps.tokenSelectionService.selectToken({
+        forceTokenList,
+        excludeRecentlySelected: true,
+        recentSelectionWindowHours: 24,
+        marketSnapshot, // Pass snapshot to avoid redundant fetch
+      });
+
+      if (tokenSelectionResult.isErr()) {
+        logger.error(`[PaintingGenerationOrchestrator] Token selection failed`, {
+          error: tokenSelectionResult.error,
+        });
+        return err(tokenSelectionResult.error);
+      }
+
+      const selectedToken = tokenSelectionResult.value;
+      logger.debug(`[PaintingGenerationOrchestrator] Selected token: ${selectedToken.id} (${selectedToken.symbol})`, {
+        tokenId: selectedToken.id,
+        symbol: selectedToken.symbol,
+        name: selectedToken.name,
+        source: selectedToken.source,
+        scores: selectedToken.scores,
+      });
+
+      // Step 4: Store market snapshot (Requirement 9)
       const storeSnapshotResult = await this.deps.marketDataService.storeMarketSnapshot(marketSnapshot, hourBucket);
       if (storeSnapshotResult.isErr()) {
         logger.error(`[PaintingGenerationOrchestrator] Market snapshot storage failed`, {
@@ -150,7 +153,7 @@ export class PaintingGenerationOrchestrator {
         return err(storeSnapshotResult.error);
       }
 
-      // Step 4: Build painting context (Requirement 5)
+      // Step 5: Build painting context (Requirement 5)
       const contextResult = await this.deps.paintingContextBuilder.buildContext({
         selectedToken,
         marketSnapshot,
@@ -171,7 +174,7 @@ export class PaintingGenerationOrchestrator {
         palette: paintingContext.p,
       });
 
-      // Step 5: Initialize services for image generation
+      // Step 6: Initialize services for image generation
       const bucket = resolveBucketOrThrow({ r2Bucket: this.deps.r2Bucket ?? cloudflareEnv.R2_BUCKET });
       const d1Binding = this.deps.d1Binding ?? cloudflareEnv.DB;
 
@@ -199,7 +202,7 @@ export class PaintingGenerationOrchestrator {
         createdAt: new Date().toISOString(),
       };
 
-      // Step 6: Generate image (Requirement 7)
+      // Step 7: Generate image (Requirement 7)
       const imageProvider = createImageProvider();
       const imageGenerationService = createImageGenerationService({
         promptService,
@@ -227,7 +230,7 @@ export class PaintingGenerationOrchestrator {
         bufferSize: imageBuffer.byteLength,
       });
 
-      // Step 7: Store painting (Requirement 9)
+      // Step 8: Store painting (Requirement 9)
       const paintingsService =
         this.deps.paintingsService ??
         createPaintingsService({
@@ -268,7 +271,7 @@ export class PaintingGenerationOrchestrator {
       const imageUrl = storeResult.value.imageUrl;
       const finalMetadata: PaintingMetadata = { ...metadata, imageUrl };
 
-      // Step 8: Index in D1 (non-blocking error)
+      // Step 9: Index in D1 (non-blocking error)
       const r2Key = buildPaintingKey(finalComposition.minuteBucket, finalComposition.prompt.filename);
       const indexResult = await paintingsService.insertPainting(finalMetadata, r2Key);
       if (indexResult.isErr()) {
@@ -284,8 +287,8 @@ export class PaintingGenerationOrchestrator {
         tokenId: selectedToken.id,
         symbol: selectedToken.symbol,
         imageUrl,
-        paramsHash: finalComposition.paramsHash,
-        seed: finalComposition.seed,
+        // paramsHash: finalComposition.paramsHash, // Reduce redundant info
+        // seed: finalComposition.seed,
       });
 
       return ok({

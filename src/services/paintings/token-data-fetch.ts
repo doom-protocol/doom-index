@@ -66,7 +66,7 @@ export class TokenDataFetchService {
         };
       });
 
-      logger.info(`[TokenDataFetchService] Fetched details for ${candidates.length} tokens`);
+      logger.debug(`[TokenDataFetchService] Fetched details for ${candidates.length} tokens`);
       return ok(candidates);
     } catch (error) {
       logger.error("[TokenDataFetchService] Failed to fetch token details", { error });
@@ -125,8 +125,13 @@ export class TokenDataFetchService {
       }
 
       // Log trending tokens list (Requirement: All trending token list)
-      const trendingListStr = trendingSummary.coins.map(c => `${c.rank}. ${c.symbol} (${c.name})`).join(", ");
-      logger.info(`[TokenDataFetchService] Trending tokens: ${trendingListStr}`);
+      // Format as structured object for better readability in logs
+      const trendingTokensList = trendingSummary.coins.map(c => ({
+        rank: c.rank,
+        symbol: c.symbol,
+        name: c.name,
+      }));
+      logger.info(`[TokenDataFetchService] Trending Tokens:`, { tokens: trendingTokensList });
 
       // Fetch details for trending tokens
       const candidatesResult = await this.fetchTokenDetails(
