@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/env";
 import { logger } from "@/utils/logger";
 
-export const runtime = "edge";
-
 export async function POST(req: NextRequest) {
   // check authentication
   const authHeader = req.headers.get("Authorization");
