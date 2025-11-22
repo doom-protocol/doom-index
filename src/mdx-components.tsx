@@ -26,14 +26,10 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     li: ({ children }: { children?: ReactNode }) => <li className="leading-7">{children}</li>,
     code: ({ children }: { children?: ReactNode }) => (
-      <code className="p-0 rounded text-[0.6rem] font-mono">
-        {children}
-      </code>
+      <code className="p-0 rounded text-[0.6rem] font-mono">{children}</code>
     ),
     pre: ({ children }: { children?: ReactNode }) => (
-      <pre className="mb-6 text-xs whitespace-pre-wrap break-words p-1 overflow-x-auto">
-        {children}
-      </pre>
+      <pre className="mb-6 text-xs whitespace-pre-wrap break-words p-1 overflow-x-auto">{children}</pre>
     ),
     blockquote: ({ children }: { children?: ReactNode }) => (
       <blockquote className="pl-3 italic border-l-4 border-[#666] bg-[#f5f5f5]">{children}</blockquote>
@@ -50,7 +46,12 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     table: ({ children }: { children?: ReactNode }) => (
       <div className="overflow-x-auto">
-        <table className="w-fit border-collapse border border-gray-300 bg-white text-sm" style={{ tableLayout: 'auto' }}>{children}</table>
+        <table
+          className="w-fit border-collapse border border-gray-300 bg-white text-sm"
+          style={{ tableLayout: "auto" }}
+        >
+          {children}
+        </table>
       </div>
     ),
     thead: ({ children }: { children?: ReactNode }) => <thead className="bg-gray-50">{children}</thead>,
