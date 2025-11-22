@@ -34,7 +34,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
 
   // If R2 public URL is configured, this endpoint should not be used
   // All images should be served directly from the public bucket
-  if (env.NEXT_PUBLIC_R2_URL) {
+  // EXCEPT when the public URL points to this endpoint itself (local development)
+  const r2Url = env.NEXT_PUBLIC_R2_URL || process.env.NEXT_PUBLIC_R2_URL;
+  const isLocalR2Route = r2Url?.includes("/api/r2");
+  const isDevelopment = env.NODE_ENV === "development" || process.env.NODE_ENV === "development";
+
+  // In development, always allow local R2 access
+  // In production, disable if R2 public URL is configured and doesn't point to this endpoint
+  if (r2Url && !isLocalR2Route && !isDevelopment) {
     logger.warn("[R2 Route] Endpoint disabled - Public R2 URL is configured", {
       publicUrl: env.NEXT_PUBLIC_R2_URL,
       url: requestUrl,

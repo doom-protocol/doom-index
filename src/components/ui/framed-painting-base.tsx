@@ -35,13 +35,16 @@ export const FrameModel: React.FC = () => {
 };
 FrameModel.displayName = "FrameModel";
 
-export const PaintingGroup: React.FC<PaintingGroupProps> = ({ position, rotation, children }) => {
-  const groupRef = useRef<Group>(null);
+export const PaintingGroup = React.forwardRef<Group, PaintingGroupProps>(({ position, rotation, children }, ref) => {
+  const internalRef = useRef<Group>(null);
   const entranceElapsedRef = useRef(0);
   const isEntranceActiveRef = useRef(true);
 
+  // Merge refs
+  React.useImperativeHandle(ref, () => internalRef.current as Group);
+
   useFrame(({ invalidate }, delta) => {
-    if (!isEntranceActiveRef.current || !groupRef.current) {
+    if (!isEntranceActiveRef.current || !internalRef.current) {
       return;
     }
 
@@ -52,7 +55,7 @@ export const PaintingGroup: React.FC<PaintingGroupProps> = ({ position, rotation
     const opacity = progress;
 
     // Apply opacity to all children meshes
-    groupRef.current.traverse(child => {
+    internalRef.current.traverse(child => {
       if (child instanceof Mesh && child.material) {
         const material = child.material;
         if (Array.isArray(material)) {
@@ -72,7 +75,7 @@ export const PaintingGroup: React.FC<PaintingGroupProps> = ({ position, rotation
     if (progress >= 1) {
       isEntranceActiveRef.current = false;
       // Reset transparency after animation
-      groupRef.current.traverse(child => {
+      internalRef.current.traverse(child => {
         if (child instanceof Mesh && child.material) {
           const material = child.material;
           if (Array.isArray(material)) {
@@ -94,9 +97,9 @@ export const PaintingGroup: React.FC<PaintingGroupProps> = ({ position, rotation
   });
 
   return (
-    <group ref={groupRef} position={position} rotation={rotation}>
+    <group ref={internalRef} position={position} rotation={rotation}>
       {children}
     </group>
   );
-};
+});
 PaintingGroup.displayName = "PaintingGroup";
