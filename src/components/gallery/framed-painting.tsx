@@ -16,7 +16,6 @@ import {
   SRGBColorSpace,
   Texture,
 } from "three";
-import type { GLTF } from "three-stdlib";
 import { openTweetIntent } from "@/utils/twitter";
 import {
   calculatePlaneDimensions,
@@ -25,12 +24,7 @@ import {
   isValidPointerEvent,
 } from "@/utils/three";
 import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
-import {
-  FrameModel,
-  PaintingGroup,
-  type PaintingContentProps,
-  type PaintingGroupProps,
-} from "@/components/ui/framed-painting-base";
+import { FrameModel, PaintingGroup, type PaintingContentProps } from "@/components/ui/framed-painting-base";
 
 interface FramedPaintingProps {
   thumbnailUrl: string;

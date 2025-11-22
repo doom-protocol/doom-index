@@ -43,7 +43,6 @@ describe("WorkersAiClient", () => {
     // Restore environment
     process.env = {
       ...originalEnv,
-      WORKERS_AI_DEFAULT_MODEL: "@cf/meta/llama-3-8b-instruct",
     };
   });
 
@@ -79,7 +78,7 @@ describe("WorkersAiClient", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.modelId).toBe("@cf/meta/llama-3-8b-instruct");
+        expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro" as keyof AiModels);
       }
     });
 
@@ -116,7 +115,7 @@ describe("WorkersAiClient", () => {
       // Should succeed using hardcoded default model
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.modelId).toBe("@cf/meta/llama-3-8b-instruct");
+        expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro" as keyof AiModels);
       }
     });
 

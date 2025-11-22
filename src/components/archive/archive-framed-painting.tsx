@@ -2,7 +2,7 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { useGLTF, useTexture } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
 import {
   AdditiveBlending,
   EdgesGeometry,
@@ -16,7 +16,6 @@ import {
   SRGBColorSpace,
   Texture,
 } from "three";
-import type { GLTF } from "three-stdlib";
 import type { Painting } from "@/types/paintings";
 import {
   calculatePlaneDimensions,
@@ -24,12 +23,7 @@ import {
   handlePointerUpForClick,
   isValidPointerEvent,
 } from "@/utils/three";
-import {
-  FrameModel,
-  PaintingGroup,
-  type PaintingContentProps,
-  type PaintingGroupProps,
-} from "@/components/ui/framed-painting-base";
+import { FrameModel, PaintingGroup, type PaintingContentProps } from "@/components/ui/framed-painting-base";
 
 interface ArchiveFramedPaintingProps {
   item: Painting;

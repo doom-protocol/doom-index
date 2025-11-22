@@ -70,7 +70,7 @@ service = "doom-index"
 # Production environment (default/top-level - used when deploying without --env flag)
 [vars]
 NODE_ENV = "production"
-LOG_LEVEL = "INFO"
+LOG_LEVEL = "DEBUG"
 NEXTJS_ENV = "production"
 NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
 IMAGE_MODEL = "runware:106@1"
