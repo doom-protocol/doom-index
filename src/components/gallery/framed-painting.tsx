@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState, forwardRef } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useGLTF, useTexture } from "@react-three/drei";
 import {
@@ -381,85 +381,83 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
 PaintingContent.displayName = "PaintingContent";
 
 // Main component - separates frame from painting content
-export const FramedPainting: React.FC<FramedPaintingProps> = ({
-  thumbnailUrl,
-  framePosition = DEFAULT_FRAME_POSITION,
-  paintingId,
-}) => {
-  const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null);
-  const activePointerIdRef = useRef<number | null>(null);
-  const hasPointerMovedRef = useRef(false);
+export const FramedPainting = forwardRef<Group, FramedPaintingProps>(
+  ({ thumbnailUrl, framePosition = DEFAULT_FRAME_POSITION, paintingId }, ref) => {
+    const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null);
+    const activePointerIdRef = useRef<number | null>(null);
+    const hasPointerMovedRef = useRef(false);
 
-  const resetPointerState = () => {
-    pointerDownPositionRef.current = null;
-    activePointerIdRef.current = null;
-    hasPointerMovedRef.current = false;
-  };
-
-  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
-    if (!event.isPrimary) {
-      return;
-    }
-
-    if (event.pointerType !== "touch" && event.button !== 0) {
-      return;
-    }
-
-    event.stopPropagation();
-    resetPointerState();
-
-    pointerDownPositionRef.current = {
-      x: event.clientX,
-      y: event.clientY,
+    const resetPointerState = () => {
+      pointerDownPositionRef.current = null;
+      activePointerIdRef.current = null;
+      hasPointerMovedRef.current = false;
     };
-    activePointerIdRef.current = event.pointerId;
-    hasPointerMovedRef.current = false;
-  };
 
-  const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
-    handlePointerMoveForDrag(event, pointerDownPositionRef, hasPointerMovedRef, activePointerIdRef);
-  };
+    const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
+      if (!event.isPrimary) {
+        return;
+      }
 
-  const handlePointerUp = (event: ThreeEvent<PointerEvent>): boolean => {
-    return handlePointerUpForClick(
-      event,
-      pointerDownPositionRef,
-      hasPointerMovedRef,
-      activePointerIdRef,
-      resetPointerState,
-      () => {
-        window.setTimeout(() => {
-          openTweetIntent();
-        }, PULSE_DURATION * 1000);
-      },
+      if (event.pointerType !== "touch" && event.button !== 0) {
+        return;
+      }
+
+      event.stopPropagation();
+      resetPointerState();
+
+      pointerDownPositionRef.current = {
+        x: event.clientX,
+        y: event.clientY,
+      };
+      activePointerIdRef.current = event.pointerId;
+      hasPointerMovedRef.current = false;
+    };
+
+    const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
+      handlePointerMoveForDrag(event, pointerDownPositionRef, hasPointerMovedRef, activePointerIdRef);
+    };
+
+    const handlePointerUp = (event: ThreeEvent<PointerEvent>): boolean => {
+      return handlePointerUpForClick(
+        event,
+        pointerDownPositionRef,
+        hasPointerMovedRef,
+        activePointerIdRef,
+        resetPointerState,
+        () => {
+          window.setTimeout(() => {
+            openTweetIntent();
+          }, PULSE_DURATION * 1000);
+        },
+      );
+    };
+
+    const handlePointerCancel = (event: ThreeEvent<PointerEvent>) => {
+      if (!isValidPointerEvent(event, activePointerIdRef.current)) {
+        return;
+      }
+
+      resetPointerState();
+    };
+
+    return (
+      <PaintingGroup ref={ref} position={framePosition} rotation={FRAME_ROTATION}>
+        {/* GLB Frame Model */}
+        <FrameModel />
+
+        {/* Painting content */}
+        <PaintingContent
+          thumbnailUrl={thumbnailUrl}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
+          paintingId={paintingId}
+        />
+      </PaintingGroup>
     );
-  };
-
-  const handlePointerCancel = (event: ThreeEvent<PointerEvent>) => {
-    if (!isValidPointerEvent(event, activePointerIdRef.current)) {
-      return;
-    }
-
-    resetPointerState();
-  };
-
-  return (
-    <PaintingGroup position={framePosition} rotation={FRAME_ROTATION}>
-      {/* GLB Frame Model */}
-      <FrameModel />
-
-      {/* Painting content */}
-      <PaintingContent
-        thumbnailUrl={thumbnailUrl}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
-        paintingId={paintingId}
-      />
-    </PaintingGroup>
-  );
-};
+  },
+);
 FramedPainting.displayName = "FramedPainting";
 
 // Preload the GLB model (outside component to avoid re-execution)

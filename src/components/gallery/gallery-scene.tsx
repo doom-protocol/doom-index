@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
-import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
+import { ACESFilmicToneMapping, PCFSoftShadowMap, Group } from "three";
 import { OrbitControls, Grid, Stats } from "@react-three/drei";
 import { Lights } from "./lights";
 import { FramedPainting } from "./framed-painting";
@@ -13,6 +13,7 @@ import { MintButton } from "../ui/mint-button";
 import { useLatestPainting } from "@/hooks/use-latest-painting";
 import { logger } from "@/utils/logger";
 import { env } from "@/env";
+import { glbExportService } from "@/lib/glb-export-service";
 
 interface GallerySceneProps {
   cameraPreset?: "dashboard" | "painting";
@@ -37,6 +38,56 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
 
   const { data: latestPainting } = useLatestPainting();
   const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
+
+  // Export state
+  const paintingRef = useRef<Group>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState(false);
+
+  const handleExport = async () => {
+    if (isExporting || !paintingRef.current) return;
+
+    setIsExporting(true);
+    setExportError(false);
+    try {
+      const result = await glbExportService.exportPaintingModel(paintingRef);
+      if (result.isOk()) {
+        const file = result.value;
+
+        // Try to optimize if size > 32MB
+        let finalFile = file;
+        const MAX_SIZE_MB = 32;
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+          const arrayBuffer = await file.arrayBuffer();
+          const optimizedResult = await glbExportService.optimizeGlb(arrayBuffer, MAX_SIZE_MB);
+          if (optimizedResult.isOk()) {
+            finalFile = new File([optimizedResult.value], file.name, { type: "application/octet-stream" });
+          } else {
+            logger.warn("MintButton.optimizeFailed", { error: optimizedResult.error });
+            // Continue with original file if optimization fails
+          }
+        }
+
+        // Download the file
+        const url = URL.createObjectURL(finalFile);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = finalFile.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        logger.error("MintButton.exportFailed", { error: result.error });
+        setExportError(true);
+      }
+    } catch (e) {
+      logger.error("MintButton.exportException", { error: e });
+      setExportError(true);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const previousThumbnailUrlRef = useRef<string | undefined>(undefined);
   useEffect(() => {
@@ -136,7 +187,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         <GalleryRoom />
 
         <Suspense fallback={null}>
-          <FramedPainting thumbnailUrl={thumbnailUrl} paintingId={latestPainting?.id} />
+          <FramedPainting ref={paintingRef} thumbnailUrl={thumbnailUrl} paintingId={latestPainting?.id} />
         </Suspense>
         {showDashboard && <RealtimeDashboard isHelpOpen={isDashboardHelpOpen} onHelpToggle={setIsDashboardHelpOpen} />}
         {isDevelopment && <Stats />}
@@ -153,7 +204,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
           pointerEvents: "none",
         }}
       >
-        <MintButton />
+        <MintButton onClick={handleExport} isLoading={isExporting} isError={exportError} />
       </div>
     </>
   );

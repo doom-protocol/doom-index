@@ -1,46 +1,82 @@
-# GLB Export 機能実装計画 (1st Round)
+# Mint NFT Implementation Plan
 
-本実装計画は NFT ミント機能の最初のフェーズとして、GLB エクスポート機能に特化しています。
-Mint ボタンを押した時に GLB がエクスポートできるところまでを実装し、NFT ミント機能との接続はおいておきます。
+## Round 1: GLB Export (Completed)
 
-- [ ] 1. 環境セットアップと依存関係の追加
+- [x] 1. 環境セットアップと依存関係の追加
   - three-stdlib をインストールして GLTFExporter を利用可能にする
   - 型安全な環境変数検証を設定（必要最小限）
   - _Requirements: 1.1_
 
-- [ ] 2. GLB エクスポートサービスの実装
+- [x] 2. GLB エクスポートサービスの実装
   - FramedPainting から絵画モデル（frame.glb + webp テクスチャ）を抽出する機能を実装
   - GLTFExporter を使用してバイナリ GLB を生成
   - File オブジェクトとして返す機能を追加
   - バックグラウンドで非同期実行できるように設計
   - _Requirements: 1.1, 1.4_
 
-- [ ] 3. GLB エクスポートの最適化ロジック実装
+- [x] 3. GLB エクスポートの最適化ロジック実装
   - 生成された GLB が 32MB を超える場合のメッシュ簡略化を実装
   - WebP テクスチャ圧縮を適用してファイルサイズを削減
   - 最適化後のサイズ検証機能を追加
   - _Requirements: 1.1, 1.2_
 
-- [ ] 4. Mint ボタン UI コンポーネントの実装
+- [x] 4. Mint ボタン UI コンポーネントの実装
   - GLB エクスポートをトリガーするボタンコンポーネントを作成
   - エクスポート進行中のローディング状態を表示
   - エクスポート完了時のダウンロードまたは保存機能を追加
   - _Requirements: 1.1, 1.3_
 
-- [ ] 5. ギャラリーシーンへの Mint ボタン統合
+- [x] 5. ギャラリーシーンへの Mint ボタン統合
   - FramedPainting の近くに Mint ボタンを配置
   - クリック時に GLB エクスポートを開始
   - 現在の絵画情報を GLB エクスポートサービスに渡す
   - _Requirements: 1.1_
 
-- [ ] 6. エラーハンドリングとリトライロジックの実装
+- [x] 6. エラーハンドリングとリトライロジックの実装
   - GLB エクスポート失敗時のエラーメッセージを表示
   - リトライ機能を備えたエラーハンドリングを実装
   - ユーザーにとって分かりやすいエラー通知を提供
   - _Requirements: 1.2_
 
-- [ ] 7. GLB エクスポート機能のユニットテスト実装
+- [x] 7. GLB エクスポート機能のユニットテスト実装
   - GLB エクスポート機能の正常系テストを作成
   - エラーケース（無効なシーン、メモリ不足等）をテスト
   - バックグラウンド実行のテストを実装
   - _Requirements: 1.1, 1.4_
+
+## Round 2: IPFS Upload & Solana Minting
+
+- [ ] 8. Pinata 統合とサーバーサイド実装
+  - `pinata` (v3) パッケージをインストール
+  - `PINATA_JWT` を `src/env.ts` に追加（server-side only）
+  - `src/server/trpc/routers/ipfs.ts` を作成し `createSignedUploadUrl` プロシージャを実装
+  - メインの tRPC ルーターに `ipfs` ルーターを統合
+  - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
+
+- [ ] 9. クライアントサイド IPFS アップロード実装
+  - `useIpfsUpload` フックを実装（署名付き URL 取得 -> 直接アップロード）
+  - `MetadataBuilder` ユーティリティを実装（Metaplex 標準準拠 JSON 生成）
+  - アップロード進行状況（progress）の監視処理を実装
+  - アップロード失敗時のリトライロジックとエラーハンドリングを追加
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 4.4_
+
+- [ ] 10. Solana ウォレット接続と契約統合
+  - `@solana/web3.js`, `@solana/wallet-adapter-react` 等をインストール
+  - `NEXT_PUBLIC_SOLANA_RPC_URL` を `src/env.ts` に追加
+  - `useSolanaWallet` フックを実装（接続、署名、送信）
+  - `useSolanaContract` フックを実装（`getMintPricing` による料金取得）
+  - _Requirements: 5.1, 5.2, 5.3, 5.4, 6.2, 7.1_
+
+- [ ] 11. Mint モーダル UI と統合フロー実装
+  - `MintModal` コンポーネントを作成し、ステップ遷移（Export -> Upload -> Pricing -> Mint）を実装
+  - 既存の `MintButton` と GLB エクスポート機能をモーダルフローに統合
+  - 動的価格表示（SOL/USD/Fees）と残高確認 UI を実装
+  - ミントトランザクションの署名フローと完了画面（Explorer Link）を実装
+  - _Requirements: 6.1, 6.3, 6.4, 5.4, 4.4_
+
+- [ ] 12. 統合テストと検証
+  - IPFS アップロードとメタデータ構造の E2E テスト（Devnet）
+  - ウォレット接続からミント完了までのフロー検証
+  - エラー系（拒否、残高不足、API エラー）の動作確認
+  - パフォーマンス検証（GLB サイズ、アップロード速度）
+  - _Requirements: 6.4, 3.7, 5.2_
