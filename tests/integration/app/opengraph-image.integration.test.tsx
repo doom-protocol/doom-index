@@ -78,23 +78,9 @@ describe("OGP Image Generation (Integration Tests)", () => {
   });
 
   describe("getArtworkDataUrl", () => {
-    test("should return artwork data URL when state and image exist", async () => {
+    test("should return artwork data URL when image exists", async () => {
       const { bucket } = createTestR2Bucket();
       const mockFetcher = createMockFetcher(true, "placeholder");
-
-      await bucket.put(
-        "state/global.json",
-        JSON.stringify({
-          prevHash: "test-hash",
-          lastTs: "2025-11-10T00:00:00Z",
-          imageUrl: "/api/r2/images/test.webp",
-        }),
-        {
-          httpMetadata: {
-            contentType: "application/json",
-          },
-        },
-      );
 
       const imageBuffer = new TextEncoder().encode("mock image data").buffer;
       await bucket.put("images/test.webp", imageBuffer, {
@@ -103,13 +89,13 @@ describe("OGP Image Generation (Integration Tests)", () => {
         },
       });
 
-      const result = await getArtworkDataUrl(mockFetcher, bucket);
+      const result = await getArtworkDataUrl(mockFetcher, bucket, "images/test.webp");
 
       expect(result.fallbackUsed).toBe(false);
       expect(result.dataUrl).toStartWith("data:image/webp;base64,");
     });
 
-    test("should use fallback when state retrieval throws", async () => {
+    test("should use fallback when image retrieval throws", async () => {
       const mockFetcher = createMockFetcher(true, "placeholder");
 
       const { bucket } = createTestR2Bucket();
@@ -120,31 +106,7 @@ describe("OGP Image Generation (Integration Tests)", () => {
         }),
       } as unknown as R2Bucket;
 
-      const result = await getArtworkDataUrl(mockFetcher, failingBucket);
-
-      expect(result.fallbackUsed).toBe(true);
-      expect(result.dataUrl).toStartWith("data:image/webp;base64,");
-    });
-
-    test("should use fallback when state has no imageUrl", async () => {
-      const mockFetcher = createMockFetcher(true, "placeholder");
-
-      const { bucket } = createTestR2Bucket();
-      await bucket.put(
-        "state/global.json",
-        JSON.stringify({
-          prevHash: "test-hash",
-          lastTs: "2025-11-10T00:00:00Z",
-          imageUrl: null,
-        }),
-        {
-          httpMetadata: {
-            contentType: "application/json",
-          },
-        },
-      );
-
-      const result = await getArtworkDataUrl(mockFetcher, bucket);
+      const result = await getArtworkDataUrl(mockFetcher, failingBucket, "images/test.webp");
 
       expect(result.fallbackUsed).toBe(true);
       expect(result.dataUrl).toStartWith("data:image/webp;base64,");
@@ -154,21 +116,9 @@ describe("OGP Image Generation (Integration Tests)", () => {
       const mockFetcher = createMockFetcher(true, "placeholder");
 
       const { bucket } = createTestR2Bucket();
-      await bucket.put(
-        "state/global.json",
-        JSON.stringify({
-          prevHash: "test-hash",
-          lastTs: "2025-11-10T00:00:00Z",
-          imageUrl: "/api/r2/images/missing.webp",
-        }),
-        {
-          httpMetadata: {
-            contentType: "application/json",
-          },
-        },
-      );
+      // No image stored
 
-      const result = await getArtworkDataUrl(mockFetcher, bucket);
+      const result = await getArtworkDataUrl(mockFetcher, bucket, "images/missing.webp");
 
       expect(result.fallbackUsed).toBe(true);
       expect(result.dataUrl).toStartWith("data:image/webp;base64,");

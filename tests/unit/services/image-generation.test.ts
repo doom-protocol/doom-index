@@ -4,21 +4,9 @@ import { createImageGenerationService } from "@/services/image-generation";
 import type { WorldPromptService, PromptComposition } from "@/services/world-prompt-service";
 import type { ImageProvider, ImageRequest } from "@/types/domain";
 import type { PaintingContext } from "@/types/painting-context";
-import type { McMapRounded } from "@/constants/token";
 import type { TokenMetaInput } from "@/services/token-context-service";
 import type { AppError } from "@/types/app-error";
 import type { VisualParams } from "@/lib/pure/mapping";
-
-const mcRounded: McMapRounded = {
-  CO2: 500_000,
-  ICE: 420_000,
-  FOREST: 510_000,
-  NUKE: 300_000,
-  MACHINE: 480_000,
-  PANDEMIC: 250_000,
-  FEAR: 200_000,
-  HOPE: 550_000,
-};
 
 const paintingContext: PaintingContext = {
   t: { n: "Doom Token", c: "solana" },
@@ -79,7 +67,6 @@ const tokenMeta: TokenMetaInput = {
 
 const createDeps = () => {
   const promptService: WorldPromptService = {
-    composePrompt: mock(() => Promise.resolve(ok(composition))) as unknown as WorldPromptService["composePrompt"],
     composeTokenPrompt: mock(() =>
       Promise.resolve(ok(composition)),
     ) as unknown as WorldPromptService["composeTokenPrompt"],
@@ -115,7 +102,6 @@ describe("ImageGenerationService.generateTokenImage", () => {
     });
 
     const result = await service.generateTokenImage({
-      mcRounded,
       paintingContext,
       tokenMeta,
       referenceImageUrl: "http://assets.example.com/logo.png?size=large",
@@ -137,7 +123,6 @@ describe("ImageGenerationService.generateTokenImage", () => {
     });
 
     const result = await service.generateTokenImage({
-      mcRounded,
       paintingContext,
       tokenMeta,
       referenceImageUrl: "javascript:alert(1)",
@@ -168,7 +153,6 @@ describe("ImageGenerationService.generateTokenImage", () => {
     });
 
     const result = await service.generateTokenImage({
-      mcRounded,
       paintingContext,
       tokenMeta,
       referenceImageUrl: "https://assets.example.com/logo.png",

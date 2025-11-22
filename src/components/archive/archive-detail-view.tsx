@@ -209,7 +209,6 @@ export const ArchiveDetailView: React.FC<ArchiveDetailViewProps> = ({ item, onCl
             </div>
           </div>
 
-
           {/* Visual Parameters */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-white/90 normal-case">Visual parameters</h3>

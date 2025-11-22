@@ -18,24 +18,6 @@ export type TokenMetaInput = {
 };
 
 /**
- * Token context output
- * Note: shortContext is now stored in tokens table, not returned here
- */
-export type TokenContext = {
-  category: string;
-  tags: string[];
-};
-
-/**
- * Fallback token context constant
- * Used when token context generation fails or quality check fails
- */
-export const FALLBACK_TOKEN_CONTEXT: TokenContext = {
-  category: "speculative",
-  tags: ["speculative", "narrative-driven", "volatile"],
-};
-
-/**
  * Fallback shortContext constant
  * Used when token context generation fails or quality check fails
  */
@@ -46,13 +28,13 @@ export const FALLBACK_SHORT_CONTEXT =
  * Token context service interface
  */
 export interface TokenContextService {
-  generateTokenContext(input: TokenMetaInput): Promise<Result<TokenContext, AppError>>;
+  generateAndSaveShortContext(input: TokenMetaInput): Promise<Result<string, AppError>>;
 }
 
 type CreateTokenContextServiceDeps = {
   tavilyClient: TavilyClient;
   workersAiClient: WorkersAiClient;
-  tokensRepository?: TokensRepository;
+  tokensRepository: TokensRepository;
   log?: typeof logger;
 };
 
@@ -75,11 +57,11 @@ export function createTokenContextService({
     if (length < 50) {
       return err({
         type: "ValidationError",
-        message: `shortContext is too short (${length} characters, minimum 50). Consider using FALLBACK_TOKEN_CONTEXT.`,
+        message: `shortContext is too short (${length} characters, minimum 50). Consider using FALLBACK_SHORT_CONTEXT.`,
         details: {
           length,
           minLength: 50,
-          recommendation: "Use FALLBACK_TOKEN_CONTEXT",
+          recommendation: "Use FALLBACK_SHORT_CONTEXT",
         },
       });
     }
@@ -87,11 +69,11 @@ export function createTokenContextService({
     if (length > 500) {
       return err({
         type: "ValidationError",
-        message: `shortContext is too long (${length} characters, maximum 500). Consider using FALLBACK_TOKEN_CONTEXT.`,
+        message: `shortContext is too long (${length} characters, maximum 500). Consider using FALLBACK_SHORT_CONTEXT.`,
         details: {
           length,
           maxLength: 500,
-          recommendation: "Use FALLBACK_TOKEN_CONTEXT",
+          recommendation: "Use FALLBACK_SHORT_CONTEXT",
         },
       });
     }
@@ -99,7 +81,7 @@ export function createTokenContextService({
     return ok(undefined);
   };
 
-  async function generateTokenContext(input: TokenMetaInput): Promise<Result<TokenContext, AppError>> {
+  async function generateAndSaveShortContext(input: TokenMetaInput): Promise<Result<string, AppError>> {
     log.debug("token-context-service.generate.start", {
       tokenId: input.id,
       symbol: input.symbol,
@@ -143,10 +125,8 @@ export function createTokenContextService({
     });
 
     // Step 3.2: Call Workers AI to generate JSON context from Tavily results
-    const systemPrompt = `You are a cryptocurrency token analyst. Analyze the provided token information and generate a structured JSON response with the following fields:
+    const systemPrompt = `You are a cryptocurrency token analyst. Analyze the provided token information and generate a structured JSON response with the following field:
 - short_context: A 2-4 sentence English description of the token's purpose, narrative, and key characteristics (50-500 characters)
-- category: A single word category (e.g., "meme", "defi", "nft", "governance", "utility")
-- tags: An array of 2-5 relevant tags as strings (e.g., ["meme", "viral", "community-driven"])
 
 Respond with JSON only. Do not include any additional text, markdown formatting, or explanations outside the JSON structure.`;
 
@@ -163,8 +143,6 @@ Generate a concise context JSON for this token.`;
 
     type TokenContextJson = {
       short_context: string;
-      category: string;
-      tags: string[];
     };
 
     const aiResult = await workersAiClient.generateJson<TokenContextJson>({
@@ -209,33 +187,27 @@ Generate a concise context JSON for this token.`;
       return err(validationResult.error);
     }
 
-    // Step 3.5: Save shortContext to tokens table if repository is available
-    if (tokensRepository) {
-      const saveResult = await tokensRepository.updateShortContext(input.id, shortContext);
-      if (saveResult.isErr()) {
-        log.warn("token-context-service.generate.save-short-context-failed", {
-          tokenId: input.id,
-          symbol: input.symbol,
-          error: saveResult.error,
-        });
-        // Continue even if save fails - context is still valid
-      } else {
-        log.info("token-context-service.generate.short-context-saved", {
-          tokenId: input.id,
-          symbol: input.symbol,
-        });
-      }
+    // Step 3.5: Save shortContext to tokens table
+    const saveResult = await tokensRepository.updateShortContext(input.id, shortContext);
+    if (saveResult.isErr()) {
+      log.warn("token-context-service.generate.save-short-context-failed", {
+        tokenId: input.id,
+        symbol: input.symbol,
+        error: saveResult.error,
+      });
+      // Return error if save fails, as this function's purpose is to save
+      return err(saveResult.error);
     }
 
-    const context: TokenContext = {
-      category: aiContext.category,
-      tags: aiContext.tags,
-    };
+    log.info("token-context-service.generate.short-context-saved", {
+      tokenId: input.id,
+      symbol: input.symbol,
+    });
 
-    return ok(context);
+    return ok(shortContext);
   }
 
   return {
-    generateTokenContext,
+    generateAndSaveShortContext,
   };
 }

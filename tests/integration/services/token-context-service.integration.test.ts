@@ -26,8 +26,8 @@ describe.skip("TokenContextService Integration", () => {
     // Cleanup: Reset any test data
   });
 
-  describe("generateTokenContext", () => {
-    it("should return TokenContext from D1 when record exists (cache hit)", async () => {
+  describe("generateAndSaveShortContext", () => {
+    it("should return shortContext string from D1 when record exists (cache hit)", async () => {
       // This test requires D1 database setup
       // Skip if D1 is not available in test environment
       let d1Binding: D1Database | null = null;
@@ -64,29 +64,30 @@ describe.skip("TokenContextService Integration", () => {
       };
 
       // First call should miss cache and generate context
-      const firstResult = await service.generateTokenContext(testTokenMeta);
+      const firstResult = await service.generateAndSaveShortContext(testTokenMeta);
 
       if (firstResult.isErr()) {
         console.log("Skipping cache hit test: Failed to generate initial context", firstResult.error);
         return;
       }
 
-      // Second call should hit cache
-      const secondResult = await service.generateTokenContext(testTokenMeta);
+      // Second call should hit cache (actually generateAndSaveShortContext always generates, but DB should reflect it)
+      // Note: generateAndSaveShortContext always fetches fresh data as per implementation
+      const secondResult = await service.generateAndSaveShortContext(testTokenMeta);
 
       expect(secondResult.isOk()).toBe(true);
       if (secondResult.isOk()) {
-        expect(secondResult.value.category).toBe(firstResult.value.category);
-        expect(secondResult.value.tags).toEqual(firstResult.value.tags);
-        // shortContext is now stored in tokens table, not in TokenContext
+        expect(secondResult.value).toBeTruthy();
+        expect(typeof secondResult.value).toBe("string");
+
         const tokenResult = await tokensRepository.findById(testTokenMeta.id);
         if (tokenResult.isOk() && tokenResult.value) {
-          expect(tokenResult.value.shortContext).toBeTruthy();
+          expect(tokenResult.value.shortContext).toBe(secondResult.value);
         }
       }
     });
 
-    it("should generate TokenContext via Tavily + Workers AI when D1 miss (cache miss)", async () => {
+    it("should generate shortContext via Tavily + Workers AI", async () => {
       // This test requires D1 database and external APIs
       // Skip if not available in test environment
       let d1Binding: D1Database | null = null;
@@ -123,7 +124,7 @@ describe.skip("TokenContextService Integration", () => {
         createdAt: new Date().toISOString(),
       };
 
-      const result = await service.generateTokenContext(testTokenMeta);
+      const result = await service.generateAndSaveShortContext(testTokenMeta);
 
       // This may fail if external APIs are not available, which is acceptable
       if (result.isErr()) {
@@ -133,14 +134,13 @@ describe.skip("TokenContextService Integration", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.category).toBeTruthy();
-        expect(Array.isArray(result.value.tags)).toBe(true);
-        expect(result.value.tags.length).toBeGreaterThan(0);
-        // shortContext is now stored in tokens table, not in TokenContext
+        expect(result.value).toBeTruthy();
+        expect(result.value.length).toBeGreaterThan(50);
+        expect(result.value.length).toBeLessThanOrEqual(500);
+        // shortContext is stored in tokens table
         const tokenResult = await tokensRepository.findById(uniqueId);
         if (tokenResult.isOk() && tokenResult.value?.shortContext) {
-          expect(tokenResult.value.shortContext.length).toBeGreaterThan(50);
-          expect(tokenResult.value.shortContext.length).toBeLessThanOrEqual(500);
+          expect(tokenResult.value.shortContext).toBe(result.value);
         }
       }
     });
@@ -179,7 +179,7 @@ describe.skip("TokenContextService Integration", () => {
         createdAt: new Date().toISOString(),
       };
 
-      const result = await service.generateTokenContext(testTokenMeta);
+      const result = await service.generateAndSaveShortContext(testTokenMeta);
 
       // Should return error when external APIs fail
       expect(result.isErr()).toBe(true);

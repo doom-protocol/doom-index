@@ -7,7 +7,7 @@ import { getMinuteBucket } from "@/utils/time";
 import { logger } from "@/utils/logger";
 import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
-import type { TokenContextService, TokenContext, TokenMetaInput } from "@/services/token-context-service";
+import type { TokenContextService, TokenMetaInput } from "@/services/token-context-service";
 import { FALLBACK_SHORT_CONTEXT } from "@/services/token-context-service";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
 import type { TokensRepository } from "@/repositories/tokens-repository";
@@ -30,7 +30,6 @@ export type PromptComposition = {
 export type TokenPromptRequest = {
   paintingContext: PaintingContext;
   tokenMeta?: TokenMetaInput;
-  tokenContext?: TokenContext;
 };
 
 type WorldPromptServiceDeps = {
@@ -109,21 +108,17 @@ Your goal is to synthesize the provided token narrative, market state, and visua
 
   const buildTokenUserPrompt = (
     ctx: PaintingContext,
-    tokenCtx: TokenContext,
     vp: VisualParams,
     shortContext: string,
   ): string => {
     const motifLine = ctx.f.length ? ctx.f.join(", ") : "none";
     const hintsLine = ctx.h.length ? ctx.h.join(", ") : "none";
-    const tagLine = tokenCtx.tags.length ? tokenCtx.tags.join(", ") : "none";
 
     return [
       `Token Context:`,
       `- Name: ${ctx.t.n}`,
       `- Chain: ${ctx.t.c}`,
       `- Short Narrative: ${shortContext}`,
-      `- Category: ${tokenCtx.category}`,
-      `- Symbolic Tags: ${tagLine}`,
       ``,
       `Market Dynamics:`,
       `- Market Climate: ${ctx.c}`,
@@ -155,24 +150,29 @@ Your goal is to synthesize the provided token narrative, market state, and visua
     ].join("\n");
   };
 
-  const resolveTokenContext = async (request: TokenPromptRequest): Promise<Result<TokenContext, AppError>> => {
-    if (request.tokenContext) return ok(request.tokenContext);
-
-    if (!tokenContextService) {
-      return err({
-        type: "ConfigurationError",
-        message: "tokenContextService is required when tokenContext is not provided",
-      });
-    }
-
+  const resolveShortContext = async (request: TokenPromptRequest): Promise<Result<string, AppError>> => {
     if (!request.tokenMeta) {
-      return err({
-        type: "ValidationError",
-        message: "tokenMeta is required when tokenContext is not provided",
-      });
+      return ok(FALLBACK_SHORT_CONTEXT);
     }
 
-    return tokenContextService.generateTokenContext(request.tokenMeta);
+    // 1. Try to get from repository
+    if (tokensRepository) {
+      const tokenResult = await tokensRepository.findById(request.tokenMeta.id);
+      if (tokenResult.isOk() && tokenResult.value?.shortContext) {
+        return ok(tokenResult.value.shortContext);
+      }
+    }
+
+    // 2. Generate if not found
+    if (!tokenContextService) {
+      log.warn("prompt.compose.token.context.missing-service", {
+        tokenId: request.tokenMeta.id,
+        message: "tokenContextService not available, using fallback",
+      });
+      return ok(FALLBACK_SHORT_CONTEXT);
+    }
+
+    return tokenContextService.generateAndSaveShortContext(request.tokenMeta);
   };
 
   async function composeTokenPrompt(request: TokenPromptRequest): Promise<Result<PromptComposition, AppError>> {
@@ -192,33 +192,23 @@ Your goal is to synthesize the provided token narrative, market state, and visua
         tokenName: paintingContext.t.n,
         chain: paintingContext.t.c,
         hasTokenMeta: Boolean(request.tokenMeta),
-        providedTokenContext: Boolean(request.tokenContext),
       });
 
-      const tokenContextResult = await resolveTokenContext(request);
-      if (tokenContextResult.isErr()) {
+      const shortContextResult = await resolveShortContext(request);
+      if (shortContextResult.isErr()) {
         log.error("prompt.compose.token.context.error", {
           tokenName: paintingContext.t.n,
           chain: paintingContext.t.c,
-          errorType: tokenContextResult.error.type,
-          message: tokenContextResult.error.message,
+          errorType: shortContextResult.error.type,
+          message: shortContextResult.error.message,
         });
-        return err(tokenContextResult.error);
+        return err(shortContextResult.error);
       }
 
-      const tokenContext = tokenContextResult.value;
-
-      // Get shortContext from token table
-      let shortContext: string = FALLBACK_SHORT_CONTEXT;
-      if (tokensRepository && request.tokenMeta) {
-        const tokenResult = await tokensRepository.findById(request.tokenMeta.id);
-        if (tokenResult.isOk() && tokenResult.value?.shortContext) {
-          shortContext = tokenResult.value.shortContext;
-        }
-      }
+      const shortContext = shortContextResult.value;
 
       const systemPrompt = buildTokenSystemPrompt();
-      const userPrompt = buildTokenUserPrompt(paintingContext, tokenContext, vp, shortContext);
+      const userPrompt = buildTokenUserPrompt(paintingContext, vp, shortContext);
 
       const aiResult = await workersAiClient.generateText({
         systemPrompt,

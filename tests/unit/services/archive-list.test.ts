@@ -18,16 +18,6 @@ function createTestMetadata(id: string, imageKey: string): PaintingMetadata {
     minuteBucket: "2025-11-14T12:00:00Z",
     paramsHash: "abc12345",
     seed: "def456789012",
-    mcRounded: {
-      CO2: 1000000,
-      ICE: 2000000,
-      FOREST: 3000000,
-      NUKE: 4000000,
-      MACHINE: 5000000,
-      PANDEMIC: 6000000,
-      FEAR: 7000000,
-      HOPE: 8000000,
-    },
     visualParams: {
       fogDensity: 0.5,
       skyTint: 0.6,

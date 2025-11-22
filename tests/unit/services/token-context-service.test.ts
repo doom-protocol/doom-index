@@ -17,7 +17,9 @@ describe("TokenContextService", () => {
       findById: mock(() => Promise.resolve(ok(null))) as unknown as TokensRepository["findById"],
       insert: mock(() => Promise.resolve(ok(undefined))) as unknown as TokensRepository["insert"],
       update: mock(() => Promise.resolve(ok(undefined))) as unknown as TokensRepository["update"],
-      updateShortContext: mock(() => Promise.resolve(ok(undefined))) as unknown as TokensRepository["updateShortContext"],
+      updateShortContext: mock(() =>
+        Promise.resolve(ok(undefined)),
+      ) as unknown as TokensRepository["updateShortContext"],
       findRecentlySelected: mock(() => Promise.resolve(ok([]))) as unknown as TokensRepository["findRecentlySelected"],
     } as unknown as TokensRepository;
 
@@ -41,29 +43,30 @@ describe("TokenContextService", () => {
     mock.restore();
   });
 
-  describe("generateTokenContext", () => {
-    it("should generate TokenContext using Tavily and Workers AI", async () => {
+  describe("generateAndSaveShortContext", () => {
+    it("should generate and save shortContext using Tavily and Workers AI", async () => {
       // Mock Tavily response
       const mockTavilyResponse = {
-        articles: [
-          { title: "Test Token Article", url: "https://example.com", content: "Test content" },
-        ],
+        articles: [{ title: "Test Token Article", url: "https://example.com", content: "Test content" }],
         combinedText: "Test Token Article\nTest content",
       };
 
-      mockTavilyClient.searchToken = mock(() => Promise.resolve(ok(mockTavilyResponse))) as unknown as TavilyClient["searchToken"];
+      mockTavilyClient.searchToken = mock(() =>
+        Promise.resolve(ok(mockTavilyResponse)),
+      ) as unknown as TavilyClient["searchToken"];
 
       // Mock Workers AI response
       const mockAiResponse = {
         value: {
-          short_context: "A test token for testing purposes. This token is designed to test various blockchain features and functionality.",
-          category: "meme",
-          tags: ["test", "token"],
+          short_context:
+            "A test token for testing purposes. This token is designed to test various blockchain features and functionality.",
         },
         modelId: "test-model",
       };
 
-      mockWorkersAiClient.generateJson = mock(() => Promise.resolve(ok(mockAiResponse))) as unknown as WorkersAiClient["generateJson"];
+      mockWorkersAiClient.generateJson = mock(() =>
+        Promise.resolve(ok(mockAiResponse)),
+      ) as unknown as WorkersAiClient["generateJson"];
 
       const service = createTokenContextService({
         tavilyClient: mockTavilyClient,
@@ -71,7 +74,7 @@ describe("TokenContextService", () => {
         tokensRepository: mockTokensRepository,
       });
 
-      const result = await service.generateTokenContext({
+      const result = await service.generateAndSaveShortContext({
         id: "test-token",
         name: "Test Token",
         symbol: "TEST",
@@ -82,17 +85,17 @@ describe("TokenContextService", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value).toEqual({
-          category: "meme",
-          tags: ["test", "token"],
-        });
+        expect(result.value).toBe(mockAiResponse.value.short_context);
       }
 
       // Should call Tavily and Workers AI
       expect(mockTavilyClient.searchToken).toHaveBeenCalled();
       expect(mockWorkersAiClient.generateJson).toHaveBeenCalled();
       // Should save shortContext to tokens table
-      expect(mockTokensRepository.updateShortContext).toHaveBeenCalledWith("test-token", "A test token for testing purposes. This token is designed to test various blockchain features and functionality.");
+      expect(mockTokensRepository.updateShortContext).toHaveBeenCalledWith(
+        "test-token",
+        "A test token for testing purposes. This token is designed to test various blockchain features and functionality.",
+      );
     });
 
     it("should return error when Tavily API fails", async () => {
@@ -102,7 +105,9 @@ describe("TokenContextService", () => {
         message: "Tavily API failed",
       };
 
-      mockTavilyClient.searchToken = mock(() => Promise.resolve(err(tavilyError))) as unknown as TavilyClient["searchToken"];
+      mockTavilyClient.searchToken = mock(() =>
+        Promise.resolve(err(tavilyError)),
+      ) as unknown as TavilyClient["searchToken"];
 
       const service = createTokenContextService({
         tavilyClient: mockTavilyClient,
@@ -110,7 +115,7 @@ describe("TokenContextService", () => {
         tokensRepository: mockTokensRepository,
       });
 
-      const result = await service.generateTokenContext({
+      const result = await service.generateAndSaveShortContext({
         id: "test-token",
         name: "Test Token",
         symbol: "TEST",
@@ -125,52 +130,7 @@ describe("TokenContextService", () => {
       }
     });
 
-    it("should handle null category and tags from AI response", async () => {
-      // Mock Tavily response
-      const mockTavilyResponse = {
-        articles: [
-          { title: "Test Token Article", url: "https://example.com", content: "Test content" },
-        ],
-        combinedText: "Test Token Article\nTest content",
-      };
-
-      mockTavilyClient.searchToken = mock(() => Promise.resolve(ok(mockTavilyResponse))) as unknown as TavilyClient["searchToken"];
-
-      // Mock Workers AI response with null category and tags
-      const mockAiResponse = {
-        value: {
-          short_context: "A test token designed for testing blockchain applications and various features in a controlled environment.",
-          category: "",
-          tags: [],
-        },
-        modelId: "test-model",
-      };
-
-      mockWorkersAiClient.generateJson = mock(() => Promise.resolve(ok(mockAiResponse))) as unknown as WorkersAiClient["generateJson"];
-
-      const service = createTokenContextService({
-        tavilyClient: mockTavilyClient,
-        workersAiClient: mockWorkersAiClient,
-        tokensRepository: mockTokensRepository,
-      });
-
-      const result = await service.generateTokenContext({
-        id: "test-token",
-        name: "Test Token",
-        symbol: "TEST",
-        chainId: "ethereum",
-        contractAddress: null,
-        createdAt: "2024-01-01T00:00:00Z",
-      });
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.category).toBe("");
-        expect(result.value.tags).toEqual([]);
-      }
-    });
-
-    it("should generate TokenContext from Tavily + Workers AI", async () => {
+    it("should generate shortContext from Tavily + Workers AI", async () => {
       mockTavilyClient.searchToken = mock(() =>
         Promise.resolve(
           ok({
@@ -188,8 +148,6 @@ describe("TokenContextService", () => {
 
       const mockAiResponse = {
         short_context: "A test token designed for testing blockchain applications.",
-        category: "test",
-        tags: ["testing", "blockchain"],
       };
 
       mockWorkersAiClient.generateJson = mock(() =>
@@ -207,7 +165,7 @@ describe("TokenContextService", () => {
         tokensRepository: mockTokensRepository,
       });
 
-      const result = await service.generateTokenContext({
+      const result = await service.generateAndSaveShortContext({
         id: "new-token",
         name: "New Token",
         symbol: "NEW",
@@ -218,10 +176,7 @@ describe("TokenContextService", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value).toEqual({
-          category: "test",
-          tags: ["testing", "blockchain"],
-        });
+        expect(result.value).toBe(mockAiResponse.short_context);
       }
 
       expect(mockTavilyClient.searchToken).toHaveBeenCalledWith({
@@ -233,7 +188,10 @@ describe("TokenContextService", () => {
       });
 
       expect(mockWorkersAiClient.generateJson).toHaveBeenCalled();
-      expect(mockTokensRepository.updateShortContext).toHaveBeenCalledWith("new-token", "A test token designed for testing blockchain applications.");
+      expect(mockTokensRepository.updateShortContext).toHaveBeenCalledWith(
+        "new-token",
+        "A test token designed for testing blockchain applications.",
+      );
     });
 
     it("should return error when Tavily fails", async () => {
@@ -243,7 +201,9 @@ describe("TokenContextService", () => {
         message: "Tavily API error",
       };
 
-      mockTavilyClient.searchToken = mock(() => Promise.resolve(err(tavilyError))) as unknown as TavilyClient["searchToken"];
+      mockTavilyClient.searchToken = mock(() =>
+        Promise.resolve(err(tavilyError)),
+      ) as unknown as TavilyClient["searchToken"];
 
       const service = createTokenContextService({
         tavilyClient: mockTavilyClient,
@@ -251,7 +211,7 @@ describe("TokenContextService", () => {
         tokensRepository: mockTokensRepository,
       });
 
-      const result = await service.generateTokenContext({
+      const result = await service.generateAndSaveShortContext({
         id: "new-token",
         name: "New Token",
         symbol: "NEW",
@@ -293,7 +253,9 @@ describe("TokenContextService", () => {
         message: "Workers AI error",
       };
 
-      mockWorkersAiClient.generateJson = mock(() => Promise.resolve(err(aiError))) as unknown as WorkersAiClient["generateJson"];
+      mockWorkersAiClient.generateJson = mock(() =>
+        Promise.resolve(err(aiError)),
+      ) as unknown as WorkersAiClient["generateJson"];
 
       const service = createTokenContextService({
         tavilyClient: mockTavilyClient,
@@ -301,7 +263,7 @@ describe("TokenContextService", () => {
         tokensRepository: mockTokensRepository,
       });
 
-      const result = await service.generateTokenContext({
+      const result = await service.generateAndSaveShortContext({
         id: "new-token",
         name: "New Token",
         symbol: "NEW",
@@ -338,8 +300,6 @@ describe("TokenContextService", () => {
       // AI returns too short context (< 50 chars)
       const mockAiResponse = {
         short_context: "Short.",
-        category: "test",
-        tags: ["testing"],
       };
 
       mockWorkersAiClient.generateJson = mock(() =>
@@ -357,7 +317,7 @@ describe("TokenContextService", () => {
         tokensRepository: mockTokensRepository,
       });
 
-      const result = await service.generateTokenContext({
+      const result = await service.generateAndSaveShortContext({
         id: "new-token",
         name: "New Token",
         symbol: "NEW",
@@ -392,8 +352,6 @@ describe("TokenContextService", () => {
       const longContext = "A".repeat(501);
       const mockAiResponse = {
         short_context: longContext,
-        category: "test",
-        tags: ["testing"],
       };
 
       mockWorkersAiClient.generateJson = mock(() =>
@@ -411,7 +369,7 @@ describe("TokenContextService", () => {
         tokensRepository: mockTokensRepository,
       });
 
-      const result = await service.generateTokenContext({
+      const result = await service.generateAndSaveShortContext({
         id: "new-token",
         name: "New Token",
         symbol: "NEW",
@@ -446,8 +404,6 @@ describe("TokenContextService", () => {
       const mockAiResponse = {
         short_context:
           "A test token designed for testing blockchain applications. It provides a simple way to test various features.",
-        category: "test",
-        tags: ["testing", "blockchain"],
       };
 
       mockWorkersAiClient.generateJson = mock(() =>
@@ -465,7 +421,7 @@ describe("TokenContextService", () => {
         tokensRepository: mockTokensRepository,
       });
 
-      const result = await service.generateTokenContext({
+      const result = await service.generateAndSaveShortContext({
         id: "new-token",
         name: "New Token",
         symbol: "NEW",

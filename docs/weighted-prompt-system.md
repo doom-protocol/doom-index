@@ -212,13 +212,13 @@ bun scripts/generate.ts \
 
 ```bash
 # 全テスト実行
-bun test
+bun run test
 
 # プロンプト生成のみ
-bun test tests/lib/pure/doom-prompt.test.ts
+bun run test tests/lib/pure/doom-prompt.test.ts
 
 # サービス統合テスト
-bun test tests/services/prompt.compose.test.ts
+bun run test tests/services/prompt.compose.test.ts
 ```
 
 ## 参考

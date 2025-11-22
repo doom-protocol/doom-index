@@ -10,7 +10,7 @@ import { CameraRig } from "./camera-rig";
 import { GalleryRoom } from "./gallery-room";
 import { RealtimeDashboard } from "../ui/realtime-dashboard";
 import { useHaptic } from "use-haptic";
-import { useGlobalState } from "@/hooks/use-global-state";
+import { useLatestPainting } from "@/hooks/use-latest-painting";
 import { logger } from "@/utils/logger";
 import { env } from "@/env";
 
@@ -38,8 +38,8 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
 
   const { triggerHaptic } = useHaptic();
 
-  const { data: globalState } = useGlobalState();
-  const thumbnailUrl = globalState?.imageUrl ?? DEFAULT_THUMBNAIL;
+  const { data: latestPainting } = useLatestPainting();
+  const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 
   const onButtonClick = (preset: "dashboard" | "painting") => {
     triggerHaptic();
@@ -58,11 +58,11 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
       logger.debug("gallery-scene.thumbnailUrl.changed", {
         previousThumbnailUrl: previousThumbnailUrlRef.current,
         currentThumbnailUrl: thumbnailUrl,
-        globalStateLastTs: globalState?.lastTs ?? null,
+        lastTs: latestPainting?.timestamp ?? null,
       });
       previousThumbnailUrlRef.current = thumbnailUrl;
     }
-  }, [thumbnailUrl, globalState?.lastTs]);
+  }, [thumbnailUrl, latestPainting?.timestamp]);
 
   return (
     <>

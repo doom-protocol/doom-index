@@ -20,7 +20,6 @@ export const paintings = sqliteTable(
     imageUrl: text("image_url").notNull(), // Public CDN URL for the image
     fileSize: integer("file_size").notNull(), // Image file size in bytes
 
-    mcRoundedJson: text("mc_rounded_json"), // JSON: { CO2: number, ICE: number, ... } (legacy, optional)
     visualParamsJson: text("visual_params_json").notNull(), // JSON: { fogDensity: number, skyTint: number, ... }
 
     prompt: text("prompt").notNull(), // Positive prompt text

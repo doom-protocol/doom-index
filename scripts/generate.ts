@@ -34,7 +34,7 @@ import { AlternativeMeClient } from "@/lib/alternative-me-client";
 import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
 import { TokensRepository } from "@/repositories/tokens-repository";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import { createTokenContextService, FALLBACK_TOKEN_CONTEXT } from "@/services/token-context-service";
+import { createTokenContextService, FALLBACK_SHORT_CONTEXT } from "@/services/token-context-service";
 import { createTavilyClient } from "@/lib/tavily-client";
 import { env } from "@/env";
 
@@ -185,16 +185,8 @@ const main = async () => {
 
   // Initialize services with actual data fetching
   const tokenDataFetchService = new TokenDataFetchService(coinGeckoClient);
-  const marketDataService = new MarketDataService(
-    coinGeckoClient,
-    alternativeMeClient,
-    marketSnapshotsRepository,
-  );
-  const tokenSelectionService = new TokenSelectionService(
-    tokenDataFetchService,
-    marketDataService,
-    tokensRepository,
-  );
+  const marketDataService = new MarketDataService(coinGeckoClient, alternativeMeClient, marketSnapshotsRepository);
+  const tokenSelectionService = new TokenSelectionService(tokenDataFetchService, marketDataService, tokensRepository);
   const paintingContextBuilder = new PaintingContextBuilder(tokensRepository);
 
   console.log("\n=== Step 1: Selecting Token ===");
@@ -263,7 +255,7 @@ const main = async () => {
 
   // Step 4: Initialize token context service (optional, requires Workers AI and Tavily)
   // Note: Workers AI requires Cloudflare environment, so we'll use fallback context for scripts
-  let tokenContext;
+  let shortContext = FALLBACK_SHORT_CONTEXT;
   let tokenContextService;
   let workersAiClient;
 
@@ -293,25 +285,21 @@ const main = async () => {
         createdAt: new Date().toISOString(),
       };
 
-      const tokenContextResult = await tokenContextService.generateTokenContext(tokenMeta);
+      const tokenContextResult = await tokenContextService.generateAndSaveShortContext(tokenMeta);
       if (tokenContextResult.isOk()) {
-        tokenContext = tokenContextResult.value;
+        shortContext = tokenContextResult.value;
         console.log(`✅ Token context generated`);
-        console.log(`   Category: ${tokenContext.category}`);
-        console.log(`   Tags: ${tokenContext.tags.join(", ")}`);
+        console.log(`   Short Context: ${shortContext}`);
       } else {
         console.warn(`⚠️ Token context generation failed, using fallback`);
         console.warn(`   Error: ${tokenContextResult.error.message}`);
-        tokenContext = FALLBACK_TOKEN_CONTEXT;
       }
     } catch (error) {
       console.warn(`⚠️ Token context service initialization failed, using fallback`);
       console.warn(`   Error: ${error instanceof Error ? error.message : "Unknown error"}`);
-      tokenContext = FALLBACK_TOKEN_CONTEXT;
     }
   } else {
     console.warn("\n⚠️ Warning: TAVILY_API_KEY not set. Using fallback token context.");
-    tokenContext = FALLBACK_TOKEN_CONTEXT;
   }
 
   // Step 5: Initialize prompt and image generation services
@@ -348,7 +336,6 @@ const main = async () => {
   const generateResult = await imageGenerationService.generateTokenImage({
     paintingContext,
     tokenMeta,
-    tokenContext, // Provide token context directly to avoid service dependency
     referenceImageUrl: selectedToken.logoUrl,
   });
 

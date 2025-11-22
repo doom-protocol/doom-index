@@ -2,10 +2,9 @@ import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 import { ok, err } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import { createWorldPromptService } from "@/services/world-prompt-service";
-import type { TokenContextService, TokenContext, TokenMetaInput } from "@/services/token-context-service";
+import type { TokenContextService, TokenMetaInput } from "@/services/token-context-service";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
 import type { PaintingContext } from "@/types/painting-context";
-import type { McMapRounded } from "@/constants/token";
 
 describe("WorldPromptService (token mode)", () => {
   let mockTokenContextService: TokenContextService;
@@ -25,22 +24,7 @@ describe("WorldPromptService (token mode)", () => {
     h: ["community-driven"],
   };
 
-  const mockMcRounded: McMapRounded = {
-    CO2: 1_000_000,
-    ICE: 900_000,
-    FOREST: 850_000,
-    NUKE: 400_000,
-    MACHINE: 600_000,
-    PANDEMIC: 350_000,
-    FEAR: 250_000,
-    HOPE: 300_000,
-  };
-
-  const mockTokenContext: TokenContext = {
-    shortContext: "A test token designed for experimental blockchain art applications.",
-    category: "meme",
-    tags: ["testing", "experimental"],
-  };
+  const mockShortContext = "A test token designed for experimental blockchain art applications.";
 
   const tokenMeta: TokenMetaInput = {
     id: "test-token",
@@ -53,9 +37,9 @@ describe("WorldPromptService (token mode)", () => {
 
   beforeEach(() => {
     mockTokenContextService = {
-      generateTokenContext: mock(() =>
-        Promise.resolve(ok(mockTokenContext)),
-      ) as unknown as TokenContextService["generateTokenContext"],
+      generateAndSaveShortContext: mock(() =>
+        Promise.resolve(ok(mockShortContext)),
+      ) as unknown as TokenContextService["generateAndSaveShortContext"],
     };
 
     mockWorkersAiClient = {
@@ -88,7 +72,6 @@ describe("WorldPromptService (token mode)", () => {
     const service = createService();
 
     const result = await service.composeTokenPrompt({
-      mcRounded: mockMcRounded,
       paintingContext: mockPaintingContext,
       tokenMeta,
     });
@@ -118,7 +101,6 @@ describe("WorldPromptService (token mode)", () => {
 
     const service = createService();
     const result = await service.composeTokenPrompt({
-      mcRounded: mockMcRounded,
       paintingContext: mockPaintingContext,
       tokenMeta,
     });
@@ -136,13 +118,12 @@ describe("WorldPromptService (token mode)", () => {
       message: "context fetch failed",
     };
 
-    mockTokenContextService.generateTokenContext = mock(() =>
+    mockTokenContextService.generateAndSaveShortContext = mock(() =>
       Promise.resolve(err(contextError)),
-    ) as unknown as TokenContextService["generateTokenContext"];
+    ) as unknown as TokenContextService["generateAndSaveShortContext"];
 
     const service = createService();
     const result = await service.composeTokenPrompt({
-      mcRounded: mockMcRounded,
       paintingContext: mockPaintingContext,
       tokenMeta,
     });
@@ -155,18 +136,14 @@ describe("WorldPromptService (token mode)", () => {
     expect(mockWorkersAiClient.generateText).not.toHaveBeenCalled();
   });
 
-  it("requires tokenMeta when tokenContext is not provided", async () => {
+  it("uses fallback shortContext when tokenMeta is not provided", async () => {
     const service = createService();
 
     const result = await service.composeTokenPrompt({
-      mcRounded: mockMcRounded,
       paintingContext: mockPaintingContext,
     });
 
-    expect(result.isErr()).toBe(true);
-    if (result.isErr()) {
-      expect(result.error.type).toBe("ValidationError");
-    }
-    expect(mockTokenContextService.generateTokenContext).not.toHaveBeenCalled();
+    expect(result.isOk()).toBe(true);
+    expect(mockTokenContextService.generateAndSaveShortContext).not.toHaveBeenCalled();
   });
 });

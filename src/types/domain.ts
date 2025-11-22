@@ -9,11 +9,6 @@ import type { AppError } from "@/types/app-error";
 export type TokenTicker = string;
 export type McMap = Record<string, number>;
 
-export type GlobalState = {
-  prevHash: string | null;
-  lastTs: string | null;
-  imageUrl?: string | null;
-};
 
 export type TokenState = {
   ticker: TokenTicker;

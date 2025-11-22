@@ -32,18 +32,18 @@ describe("Token Integration", () => {
     const caller = appRouter.createCaller(ctx);
 
     // Test with a single ticker instead
-      try {
+    try {
       const result = await caller.token.getState({ ticker: "CO2" });
 
-        // nullまたはTokenStateを返す
-        if (result !== null) {
-          expect(result).toHaveProperty("ticker");
-          expect(result).toHaveProperty("thumbnailUrl");
-          expect(result).toHaveProperty("updatedAt");
+      // nullまたはTokenStateを返す
+      if (result !== null) {
+        expect(result).toHaveProperty("ticker");
+        expect(result).toHaveProperty("thumbnailUrl");
+        expect(result).toHaveProperty("updatedAt");
         expect(result.ticker).toBe("CO2");
-        }
-      } catch (error) {
-        // R2が利用できない場合はスキップ
+      }
+    } catch (error) {
+      // R2が利用できない場合はスキップ
       console.log("Skipping test: R2 not available", error);
     }
   });

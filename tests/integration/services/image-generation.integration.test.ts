@@ -17,17 +17,6 @@ import type { McMapRounded } from "@/constants/token";
 import type { PaintingContext } from "@/types/painting-context";
 import type { PromptComposition, WorldPromptService } from "@/services/world-prompt-service";
 
-const mcRounded: McMapRounded = {
-  CO2: 500_000,
-  ICE: 420_000,
-  FOREST: 510_000,
-  NUKE: 50_000,
-  MACHINE: 1_450_000,
-  PANDEMIC: 700_000,
-  FEAR: 1_100_000,
-  HOPE: 400_000,
-};
-
 const mockPaintingContext: PaintingContext = {
   t: { n: "Bitcoin", c: "bitcoin" },
   m: { mc: 2_500_000_000_000, bd: 45.5, fg: 65 },
@@ -48,171 +37,6 @@ describe("ImageGenerationService Integration", () => {
 
   beforeEach(() => {
     mock.restore();
-  });
-
-  describe("generateImage", () => {
-    it.skip("should generate image successfully with valid market cap data", async () => {
-      const mockImageBuffer = new ArrayBuffer(1024);
-      const mockProviderMeta = { jobId: "test-job-123" };
-
-      mockImageProvider = {
-        name: "mock",
-        generate: mock(() =>
-          Promise.resolve(
-            ok({
-              imageBuffer: mockImageBuffer,
-              providerMeta: mockProviderMeta,
-            }),
-          ),
-        ),
-      };
-
-      const mockComposition: PromptComposition = {
-        seed: "test-seed-123",
-        minuteBucket: "2024-01-01T12:00",
-        vp: {
-          fogDensity: 0.5,
-          skyTint: 0.5,
-          reflectivity: 0.5,
-          blueBalance: 0.5,
-          vegetationDensity: 0.5,
-          organicPattern: 0.5,
-          radiationGlow: 0.5,
-          debrisIntensity: 0.5,
-          mechanicalPattern: 0.5,
-          metallicRatio: 0.5,
-          fractalDensity: 0.5,
-          bioluminescence: 0.5,
-          shadowDepth: 0.5,
-          redHighlight: 0.5,
-          lightIntensity: 0.5,
-          warmHue: 0.5,
-        },
-        prompt: {
-          text: "A majestic temple with golden pillars",
-          negative: "blurry, low quality",
-          size: { w: 1024, h: 1024 },
-          format: "webp" as const,
-          seed: "test-seed-123",
-          filename: "test.webp",
-        },
-        paramsHash: "test-hash",
-      };
-
-      mockPromptService = {
-        composePrompt: mock(() => Promise.resolve(ok(mockComposition))),
-        composeTokenPrompt: mock(() => Promise.resolve(ok(mockComposition))),
-      };
-
-      const service = createImageGenerationService({
-        promptService: mockPromptService,
-        imageProvider: mockImageProvider,
-      });
-
-      const result = await service.generateImage(mcRounded);
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.imageBuffer).toBe(mockImageBuffer);
-        expect(result.value.providerMeta).toEqual(mockProviderMeta);
-        expect(result.value.composition.prompt.text).toBe(mockComposition.prompt.text);
-        expect(result.value.composition.prompt.negative).toBe(mockComposition.prompt.negative);
-      }
-    });
-
-    it.skip("should handle prompt generation errors", async () => {
-      const mockError: AppError = {
-        type: "InternalError",
-        message: "Prompt generation failed",
-      };
-
-      mockImageProvider = {
-        name: "mock",
-        generate: mock(() => Promise.resolve(ok({ imageBuffer: new ArrayBuffer(1024), providerMeta: {} }))),
-      };
-
-      mockPromptService = {
-        composePrompt: mock(() => Promise.resolve(err(mockError))),
-        composeTokenPrompt: mock(() => Promise.resolve(err(mockError))),
-      };
-
-      const service = createImageGenerationService({
-        promptService: mockPromptService,
-        imageProvider: mockImageProvider,
-      });
-
-      const result = await service.generateImage(mcRounded);
-
-      expect(result.isErr()).toBe(true);
-      if (result.isErr()) {
-        expect(result.error.type).toBe("InternalError");
-      }
-    });
-
-    it.skip("should handle image provider errors", async () => {
-      const mockError: AppError = {
-        type: "ExternalApiError",
-        provider: "ImageProvider",
-        message: "Image generation failed",
-      };
-
-      mockImageProvider = {
-        name: "mock",
-        generate: mock(() => Promise.resolve(err(mockError))),
-      };
-
-      const mockComposition: PromptComposition = {
-        seed: "test-seed-123",
-        minuteBucket: "2024-01-01T12:00",
-        vp: {
-          fogDensity: 0.5,
-          skyTint: 0.5,
-          reflectivity: 0.5,
-          blueBalance: 0.5,
-          vegetationDensity: 0.5,
-          organicPattern: 0.5,
-          radiationGlow: 0.5,
-          debrisIntensity: 0.5,
-          mechanicalPattern: 0.5,
-          metallicRatio: 0.5,
-          fractalDensity: 0.5,
-          bioluminescence: 0.5,
-          shadowDepth: 0.5,
-          redHighlight: 0.5,
-          lightIntensity: 0.5,
-          warmHue: 0.5,
-        },
-        prompt: {
-          text: "A majestic temple with golden pillars",
-          negative: "blurry, low quality",
-          size: { w: 1024, h: 1024 },
-          format: "webp" as const,
-          seed: "test-seed-123",
-          filename: "test.webp",
-        },
-        paramsHash: "test-hash",
-      };
-
-      mockPromptService = {
-        composePrompt: mock(() => Promise.resolve(ok(mockComposition))),
-        composeTokenPrompt: mock(() => Promise.resolve(ok(mockComposition))),
-      };
-
-      const service = createImageGenerationService({
-        promptService: mockPromptService,
-        imageProvider: mockImageProvider,
-      });
-
-      const result = await service.generateImage(mcRounded);
-
-      expect(result.isErr()).toBe(true);
-      if (result.isErr()) {
-        expect(result.error.type).toBe("ExternalApiError");
-        if (result.error.type === "ExternalApiError") {
-          expect(result.error.provider).toBe("ImageProvider");
-        }
-      }
-    });
   });
 
   describe("generateTokenImage", () => {
@@ -266,7 +90,6 @@ describe("ImageGenerationService Integration", () => {
       };
 
       mockPromptService = {
-        composePrompt: mock(() => Promise.resolve(ok(mockComposition))),
         composeTokenPrompt: mock(() => Promise.resolve(ok(mockComposition))),
       };
 
@@ -276,7 +99,6 @@ describe("ImageGenerationService Integration", () => {
       });
 
       const result = await service.generateTokenImage({
-        mcRounded,
         paintingContext: mockPaintingContext,
         tokenMeta: {
           id: "bitcoin",
@@ -347,7 +169,6 @@ describe("ImageGenerationService Integration", () => {
       };
 
       mockPromptService = {
-        composePrompt: mock(() => Promise.resolve(ok(mockComposition))),
         composeTokenPrompt: mock(() => Promise.resolve(ok(mockComposition))),
       };
 
@@ -357,7 +178,6 @@ describe("ImageGenerationService Integration", () => {
       });
 
       const result = await service.generateTokenImage({
-        mcRounded,
         paintingContext: mockPaintingContext,
         tokenMeta: {
           id: "bitcoin",
@@ -424,7 +244,6 @@ describe("ImageGenerationService Integration", () => {
       };
 
       mockPromptService = {
-        composePrompt: mock(() => Promise.resolve(ok(mockComposition))),
         composeTokenPrompt: mock(() => Promise.resolve(ok(mockComposition))),
       };
 
@@ -434,7 +253,6 @@ describe("ImageGenerationService Integration", () => {
       });
 
       const result = await service.generateTokenImage({
-        mcRounded,
         paintingContext: mockPaintingContext,
         tokenMeta: {
           id: "bitcoin",
@@ -495,7 +313,6 @@ describe("ImageGenerationService Integration", () => {
       };
 
       mockPromptService = {
-        composePrompt: mock(() => Promise.resolve(ok(mockComposition))),
         composeTokenPrompt: mock(() => Promise.resolve(err(mockError))),
       };
 
@@ -505,7 +322,6 @@ describe("ImageGenerationService Integration", () => {
       });
 
       const result = await service.generateTokenImage({
-        mcRounded,
         paintingContext: mockPaintingContext,
         tokenMeta: {
           id: "bitcoin",

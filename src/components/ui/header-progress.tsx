@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FC } from "react";
 import useSound from "use-sound";
 import { useHaptic } from "use-haptic";
-import { useGlobalStateRefetch } from "@/hooks/use-global-state";
+import { useLatestPaintingRefetch } from "@/hooks/use-latest-painting";
 import { logger } from "@/utils/logger";
 
 const MINUTE_MS = 60000;
@@ -15,7 +15,7 @@ export const HeaderProgress: FC = () => {
 
   const { triggerHaptic } = useHaptic();
   const [playChime] = useSound("/clock-chime.mp3", { interrupt: true });
-  const refetchGlobalState = useGlobalStateRefetch();
+  const refetchLatestPainting = useLatestPaintingRefetch();
 
   useEffect(() => {
     let animationFrameId: number | undefined;
@@ -46,8 +46,8 @@ export const HeaderProgress: FC = () => {
         triggerHaptic();
       }
       playChime();
-      refetchGlobalState().catch(error => {
-        logger.error("header-progress.refetchGlobalState.failed", { error });
+      refetchLatestPainting().catch(error => {
+        logger.error("header-progress.refetchLatestPainting.failed", { error });
       });
     };
 
@@ -93,7 +93,7 @@ export const HeaderProgress: FC = () => {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [playChime, refetchGlobalState, triggerHaptic]);
+  }, [playChime, refetchLatestPainting, triggerHaptic]);
 
   const secondsLabel = displaySecond.toString().padStart(2, "0");
 

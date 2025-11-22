@@ -163,6 +163,7 @@ export class PaintingGenerationOrchestrator {
       const tokenContextService = createTokenContextService({
         tavilyClient,
         workersAiClient,
+        tokensRepository: this.deps.tokensRepository,
       });
 
       const promptService = createWorldPromptService({

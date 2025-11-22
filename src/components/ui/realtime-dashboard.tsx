@@ -10,7 +10,10 @@ interface RealtimeDashboardProps {
   onHelpToggle: (open: boolean) => void;
 }
 
-export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({ isHelpOpen: _isHelpOpen, onHelpToggle: _onHelpToggle }) => {
+export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
+  isHelpOpen: _isHelpOpen,
+  onHelpToggle: _onHelpToggle,
+}) => {
   // Legacy dashboard - return empty component
   return null;
 };

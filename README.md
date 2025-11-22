@@ -74,11 +74,7 @@ FORCE_TOKEN_LIST=bitcoin,ethereum,solana
 bun run dev
 
 # Development (Cloudflare Workers Preview - Local R2)
-bun run preview
-
-# Development (Cloudflare Workers Cron)
-# Start preview with --test-scheduled flag
-bun run preview
+bun run build:cf && bun run preview
 
 # Automatically trigger cron every hour (starting at :00:00)
 # This script waits until the next hour and then triggers every 3600 seconds
@@ -117,7 +113,7 @@ bun run db:studio
 
 ```bash
 # Run all tests
-bun test
+bun run test
 
 # Run unit tests only
 bun run test:unit
@@ -246,6 +242,74 @@ bun run truncate-r2
 - **Image Generation**: Runware (default) / OpenAI
 - **External APIs**: CoinGecko, Alternative.me (Fear & Greed Index), Tavily (web search)
 - **Runtime**: Bun (local), workerd (Cloudflare)
+
+### High-Level Architecture
+
+```mermaid
+graph TB
+    CronTrigger[Cloudflare Cron Trigger 1h]
+    Orchestrator[PaintingGenerationOrchestrator]
+
+    subgraph DataAcquisition[Data Acquisition Layer]
+        CoinGeckoClient[CoinGeckoClient ACL]
+        AlternativeMeClient[AlternativeMeClient ACL]
+        TokenFetchService[TokenDataFetchService]
+        MarketDataService[MarketDataService]
+    end
+
+    subgraph SelectionLayer[Token Selection Layer]
+        TokenSelectionService[TokenSelectionService]
+        ScoringEngine[ScoringEngine]
+    end
+
+    subgraph ContextLayer[Context Building Layer]
+        ContextBuilder[PaintingContextBuilder]
+        ClassificationFns[Classification Functions lib/pure]
+    end
+
+    subgraph GenerationLayer[Image Generation Layer]
+        WorldPromptService[WorldPromptService existing]
+        ImageGenerationService[ImageGenerationService existing]
+        RunwareClient[RunwareClient existing]
+    end
+
+    subgraph DataLayer[Data Access Layer]
+        TokensRepo[TokensRepository]
+        MarketSnapshotsRepo[MarketSnapshotsRepository]
+        PaintingsRepo[PaintingsRepository existing]
+        D1[(Cloudflare D1)]
+        R2[(Cloudflare R2)]
+    end
+
+    CronTrigger --> Orchestrator
+
+    Orchestrator --> CoinGeckoClient
+    Orchestrator --> AlternativeMeClient
+    CoinGeckoClient --> TokenFetchService
+    CoinGeckoClient --> MarketDataService
+    AlternativeMeClient --> MarketDataService
+
+    TokenFetchService --> TokenSelectionService
+    MarketDataService --> TokenSelectionService
+    TokenSelectionService --> ScoringEngine
+
+    TokenSelectionService --> ContextBuilder
+    MarketDataService --> ContextBuilder
+    ContextBuilder --> ClassificationFns
+
+    ContextBuilder --> WorldPromptService
+    WorldPromptService --> ImageGenerationService
+    ImageGenerationService --> RunwareClient
+
+    TokensRepo --> D1
+    MarketSnapshotsRepo --> D1
+    PaintingsRepo --> D1
+    PaintingsRepo --> R2
+
+    Orchestrator --> TokensRepo
+    Orchestrator --> MarketSnapshotsRepo
+    Orchestrator --> PaintingsRepo
+```
 
 ### Cloudflare D1 Database
 
@@ -401,11 +465,189 @@ The hourly cron job executes the following pipeline:
 7. **Generate Image**: Generate artwork using selected model
 8. **Store Painting**: Save image to R2 and metadata to D1
 
+### Hourly Painting Generation Flow
+
+```mermaid
+sequenceDiagram
+    participant Cron as Cloudflare Cron
+    participant Orch as PaintingGenerationOrchestrator
+    participant CG as CoinGeckoClient
+    participant TFS as TokenDataFetchService
+    participant MDS as MarketDataService
+    participant TSS as TokenSelectionService
+    participant PCB as PaintingContextBuilder
+    participant WPS as WorldPromptService
+    participant IGS as ImageGenerationService
+    participant TR as TokensRepository
+    participant MSR as MarketSnapshotsRepository
+    participant PR as PaintingsRepository
+    participant D1 as Cloudflare D1
+    participant R2 as Cloudflare R2
+
+    Cron->>Orch: Trigger (hourly)
+    Orch->>Orch: Generate hourBucket
+    Orch->>MSR: Check duplicate (hourBucket)
+    MSR->>D1: SELECT FROM market_snapshots
+    D1-->>MSR: Existing record or null
+    MSR-->>Orch: Result<boolean>
+
+    alt Duplicate detected
+        Orch-->>Cron: Skip (idempotency)
+    else No duplicate
+        Orch->>CG: Check FORCE_TOKEN_LIST env
+
+        alt FORCE_TOKEN_LIST is set
+            CG->>CG: Parse FORCE_TOKEN_LIST
+            CG->>CG: GET /coins/list (ID mapping)
+            CG->>CG: Resolve tickers to CoinGecko IDs
+            CG-->>TFS: Forced token list with priorities
+        else Normal flow
+            CG->>CG: GET /search/trending
+            CG-->>TFS: Trending token list with ranks
+        end
+
+        TFS->>CG: GET /coins/markets with ids parameter
+        CG-->>TFS: Batch token details (logo, price, volume, etc.)
+        TFS-->>TSS: Candidate tokens with market data
+
+        MDS->>CG: GET /global
+        CG-->>MDS: Global market data
+        MDS->>Orch: Request Fear & Greed Index
+        Orch->>AlternativeMeClient: GET /fng/
+        AlternativeMeClient-->>Orch: Fear & Greed Index
+        Orch-->>MDS: Fear & Greed Index
+        MDS-->>TSS: Market snapshot (with FGI)
+        MDS->>MSR: Store market snapshot
+        MSR->>D1: INSERT INTO market_snapshots
+
+        TSS->>TSS: Score candidates (trend, impact, mood)
+        TSS->>TSS: Select top token by finalScore
+        TSS->>TR: Check if token exists in DB
+        TR->>D1: SELECT FROM tokens
+        D1-->>TR: Token record or null
+
+        alt Token not in DB
+            TR->>D1: INSERT INTO tokens
+        end
+
+        TSS-->>PCB: Selected token + market data
+
+        PCB->>PCB: classifyMarketClimate()
+        PCB->>PCB: classifyTokenArchetype()
+        PCB->>PCB: classifyEventPressure()
+        PCB->>PCB: pickComposition()
+        PCB->>PCB: pickPalette()
+        PCB->>PCB: classifyDynamics()
+        PCB->>PCB: deriveMotifs()
+        PCB-->>WPS: PaintingContext
+
+        WPS->>WPS: composeTokenPrompt()
+        WPS-->>IGS: PromptComposition
+
+        IGS->>IGS: Generate image (Runware FLUX kontext)
+        IGS-->>PR: Image buffer + metadata
+
+        PR->>R2: Store image
+        R2-->>PR: Image URL
+        PR->>D1: INSERT INTO paintings
+        D1-->>PR: Success
+
+        PR-->>Orch: Generation result
+        Orch-->>Cron: Success
+    end
+```
+
+### Token Selection and Scoring Flow
+
+```mermaid
+flowchart TD
+    Start([Start Token Selection])
+    CheckForce{FORCE_TOKEN_LIST<br/>is set?}
+    ParseForce[Parse FORCE_TOKEN_LIST]
+    GetCoinsList[GET /coins/list<br/>ID mapping]
+    ResolveIds[Resolve tickers to<br/>CoinGecko IDs]
+    GetTrending[GET /search/trending<br/>Trending Search]
+
+    GetDetails["GET /coins/markets<br/>batch fetch all tokens"]
+    BuildCandidates[Build candidate set<br/>with market data]
+
+    CheckForceFlow{FORCE_TOKEN_LIST<br/>used?}
+    SkipStablecoins[Skip stablecoin<br/>exclusion]
+    ExcludeStablecoins[Exclude stablecoins<br/>USDT, USDC, etc.]
+
+    CheckForceScoring{FORCE_TOKEN_LIST<br/>used?}
+    SortByPriority[Sort by forcePriority]
+    SelectTop[Select top priority token]
+
+    CalculateScores[Calculate scores:<br/>trendScore, impactScore, moodScore]
+    CalculateFinal["finalScore = 0.50*trend<br/>+ 0.35*impact + 0.15*mood"]
+    SelectMaxScore[Select token with<br/>max finalScore]
+
+    CheckDuplicate{Token selected<br/>in last 24h?}
+    SkipDuplicate[Skip to next candidate]
+
+    CheckTokenDB{Token exists<br/>in DB?}
+    StoreToken[INSERT INTO tokens<br/>with coingeckoId]
+
+    End([Return Selected Token])
+
+    Start --> CheckForce
+    CheckForce -->|Yes| ParseForce
+    CheckForce -->|No| GetTrending
+    ParseForce --> GetCoinsList
+    GetCoinsList --> ResolveIds
+    ResolveIds --> GetDetails
+    GetTrending --> GetDetails
+
+    GetDetails --> BuildCandidates
+    BuildCandidates --> CheckForceFlow
+
+    CheckForceFlow -->|Yes| SkipStablecoins
+    CheckForceFlow -->|No| ExcludeStablecoins
+
+    SkipStablecoins --> CheckForceScoring
+    ExcludeStablecoins --> CheckForceScoring
+
+    CheckForceScoring -->|Yes| SortByPriority
+    CheckForceScoring -->|No| CalculateScores
+
+    SortByPriority --> SelectTop
+    SelectTop --> CheckTokenDB
+
+    CalculateScores --> CalculateFinal
+    CalculateFinal --> SelectMaxScore
+    SelectMaxScore --> CheckDuplicate
+
+    CheckDuplicate -->|Yes, skip| SkipDuplicate
+    CheckDuplicate -->|No| CheckTokenDB
+    SkipDuplicate --> CalculateScores
+
+    CheckTokenDB -->|No| StoreToken
+    CheckTokenDB -->|Yes| End
+    StoreToken --> End
+```
+
 See `src/cron.ts` and `src/services/paintings/painting-generation-orchestrator.ts` for implementation details.
 
 ## Prompt System
 
 The project uses a dynamic prompt generation system that incorporates:
+
+### Dynamic Prompt Architecture
+
+```mermaid
+graph TB
+CronJob[CronJob] --> PromptService[PromptService]
+PromptService --> D1Lookup[D1Lookup]
+D1Lookup --> D1Check{D1Hit}
+D1Check -->|Yes| UseD1Context[UseD1Context]
+D1Check -->|No| TavilySearch[TavilySearch]
+UseD1Context --> WorkersAiPrompt[WorkersAiPrompt]
+TavilySearch --> WorkersAiPrompt
+WorkersAiPrompt --> PromptResult[PromptResult]
+```
+
+The system dynamically generates contextual prompts by:
 
 - **Token Context**: Market data, price trends, and sentiment analysis
 - **Market Sentiment**: Fear & Greed Index from Alternative.me
@@ -531,6 +773,17 @@ Additional documentation is available in the `docs/` directory:
 - [Weighted Prompt System](./docs/weighted-prompt-system.md) – Prompt generation details
 - [Runware Models](./docs/runware-models.md) – Available models and configurations
 - [Cache Impact Analysis](./docs/cache-impact-analysis.md) – Caching strategy
+
+### Design Specifications
+
+Detailed design documents for current features:
+
+- [Dynamic Draw Design](./.kiro/specs/dynamic-draw/design.md) – Hourly painting generation architecture
+- [Dynamic Draw Requirements](./.kiro/specs/dynamic-draw/requirements.md) – Functional requirements and constraints
+- [Dynamic Draw Tasks](./.kiro/specs/dynamic-draw/tasks.md) – Implementation task breakdown
+- [Dynamic Prompt Design](./.kiro/specs/dynamic-prompt/design.md) – AI-powered prompt generation system
+- [Dynamic Prompt Requirements](./.kiro/specs/dynamic-prompt/requirements.md) – Prompt generation requirements
+- [Dynamic Prompt Tasks](./.kiro/specs/dynamic-prompt/tasks.md) – Prompt system implementation tasks
 
 ## Links
 

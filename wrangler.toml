@@ -48,6 +48,7 @@ id = "8c588d03a8ab4cd19e0c458dcabf1bec"
 # Workers AI Binding
 [ai]
 binding = "AI"
+remote = true
 
 # Next.js on Cloudflare Pages is managed in open-next.config.ts
 [assets]
@@ -110,6 +111,7 @@ id = "8c588d03a8ab4cd19e0c458dcabf1bec"
 # Workers AI Binding (same as production for dev)
 [env.dev.ai]
 binding = "AI"
+remote = true
 
 # Service Binding
 [[env.dev.services]]

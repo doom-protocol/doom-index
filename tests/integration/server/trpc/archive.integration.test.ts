@@ -11,16 +11,6 @@ function createTestMetadata(id: string, imageKey: string, timestamp: string): Pa
     minuteBucket: timestamp,
     paramsHash: "abc12345",
     seed: "def456789012",
-    mcRounded: {
-      CO2: 1000000,
-      ICE: 2000000,
-      FOREST: 3000000,
-      NUKE: 4000000,
-      MACHINE: 5000000,
-      PANDEMIC: 6000000,
-      FEAR: 7000000,
-      HOPE: 8000000,
-    },
     visualParams: {
       fogDensity: 0.5,
       skyTint: 0.6,

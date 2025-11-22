@@ -18,7 +18,7 @@ import type { ImageProvider } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
 import type { WorldPromptService, PromptComposition } from "@/services/world-prompt-service";
 import type { PaintingContext } from "@/types/painting-context";
-import type { TokenContext, TokenMetaInput } from "@/services/token-context-service";
+import type { TokenMetaInput } from "@/services/token-context-service";
 
 export type ImageGenerationResult = {
   composition: PromptComposition;
@@ -40,7 +40,6 @@ type ImageGenerationDeps = {
 type TokenImageGenerationInput = {
   paintingContext: PaintingContext;
   tokenMeta: TokenMetaInput;
-  tokenContext?: TokenContext;
   referenceImageUrl?: string | null;
 };
 
@@ -159,7 +158,6 @@ export function createImageGenerationService({
     const promptResult = await promptService.composeTokenPrompt({
       paintingContext: input.paintingContext,
       tokenMeta: input.tokenMeta,
-      tokenContext: input.tokenContext,
     });
 
     if (promptResult.isErr()) return err(promptResult.error);

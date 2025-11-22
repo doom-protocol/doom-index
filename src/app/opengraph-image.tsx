@@ -7,12 +7,12 @@
  */
 
 import { ImageResponse } from "next/og";
-import { getJsonR2, getImageR2 } from "@/lib/r2";
+import { getImageR2 } from "@/lib/r2";
 import { arrayBufferToDataUrl } from "@/utils/image";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getBaseUrl } from "@/utils/url";
 import { logger } from "@/utils/logger";
-import type { GlobalState } from "@/types/domain";
+import { createPaintingsRepository } from "@/repositories/paintings-repository";
 
 // Route Segment Config
 export const dynamic = "force-dynamic";
@@ -66,24 +66,34 @@ async function getFallbackImageDataUrl(assetsFetcher: Fetcher): Promise<string> 
  * - Prefer Cloudflare Image Transformations to get PNG (Satori-friendly)
  * - If transformation not applied (e.g., local dev), return absolute URL to static fallback PNG
  */
-async function getArtworkImageSrc(bucket: R2Bucket, requestUrl: string, assetsFetcher?: Fetcher): Promise<string> {
+async function getArtworkImageSrc(
+  bucket: R2Bucket,
+  db: D1Database,
+  requestUrl: string,
+  assetsFetcher?: Fetcher,
+): Promise<string> {
   logger.info("ogp.step1-fetch-state");
-  // Step 1: Fetch global state
-  const stateResult = await getJsonR2<GlobalState>(bucket, "state/global.json");
-  if (stateResult.isErr() || !stateResult.value?.imageUrl) {
+  // Step 1: Fetch latest painting from D1
+  const repo = createPaintingsRepository({ d1Binding: db });
+  const listResult = await repo.list({ limit: 1 });
+
+  if (listResult.isErr() || listResult.value.items.length === 0) {
     logger.warn("ogp.step1-state-failed", {
-      error: stateResult.isErr() ? stateResult.error.message : "No image URL",
+      error: listResult.isErr() ? listResult.error.message : "No paintings found",
     });
-    throw new Error("Failed to fetch state or no image URL");
+    throw new Error("Failed to fetch state or no paintings found");
   }
 
+  const latestPainting = listResult.value.items[0];
+
   logger.info("ogp.step1-state-success", {
-    imageUrl: stateResult.value.imageUrl,
+    imageUrl: latestPainting.imageUrl,
+    id: latestPainting.id,
   });
 
   logger.info("ogp.step2-extract-key");
   // Step 2: Extract R2 key from imageUrl
-  const imageUrl = stateResult.value.imageUrl;
+  const imageUrl = latestPainting.imageUrl;
   let imageKey: string;
   if (imageUrl.startsWith("/api/r2/")) {
     imageKey = imageUrl.slice("/api/r2/".length);
@@ -203,32 +213,9 @@ export async function getPlaceholderDataUrl(assetsFetcher: Fetcher): Promise<str
 export async function getArtworkDataUrl(
   assetsFetcher: Fetcher,
   bucket: R2Bucket,
+  imageKey: string,
 ): Promise<{ dataUrl: string; fallbackUsed: boolean }> {
   try {
-    const stateResult = await getJsonR2<GlobalState>(bucket, "state/global.json");
-    if (stateResult.isErr() || !stateResult.value?.imageUrl) {
-      const dataUrl = await getPlaceholderDataUrl(assetsFetcher);
-      return { dataUrl, fallbackUsed: true };
-    }
-
-    const imageUrl = stateResult.value.imageUrl;
-    // Extract key from possible "/api/r2/..." prefix or direct R2 key
-    let imageKey: string;
-    if (imageUrl.startsWith("/api/r2/")) {
-      imageKey = imageUrl.slice("/api/r2/".length);
-    } else if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-      const url = new URL(imageUrl);
-      if (url.pathname.startsWith("/api/r2/")) {
-        imageKey = url.pathname.slice("/api/r2/".length);
-      } else {
-        // Assume it's a direct R2 key if it doesn't match our API route pattern
-        imageKey = url.pathname.replace(/^\//, "");
-      }
-    } else {
-      // Assume it's a direct R2 key
-      imageKey = imageUrl.replace(/^\//, "");
-    }
-
     const imageResult = await getImageR2(bucket, imageKey);
     if (imageResult.isErr() || !imageResult.value) {
       const dataUrl = await getPlaceholderDataUrl(assetsFetcher);
@@ -270,16 +257,23 @@ export default async function Image(): Promise<ImageResponse> {
     const { env } = await getCloudflareContext({ async: true });
     const cloudflareEnv = env as Cloudflare.Env;
     const r2Bucket = cloudflareEnv.R2_BUCKET as R2Bucket | undefined;
+    const db = cloudflareEnv.DB as D1Database | undefined;
 
     if (!r2Bucket) {
       logger.warn("ogp.step-init-no-bucket");
       throw new Error("R2_BUCKET not available");
     }
 
+    if (!db) {
+      logger.warn("ogp.step-init-no-db");
+      throw new Error("DB not available");
+    }
+
     const assetsFetcher = cloudflareEnv.ASSETS as Fetcher | undefined;
 
     logger.info("ogp.step-init-success", {
       hasBucket: !!r2Bucket,
+      hasDb: !!db,
       hasAssets: !!assetsFetcher,
     });
 
@@ -290,7 +284,7 @@ export default async function Image(): Promise<ImageResponse> {
 
     logger.info("ogp.step-fetch-artwork");
     // Fetch artwork image
-    const dataUrl = await getArtworkImageSrc(r2Bucket, requestUrl, assetsFetcher);
+    const dataUrl = await getArtworkImageSrc(r2Bucket, db, requestUrl, assetsFetcher);
     logger.info("ogp.step-fetch-artwork-success", {
       dataUrlLength: dataUrl.length,
       dataUrlLengthKB: (dataUrl.length / 1024).toFixed(2),
