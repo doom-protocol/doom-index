@@ -63,3 +63,8 @@ export const CompositionPatternComponent = () => {
   );
 };
 ```
+
+## 4. 副作用の管理
+
+無闇矢鱈にuseEffectを使わないで下さい!!
+例えばmodalやtoastなども最近はcssのみで実装することができます。

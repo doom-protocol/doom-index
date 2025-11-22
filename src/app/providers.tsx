@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useViewer } from "@/hooks/use-viewer";
 import { useState } from "react";
 import { TRPCProvider, createTRPCClientInstance } from "@/lib/trpc/client";
+import { WalletAdapterProvider } from "@/components/providers/wallet-adapter-provider";
+import { UmiProvider } from "@/components/providers/umi-provider";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -40,9 +42,13 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({ children })
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-        {children}
-      </TRPCProvider>
+      <WalletAdapterProvider>
+        <UmiProvider>
+          <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+            {children}
+          </TRPCProvider>
+        </UmiProvider>
+      </WalletAdapterProvider>
     </QueryClientProvider>
   );
 };
