@@ -60,7 +60,7 @@ export const DateFilter: React.FC = () => {
               type="date"
               defaultValue={startDate}
               onBlur={handleStartDateBlur}
-              className="w-30 rounded border border-white/20 bg-white/10 px-2 py-2 pr-8 text-xs text-white text-right backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none md:w-36 md:px-2 md:py-1 md:text-sm md:pr-2 md:text-left"
+              className="w-30 rounded border border-white/20 bg-white/10 px-2 py-2 pr-2 text-[9px] text-white text-right backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none md:w-36 md:px-2 md:py-1 md:text-[11px] md:pr-1 md:text-left"
             />
           </div>
 
@@ -74,7 +74,7 @@ export const DateFilter: React.FC = () => {
               defaultValue={endDate}
               onBlur={handleEndDateBlur}
               min={startDate || undefined}
-              className="w-30 rounded border border-white/20 bg-white/10 px-2 py-2 pr-8 text-xs text-white text-right backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none md:w-36 md:px-2 md:py-1 md:text-sm md:pr-2 md:text-left"
+              className="w-30 rounded border border-white/20 bg-white/10 px-2 py-2 pr-2 text-[9px] text-white text-right backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none md:w-36 md:px-2 md:py-1 md:text-[11px] md:pr-1 md:text-left"
             />
           </div>
         </div>
