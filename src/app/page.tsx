@@ -1,7 +1,14 @@
 "use client";
 
-import { GalleryScene } from "@/components/gallery/gallery-scene";
+import dynamic from "next/dynamic";
 import { Header } from "@/components/ui/header";
+
+const GalleryScene = dynamic(
+  () => import("@/components/gallery/gallery-scene").then(mod => ({ default: mod.GalleryScene })),
+  {
+    ssr: false,
+  },
+);
 
 export default function Home() {
   return (

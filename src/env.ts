@@ -22,6 +22,8 @@ export const env = createEnv({
     COINGECKO_API_KEY: z.string().optional(),
     FORCE_TOKEN_LIST: z.string().optional(),
     SLACK_WEBHOOK_URL: z.string().optional(),
+    // IPFS / Pinata
+    PINATA_JWT: z.string().optional(),
     // Admin Tools
     ADMIN_SECRET: z.string().optional(),
     CACHE_PURGE_API_TOKEN: z.string().optional(),
@@ -37,6 +39,8 @@ export const env = createEnv({
     // R2 Public URL (e.g., "https://storage.doomindex.fun" or "http://localhost:8787/api/r2")
     // If set, images will be served directly from this URL instead of /api/r2 endpoint
     NEXT_PUBLIC_R2_URL: z.string().min(1),
+    // Solana RPC URL for client-side transactions
+    NEXT_PUBLIC_SOLANA_RPC_URL: z.string().url().default("https://api.devnet.solana.com"),
   },
 
   /**
@@ -66,12 +70,14 @@ export const env = createEnv({
     COINGECKO_API_KEY: process.env.COINGECKO_API_KEY,
     FORCE_TOKEN_LIST: process.env.FORCE_TOKEN_LIST,
     SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL,
+    PINATA_JWT: process.env.PINATA_JWT,
     ADMIN_SECRET: process.env.ADMIN_SECRET,
     CACHE_PURGE_API_TOKEN: process.env.CACHE_PURGE_API_TOKEN,
     CACHE_PURGE_ZONE_ID: process.env.CACHE_PURGE_ZONE_ID,
     // Client
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     NEXT_PUBLIC_R2_URL: process.env.NEXT_PUBLIC_R2_URL,
+    NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
     // Shared
     IMAGE_MODEL: process.env.IMAGE_MODEL,
     NODE_ENV: process.env.NODE_ENV,

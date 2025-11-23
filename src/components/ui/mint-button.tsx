@@ -31,7 +31,12 @@ export const MintButton: FC<MintButtonProps> = ({
     triggerHaptic();
     if (!disabled && !isLoading && !showError) {
       sendGAEvent(GA_EVENTS.MINT_BUTTON_CLICK);
-      onClick?.();
+
+      // If GLB file is already exported, trigger onClick to open modal (handled by parent)
+      // Otherwise, trigger export
+      if (onClick) {
+        onClick();
+      }
     }
   };
 
@@ -65,7 +70,7 @@ export const MintButton: FC<MintButtonProps> = ({
         ${isErrorState ? "text-red-200" : "text-white/70"}
       `}
       >
-        {isLoading ? "Exporting..." : isErrorState ? "Failed" : "Export GLB"}
+        Mint
       </span>
     </button>
   );

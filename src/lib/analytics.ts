@@ -9,6 +9,10 @@ export const GA_EVENTS = {
   ARCHIVE_PAGE_CHANGE: "archive_page_change",
   ARCHIVE_FILTER_CHANGE: "archive_filter_change",
   MINT_BUTTON_CLICK: "mint_button_click",
+  MINT_UPLOAD_START: "mint_upload_start",
+  MINT_WALLET_CONNECT: "mint_wallet_connect",
+  MINT_TRANSACTION_START: "mint_transaction_start",
+  MINT_SUCCESS: "mint_success",
   WHITEPAPER_VIEW: "whitepaper_view",
   PAGE_NAVIGATION: "page_navigation",
 } as const;

@@ -113,7 +113,6 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
       if (imageSrc && imageSrc.includes(pendingUrlRef.current)) {
         const oldTexture = currentTextureRef.current;
         if (oldTexture && oldTexture !== texture) {
-          previousTextureRef.current = oldTexture;
           setPreviousTexture(oldTexture);
         }
 
@@ -135,7 +134,6 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
       if (imageSrc && imageSrc !== currentImageSrc) {
         const oldTexture = currentTextureRef.current;
         if (oldTexture) {
-          previousTextureRef.current = oldTexture;
           setPreviousTexture(oldTexture);
         }
 
@@ -157,21 +155,18 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
   const activeTexture = currentTexture || texture;
   const [planeWidth, planeHeight] = calculatePlaneDimensions(activeTexture, innerWidth, innerHeight);
 
-  const [pulseOutlineGeometry, setPulseOutlineGeometry] = useState<EdgesGeometry | null>(null);
-
-  useEffect(() => {
+  const pulseOutlineGeometry = React.useMemo(() => {
     const plane = new PlaneGeometry(planeWidth, planeHeight);
     const edges = new EdgesGeometry(plane, 1);
     plane.dispose();
-
-    setTimeout(() => {
-      setPulseOutlineGeometry(edges);
-    }, 0);
-
-    return () => {
-      edges.dispose();
-    };
+    return edges;
   }, [planeWidth, planeHeight]);
+
+  useEffect(() => {
+    return () => {
+      pulseOutlineGeometry.dispose();
+    };
+  }, [pulseOutlineGeometry]);
 
   // Cleanup textures on unmount
   useEffect(() => {

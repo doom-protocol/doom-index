@@ -29,6 +29,8 @@ const eslintConfig = defineConfig([
           caughtErrorsIgnorePattern: "^_",
         },
       ],
+      // Disable equals-negative-zero warning (caused by Three.js library)
+      "equals-negative-zero": "off",
     },
   },
 ]);

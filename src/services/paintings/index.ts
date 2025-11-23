@@ -13,6 +13,7 @@
 import { Result } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import type { PaintingMetadata } from "@/types/paintings";
+import type { PaginationOptions } from "@/types/domain";
 import { resolveBucketOrThrow } from "@/lib/r2";
 import { createPaintingsRepository } from "@/repositories/paintings-repository";
 import type { PaintingsRepository } from "@/repositories/paintings-repository";
@@ -30,13 +31,9 @@ type ArchiveStorageResult = {
   metadataUrl: string;
 };
 
-type ArchiveListOptions = {
-  limit?: number;
-  cursor?: string;
+type ArchiveListOptions = PaginationOptions & {
   prefix?: string;
   startAfter?: string;
-  startDate?: string;
-  endDate?: string;
 };
 
 export type ArchiveListResponse = list.ListImagesResponse;

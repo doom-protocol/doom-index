@@ -59,3 +59,17 @@ export const paintingsListSchema = z
       path: ["startDate"],
     },
   );
+
+// IPFS Schemas
+export const createSignedUploadUrlSchema = z.object({
+  filename: z.string().min(1).max(255),
+  contentType: z.enum(["application/octet-stream", "application/json"]),
+  keyvalues: z
+    .object({
+      walletAddress: z.string().optional(),
+      timestamp: z.string(),
+      paintingHash: z.string(),
+      network: z.enum(["devnet", "mainnet-beta"]),
+    })
+    .optional(),
+});

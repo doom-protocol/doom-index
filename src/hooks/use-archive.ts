@@ -1,13 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC, useTRPCClient } from "@/lib/trpc/client";
 import type { ArchiveListResponse } from "@/services/paintings";
+import type { PaginationOptions } from "@/types/domain";
 import { logger } from "@/utils/logger";
 
-interface UseArchiveOptions {
-  limit?: number;
-  cursor?: string;
-  startDate?: string;
-  endDate?: string;
+interface UseArchiveOptions extends PaginationOptions {
   enabled?: boolean;
 }
 

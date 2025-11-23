@@ -225,14 +225,8 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ startDate, endDa
     );
   }
 
-  // Loading state
-  if (isLoading || awaitingCursor) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center p-8">
-        <p className="text-white/70">Loading paintings...</p>
-      </div>
-    );
-  }
+  // Show skeleton immediately when loading
+  const showSkeleton = isLoading || awaitingCursor;
 
   const updateURL = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -303,7 +297,7 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ startDate, endDa
         </div>
         <ArchiveGrid
           items={displayedItems}
-          isLoading={isLoading}
+          isLoading={showSkeleton}
           skeletonCount={itemsPerPage}
           onItemClick={handleItemClick}
         />
@@ -317,7 +311,7 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ startDate, endDa
           hasPreviousPage={hasPreviousPage}
           onNext={handleNext}
           onPrevious={handlePrevious}
-          isLoading={isLoading}
+          isLoading={showSkeleton}
         />
       </div>
       <div className={`transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>

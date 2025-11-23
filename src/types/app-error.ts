@@ -1,9 +1,10 @@
 type ExternalApiError = {
   type: "ExternalApiError";
-  provider: "ImageProvider" | "WorkersAI" | "Tavily" | "coingecko" | "alternative.me" | "runware";
+  provider: "ImageProvider" | "WorkersAI" | "Tavily" | "coingecko" | "alternative.me" | "runware" | "pinata";
   status?: number;
   message: string;
   ticker?: string;
+  details?: unknown;
 };
 
 type StorageError = {
