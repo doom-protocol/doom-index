@@ -5,9 +5,6 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
-  CoinbaseWalletAdapter,
-  TrustWalletAdapter,
-  LedgerWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import React, { FC, useMemo } from "react";
@@ -40,12 +37,12 @@ export const WalletAdapterProvider: FC<Props> = ({ children }) => {
        * If you wish to support a wallet that supports neither of those standards,
        * instantiate its legacy wallet adapter here. Common legacy adapters can be found
        * in the npm package `@solana/wallet-adapter-wallets`.
+       *
+       * Note: Backpack and Jupiter wallets support the Wallet Standard protocol
+       * and will be automatically detected without explicit adapter instantiation.
        */
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter({ network }),
-      new CoinbaseWalletAdapter(),
-      new TrustWalletAdapter(),
-      new LedgerWalletAdapter(),
     ],
     [network],
   );
