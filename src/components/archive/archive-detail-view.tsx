@@ -11,6 +11,7 @@ import { env } from "@/env";
 import type { Painting } from "@/types/paintings";
 import { sendGAEvent } from "@/lib/analytics";
 import { useEscapeKey } from "@/hooks/use-click-outside";
+import { useHaptic } from "use-haptic";
 
 interface ArchiveDetailViewProps {
   item: Painting;
@@ -79,15 +80,17 @@ const CameraAnimation: React.FC<CameraAnimationProps> = ({ isZoomingOut, onZoomO
 export const ArchiveDetailView: React.FC<ArchiveDetailViewProps> = ({ item, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const { triggerHaptic } = useHaptic();
 
   const handleClose = useCallback(() => {
+    triggerHaptic();
     setIsClosing(true);
     setIsVisible(false);
     // Wait for zoom out animation to complete
     setTimeout(() => {
       onClose();
     }, 800); // Slightly longer than camera animation
-  }, [onClose]);
+  }, [onClose, triggerHaptic]);
 
   // Disable scroll when detail view is open
   useEffect(() => {
