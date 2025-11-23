@@ -10,6 +10,7 @@ import { ArchiveFramedPainting } from "./archive-framed-painting";
 import { env } from "@/env";
 import type { Painting } from "@/types/paintings";
 import { sendGAEvent } from "@/lib/analytics";
+import { useEscapeKey } from "@/hooks/use-click-outside";
 
 interface ArchiveDetailViewProps {
   item: Painting;
@@ -101,17 +102,7 @@ export const ArchiveDetailView: React.FC<ArchiveDetailViewProps> = ({ item, onCl
   }, [item.id]);
 
   // Handle ESC key
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        handleClose();
-      }
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => {
-      window.removeEventListener("keydown", handleEsc);
-    };
-  }, [handleClose]);
+  useEscapeKey(handleClose);
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);

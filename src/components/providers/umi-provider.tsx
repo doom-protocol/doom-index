@@ -6,24 +6,12 @@ import { mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { Umi } from "@metaplex-foundation/umi";
-import { env } from "@/env";
+import { getSolanaRpcUrl } from "@/constants/solana";
 
 // Create Umi instance
 const createUmiInstance = (): Umi => {
-  // Fallback to devnet if RPC URL is not set
-  // Handle both undefined and empty string cases
-  let rpcUrl: string;
-  try {
-    rpcUrl = env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com";
-  } catch {
-    // Fallback if env is not available
-    rpcUrl = "https://api.devnet.solana.com";
-  }
-
-  // Ensure rpcUrl is a valid string
-  if (!rpcUrl || typeof rpcUrl !== "string" || rpcUrl.trim() === "") {
-    rpcUrl = "https://api.devnet.solana.com";
-  }
+  // Get RPC URL using centralized configuration
+  const rpcUrl = getSolanaRpcUrl();
 
   const umi = createUmi(rpcUrl).use(mplTokenMetadata());
 

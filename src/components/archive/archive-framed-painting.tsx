@@ -144,21 +144,18 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
     : [planeWidth, planeHeight];
   const [previousPlaneWidth, previousPlaneHeight] = previousPlaneDimensions;
 
-  const [pulseOutlineGeometry, setPulseOutlineGeometry] = useState<EdgesGeometry | null>(null);
-
-  useEffect(() => {
+  const pulseOutlineGeometry = React.useMemo(() => {
     const plane = new PlaneGeometry(planeWidth, planeHeight);
     const edges = new EdgesGeometry(plane, 1);
     plane.dispose();
-
-    setTimeout(() => {
-      setPulseOutlineGeometry(edges);
-    }, 0);
-
-    return () => {
-      edges.dispose();
-    };
+    return edges;
   }, [planeWidth, planeHeight]);
+
+  useEffect(() => {
+    return () => {
+      pulseOutlineGeometry.dispose();
+    };
+  }, [pulseOutlineGeometry]);
 
   useEffect(() => {
     return () => {

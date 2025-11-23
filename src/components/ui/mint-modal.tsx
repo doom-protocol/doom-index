@@ -10,9 +10,10 @@ import { FC, useState, useCallback, useRef, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, Group } from "three";
 import { OrbitControls } from "@react-three/drei";
-import { useIpfsUpload } from "@/hooks/use-ipfs-upload";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useSolanaWallet } from "@/hooks/use-solana-wallet";
 import { useSolanaMint } from "@/hooks/use-solana-mint";
+import { useIpfsUpload } from "@/hooks/use-ipfs-upload";
 import { logger } from "@/utils/logger";
 import { getErrorMessage } from "@/utils/error";
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
@@ -33,55 +34,57 @@ export interface MintModalProps {
 
 export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata, glbFile }) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isMintCompleted, setIsMintCompleted] = useState(false);
+  const [uploadedMetadata, setUploadedMetadata] = useState<{
+    cidGlb: string;
+    cidMetadata: string;
+  } | null>(null);
   const paintingRef = useRef<Group>(null);
 
-  const { uploadGlbAndMetadata, isUploading } = useIpfsUpload();
-  const { publicKey, connected, connectWallet, connecting: isWalletConnecting } = useSolanaWallet();
+  const { connected, connecting: isWalletConnecting, publicKey } = useSolanaWallet();
+  const { setVisible } = useWalletModal();
   const { mint, isMinting } = useSolanaMint();
+  const { uploadGlbAndMetadata, isUploading: isIpfsUploading } = useIpfsUpload();
 
   // Mock price (in SOL)
   const MINT_PRICE = 0.1;
 
+  // Handle wallet connection
+  const handleConnectWallet = useCallback(() => {
+    setVisible(true);
+  }, [setVisible]);
+
   // Handle complete mint flow
   const handleMint = useCallback(async () => {
+    // Step 1: Check wallet connection
+    if (!connected) {
+      setVisible(true);
+      return;
+    }
+
+    // Step 2: Validate required data
     if (!glbFile) {
-      toast.error("No artwork file available");
+      toast.error("Artwork is still being prepared. Please wait...");
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      // Step 1: Upload to IPFS (if not already done)
-      sendGAEvent(GA_EVENTS.MINT_UPLOAD_START);
-      const ipfsData = await uploadGlbAndMetadata(glbFile, {
-        paintingHash: paintingMetadata.paintingHash,
-        timestamp: paintingMetadata.timestamp,
-        walletAddress: publicKey ?? undefined,
-      });
+      // Step 3: Mint NFT first, then upload to IPFS after transaction is sent
+      let metadata = uploadedMetadata;
 
-      logger.info("mint.upload.success", {
-        cidGlb: ipfsData.cidGlb,
-        cidMetadata: ipfsData.cidMetadata,
-      });
-
-      // Step 2: Connect wallet if not connected
-      if (!connected) {
-        sendGAEvent(GA_EVENTS.MINT_WALLET_CONNECT);
-
-        const connectResult = await connectWallet();
-        if (connectResult.isErr()) {
-          // Error handling is done inside useSolanaWallet hook
-          return;
-        }
-      }
-
-      // Step 3: Mint NFT
+      // Mint NFT first (signature prompt shows immediately)
       sendGAEvent(GA_EVENTS.MINT_TRANSACTION_START);
+
+      // Use placeholder URI for minting if metadata doesn't exist yet
+      const tokenId = parseInt(paintingMetadata.paintingHash.slice(0, 8), 16);
+      const mintUri = metadata ? `ipfs://${metadata.cidMetadata}` : `ipfs://${tokenId}/metadata.json`; // Placeholder
+
       const result = await mint({
-        name: `DOOM INDEX #${paintingMetadata.paintingHash.slice(0, 8)}`,
+        name: `DOOM INDEX #${tokenId}`,
         symbol: "DOOM",
-        uri: `ipfs://${ipfsData.cidMetadata}`,
+        uri: mintUri,
         sellerFeeBasisPoints: 0,
       });
 
@@ -90,12 +93,36 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
         mintAddress: result.mintAddress,
       });
 
+      // Now upload to IPFS after transaction is sent
+      if (!metadata) {
+        logger.info("mint-modal.ipfs-upload.start");
+        toast.info("Uploading artwork to IPFS...");
+
+        const ipfsResult = await uploadGlbAndMetadata(glbFile, {
+          paintingHash: paintingMetadata.paintingHash,
+          timestamp: paintingMetadata.timestamp,
+          walletAddress: publicKey ?? undefined,
+        });
+
+        metadata = {
+          cidGlb: ipfsResult.cidGlb,
+          cidMetadata: ipfsResult.cidMetadata,
+        };
+        setUploadedMetadata(metadata);
+        logger.info("mint-modal.ipfs-upload.success", {
+          cidGlb: ipfsResult.cidGlb,
+          cidMetadata: ipfsResult.cidMetadata,
+        });
+      }
+
+      setIsMintCompleted(true);
       sendGAEvent(GA_EVENTS.MINT_SUCCESS);
       toast.success("NFT minted successfully!");
 
       // Close modal after successful mint
       setTimeout(() => {
         setIsProcessing(false);
+        setIsMintCompleted(false);
         onClose();
       }, 2000);
     } catch (error) {
@@ -105,7 +132,17 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
     } finally {
       setIsProcessing(false);
     }
-  }, [glbFile, uploadGlbAndMetadata, paintingMetadata, publicKey, connected, connectWallet, mint, onClose]);
+  }, [
+    glbFile,
+    uploadedMetadata,
+    paintingMetadata,
+    connected,
+    setVisible,
+    mint,
+    onClose,
+    uploadGlbAndMetadata,
+    publicKey,
+  ]);
 
   // Handle modal close
   const handleClose = useCallback(() => {
@@ -113,10 +150,10 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
     onClose();
   }, [onClose]);
 
-  const isLoading = isUploading || isMinting || isWalletConnecting || isProcessing;
+  const isLoading = isMinting || isWalletConnecting || isProcessing || isIpfsUploading;
 
-  // Extract token ID from painting hash (first 8 characters)
-  const tokenId = paintingMetadata.paintingHash.slice(0, 8);
+  // Extract token ID from painting hash (first 8 characters as int)
+  const tokenId = parseInt(paintingMetadata.paintingHash.slice(0, 8), 16);
   const collectionName = `DOOM NFT #${tokenId}`;
 
   return (
@@ -197,28 +234,66 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
               </div>
             </div>
 
-            {/* Mint Button */}
-            <button
-              onClick={handleMint}
-              disabled={isLoading || !glbFile || !isOpen}
-              tabIndex={isOpen ? 0 : -1}
-              className={`
-                relative w-full h-[52px] sm:h-[56px] rounded-[26px] sm:rounded-[28px] border
-                backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.2)]
-                flex items-center justify-center transition-all duration-300 ease-in-out
-                touch-manipulation p-0 outline-none overflow-hidden
-                transform-gpu will-change-transform
-                ${
-                  isLoading || !glbFile
-                    ? "bg-white/15 border-white/25 cursor-not-allowed opacity-60 shadow-white/15"
-                    : "bg-white/25 border-white/35 cursor-pointer opacity-100 active:scale-[0.97] sm:hover:bg-white/30 sm:hover:scale-[1.02] sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25 active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 shadow-white/20"
-                }
-              `}
-            >
-              <span className="relative z-10 text-sm sm:text-base font-bold tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] text-white">
-                {isLoading ? "Processing..." : "Mint"}
-              </span>
-            </button>
+            {/* Action Button */}
+            {!connected ? (
+              // Connect Wallet Button (always enabled)
+              <button
+                onClick={handleConnectWallet}
+                disabled={isLoading}
+                tabIndex={isOpen ? 0 : -1}
+                className={`
+                  relative w-full h-[52px] sm:h-[56px] rounded-[26px] sm:rounded-[28px] border
+                  backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.2)]
+                  flex items-center justify-center transition-all duration-300 ease-in-out
+                  touch-manipulation p-0 outline-none overflow-hidden
+                  transform-gpu will-change-transform
+                  ${
+                    isLoading
+                      ? "bg-white/15 border-white/25 cursor-not-allowed opacity-60 shadow-white/15"
+                      : "bg-white/25 border-white/35 cursor-pointer opacity-100 active:scale-[0.97] sm:hover:bg-white/30 sm:hover:scale-[1.02] sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25 active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 shadow-white/20"
+                  }
+                `}
+              >
+                <span className="relative z-10 text-sm sm:text-base font-bold tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] text-white">
+                  {isLoading ? "Processing..." : "Connect Wallet"}
+                </span>
+              </button>
+            ) : (
+              // Mint Button
+              <button
+                onClick={handleMint}
+                disabled={isLoading || !glbFile || !isMintCompleted}
+                tabIndex={isOpen ? 0 : -1}
+                className={`
+                  relative w-full h-[52px] sm:h-[56px] rounded-[26px] sm:rounded-[28px] border
+                  backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.2)]
+                  flex items-center justify-center transition-all duration-300 ease-in-out
+                  touch-manipulation p-0 outline-none overflow-hidden
+                  transform-gpu will-change-transform
+                  ${
+                    isLoading || !glbFile || !isMintCompleted
+                      ? "bg-white/10 border-white/20 cursor-not-allowed opacity-40 shadow-white/10"
+                      : "bg-white/25 border-white/35 cursor-pointer opacity-100 active:scale-[0.97] sm:hover:bg-white/30 sm:hover:scale-[1.02] sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25 active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 shadow-white/20"
+                  }
+                `}
+              >
+                <span
+                  className={`relative z-10 text-sm sm:text-base font-bold tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] ${
+                    isLoading || !glbFile || !isMintCompleted ? "text-white/50" : "text-white"
+                  }`}
+                >
+                  {isMintCompleted
+                    ? "Minted!"
+                    : isIpfsUploading
+                      ? "Uploading..."
+                      : isMinting
+                        ? "Minting..."
+                        : isProcessing
+                          ? "Processing..."
+                          : "Coming Soon"}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>

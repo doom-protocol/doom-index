@@ -12,6 +12,7 @@ import { RealtimeDashboard } from "../ui/realtime-dashboard";
 import { MintButton } from "../ui/mint-button";
 import { MintModal } from "../ui/mint-modal";
 import { useLatestPainting } from "@/hooks/use-latest-painting";
+import { useSolanaWallet } from "@/hooks/use-solana-wallet";
 import { logger } from "@/utils/logger";
 import { env } from "@/env";
 import { glbExportService } from "@/lib/glb-export-service";
@@ -41,6 +42,9 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
   const { data: latestPainting } = useLatestPainting();
   const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 
+  // Wallet hooks
+  const { connecting: isWalletConnecting } = useSolanaWallet();
+
   // Export state
   const paintingRef = useRef<Group>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -48,17 +52,22 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
   const [isMintModalOpen, setIsMintModalOpen] = useState(false);
 
   const handleExport = async () => {
-    // If GLB file is already exported, open mint modal
-    if (exportedGlbFile && latestPainting) {
+    // Open mint modal immediately (wallet connection and export will be handled in modal)
+    if (latestPainting) {
       setIsMintModalOpen(true);
+    }
+
+    // If GLB is already exported, no need to export again
+    if (exportedGlbFile) {
       return;
     }
 
-    // Otherwise, export GLB
+    // Export GLB and upload to IPFS in background
     if (isExporting || !paintingRef.current) return;
 
     setIsExporting(true);
     try {
+      logger.info("gallery-scene.glb-export.start");
       const result = await glbExportService.exportPaintingModel(paintingRef);
       if (result.isOk()) {
         const file = result.value;
@@ -72,21 +81,19 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
           if (optimizedResult.isOk()) {
             finalFile = new File([optimizedResult.value], file.name, { type: "application/octet-stream" });
           } else {
-            logger.warn("MintButton.optimizeFailed", { error: optimizedResult.error });
+            logger.warn("gallery-scene.optimizeFailed", { error: optimizedResult.error });
             // Continue with original file if optimization fails
           }
         }
 
-        // Store the file for mint flow and open mint modal
         setExportedGlbFile(finalFile);
-        setIsMintModalOpen(true);
-        logger.info("MintButton.exportSuccess", { fileName: finalFile.name, size: finalFile.size });
+        logger.info("gallery-scene.glb-export.success", { fileName: finalFile.name, size: finalFile.size });
       } else {
-        logger.error("MintButton.exportFailed", { error: result.error });
+        logger.error("gallery-scene.glb-export.failed", { error: result.error });
         toast.error(`Export failed: ${result.error.message}`);
       }
     } catch (e) {
-      logger.error("MintButton.exportException", { error: e });
+      logger.error("gallery-scene.exportException", { error: e });
       const errorMessage = e instanceof Error ? e.message : "Export failed";
       toast.error(`Export error: ${errorMessage}`);
     } finally {
@@ -95,11 +102,6 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
   };
 
   const previousThumbnailUrlRef = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    if (showDashboard && process.env.NODE_ENV !== "production") {
-      console.warn("RealtimeDashboard is deprecated — set showDashboard to false or restore implementation");
-    }
-  }, [showDashboard]);
 
   useEffect(() => {
     if (previousThumbnailUrlRef.current === undefined) {
@@ -116,6 +118,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
       });
       previousThumbnailUrlRef.current = thumbnailUrl;
       setExportedGlbFile(null);
+      setIsMintModalOpen(false);
     }
   }, [thumbnailUrl, latestPainting?.timestamp]);
 
@@ -210,12 +213,12 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
           pointerEvents: "none",
         }}
       >
-        <MintButton onClick={handleExport} isLoading={isExporting} />
+        <MintButton onClick={handleExport} isLoading={isExporting || isWalletConnecting} disabled={!latestPainting} />
       </div>
 
       {/* Mint Modal */}
       <MintModal
-        isOpen={isMintModalOpen && !!latestPainting && !!exportedGlbFile}
+        isOpen={isMintModalOpen && !!latestPainting}
         onClose={() => {
           setIsMintModalOpen(false);
           // Do not clear exportedGlbFile here to allow exit animation

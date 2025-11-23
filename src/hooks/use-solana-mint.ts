@@ -8,11 +8,19 @@
  */
 
 import { useState, useCallback } from "react";
-import { generateSigner, percentAmount } from "@metaplex-foundation/umi";
+import { generateSigner, percentAmount, publicKey } from "@metaplex-foundation/umi";
 import { createNft } from "@metaplex-foundation/mpl-token-metadata";
 import { useUmi } from "@/components/providers/umi-provider";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { logger } from "@/utils/logger";
+import {
+  DOOM_INDEX_COLLECTION_ADDRESS,
+  UPDATE_AUTHORITY_ADDRESS,
+  DEFAULT_SELLER_FEE_BASIS_POINTS,
+  CREATORS,
+} from "@/constants/solana";
+
+type CreateNftInput = Parameters<typeof createNft>[1];
 
 /**
  * Mint parameters
@@ -69,14 +77,38 @@ export function useSolanaMint(): UseSolanaMintResult {
         logger.info("solana.mint.address-generated", { mintAddress: mint.publicKey });
 
         // Create NFT using Metaplex Token Metadata
-        const tx = await createNft(umi, {
+        const nftConfig: CreateNftInput = {
           mint,
           name: params.name,
           symbol: params.symbol,
           uri: params.uri,
-          sellerFeeBasisPoints: percentAmount(params.sellerFeeBasisPoints ?? 0),
+          sellerFeeBasisPoints: percentAmount(params.sellerFeeBasisPoints ?? DEFAULT_SELLER_FEE_BASIS_POINTS),
           isCollection: false,
-        });
+        };
+
+        // Optional: Add collection if configured
+        if (DOOM_INDEX_COLLECTION_ADDRESS) {
+          nftConfig.collection = {
+            verified: false,
+            key: DOOM_INDEX_COLLECTION_ADDRESS,
+          };
+        }
+
+        // Optional: Add update authority if configured
+        if (UPDATE_AUTHORITY_ADDRESS) {
+          nftConfig.updateAuthority = UPDATE_AUTHORITY_ADDRESS;
+        }
+
+        // Optional: Add creators if configured and valid
+        if (CREATORS.length > 0 && CREATORS[0].address) {
+          nftConfig.creators = CREATORS.map(creator => ({
+            address: publicKey(creator.address),
+            verified: creator.verified,
+            share: creator.share,
+          }));
+        }
+
+        const tx = await createNft(umi, nftConfig);
 
         // Send and confirm transaction
         const result = await tx.sendAndConfirm(umi);

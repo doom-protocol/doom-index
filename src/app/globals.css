@@ -373,4 +373,16 @@ body {
     background: rgba(255, 255, 255, 0.2);
     color: rgba(255, 255, 255, 0.9);
   }
+
+  /* Remove click light effect on toast */
+  [data-sonner-toast]:active,
+  [data-sonner-toast]:focus {
+    outline: none !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  [data-sonner-toast]:active::before,
+  [data-sonner-toast]:focus::before {
+    display: none !important;
+  }
 }

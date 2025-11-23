@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type FC, type SVGProps } from "react";
+import { useCallback, useRef, useState, type FC, type SVGProps } from "react";
 import { useHaptic } from "use-haptic";
 
 import { PumpFunIcon } from "@/components/icons/pump-fun-icon";
@@ -13,6 +13,7 @@ import { GITHUB_URL, X_URL } from "@/constants";
 
 import { HeaderProgress } from "./header-progress";
 import { ViewerCountBadge } from "./viewer-count-badge";
+import { useClickOutside, useEscapeKey } from "@/hooks/use-click-outside";
 
 type NavLinkConfig = {
   href: string;
@@ -59,46 +60,9 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
     setIsMenuOpen(false);
   }, []);
 
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
+  useClickOutside(menuContainerRef, () => setIsMenuOpen(false), isMenuOpen, "window", "pointerdown");
 
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!menuContainerRef.current) {
-        return;
-      }
-
-      const target = event.target;
-      if (target instanceof Node && menuContainerRef.current.contains(target)) {
-        return;
-      }
-
-      setIsMenuOpen(false);
-    };
-
-    window.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      window.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isMenuOpen]);
-
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsMenuOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isMenuOpen]);
+  useEscapeKey(() => setIsMenuOpen(false), isMenuOpen);
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm">

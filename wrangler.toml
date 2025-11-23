@@ -128,7 +128,7 @@ service = "doom-index-dev"
 
 [env.dev.vars]
 NODE_ENV = "development"
-LOG_LEVEL = "INFO"
+LOG_LEVEL = "DEBUG"
 NEXTJS_ENV = "development"
 NEXT_PUBLIC_BASE_URL = "http://localhost:8787"
 IMAGE_MODEL = "runware:106@1"
