@@ -235,7 +235,7 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ startDate, endDa
     } else {
       params.set("page", page.toString());
     }
-    router.push(`/paintings?${params.toString()}`, { scroll: false });
+    router.push(`/archive?${params.toString()}`, { scroll: false });
   };
 
   const handleNext = () => {
