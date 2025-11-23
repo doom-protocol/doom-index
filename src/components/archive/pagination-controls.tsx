@@ -31,12 +31,12 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   const isNextDisabled = !hasNextPage || isLoading;
 
   return (
-    <div className="fixed bottom-[60px] left-1/2 z-[1000] flex -translate-x-1/2 items-center gap-2 rounded-lg border border-white/10 bg-black/60 px-3 py-1.5 backdrop-blur-xl opacity-60 hover:opacity-100 transition-opacity duration-200">
+    <div className="fixed bottom-[75px] left-1/2 z-[1000] flex -translate-x-1/2 items-center gap-1.5 rounded-lg border border-white/10 bg-black/60 px-2.5 py-1 backdrop-blur-xl opacity-60 hover:opacity-100 transition-opacity duration-200 md:bottom-[60px] md:gap-2 md:px-3 md:py-1.5">
       <button
         type="button"
         onClick={onPrevious}
         disabled={isPreviousDisabled}
-        className={`rounded border px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+        className={`rounded border px-2 py-0.5 text-[10px] font-medium transition-all cursor-pointer md:px-2.5 md:py-1 md:text-xs ${
           isPreviousDisabled
             ? "cursor-not-allowed border-white/20 bg-white/5 text-white/40 opacity-50"
             : "border-white/20 bg-white/10 text-white hover:border-white/30 hover:bg-white/15"
@@ -45,13 +45,13 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
         PREV
       </button>
 
-      <span className="min-w-[80px] text-center text-xs text-white/80">{rangeText}</span>
+      <span className="min-w-[70px] text-center text-[10px] text-white/80 md:min-w-[80px] md:text-xs">{rangeText}</span>
 
       <button
         type="button"
         onClick={onNext}
         disabled={isNextDisabled}
-        className={`rounded border px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+        className={`rounded border px-2 py-0.5 text-[10px] font-medium transition-all cursor-pointer md:px-2.5 md:py-1 md:text-xs ${
           isNextDisabled
             ? "cursor-not-allowed border-white/20 bg-white/5 text-white/40 opacity-50"
             : "border-white/20 bg-white/10 text-white hover:border-white/30 hover:bg-white/15"
