@@ -153,6 +153,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
           padding: 0,
           display: "block",
           background: "#000000",
+          touchAction: "none",
         }}
       >
         <CameraRig preset={initialCameraPreset} />
