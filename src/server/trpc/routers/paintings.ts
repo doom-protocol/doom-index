@@ -6,9 +6,9 @@ import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
 
 export const paintingsRouter = router({
   list: publicProcedure.input(paintingsListSchema).query(async ({ input, ctx }) => {
-    const { limit, cursor, startDate, endDate } = input;
+    const { limit, cursor, from, to } = input;
 
-    const cacheKey = `archive:list:v2:${JSON.stringify({ limit, cursor, startDate, endDate })}`;
+    const cacheKey = `archive:list:v2:${JSON.stringify({ limit, cursor, from, to })}`;
     const cached = await get<{ items: unknown[]; cursor?: string; hasMore: boolean }>(cacheKey, {
       logger: ctx.logger,
     });
@@ -33,8 +33,8 @@ export const paintingsRouter = router({
     const listResult = await archiveService.listImages({
       limit,
       cursor,
-      startDate,
-      endDate,
+      from,
+      to,
     });
 
     const result = resultOrThrow(listResult, ctx);

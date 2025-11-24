@@ -115,7 +115,7 @@ describe("Archive List Service - Date Filtering", () => {
       }
     });
 
-    it("should exclude items after endDate using startAfter", async () => {
+    it("should exclude items after to using startAfter", async () => {
       const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({
         prefix: "images/2025/11/",

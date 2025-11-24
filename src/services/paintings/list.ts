@@ -200,10 +200,10 @@ function generateDatePrefixes(from: string, to: string): string[] {
 }
 
 /**
- * Calculate startAfter key for endDate filtering
- * Returns a key that would come after all items on the endDate
+ * Calculate startAfter key for to filtering
+ * Returns a key that would come after all items on the to
  */
-function calculateStartAfterForEndDate(to: string): string {
+function calculateStartAfterForto(to: string): string {
   const date = new Date(to);
   date.setDate(date.getDate() + 1); // Next day
   const year = date.getFullYear();
@@ -329,8 +329,8 @@ export async function listImages(
       const allObjects = listResults.flatMap(result => (result.isOk() ? result.value.objects : []));
       const webpObjects = filterWebpObjects(allObjects);
 
-      const endDateStartAfter = calculateStartAfterForEndDate(options.to);
-      const filteredObjects = webpObjects.filter(obj => obj.key < endDateStartAfter);
+      const toStartAfter = calculateStartAfterForto(options.to);
+      const filteredObjects = webpObjects.filter(obj => obj.key < toStartAfter);
 
       const items = await buildPaintingsWithMetadata(filteredObjects, bucket, { sortOrder: "desc" });
       const limitedItems = items.slice(0, limit).map(entry => entry.item);
@@ -353,7 +353,7 @@ export async function listImages(
       } catch (error) {
         return err({
           type: "ValidationError",
-          message: `Invalid startDate format: ${error instanceof Error ? error.message : "Unknown error"}`,
+          message: `Invalid from format: ${error instanceof Error ? error.message : "Unknown error"}`,
         });
       }
     }

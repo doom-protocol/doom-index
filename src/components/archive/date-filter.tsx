@@ -27,14 +27,14 @@ export const DateFilter: React.FC<DateFilterProps> = ({ from = "", to = "" }) =>
     router.push(`/archive?${params.toString()}`);
   };
 
-  const handleStartDateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handlefromBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     if (newValue !== from) {
       updateURL(newValue || undefined, to || undefined);
     }
   };
 
-  const handleEndDateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handletoBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     if (newValue !== to) {
       updateURL(from || undefined, newValue || undefined);
@@ -50,27 +50,27 @@ export const DateFilter: React.FC<DateFilterProps> = ({ from = "", to = "" }) =>
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-2.5 md:flex-row md:justify-center md:gap-2">
         <div className="w-full md:w-auto flex flex-row items-stretch justify-around md:flex-row md:items-center md:gap-2">
           <div className="flex items-center gap-1">
-            <label htmlFor="startDate" className="text-[10px] text-white/70 md:text-xs whitespace-nowrap">
+            <label htmlFor="from" className="text-[10px] text-white/70 md:text-xs whitespace-nowrap">
               From:
             </label>
             <input
-              id="startDate"
+              id="from"
               type="date"
               defaultValue={from}
-              onBlur={handleStartDateBlur}
+              onBlur={handlefromBlur}
               className="w-30 rounded border border-white/20 bg-white/10 px-2 py-2 pr-2 text-[9px] text-white text-right backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none md:w-36 md:px-2 md:py-1 md:text-[11px] md:pr-1 md:text-left"
             />
           </div>
 
           <div className="flex items-center gap-1">
-            <label htmlFor="endDate" className="text-[10px] text-white/70 md:text-xs whitespace-nowrap">
+            <label htmlFor="to" className="text-[10px] text-white/70 md:text-xs whitespace-nowrap">
               To:
             </label>
             <input
-              id="endDate"
+              id="to"
               type="date"
               defaultValue={to}
-              onBlur={handleEndDateBlur}
+              onBlur={handletoBlur}
               min={from || undefined}
               className="w-30 rounded border border-white/20 bg-white/10 px-2 py-2 pr-2 text-[9px] text-white text-right backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none md:w-36 md:px-2 md:py-1 md:text-[11px] md:pr-1 md:text-left"
             />

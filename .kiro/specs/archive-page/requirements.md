@@ -82,8 +82,8 @@ r2://doom-index-storage/
 1. WHEN `/api/archive`エンドポイントが呼び出されたとき THEN Archive API SHALL R2の`list`メソッドを使用して`images/`プレフィックス配下のオブジェクトを取得する
 2. IF `limit`クエリパラメータが指定されたとき THEN Archive API SHALL R2の`list`オプションに`limit`を設定し、最大100件まで許可する（デフォルト: 20件）
 3. IF `cursor`クエリパラメータが指定されたとき THEN Archive API SHALL R2の`list`オプションに`cursor`を設定し、前回の続きから取得する
-4. IF `startDate`クエリパラメータが指定されたとき THEN Archive API SHALL 日付文字列（`YYYY-MM-DD`）を解析し、`images/{YYYY}/{MM}/{DD}/`プレフィックスを使用してR2の`list`オプションに`prefix`を設定する
-5. IF `endDate`クエリパラメータが指定されたとき THEN Archive API SHALL `startAfter`オプションを使用して終了日以降のオブジェクトを除外する
+4. IF `from`クエリパラメータが指定されたとき THEN Archive API SHALL 日付文字列（`YYYY-MM-DD`）を解析し、`images/{YYYY}/{MM}/{DD}/`プレフィックスを使用してR2の`list`オプションに`prefix`を設定する
+5. IF `to`クエリパラメータが指定されたとき THEN Archive API SHALL `startAfter`オプションを使用して終了日以降のオブジェクトを除外する
 6. WHERE 日付範囲フィルタが適用されたとき THEN Archive API SHALL 複数の日付プレフィックスに対して並行して`list`操作を実行し、結果をマージする
 7. WHERE リスト結果を返却するとき THEN Archive API SHALL 以下の形式でレスポンスする: `{ items: ArchiveItem[], cursor?: string, hasMore: boolean, totalCount?: number }`
 8. WHEN リスト結果を構築するとき THEN Archive API SHALL `.webp`拡張子のオブジェクトのみを`items`に含め、対応する`.json`メタデータファイルを並行取得する
@@ -158,11 +158,11 @@ r2://doom-index-storage/
 #### Acceptance Criteria
 
 1. WHEN アーカイブアイテムがクリックされたとき THEN Archive UI SHALL モーダルまたはサイドパネルで詳細情報を表示する: 生成時刻、各トークンのMC値、視覚パラメータ、シード値、ファイルサイズ
-2. IF 時間ベースのフィルタリング機能が実装される場合 THEN Archive UI SHALL 日付範囲ピッカー（開始日・終了日）を提供し、`startDate`と`endDate`クエリパラメータとして送信する
+2. IF 時間ベースのフィルタリング機能が実装される場合 THEN Archive UI SHALL 日付範囲ピッカー（開始日・終了日）を提供し、`from`と`to`クエリパラメータとして送信する
 3. WHERE 日付範囲フィルタが適用されたとき THEN Archive API SHALL R2の`list`オプションに日付ベースの`prefix`（例: `images/2025/11/`）と`startAfter`を使用して効率的に絞り込む
 4. WHEN 時間ベースのソートが実行される場合 THEN Archive API SHALL ファイル名のタイムスタンプ部分を解析し、常に降順（最新が先頭）でソートする
 5. IF 複数の日付プレフィックスにまたがるクエリが発生したとき THEN Archive API SHALL 各日付プレフィックスに対して並行して`list`操作を実行し、結果をマージしてソートする
-6. WHERE フィルタリングが適用されたとき THEN Archive UI SHALL URLクエリパラメータ（`?startDate=2025-11-01&endDate=2025-11-14`）を更新し、ブラウザの戻る/進むボタンで動作する
+6. WHERE フィルタリングが適用されたとき THEN Archive UI SHALL URLクエリパラメータ（`?from=2025-11-01&to=2025-11-14`）を更新し、ブラウザの戻る/進むボタンで動作する
 7. WHEN メタデータが表示されるとき THEN Archive UI SHALL 読みやすい形式（日時はローカルタイムゾーン、MC値はカンマ区切りなど）でフォーマットする
 8. WHERE 時間ベースのフィルタリングが実装される場合 THEN Archive UI SHALL カレンダーUIまたは日付入力フィールドを提供し、ユーザーが直感的に日付範囲を選択できるようにする
 

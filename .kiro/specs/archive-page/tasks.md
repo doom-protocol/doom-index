@@ -53,7 +53,7 @@
 - [x] 3. アーカイブAPIエンドポイントの実装
 - [x] 3.1 Next.js API Routeの作成とクエリパラメータ処理
   - `/api/archive`エンドポイントを作成し、Edge Runtimeで実行する
-  - クエリパラメータ（`cursor`、`limit`、`startDate`、`endDate`）を解析する機能を実装する
+  - クエリパラメータ（`cursor`、`limit`、`from`、`to`）を解析する機能を実装する
   - パラメータのバリデーション機能を実装する（`limit`の範囲、日付形式の検証）
   - 無効なパラメータに対するエラーレスポンスを実装する
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
@@ -74,7 +74,7 @@
 - [x] 4.1 Next.jsページルートの作成とSSR実装
   - `/archive`ページルート（`src/app/archive/page.tsx`）を作成する
   - 初期ページのデータをSSRで取得する機能を実装する
-  - URLクエリパラメータ（`cursor`、`startDate`、`endDate`）を管理する機能を実装する
+  - URLクエリパラメータ（`cursor`、`from`、`to`）を管理する機能を実装する
   - _Requirements: 4.1, 4.2, 4.3_
 
 - [x] 4.2 React Queryによるデータ取得とページネーション管理
@@ -202,7 +202,7 @@
   - _Requirements: 8.2, 8.8_
 
 - [x] 10.2 日付フィルタの適用とURL連動
-  - 日付選択時に`startDate`と`endDate`クエリパラメータを更新する機能を実装する
+  - 日付選択時に`from`と`to`クエリパラメータを更新する機能を実装する
   - URLクエリパラメータに基づいてフィルタを適用する機能を実装する
   - ブラウザの戻る/進むボタンで動作する機能を実装する
   - _Requirements: 8.2, 8.6_

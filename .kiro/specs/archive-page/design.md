@@ -174,7 +174,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A[ArchivePage: User selects date range] --> B[ArchiveAPI: GET /api/archive?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD]
+    A[ArchivePage: User selects date range] --> B[ArchiveAPI: GET /api/archive?from=YYYY-MM-DD&to=YYYY-MM-DD]
     B --> C[ArchiveService: Generate date prefixes]
     C --> D[ArchiveService: Parallel list operations]
     D --> E[R2Bucket: list prefix images/2025/11/01/]
@@ -276,8 +276,8 @@ type ArchiveListOptions = {
   prefix?: string; // Date-based prefix: images/YYYY/MM/DD/
   cursor?: string; // R2 cursor for pagination
   limit?: number; // Max 100, default 20
-  startDate?: string; // YYYY-MM-DD format
-  endDate?: string; // YYYY-MM-DD format
+  from?: string; // YYYY-MM-DD format
+  to?: string; // YYYY-MM-DD format
 };
 
 type ArchiveListResponse = {
@@ -287,7 +287,7 @@ type ArchiveListResponse = {
 };
 ```
 
-- **Preconditions**: `limit`は1-100の範囲、`startDate`と`endDate`は`YYYY-MM-DD`形式
+- **Preconditions**: `limit`は1-100の範囲、`from`と`to`は`YYYY-MM-DD`形式
 - **Postconditions**: メタデータが存在し、必須フィールドが揃っている画像のみが`items`に含まれる。`timestamp`降順でソートされる
 - **Invariants**: メタデータがない画像はスキップされ、エラーログが記録される
 
@@ -312,14 +312,14 @@ type ArchiveListResponse = {
 
 | Method | Endpoint     | Request                                              | Response                                                      | Errors   |
 | ------ | ------------ | ---------------------------------------------------- | ------------------------------------------------------------- | -------- |
-| GET    | /api/archive | Query: `cursor?`, `limit?`, `startDate?`, `endDate?` | `{ items: ArchiveItem[], cursor?: string, hasMore: boolean }` | 400, 500 |
+| GET    | /api/archive | Query: `cursor?`, `limit?`, `from?`, `to?` | `{ items: ArchiveItem[], cursor?: string, hasMore: boolean }` | 400, 500 |
 
 **Request Schema**:
 
 - `cursor`: string (optional) - R2 cursor for pagination
 - `limit`: number (optional, default: 20, max: 100) - Number of items per page
-- `startDate`: string (optional) - Date in `YYYY-MM-DD` format
-- `endDate`: string (optional) - Date in `YYYY-MM-DD` format
+- `from`: string (optional) - Date in `YYYY-MM-DD` format
+- `to`: string (optional) - Date in `YYYY-MM-DD` format
 
 **Response Schema**:
 
@@ -391,7 +391,7 @@ type ArchiveListResponse = {
 - **配置**: 画面右上（`TopBar`の下、または`TopBar`内に統合）
 - **コンポーネント**: 日付範囲ピッカー（開始日・終了日）
 - **スタイル**: 既存のUIパターンに合わせたモーダルまたはドロップダウン
-- **動作**: 日付選択で`startDate`と`endDate`クエリパラメータを更新
+- **動作**: 日付選択で`from`と`to`クエリパラメータを更新
 
 **5. 詳細モーダル**:
 
@@ -531,12 +531,12 @@ interface ArchiveSceneProps {
 const ArchivePage: React.FC = () => {
   const searchParams = useSearchParams();
   const cursor = searchParams.get("cursor") ?? undefined;
-  const startDate = searchParams.get("startDate") ?? undefined;
-  const endDate = searchParams.get("endDate") ?? undefined;
+  const from = searchParams.get("from") ?? undefined;
+  const to = searchParams.get("to") ?? undefined;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["archive", cursor, startDate, endDate],
-    queryFn: () => fetchArchive({ cursor, startDate, endDate }),
+    queryKey: ["archive", cursor, from, to],
+    queryFn: () => fetchArchive({ cursor, from, to }),
   });
 
   return (
@@ -566,12 +566,12 @@ const ArchivePage: React.FC = () => {
         }}
       />
       <ArchiveDateFilter
-        startDate={startDate}
-        endDate={endDate}
-        onDateChange={(newStartDate, newEndDate) => {
+        from={from}
+        to={to}
+        onDateChange={(newfrom, newto) => {
           const params = new URLSearchParams();
-          if (newStartDate) params.set("startDate", newStartDate);
-          if (newEndDate) params.set("endDate", newEndDate);
+          if (newfrom) params.set("from", newfrom);
+          if (newto) params.set("to", newto);
           router.push(`/archive?${params.toString()}`);
         }}
       />
@@ -956,7 +956,7 @@ sequenceDiagram
 **ページネーション状態管理**:
 
 - **URLクエリパラメータ**: `cursor`をURLに保持し、ブラウザの戻る/進むボタンで動作
-- **React Queryキャッシュ**: `queryKey: ["archive", cursor, startDate, endDate]`でキャッシュ管理
+- **React Queryキャッシュ**: `queryKey: ["archive", cursor, from, to]`でキャッシュ管理
 - **ローディング状態**: `isLoading`でページネーションボタンを無効化
 - **エラー状態**: エラー時はエラーメッセージとリトライボタンを表示
 
@@ -1484,7 +1484,7 @@ const ArchiveDetailModal: React.FC<ArchiveDetailModalProps> = ({ item, isOpen, o
 
 ## Security Considerations
 
-- **入力検証**: クエリパラメータ（`limit`、`startDate`、`endDate`）の検証を実装
+- **入力検証**: クエリパラメータ（`limit`、`from`、`to`）の検証を実装
 - **パストラバーサル対策**: R2キーの構築時にパストラバーサル攻撃を防ぐ検証を実装
 - **レート制限**: アーカイブAPIにレート制限を実装（既存のAPIパターンに従う）
 - **データ公開**: メタデータには機密情報が含まれないことを確認（MC値、プロンプトは公開情報）
