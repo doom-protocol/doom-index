@@ -160,6 +160,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         <OrbitControls
           enableDamping
           dampingFactor={0.05}
+          touches={{ ONE: 0, TWO: 2 }}
           enableZoom
           enablePan
           minDistance={0.5}
