@@ -16,8 +16,7 @@ import { env } from "@/env";
 import type { ImageProvider } from "@/types/domain";
 import type { AppError } from "@/types/app-error";
 import type { WorldPromptService, PromptComposition } from "@/services/world-prompt-service";
-import type { PaintingContext } from "@/types/painting-context";
-import type { TokenMetaInput } from "@/services/token-analysis-service";
+import type { TokenOperationInput } from "@/services/token-analysis-service";
 
 type ImageGenerationResult = {
   composition: PromptComposition;
@@ -36,11 +35,7 @@ type ImageGenerationDeps = {
   log?: typeof logger;
 };
 
-type TokenImageGenerationInput = {
-  paintingContext: PaintingContext;
-  tokenMeta: TokenMetaInput;
-  referenceImageUrl?: string | null;
-};
+type TokenImageGenerationInput = TokenOperationInput;
 
 /**
  * Create image generation orchestration service

@@ -114,80 +114,41 @@ export function formatErrorForSlack(error: unknown, context?: string): SlackMess
 
   const source = getSourceFromStack(stackTrace);
 
-  const blocks = [
-    {
-      type: "header",
-      text: {
-        type: "plain_text",
-        text: "🚨 Server Error",
-        emoji: true,
-      },
-    },
-    {
-      type: "section",
-      fields: [
-        {
-          type: "mrkdwn",
-          text: `*Environment:*\n${env.NODE_ENV}`,
-        },
-        {
-          type: "mrkdwn",
-          text: `*Context:*\n${context || "N/A"}`,
-        },
-      ],
-    },
-  ];
+  // Build a simple text message to avoid Block Kit issues
+  let message = `🚨 Server Error\n\n`;
+  message += `*Environment:* ${env.NODE_ENV}\n`;
+  message += `*Context:* ${context || "N/A"}\n`;
 
-  // Add Source field if found
   if (source) {
-    blocks.push({
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `*Source:*\n\`${source}\``,
-        emoji: true,
-      },
-    });
+    message += `*Source:* \`${source}\`\n`;
   }
 
-  // Error Message
-  blocks.push({
-    type: "section",
-    text: {
-      type: "mrkdwn",
-      text: `*Message:*\n\`\`\`${errorMessage}\`\`\``,
-      emoji: true,
-    },
-  });
+  message += `*Message:* ${errorMessage}\n`;
 
-  // Additional Details (if any object context was provided)
   if (additionalDetails) {
-    blocks.push({
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `*Details:*\n\`\`\`${additionalDetails.substring(0, 2000)}\`\`\``,
-        emoji: true,
-      },
-    });
+    const truncatedDetails = additionalDetails.length > 1000
+      ? additionalDetails.substring(0, 1000) + "...(truncated)"
+      : additionalDetails;
+    message += `*Details:* \`\`\`${truncatedDetails}\`\`\`\n`;
   }
 
-  // Stack Trace (collapsed if possible, but Slack blocks don't strictly support collapsible, just code block)
   if (stackTrace) {
-    const truncatedStack = stackTrace.length > 2500 ? stackTrace.substring(0, 2500) + "\n...(truncated)" : stackTrace;
-
-    blocks.push({
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `*Stack Trace:*\n\`\`\`${truncatedStack}\`\`\``,
-        emoji: true,
-      },
-    });
+    const truncatedStack = stackTrace.length > 2000
+      ? stackTrace.substring(0, 2000) + "\n...(truncated)"
+      : stackTrace;
+    message += `*Stack Trace:* \`\`\`${truncatedStack}\`\`\`\n`;
   }
 
   return {
     text: `Server Error: ${context || errorMessage}`,
-    blocks,
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: message,
+        },
+      },
+    ],
   };
 }

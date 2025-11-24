@@ -76,11 +76,7 @@ export const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
 
   return (
     <>
-      {isLoading && skeleton && (
-        <div className="absolute inset-0 z-10">
-          {skeleton}
-        </div>
-      )}
+      {isLoading && skeleton && <div className="absolute inset-0 z-10">{skeleton}</div>}
       <Image
         src={src}
         alt={alt}

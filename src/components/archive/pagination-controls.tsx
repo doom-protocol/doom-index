@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
 
 interface PaginationControlsProps {
   currentPage: number;
@@ -9,6 +10,8 @@ interface PaginationControlsProps {
   totalItems: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
+  startDate?: string;
+  endDate?: string;
 }
 
 export const PaginationControls: React.FC<PaginationControlsProps> = ({
@@ -17,6 +20,8 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   totalItems,
   hasNextPage,
   hasPreviousPage,
+  startDate,
+  endDate,
 }) => {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = startItem + totalItems - 1;
@@ -27,8 +32,11 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
     if (page > 1) {
       params.set("page", page.toString());
     }
+    if (startDate) params.set("startDate", startDate);
+    if (endDate) params.set("endDate", endDate);
+
     const query = params.toString();
-    return query ? `?${query}` : "";
+    return query ? `?${query}` : "/archive";
   };
 
   return (
@@ -36,6 +44,9 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
       {hasPreviousPage ? (
         <Link
           href={`/archive${createPageUrl(currentPage - 1)}`}
+          onClick={() => {
+            sendGAEvent(GA_EVENTS.ARCHIVE_PAGE_CHANGE, { page: currentPage - 1, direction: "prev" });
+          }}
           className="rounded border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white transition-all hover:border-white/30 hover:bg-white/15 md:px-2.5 md:py-1 md:text-xs"
         >
           PREV
@@ -51,6 +62,9 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
       {hasNextPage ? (
         <Link
           href={`/archive${createPageUrl(currentPage + 1)}`}
+          onClick={() => {
+            sendGAEvent(GA_EVENTS.ARCHIVE_PAGE_CHANGE, { page: currentPage + 1, direction: "next" });
+          }}
           className="rounded border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white transition-all hover:border-white/30 hover:bg-white/15 md:px-2.5 md:py-1 md:text-xs"
         >
           NEXT

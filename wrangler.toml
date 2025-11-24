@@ -67,15 +67,15 @@ binding = "ASSETS"
 binding = "WORKER_SELF_REFERENCE"
 service = "doom-index"
 
-# Durable Object Queue for ISR revalidation
-[[durable_objects.bindings]]
-name = "NEXT_CACHE_DO_QUEUE"
-class_name = "DOQueueHandler"
+# # Durable Object Queue for ISR revalidation
+# [[durable_objects.bindings]]
+# name = "NEXT_CACHE_DO_QUEUE"
+# class_name = "DOQueueHandler"
 
-# Durable Object Migrations
-[[migrations]]
-tag = "v1"
-new_sqlite_classes = ["DOQueueHandler"]
+# # Durable Object Migrations
+# [[migrations]]
+# tag = "v1"
+# new_sqlite_classes = ["DOQueueHandler"]
 
 # Production environment (default/top-level - used when deploying without --env flag)
 [vars]
@@ -136,15 +136,15 @@ remote = true
 binding = "WORKER_SELF_REFERENCE"
 service = "doom-index-dev"
 
-# Durable Object Queue for ISR revalidation (dev environment)
-[[env.dev.durable_objects.bindings]]
-name = "NEXT_CACHE_DO_QUEUE"
-class_name = "DOQueueHandler"
+# # Durable Object Queue for ISR revalidation (dev environment)
+# [[env.dev.durable_objects.bindings]]
+# name = "NEXT_CACHE_DO_QUEUE"
+# class_name = "DOQueueHandler"
 
-# Durable Object Migrations (dev environment)
-[[env.dev.migrations]]
-tag = "v1"
-new_sqlite_classes = ["DOQueueHandler"]
+# # Durable Object Migrations (dev environment)
+# [[env.dev.migrations]]
+# tag = "v1"
+# new_sqlite_classes = ["DOQueueHandler"]
 
 [env.dev.vars]
 NODE_ENV = "development"

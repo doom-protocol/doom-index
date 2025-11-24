@@ -17,7 +17,7 @@ import { getMinuteBucket } from "@/utils/time";
 import { logger } from "@/utils/logger";
 import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
-import type { TokenAnalysisService, TokenMetaInput } from "@/services/token-analysis-service";
+import type { TokenAnalysisService, TokenMetaInput, TokenOperationInput } from "@/services/token-analysis-service";
 import { FALLBACK_SHORT_CONTEXT } from "@/services/token-analysis-service";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
 import type { TokensRepository } from "@/repositories/tokens-repository";
@@ -38,10 +38,11 @@ export type PromptComposition = {
   paramsHash: string;
 };
 
-type TokenPromptRequest = {
-  paintingContext: PaintingContext;
+/**
+ * Input for token prompt composition - allows optional tokenMeta for fallback handling
+ */
+type TokenPromptRequest = Omit<TokenOperationInput, "tokenMeta"> & {
   tokenMeta?: TokenMetaInput;
-  referenceImageUrl?: string | null;
 };
 
 type WorldPromptServiceDeps = {

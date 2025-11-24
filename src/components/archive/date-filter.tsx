@@ -1,29 +1,26 @@
 "use client";
 
 import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
 
-export const DateFilter: React.FC = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+interface DateFilterProps {
+  startDate?: string;
+  endDate?: string;
+}
 
-  const startDate = searchParams.get("startDate") || "";
-  const endDate = searchParams.get("endDate") || "";
+export const DateFilter: React.FC<DateFilterProps> = ({ startDate = "", endDate = "" }) => {
+  const router = useRouter();
 
   const updateURL = (newStartDate?: string, newEndDate?: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
     if (newStartDate) {
       params.set("startDate", newStartDate);
-    } else {
-      params.delete("startDate");
     }
     if (newEndDate) {
       params.set("endDate", newEndDate);
-    } else {
-      params.delete("endDate");
     }
-    params.delete("page"); // Reset to first page when filter changes
+    // page is reset implicitly by not including it
 
     const filterValue = newStartDate || newEndDate ? `${newStartDate || ""}-${newEndDate || ""}` : "cleared";
     sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, { filter_type: "date", filter_value: filterValue });

@@ -24,8 +24,12 @@ interface ArchivePageProps {
   }>;
 }
 
-// Separate component to fetch data to use in Suspense
-async function ArchiveData({ page, startDate, endDate }: { page: number; startDate?: string; endDate?: string }) {
+const ArchivePage: NextPage<ArchivePageProps> = async ({ searchParams }) => {
+  const params = await searchParams;
+  const startDate = params.startDate;
+  const endDate = params.endDate;
+  const page = Number(params.page) || 1;
+
   let items: Painting[] = [];
   let hasMore = false;
 
@@ -58,19 +62,10 @@ async function ArchiveData({ page, startDate, endDate }: { page: number; startDa
     logger.error("ArchivePage: Error fetching context or data", { error: e });
   }
 
-  return <ArchiveContent items={items} hasNextPage={hasMore} page={page} />;
-}
-
-const ArchivePage: NextPage<ArchivePageProps> = async ({ searchParams }) => {
-  const params = await searchParams;
-  const startDate = params.startDate;
-  const endDate = params.endDate;
-  const page = Number(params.page) || 1;
-
   return (
     <main className="relative h-screen w-full overflow-hidden">
       <Header showProgress={false} />
-      <ArchiveData page={page} startDate={startDate} endDate={endDate} />
+      <ArchiveContent items={items} hasNextPage={hasMore} page={page} startDate={startDate} endDate={endDate} />
     </main>
   );
 };
