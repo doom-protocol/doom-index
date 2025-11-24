@@ -3,6 +3,9 @@
 name = "doom-index"
 main = "./src/worker.ts"
 
+workers_dev = false
+preview_urls = true
+
 compatibility_date = "2025-03-25"
 compatibility_flags = [
  "nodejs_compat",
@@ -24,7 +27,9 @@ compatibility_flags = [
 #   - 1 hour (3600000ms):  "0 * * * *"
 #   - 2 hours (7200000ms): "0 */2 * * *"
 [triggers]
-crons = ["*/10 * * * *"] # Every 10 minutes (NEXT_PUBLIC_GENERATION_INTERVAL_MS=600000)
+crons = [
+ "*/10 * * * *",
+] # Every 10 minutes (NEXT_PUBLIC_GENERATION_INTERVAL_MS=600000)
 
 [[routes]]
 pattern = "doomindex.fun"
@@ -84,7 +89,7 @@ LOG_LEVEL = "INFO"
 NEXTJS_ENV = "production"
 NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
 IMAGE_MODEL = "runware:106@1"
-NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000 # 10 minutes
+NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000    # 10 minutes
 
 [observability]
 enabled = false
@@ -152,4 +157,4 @@ LOG_LEVEL = "DEBUG"
 NEXTJS_ENV = "development"
 NEXT_PUBLIC_BASE_URL = "http://localhost:8787"
 IMAGE_MODEL = "runware:106@1"
-NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000 # 10 minutes
+NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000    # 10 minutes
