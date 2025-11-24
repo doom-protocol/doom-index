@@ -185,6 +185,7 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
           {/* 3D Preview */}
           <div className="relative h-[300px] sm:h-[350px] lg:h-[500px] w-full lg:w-[60%] bg-black/40">
             <Canvas
+              className="r3f-gallery-canvas"
               frameloop={isOpen ? "always" : "never"}
               shadows
               dpr={[1, 1.5]}
