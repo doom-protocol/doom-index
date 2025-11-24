@@ -151,7 +151,7 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
     setIsProcessing(false);
     onClose();
     triggerHaptic();
-  }, [onClose]);
+  }, [onClose, triggerHaptic]);
 
   const isLoading = isMinting || isWalletConnecting || isProcessing || isIpfsUploading;
 
