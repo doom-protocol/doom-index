@@ -26,7 +26,7 @@ export async function getDB(d1Binding?: D1Database): Promise<DrizzleD1Database<t
     try {
       const { getCloudflareContext } = await import("@opennextjs/cloudflare");
       const { env } = await getCloudflareContext({ async: true });
-      binding = (env as Cloudflare.Env).DB;
+      binding = env.DB;
     } catch (error) {
       logger.error("Failed to get Cloudflare context", { error });
       throw new Error("Failed to get Cloudflare context for D1 binding");

@@ -274,9 +274,8 @@ export default async function Image(): Promise<ImageResponse> {
     logger.info("ogp.step-init-context");
     // Get Cloudflare context
     const { env } = await getCloudflareContext({ async: true });
-    const cloudflareEnv = env as Cloudflare.Env;
-    const r2Bucket = cloudflareEnv.R2_BUCKET as R2Bucket | undefined;
-    const db = cloudflareEnv.DB as D1Database | undefined;
+    const r2Bucket = env.R2_BUCKET as R2Bucket | undefined;
+    const db = env.DB as D1Database | undefined;
 
     if (!r2Bucket) {
       logger.warn("ogp.step-init-no-bucket");
@@ -288,7 +287,7 @@ export default async function Image(): Promise<ImageResponse> {
       throw new Error("DB not available");
     }
 
-    const assetsFetcher = cloudflareEnv.ASSETS as Fetcher | undefined;
+    const assetsFetcher = env.ASSETS as Fetcher | undefined;
 
     logger.info("ogp.step-init-success", {
       hasBucket: !!r2Bucket,
@@ -371,8 +370,7 @@ export default async function Image(): Promise<ImageResponse> {
     try {
       // Get ASSETS fetcher for fallback image
       const { env } = await getCloudflareContext({ async: true });
-      const cloudflareEnv = env as Cloudflare.Env;
-      const assetsFetcher = cloudflareEnv.ASSETS as Fetcher | undefined;
+      const assetsFetcher = env.ASSETS as Fetcher | undefined;
 
       if (assetsFetcher) {
         logger.info("ogp.fallback-load-image");

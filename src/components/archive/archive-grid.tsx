@@ -2,8 +2,8 @@
 
 import React from "react";
 import type { Painting } from "@/types/paintings";
-import { PaintingComponent } from "./archive-item";
-import { PaintingSkeleton } from "./archive-item-skeleton";
+import { PaintingComponent } from "./painting-item";
+import { PaintingSkeleton } from "./painting-item-skeleton";
 
 interface ArchiveGridProps {
   items: Painting[];

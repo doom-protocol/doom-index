@@ -179,10 +179,10 @@ async function collectPaginatedPaintings({
 /**
  * Generate date prefixes for a date range
  */
-function generateDatePrefixes(startDate: string, endDate: string): string[] {
+function generateDatePrefixes(from: string, to: string): string[] {
   const prefixes: string[] = [];
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = new Date(from);
+  const end = new Date(to);
 
   // Iterate through each day in the range
   const current = new Date(start);
@@ -200,11 +200,11 @@ function generateDatePrefixes(startDate: string, endDate: string): string[] {
 }
 
 /**
- * Calculate startAfter key for endDate filtering
- * Returns a key that would come after all items on the endDate
+ * Calculate startAfter key for to filtering
+ * Returns a key that would come after all items on the to
  */
-function calculateStartAfterForEndDate(endDate: string): string {
-  const date = new Date(endDate);
+function calculateStartAfterForto(to: string): string {
+  const date = new Date(to);
   date.setDate(date.getDate() + 1); // Next day
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -215,10 +215,11 @@ function calculateStartAfterForEndDate(endDate: string): string {
 export type ListImagesOptions = {
   limit?: number;
   cursor?: string;
+  offset?: number;
   prefix?: string;
   startAfter?: string;
-  startDate?: string;
-  endDate?: string;
+  from?: string;
+  to?: string;
 };
 
 export type ListImagesResponse = {
@@ -245,8 +246,9 @@ export async function listImages(
     const d1Result = await repo.list({
       limit,
       cursor: options.cursor,
-      startDate: options.startDate,
-      endDate: options.endDate,
+      offset: options.offset,
+      from: options.from,
+      to: options.to,
     });
 
     if (d1Result.isOk()) {
@@ -306,14 +308,14 @@ export async function listImages(
 
     logger.warn("archive.list.d1-fallback", { error: d1Result.error });
 
-    if (options.startDate && options.endDate) {
-      const datePrefixes = generateDatePrefixes(options.startDate, options.endDate);
+    if (options.from && options.to) {
+      const datePrefixes = generateDatePrefixes(options.from, options.to);
 
       if (options.cursor) {
         logger.warn("archive.list.cursor-ignored-for-date-range", {
           cursor: options.cursor,
-          startDate: options.startDate,
-          endDate: options.endDate,
+          from: options.from,
+          to: options.to,
         });
       }
 
@@ -327,8 +329,8 @@ export async function listImages(
       const allObjects = listResults.flatMap(result => (result.isOk() ? result.value.objects : []));
       const webpObjects = filterWebpObjects(allObjects);
 
-      const endDateStartAfter = calculateStartAfterForEndDate(options.endDate);
-      const filteredObjects = webpObjects.filter(obj => obj.key < endDateStartAfter);
+      const toStartAfter = calculateStartAfterForto(options.to);
+      const filteredObjects = webpObjects.filter(obj => obj.key < toStartAfter);
 
       const items = await buildPaintingsWithMetadata(filteredObjects, bucket, { sortOrder: "desc" });
       const limitedItems = items.slice(0, limit).map(entry => entry.item);
@@ -344,14 +346,14 @@ export async function listImages(
 
     let listPrefix = options.prefix ?? "images/";
 
-    if (options.startDate && !options.endDate) {
+    if (options.from && !options.to) {
       try {
-        const datePrefix = parseDatePrefix(options.startDate);
+        const datePrefix = parseDatePrefix(options.from);
         listPrefix = datePrefix.prefix;
       } catch (error) {
         return err({
           type: "ValidationError",
-          message: `Invalid startDate format: ${error instanceof Error ? error.message : "Unknown error"}`,
+          message: `Invalid from format: ${error instanceof Error ? error.message : "Unknown error"}`,
         });
       }
     }

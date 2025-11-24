@@ -569,7 +569,7 @@ export async function POST(request: Request) {
   try {
     // Cloudflare環境からKV Namespaceを取得
     const { env } = await getCloudflareContext({ async: true });
-    const kvNamespace = (env as Cloudflare.Env).VIEWER_KV as KVNamespace | undefined;
+    const kvNamespace = env.VIEWER_KV as KVNamespace | undefined;
 
     if (!kvNamespace) {
       logger.error("viewer.api.error", {
@@ -832,7 +832,7 @@ export async function handleScheduledEvent(
 
   try {
     // 閲覧者チェック
-    const kvNamespace = env.VIEWER_KV as KVNamespace | undefined;
+    const kvNamespace = env.VIEWER_KV;
     if (kvNamespace) {
       const viewerService = createViewerService({ kvNamespace });
       const viewerResult = await viewerService.hasActiveViewer();

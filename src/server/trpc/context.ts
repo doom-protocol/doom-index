@@ -5,7 +5,7 @@ import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 export type Context = {
   headers: Headers;
   logger: typeof logger;
-  env?: Cloudflare.Env;
+  env?: CloudflareEnv;
   kvNamespace?: KVNamespace;
   r2Bucket?: R2Bucket;
 };
@@ -16,14 +16,13 @@ export async function createContext(opts: FetchCreateContextFnOptions): Promise<
 
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const cfEnv = env as Cloudflare.Env;
 
     return {
       headers: req.headers,
       logger,
-      env: cfEnv,
-      kvNamespace: cfEnv.VIEWER_KV,
-      r2Bucket: cfEnv.R2_BUCKET,
+      env,
+      kvNamespace: env.VIEWER_KV,
+      r2Bucket: env.R2_BUCKET,
     };
   } catch (_error) {
     logger.warn("trpc.context.cloudflare-unavailable", {
@@ -44,14 +43,13 @@ export async function createServerContext(): Promise<Context> {
 
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const cfEnv = env as Cloudflare.Env;
 
     return {
       headers: headersList,
       logger,
-      env: cfEnv,
-      kvNamespace: cfEnv.VIEWER_KV,
-      r2Bucket: cfEnv.R2_BUCKET,
+      env,
+      kvNamespace: env.VIEWER_KV,
+      r2Bucket: env.R2_BUCKET,
     };
   } catch (_error) {
     logger.warn("trpc.context.cloudflare-unavailable", {

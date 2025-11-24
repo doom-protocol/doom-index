@@ -36,27 +36,27 @@ export const paintingsListSchema = z
   .object({
     limit: z.number().int().min(1).max(100).optional(),
     cursor: z.string().optional(),
-    startDate: z
+    from: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD")
       .optional(),
-    endDate: z
+    to: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD")
       .optional(),
   })
   .refine(
     data => {
-      if (data.startDate && data.endDate) {
-        const start = new Date(data.startDate);
-        const end = new Date(data.endDate);
+      if (data.from && data.to) {
+        const start = new Date(data.from);
+        const end = new Date(data.to);
         return start <= end;
       }
       return true;
     },
     {
-      message: "startDate must be before or equal to endDate",
-      path: ["startDate"],
+      message: "from must be before or equal to to",
+      path: ["from", "to"],
     },
   );
 

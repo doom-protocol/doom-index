@@ -9,7 +9,7 @@ interface UseArchiveOptions extends PaginationOptions {
 }
 
 export const useArchive = (options: UseArchiveOptions = {}) => {
-  const { limit = 20, cursor, startDate, endDate, enabled = true } = options;
+  const { limit = 20, cursor, from, to, enabled = true } = options;
 
   const trpc = useTRPC();
   const client = useTRPCClient();
@@ -18,15 +18,15 @@ export const useArchive = (options: UseArchiveOptions = {}) => {
   const queryKey = trpc.paintings.list.queryKey({
     limit,
     cursor: cursor ?? undefined, // Explicitly pass undefined
-    startDate: startDate ?? undefined,
-    endDate: endDate ?? undefined,
+    from: from ?? undefined,
+    to: to ?? undefined,
   });
 
   logger.debug("use-paintings.query-key", {
     limit,
     cursor: cursor || "undefined",
-    startDate: startDate || "none",
-    endDate: endDate || "none",
+    from: from || "none",
+    to: to || "none",
     queryKey: JSON.stringify(queryKey),
   });
 
@@ -36,15 +36,15 @@ export const useArchive = (options: UseArchiveOptions = {}) => {
       logger.debug("use-paintings.query-fn", {
         limit,
         cursor: cursor || "undefined",
-        startDate: startDate || "none",
-        endDate: endDate || "none",
+        from: from || "none",
+        to: to || "none",
       });
 
       const result = await client.paintings.list.query({
         limit,
         cursor,
-        startDate,
-        endDate,
+        from,
+        to,
       });
 
       const typedResult = result as ArchiveListResponse;

@@ -3,6 +3,9 @@
 name = "doom-index"
 main = "./src/worker.ts"
 
+workers_dev = false
+preview_urls = true
+
 compatibility_date = "2025-03-25"
 compatibility_flags = [
  "nodejs_compat",
@@ -24,7 +27,9 @@ compatibility_flags = [
 #   - 1 hour (3600000ms):  "0 * * * *"
 #   - 2 hours (7200000ms): "0 */2 * * *"
 [triggers]
-crons = ["*/10 * * * *"] # Every 10 minutes (NEXT_PUBLIC_GENERATION_INTERVAL_MS=600000)
+crons = [
+ "*/10 * * * *",
+] # Every 10 minutes (NEXT_PUBLIC_GENERATION_INTERVAL_MS=600000)
 
 [[routes]]
 pattern = "doomindex.fun"
@@ -67,6 +72,16 @@ binding = "ASSETS"
 binding = "WORKER_SELF_REFERENCE"
 service = "doom-index"
 
+# # Durable Object Queue for ISR revalidation
+# [[durable_objects.bindings]]
+# name = "NEXT_CACHE_DO_QUEUE"
+# class_name = "DOQueueHandler"
+
+# # Durable Object Migrations
+# [[migrations]]
+# tag = "v1"
+# new_sqlite_classes = ["DOQueueHandler"]
+
 # Production environment (default/top-level - used when deploying without --env flag)
 [vars]
 NODE_ENV = "production"
@@ -74,7 +89,7 @@ LOG_LEVEL = "INFO"
 NEXTJS_ENV = "production"
 NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
 IMAGE_MODEL = "runware:106@1"
-NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000 # 10 minutes
+NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000    # 10 minutes
 
 [observability]
 enabled = false
@@ -126,10 +141,20 @@ remote = true
 binding = "WORKER_SELF_REFERENCE"
 service = "doom-index-dev"
 
+# # Durable Object Queue for ISR revalidation (dev environment)
+# [[env.dev.durable_objects.bindings]]
+# name = "NEXT_CACHE_DO_QUEUE"
+# class_name = "DOQueueHandler"
+
+# # Durable Object Migrations (dev environment)
+# [[env.dev.migrations]]
+# tag = "v1"
+# new_sqlite_classes = ["DOQueueHandler"]
+
 [env.dev.vars]
 NODE_ENV = "development"
 LOG_LEVEL = "DEBUG"
 NEXTJS_ENV = "development"
 NEXT_PUBLIC_BASE_URL = "http://localhost:8787"
 IMAGE_MODEL = "runware:106@1"
-NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000 # 10 minutes
+NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000    # 10 minutes

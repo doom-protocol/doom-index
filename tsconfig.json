@@ -21,13 +21,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": [
-      "./src/types/worker-configuration.d.ts",
-      "./src/types/mdx.d.ts",
-      "bun-types",
-      "node",
-      "@testing-library/jest-dom"
-    ]
+    "types": ["./cloudflare-env.d.ts", "./src/types/mdx.d.ts", "bun-types", "node", "@testing-library/jest-dom"]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts", "**/*.mts"],
   "exclude": ["node_modules"]

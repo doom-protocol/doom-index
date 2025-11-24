@@ -14,7 +14,7 @@
     "test:unit": "bun test --env-file=.dev.vars --grep 'unit' --preload=./tests/preload.ts",
     "test:integration": "bun test --env-file=.dev.vars --grep 'integration' --preload=./tests/preload.ts",
     "typecheck": "tsgo --noEmit",
-    "cf-typegen": "wrangler types src/types/worker-configuration.d.ts --env-interface CloudflareBindings",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "generate": "bun --env-file=.dev.vars scripts/generate.ts",
     "watch-cron": "bun scripts/watch-cron.ts",
     "truncate-r2": "bun --env-file=.dev.vars scripts/truncate-r2.ts",

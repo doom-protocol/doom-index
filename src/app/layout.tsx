@@ -5,6 +5,7 @@ import { Providers } from "@/app/providers";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { getBaseUrl } from "@/utils/url";
 import { ViewTransition } from "react";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
 
 const cinzelDecorative = Cinzel_Decorative({
   variable: "--font-cinzel-decorative",
@@ -95,6 +96,7 @@ export default function RootLayout({
           className={`${cinzelDecorative.variable} antialiased`}
           style={{ margin: 0, padding: 0, width: "100%", height: "100%", overflow: "hidden" }}
         >
+          <LoadingIndicator />
           <Providers>{children}</Providers>
         </body>
         <GoogleAnalytics gaId="G-RMLTMSSJ8T" />

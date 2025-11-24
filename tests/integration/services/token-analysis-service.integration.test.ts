@@ -33,7 +33,7 @@ describe.skip("TokenAnalysisService Integration", () => {
       let d1Binding: D1Database | null = null;
       try {
         const { env } = await getCloudflareContext({ async: true });
-        d1Binding = (env as Cloudflare.Env).DB;
+        d1Binding = env.DB;
       } catch (error) {
         console.log("Skipping test: D1 database not available", error);
         return;
@@ -93,7 +93,7 @@ describe.skip("TokenAnalysisService Integration", () => {
       let d1Binding: D1Database | null = null;
       try {
         const { env } = await getCloudflareContext({ async: true });
-        d1Binding = (env as Cloudflare.Env).DB;
+        d1Binding = env.DB;
       } catch (error) {
         console.log("Skipping test: D1 database not available", error);
         return;
@@ -149,7 +149,7 @@ describe.skip("TokenAnalysisService Integration", () => {
       let d1Binding: D1Database | null = null;
       try {
         const { env } = await getCloudflareContext({ async: true });
-        d1Binding = (env as Cloudflare.Env).DB;
+        d1Binding = env.DB;
       } catch (error) {
         console.log("Skipping test: D1 database not available", error);
         return;

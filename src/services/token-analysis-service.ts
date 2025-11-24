@@ -4,6 +4,7 @@ import { logger } from "@/utils/logger";
 import type { TavilyClient } from "@/lib/tavily-client";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
 import type { TokensRepository } from "@/repositories/tokens-repository";
+import type { PaintingContext } from "@/types/painting-context";
 
 /**
  * Token metadata input
@@ -15,6 +16,15 @@ export type TokenMetaInput = {
   chainId: string;
   contractAddress: string | null;
   createdAt: string;
+};
+
+/**
+ * Input for token-related operations that require painting context and token metadata
+ */
+export type TokenOperationInput = {
+  paintingContext: PaintingContext;
+  tokenMeta: TokenMetaInput;
+  referenceImageUrl?: string | null;
 };
 
 /**

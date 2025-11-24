@@ -95,11 +95,11 @@ describe("Archive List Service - Date Filtering", () => {
       }
     });
 
-    it("should filter by date range using startDate and endDate", async () => {
+    it("should filter by date range using from and to", async () => {
       const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({
-        startDate: "2025-11-14",
-        endDate: "2025-11-15",
+        from: "2025-11-14",
+        to: "2025-11-15",
       });
 
       expect(result.isOk()).toBe(true);
@@ -115,7 +115,7 @@ describe("Archive List Service - Date Filtering", () => {
       }
     });
 
-    it("should exclude items after endDate using startAfter", async () => {
+    it("should exclude items after to using startAfter", async () => {
       const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({
         prefix: "images/2025/11/",
@@ -133,8 +133,8 @@ describe("Archive List Service - Date Filtering", () => {
     it("should handle date range spanning multiple days", async () => {
       const service = createPaintingsService({ r2Bucket: bucket });
       const result = await service.listImages({
-        startDate: "2025-11-14",
-        endDate: "2025-11-16",
+        from: "2025-11-14",
+        to: "2025-11-16",
       });
 
       expect(result.isOk()).toBe(true);
