@@ -63,6 +63,7 @@ describe("Archive List Service", () => {
 
   afterEach(() => {
     // Clean up environment variables after each test
+    // @ts-expect-error - Deleting env var for test cleanup
     delete process.env.NEXT_PUBLIC_R2_URL;
 
     // Restore original module

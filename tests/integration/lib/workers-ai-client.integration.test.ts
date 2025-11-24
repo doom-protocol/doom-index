@@ -20,7 +20,7 @@ async function isAiBindingAvailable(): Promise<boolean> {
 
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const binding = (env as Cloudflare.Env).AI;
+    const binding = env.AI;
     return !!binding;
   } catch {
     return false;

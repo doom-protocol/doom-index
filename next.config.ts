@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   experimental: {
     viewTransition: true,
+    scrollRestoration: true,
     // mdxRs: true,
   },
   pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],

@@ -62,6 +62,7 @@ export type ArchiveSortDirection = "asc" | "desc";
 export type ListArchiveOptions = {
   limit: number;
   cursor?: string;
+  offset?: number;
   startDate?: string;
   endDate?: string;
   /**
@@ -121,7 +122,7 @@ export function createPaintingsRepository({
   async function list(options: ListArchiveOptions): Promise<Result<ListArchiveResult, AppError>> {
     try {
       const db = await getDB(d1Binding);
-      const { limit, cursor, startDate, endDate, direction = "desc", paramsHash, seed } = options;
+      const { limit, cursor, offset, startDate, endDate, direction = "desc", paramsHash, seed } = options;
       const { startTs, endExclusiveTs } = toRangeTs(startDate, endDate);
 
       // Validate and clamp limit
@@ -159,7 +160,7 @@ export function createPaintingsRepository({
       const orderBy =
         direction === "desc" ? [desc(paintings.ts), desc(paintings.id)] : [asc(paintings.ts), asc(paintings.id)];
 
-      const rows = await db
+      const baseQuery = db
         .select({
           id: paintings.id,
           timestamp: paintings.timestamp,
@@ -176,8 +177,11 @@ export function createPaintingsRepository({
         .from(paintings)
         .where(whereParts.length ? and(...whereParts) : undefined)
         .orderBy(...orderBy)
-        .limit(clampedLimit + 1) // Fetch one extra to determine hasMore
-        .all();
+        .limit(clampedLimit + 1); // Fetch one extra to determine hasMore
+
+      const query = offset !== undefined && offset > 0 ? baseQuery.offset(offset) : baseQuery;
+
+      const rows = await query.all();
 
       // Determine if there are more items
       const hasMore = rows.length > clampedLimit;
@@ -205,6 +209,7 @@ export function createPaintingsRepository({
         limit: clampedLimit,
         direction,
         cursor: cursor || "none",
+        offset: offset || 0,
         startDate: startDate || "none",
         endDate: endDate || "none",
         paramsHash: paramsHash || "none",

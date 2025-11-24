@@ -215,6 +215,7 @@ function calculateStartAfterForEndDate(endDate: string): string {
 export type ListImagesOptions = {
   limit?: number;
   cursor?: string;
+  offset?: number;
   prefix?: string;
   startAfter?: string;
   startDate?: string;
@@ -245,6 +246,7 @@ export async function listImages(
     const d1Result = await repo.list({
       limit,
       cursor: options.cursor,
+      offset: options.offset,
       startDate: options.startDate,
       endDate: options.endDate,
     });

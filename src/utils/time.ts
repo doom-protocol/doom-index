@@ -46,6 +46,19 @@ export function getIntervalBucket(date: Date = new Date(), intervalMs: number = 
 }
 
 /**
+ * Formats a date to a short month-day string (e.g., "Jan 15")
+ *
+ * @param date - Date to format
+ * @returns Formatted date string
+ */
+export function formatDateShort(date: Date): string {
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const m = monthNames[date.getMonth()];
+  const d = date.getDate();
+  return `${m} ${d}`;
+}
+
+/**
  * Create timeout promise
  * Returns a promise that resolves to a TimeoutError after the specified duration
  *

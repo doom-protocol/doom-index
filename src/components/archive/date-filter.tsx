@@ -23,7 +23,8 @@ export const DateFilter: React.FC = () => {
     } else {
       params.delete("endDate");
     }
-    params.delete("cursor"); // Reset cursor when filter changes
+    params.delete("page"); // Reset to first page when filter changes
+
     const filterValue = newStartDate || newEndDate ? `${newStartDate || ""}-${newEndDate || ""}` : "cleared";
     sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, { filter_type: "date", filter_value: filterValue });
     router.push(`/archive?${params.toString()}`);
@@ -32,14 +33,14 @@ export const DateFilter: React.FC = () => {
   const handleStartDateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     if (newValue !== startDate) {
-      updateURL(newValue, endDate);
+      updateURL(newValue || undefined, endDate || undefined);
     }
   };
 
   const handleEndDateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     if (newValue !== endDate) {
-      updateURL(startDate, newValue);
+      updateURL(startDate || undefined, newValue || undefined);
     }
   };
 

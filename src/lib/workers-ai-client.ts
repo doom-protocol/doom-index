@@ -86,7 +86,7 @@ export function createWorkersAiClient({
     try {
       // Try to get binding from Cloudflare context
       const ctx = await getCloudflareContext({ async: true });
-      const binding = (ctx.env as Cloudflare.Env).AI;
+      const binding = ctx.env.AI;
       if (binding) {
         return ok(binding);
       }

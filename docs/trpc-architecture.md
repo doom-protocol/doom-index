@@ -86,14 +86,13 @@ src/
 export async function createContext(opts: FetchCreateContextFnOptions): Promise<Context> {
   const { req } = opts;
   const { env } = await getCloudflareContext({ async: true });
-  const cfEnv = env as Cloudflare.Env;
 
   return {
     headers: req.headers,
     logger,
-    env: cfEnv,
-    kvNamespace: cfEnv.VIEWER_KV,
-    r2Bucket: cfEnv.R2_BUCKET,
+    env,
+    kvNamespace: env.VIEWER_KV,
+    r2Bucket: env.R2_BUCKET,
   };
 }
 

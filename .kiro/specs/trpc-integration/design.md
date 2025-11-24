@@ -450,14 +450,13 @@ export async function createContext(opts: FetchCreateContextFnOptions): Promise<
 
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const cfEnv = env as Cloudflare.Env;
 
     return {
       headers: req.headers,
       logger,
-      env: cfEnv,
-      kvNamespace: cfEnv.VIEWER_KV,
-      r2Bucket: cfEnv.DOOM_INDEX_BUCKET,
+      env,
+      kvNamespace: env.VIEWER_KV,
+      r2Bucket: env.DOOM_INDEX_BUCKET,
     };
   } catch (error) {
     logger.warn("trpc.context.cloudflare-unavailable", {
@@ -478,14 +477,13 @@ export async function createServerContext(): Promise<Context> {
 
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const cfEnv = env as Cloudflare.Env;
 
     return {
       headers: headersList,
       logger,
-      env: cfEnv,
-      kvNamespace: cfEnv.VIEWER_KV,
-      r2Bucket: cfEnv.DOOM_INDEX_BUCKET,
+      env,
+      kvNamespace: env.VIEWER_KV,
+      r2Bucket: env.DOOM_INDEX_BUCKET,
     };
   } catch (error) {
     logger.warn("trpc.context.cloudflare-unavailable", {
