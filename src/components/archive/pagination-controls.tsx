@@ -61,7 +61,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
     if (to) params.set("to", to);
 
     const query = params.toString();
-    return query ? `?${query}` : "/archive";
+    return query ? `?${query}` : "";
   };
 
   return (
