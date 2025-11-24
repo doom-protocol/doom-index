@@ -5,39 +5,39 @@ import { useRouter } from "next/navigation";
 import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
 
 interface DateFilterProps {
-  startDate?: string;
-  endDate?: string;
+  from?: string;
+  to?: string;
 }
 
-export const DateFilter: React.FC<DateFilterProps> = ({ startDate = "", endDate = "" }) => {
+export const DateFilter: React.FC<DateFilterProps> = ({ from = "", to = "" }) => {
   const router = useRouter();
 
-  const updateURL = (newStartDate?: string, newEndDate?: string) => {
+  const updateURL = (newFrom?: string, newTo?: string) => {
     const params = new URLSearchParams();
-    if (newStartDate) {
-      params.set("startDate", newStartDate);
+    if (newFrom) {
+      params.set("from", newFrom);
     }
-    if (newEndDate) {
-      params.set("endDate", newEndDate);
+    if (newTo) {
+      params.set("to", newTo);
     }
     // page is reset implicitly by not including it
 
-    const filterValue = newStartDate || newEndDate ? `${newStartDate || ""}-${newEndDate || ""}` : "cleared";
+    const filterValue = newFrom || newTo ? `${newFrom || ""}-${newTo || ""}` : "cleared";
     sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, { filter_type: "date", filter_value: filterValue });
     router.push(`/archive?${params.toString()}`);
   };
 
   const handleStartDateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    if (newValue !== startDate) {
-      updateURL(newValue || undefined, endDate || undefined);
+    if (newValue !== from) {
+      updateURL(newValue || undefined, to || undefined);
     }
   };
 
   const handleEndDateBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    if (newValue !== endDate) {
-      updateURL(startDate || undefined, newValue || undefined);
+    if (newValue !== to) {
+      updateURL(from || undefined, newValue || undefined);
     }
   };
 
@@ -56,7 +56,7 @@ export const DateFilter: React.FC<DateFilterProps> = ({ startDate = "", endDate 
             <input
               id="startDate"
               type="date"
-              defaultValue={startDate}
+              defaultValue={from}
               onBlur={handleStartDateBlur}
               className="w-30 rounded border border-white/20 bg-white/10 px-2 py-2 pr-2 text-[9px] text-white text-right backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none md:w-36 md:px-2 md:py-1 md:text-[11px] md:pr-1 md:text-left"
             />
@@ -69,15 +69,15 @@ export const DateFilter: React.FC<DateFilterProps> = ({ startDate = "", endDate 
             <input
               id="endDate"
               type="date"
-              defaultValue={endDate}
+              defaultValue={to}
               onBlur={handleEndDateBlur}
-              min={startDate || undefined}
+              min={from || undefined}
               className="w-30 rounded border border-white/20 bg-white/10 px-2 py-2 pr-2 text-[9px] text-white text-right backdrop-blur-sm transition-colors hover:border-white/30 focus:border-white/50 focus:outline-none md:w-36 md:px-2 md:py-1 md:text-[11px] md:pr-1 md:text-left"
             />
           </div>
         </div>
 
-        {(startDate || endDate) && (
+        {(from || to) && (
           <button
             onClick={handleClear}
             className="rounded border border-white/20 bg-white/10 px-4 py-1 text-[10px] text-white transition-colors hover:bg-white/20 md:px-3 md:py-1 md:text-xs"

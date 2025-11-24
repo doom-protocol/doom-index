@@ -36,8 +36,8 @@ export type ImageResponse = {
 export interface PaginationOptions {
   limit?: number;
   cursor?: string;
-  startDate?: string;
-  endDate?: string;
+  from?: string;
+  to?: string;
 }
 
 export type ImageGenerationOptions = {

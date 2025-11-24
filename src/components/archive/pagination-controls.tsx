@@ -10,8 +10,8 @@ interface PaginationControlsProps {
   totalItems: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-  startDate?: string;
-  endDate?: string;
+  from?: string;
+  to?: string;
 }
 
 export const PaginationControls: React.FC<PaginationControlsProps> = ({
@@ -20,8 +20,8 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   totalItems,
   hasNextPage,
   hasPreviousPage,
-  startDate,
-  endDate,
+  from,
+  to,
 }) => {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = startItem + totalItems - 1;
@@ -32,8 +32,8 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
     if (page > 1) {
       params.set("page", page.toString());
     }
-    if (startDate) params.set("startDate", startDate);
-    if (endDate) params.set("endDate", endDate);
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
 
     const query = params.toString();
     return query ? `?${query}` : "/archive";

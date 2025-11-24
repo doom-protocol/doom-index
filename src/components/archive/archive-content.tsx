@@ -13,11 +13,11 @@ interface ArchiveContentProps {
   items: Painting[];
   hasNextPage: boolean;
   page: number;
-  startDate?: string;
-  endDate?: string;
+  from?: string;
+  to?: string;
 }
 
-export const ArchiveContent: React.FC<ArchiveContentProps> = ({ items, hasNextPage, page, startDate, endDate }) => {
+export const ArchiveContent: React.FC<ArchiveContentProps> = ({ items, hasNextPage, page, from, to }) => {
   const [selectedItem, setSelectedItem] = useState<Painting | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -90,12 +90,12 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ items, hasNextPa
           totalItems={items.length}
           hasNextPage={hasNextPage}
           hasPreviousPage={hasPreviousPage}
-          startDate={startDate}
-          endDate={endDate}
+          from={from}
+          to={to}
         />
       </div>
       <div className={`transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
-        <DateFilter startDate={startDate} endDate={endDate} />
+        <DateFilter from={from} to={to} />
       </div>
     </>
   );

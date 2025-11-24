@@ -26,10 +26,10 @@ export const decodeCursor = (s: string): PaintingCursor => {
  * Convert date strings to epoch timestamp range
  * Start date is inclusive, end date is exclusive (next day 00:00:00Z)
  */
-function toRangeTs(startDate?: string, endDate?: string) {
-  const startTs = startDate ? Math.floor(new Date(`${startDate}T00:00:00Z`).getTime() / 1000) : undefined;
-  const endExclusiveTs = endDate
-    ? Math.floor(new Date(new Date(`${endDate}T00:00:00Z`).getTime() + 86400_000).getTime() / 1000)
+function toRangeTs(from?: string, to?: string) {
+  const startTs = from ? Math.floor(new Date(`${from}T00:00:00Z`).getTime() / 1000) : undefined;
+  const endExclusiveTs = to
+    ? Math.floor(new Date(new Date(`${to}T00:00:00Z`).getTime() + 86400_000).getTime() / 1000)
     : undefined;
   return { startTs, endExclusiveTs };
 }
@@ -63,8 +63,8 @@ export type ListArchiveOptions = {
   limit: number;
   cursor?: string;
   offset?: number;
-  startDate?: string;
-  endDate?: string;
+  from?: string;
+  to?: string;
   /**
    * Sort direction: "desc" for newest first (default), "asc" for oldest first
    * @default "desc"
@@ -122,8 +122,8 @@ export function createPaintingsRepository({
   async function list(options: ListArchiveOptions): Promise<Result<ListArchiveResult, AppError>> {
     try {
       const db = await getDB(d1Binding);
-      const { limit, cursor, offset, startDate, endDate, direction = "desc", paramsHash, seed } = options;
-      const { startTs, endExclusiveTs } = toRangeTs(startDate, endDate);
+      const { limit, cursor, offset, from, to, direction = "desc", paramsHash, seed } = options;
+      const { startTs, endExclusiveTs } = toRangeTs(from, to);
 
       // Validate and clamp limit
       const clampedLimit = Math.min(Math.max(limit, 1), 100);

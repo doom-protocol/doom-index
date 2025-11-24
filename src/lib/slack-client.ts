@@ -126,16 +126,13 @@ export function formatErrorForSlack(error: unknown, context?: string): SlackMess
   message += `*Message:* ${errorMessage}\n`;
 
   if (additionalDetails) {
-    const truncatedDetails = additionalDetails.length > 1000
-      ? additionalDetails.substring(0, 1000) + "...(truncated)"
-      : additionalDetails;
+    const truncatedDetails =
+      additionalDetails.length > 1000 ? additionalDetails.substring(0, 1000) + "...(truncated)" : additionalDetails;
     message += `*Details:* \`\`\`${truncatedDetails}\`\`\`\n`;
   }
 
   if (stackTrace) {
-    const truncatedStack = stackTrace.length > 2000
-      ? stackTrace.substring(0, 2000) + "\n...(truncated)"
-      : stackTrace;
+    const truncatedStack = stackTrace.length > 2000 ? stackTrace.substring(0, 2000) + "\n...(truncated)" : stackTrace;
     message += `*Stack Trace:* \`\`\`${truncatedStack}\`\`\`\n`;
   }
 

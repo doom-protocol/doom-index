@@ -19,15 +19,15 @@ export const metadata: Metadata = {
 interface ArchivePageProps {
   searchParams: Promise<{
     page?: string;
-    startDate?: string;
-    endDate?: string;
+    from?: string;
+    to?: string;
   }>;
 }
 
 const ArchivePage: NextPage<ArchivePageProps> = async ({ searchParams }) => {
   const params = await searchParams;
-  const startDate = params.startDate;
-  const endDate = params.endDate;
+  const from = params.from;
+  const to = params.to;
   const page = Number(params.page) || 1;
 
   let items: Painting[] = [];
@@ -45,8 +45,8 @@ const ArchivePage: NextPage<ArchivePageProps> = async ({ searchParams }) => {
       const result = await listImages(r2, db, {
         limit,
         offset,
-        startDate,
-        endDate,
+        from,
+        to,
       });
 
       if (result.isOk()) {
@@ -65,7 +65,7 @@ const ArchivePage: NextPage<ArchivePageProps> = async ({ searchParams }) => {
   return (
     <main className="relative h-screen w-full overflow-hidden">
       <Header showProgress={false} />
-      <ArchiveContent items={items} hasNextPage={hasMore} page={page} startDate={startDate} endDate={endDate} />
+      <ArchiveContent items={items} hasNextPage={hasMore} page={page} from={from} to={to} />
     </main>
   );
 };
