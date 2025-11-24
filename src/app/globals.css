@@ -386,13 +386,3 @@ body {
     display: none !important;
   }
 }
-
-/* React Three Fiber Canvas - Force touch-action: none for 3D camera controls
- * R3F applies touch-action: auto directly to the canvas element, overriding
- * the style prop on the Canvas component. This scoped rule targets only our
- * R3F gallery canvases and ensures OrbitControls receives all touch events
- * for pinch zoom and other multi-touch gestures on mobile devices.
- */
-.r3f-gallery-canvas canvas {
-  touch-action: none !important;
-}

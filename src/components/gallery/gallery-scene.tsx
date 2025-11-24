@@ -154,13 +154,13 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
           padding: 0,
           display: "block",
           background: "#000000",
-          touchAction: "none",
         }}
       >
         <CameraRig preset={initialCameraPreset} />
         <OrbitControls
           enableDamping
           dampingFactor={0.05}
+          touches={{ ONE: 0, TWO: 2 }}
           enableZoom
           enablePan
           minDistance={0.5}
