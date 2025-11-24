@@ -20,6 +20,7 @@ import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import { FramedPainting } from "@/components/gallery/framed-painting";
 import { Lights } from "@/components/gallery/lights";
 import { toast } from "sonner";
+import { useHaptic } from "use-haptic";
 
 export interface MintModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
   const { setVisible } = useWalletModal();
   const { mint, isMinting } = useSolanaMint();
   const { uploadGlbAndMetadata, isUploading: isIpfsUploading } = useIpfsUpload();
+  const { triggerHaptic } = useHaptic();
 
   // Mock price (in SOL)
   const MINT_PRICE = 0.1;
@@ -148,6 +150,7 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
   const handleClose = useCallback(() => {
     setIsProcessing(false);
     onClose();
+    triggerHaptic();
   }, [onClose]);
 
   const isLoading = isMinting || isWalletConnecting || isProcessing || isIpfsUploading;
