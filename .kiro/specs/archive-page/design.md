@@ -310,8 +310,8 @@ type ArchiveListResponse = {
 
 **API Contract**:
 
-| Method | Endpoint     | Request                                              | Response                                                      | Errors   |
-| ------ | ------------ | ---------------------------------------------------- | ------------------------------------------------------------- | -------- |
+| Method | Endpoint     | Request                                    | Response                                                      | Errors   |
+| ------ | ------------ | ------------------------------------------ | ------------------------------------------------------------- | -------- |
 | GET    | /api/archive | Query: `cursor?`, `limit?`, `from?`, `to?` | `{ items: ArchiveItem[], cursor?: string, hasMore: boolean }` | 400, 500 |
 
 **Request Schema**:

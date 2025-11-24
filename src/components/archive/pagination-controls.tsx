@@ -4,6 +4,31 @@ import React from "react";
 import Link from "next/link";
 import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
 
+interface PaginationButtonProps {
+  href?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}
+
+const PaginationButton: React.FC<PaginationButtonProps> = ({ href, onClick, disabled, children }) => {
+  const baseStyles = "rounded border border-white/20 px-2 py-0.5 text-[10px] font-medium md:px-2.5 md:py-1 md:text-xs";
+  const activeStyles = "bg-white/10 text-white transition-all hover:border-white/30 hover:bg-white/15";
+  const disabledStyles = "bg-white/5 text-white/40 opacity-50 cursor-default";
+
+  const className = `${baseStyles} ${disabled ? disabledStyles : activeStyles}`;
+
+  if (disabled || !href) {
+    return <span className={className}>{children}</span>;
+  }
+
+  return (
+    <Link href={href} onClick={onClick} className={className}>
+      {children}
+    </Link>
+  );
+};
+
 interface PaginationControlsProps {
   currentPage: number;
   itemsPerPage: number;
@@ -41,37 +66,33 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
 
   return (
     <div className="fixed bottom-[75px] left-1/2 z-[1000] flex -translate-x-1/2 items-center gap-1.5 rounded-lg border border-white/10 bg-black/60 px-2.5 py-1 backdrop-blur-xl opacity-60 hover:opacity-100 transition-opacity duration-200 md:bottom-[60px] md:gap-2 md:px-3 md:py-1.5">
-      {hasPreviousPage ? (
-        <Link
-          href={`/archive${createPageUrl(currentPage - 1)}`}
-          onClick={() => {
-            sendGAEvent(GA_EVENTS.ARCHIVE_PAGE_CHANGE, { page: currentPage - 1, direction: "prev" });
-          }}
-          className="rounded border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white transition-all hover:border-white/30 hover:bg-white/15 md:px-2.5 md:py-1 md:text-xs"
-        >
-          PREV
-        </Link>
-      ) : (
-        <span className="rounded border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-white/40 opacity-50 md:px-2.5 md:py-1 md:text-xs">
-          PREV
-        </span>
-      )}
+      <PaginationButton
+        href={hasPreviousPage ? `/archive${createPageUrl(currentPage - 1)}` : undefined}
+        onClick={() => {
+          sendGAEvent(GA_EVENTS.ARCHIVE_PAGE_CHANGE, {
+            page: currentPage - 1,
+            direction: "prev",
+          });
+        }}
+        disabled={!hasPreviousPage}
+      >
+        PREV
+      </PaginationButton>
 
       <span className="min-w-[70px] text-center text-[10px] text-white/80 md:min-w-[80px] md:text-xs">{rangeText}</span>
 
-      {hasNextPage ? (
-        <Link
-          href={`/archive${createPageUrl(currentPage + 1)}`}
-          onClick={() => {
-            sendGAEvent(GA_EVENTS.ARCHIVE_PAGE_CHANGE, { page: currentPage + 1, direction: "next" });
-          }}
-          className="rounded border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white transition-all hover:border-white/30 hover:bg-white/15 md:px-2.5 md:py-1 md:text-xs"
-        >
-          NEXT
-        </Link>
-      ) : (
-        <span className="rounded border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-white/40 opacity-50 md:px-2.5 md:py-1 md:text-xs"></span>
-      )}
+      <PaginationButton
+        href={hasNextPage ? `/archive${createPageUrl(currentPage + 1)}` : undefined}
+        onClick={() => {
+          sendGAEvent(GA_EVENTS.ARCHIVE_PAGE_CHANGE, {
+            page: currentPage + 1,
+            direction: "next",
+          });
+        }}
+        disabled={!hasNextPage}
+      >
+        NEXT
+      </PaginationButton>
     </div>
   );
 };
