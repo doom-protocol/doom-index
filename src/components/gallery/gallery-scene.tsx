@@ -125,6 +125,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
   return (
     <>
       <Canvas
+        className="r3f-gallery-canvas"
         frameloop="demand"
         shadows
         dpr={[1, 1.5]}
