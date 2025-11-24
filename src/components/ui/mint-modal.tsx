@@ -184,44 +184,46 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
         <div className="flex flex-col lg:flex-row">
           {/* 3D Preview */}
           <div className="relative h-[300px] sm:h-[350px] lg:h-[500px] w-full lg:w-[60%] bg-black/40">
-            <Canvas
-              className="r3f-gallery-canvas"
-              frameloop={isOpen ? "always" : "never"}
-              shadows
-              dpr={[1, 1.5]}
-              camera={{
-                fov: 50,
-                position: [0, 0.8, 0.8],
-                near: 0.1,
-                far: 100,
-              }}
-              gl={{
-                antialias: true,
-                toneMapping: ACESFilmicToneMapping,
-              }}
-              onCreated={({ gl }) => {
-                gl.shadowMap.enabled = true;
-                gl.shadowMap.type = PCFSoftShadowMap;
-                gl.toneMapping = ACESFilmicToneMapping;
-                gl.setClearColor("#050505");
-              }}
-              style={{ width: "100%", height: "100%" }}
-            >
-              <Lights />
-              <OrbitControls
-                enableDamping
-                dampingFactor={0.05}
-                minDistance={2}
-                maxDistance={6}
-                target={[0, 0.8, 4.0]}
-                rotateSpeed={0.5}
-                zoomSpeed={0.5}
-                enabled={!isLoading && isOpen}
-              />
-              <Suspense fallback={null}>
-                <FramedPainting ref={paintingRef} thumbnailUrl={paintingMetadata.thumbnailUrl} />
-              </Suspense>
-            </Canvas>
+            {isOpen && (
+              <Canvas
+                className="r3f-gallery-canvas"
+                frameloop="always"
+                shadows
+                dpr={[1, 1.5]}
+                camera={{
+                  fov: 50,
+                  position: [0, 0.8, 0.8],
+                  near: 0.1,
+                  far: 100,
+                }}
+                gl={{
+                  antialias: true,
+                  toneMapping: ACESFilmicToneMapping,
+                }}
+                onCreated={({ gl }) => {
+                  gl.shadowMap.enabled = true;
+                  gl.shadowMap.type = PCFSoftShadowMap;
+                  gl.toneMapping = ACESFilmicToneMapping;
+                  gl.setClearColor("#050505");
+                }}
+                style={{ width: "100%", height: "100%" }}
+              >
+                <Lights />
+                <OrbitControls
+                  enableDamping
+                  dampingFactor={0.05}
+                  minDistance={2}
+                  maxDistance={6}
+                  target={[0, 0.8, 4.0]}
+                  rotateSpeed={0.5}
+                  zoomSpeed={0.5}
+                  enabled={!isLoading}
+                />
+                <Suspense fallback={null}>
+                  <FramedPainting ref={paintingRef} thumbnailUrl={paintingMetadata.thumbnailUrl} />
+                </Suspense>
+              </Canvas>
+            )}
           </div>
 
           {/* Content Panel */}
