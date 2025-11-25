@@ -13,8 +13,9 @@ export class ScoringEngine {
    */
   calculateTrendScore(candidate: TokenCandidate): number {
     // Trend score components:
-    // - CoinGecko Trending Search rank (0.60 weight)
-    // - 24h volume (0.40 weight)
+    // - CoinGecko Trending Search rank (0.80 weight)
+    // - 24h volume (0.20 weight)
+    // Adjusted to favor actual user search interest over raw volume (which favors BTC)
 
     let rankScore = 0;
     if (candidate.trendingRankCgSearch !== undefined) {
@@ -28,7 +29,7 @@ export class ScoringEngine {
     const maxVolume = 10000000000; // 10B USD as reference
     const volumeScore = Math.min(1, Math.log10(Math.max(1, candidate.volume24hUsd)) / Math.log10(maxVolume));
 
-    return 0.6 * rankScore + 0.4 * volumeScore;
+    return 0.8 * rankScore + 0.2 * volumeScore;
   }
 
   /**
@@ -37,21 +38,32 @@ export class ScoringEngine {
    */
   calculateImpactScore(candidate: TokenCandidate): number {
     // Impact score components:
-    // - Price change magnitude (|priceChange24h|)
-    // - Market cap
-    // - Volume
+    // - Price change magnitude (Max of 24h and 7d to capture both new launches and sustained trends)
+    // - Turnover (Volume / Market Cap) - captures active trading interest relative to size
+    // - Market cap - reduced weight to prevent bias towards inactive mega-caps
     // - Token archetype weight
 
     // Price change magnitude (0-1)
-    const priceChangeMagnitude = Math.min(1, Math.abs(candidate.priceChange24h) / 50); // 50% = max
+    // Adjusted to be more sensitive to recent moves (24h) while respecting weekly trends (7d)
+    const change24h = Math.abs(candidate.priceChange24h);
+    const change7d = Math.abs(candidate.priceChange7d ?? 0);
+
+    const score24h = Math.min(1, change24h / 30); // 30% move in 24h is max score
+    const score7d = Math.min(1, change7d / 60); // 60% move in 7d is max score
+
+    // Use the stronger signal between 24h and 7d
+    const priceChangeMagnitude = Math.max(score24h, score7d);
+
+    // Turnover score: measures trading activity relative to capitalization
+    // Helps identify tokens that are "in play" regardless of size (e.g. new L1s, memes)
+    // BTC usually has lower turnover than trending alts
+    // Normalized: 50% turnover = 1.0 score
+    const turnover = candidate.volume24hUsd / Math.max(1, candidate.marketCapUsd);
+    const turnoverScore = Math.min(1, turnover * 2);
 
     // Market cap score (log scale)
     const maxMarketCap = 1000000000000; // 1T USD as reference
     const marketCapScore = Math.min(1, Math.log10(Math.max(1, candidate.marketCapUsd)) / Math.log10(maxMarketCap));
-
-    // Volume score (same as trend score)
-    const maxVolume = 10000000000; // 10B USD as reference
-    const volumeScore = Math.min(1, Math.log10(Math.max(1, candidate.volume24hUsd)) / Math.log10(maxVolume));
 
     // Archetype weight (based on categories)
     let archetypeWeight = 0.5; // Default
@@ -64,7 +76,9 @@ export class ScoringEngine {
     }
 
     // Combine components
-    const impactScore = (priceChangeMagnitude * 0.4 + marketCapScore * 0.3 + volumeScore * 0.3) * archetypeWeight;
+    // Formula: Price(60%) + Turnover(30%) + Size(10%)
+    // Heavily favors price action and relative activity over raw size
+    const impactScore = (priceChangeMagnitude * 0.6 + turnoverScore * 0.3 + marketCapScore * 0.1) * archetypeWeight;
 
     return Math.min(1, impactScore);
   }
