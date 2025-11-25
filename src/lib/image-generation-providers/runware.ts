@@ -6,7 +6,7 @@ import { base64ToArrayBuffer } from "@/utils/image";
 import { getErrorMessage } from "@/utils/error";
 import { env } from "@/env";
 import { RunwareClient, FLUX_KONTEXT_DEV_MODEL } from "@/lib/runware-client";
-import { DEFAULT_RUNWARE_MODEL, DEFAULT_IMAGE_SIZE, DEFAULT_RUNWARE_TIMEOUT } from "@/constants/runware";
+import { DEFAULT_RUNWARE_MODEL, DEFAULT_IMAGE_SIZE, DEFAULT_RUNWARE_TIMEOUT, RUNWARE_AIR_MODELS } from "@/constants/runware";
 
 /**
  * Runware Provider for Image Generation
