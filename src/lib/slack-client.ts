@@ -59,11 +59,56 @@ export async function sendSlackMessage(message: SlackMessage): Promise<Result<vo
 function getSourceFromStack(stack?: string): string | undefined {
   if (!stack) return undefined;
   const lines = stack.split("\n");
-  // First line is usually the error message, second line is the first stack frame
-  // But sometimes the stack starts directly with frames (depending on browser/env)
-  // We look for lines starting with "at " or containing specific patterns
   const firstFrame = lines.find(line => line.trim().startsWith("at ") || line.includes(":"));
   return firstFrame ? firstFrame.trim() : undefined;
+}
+
+/**
+ * Try to parse and format JSON content for better readability.
+ * Returns formatted JSON if successful, otherwise returns the original string.
+ */
+function tryFormatJson(str: string): { isJson: boolean; formatted: string } {
+  const trimmed = str.trim();
+
+  if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      return { isJson: true, formatted: JSON.stringify(parsed, null, 2) };
+    } catch {
+      return { isJson: false, formatted: str };
+    }
+  }
+
+  return { isJson: false, formatted: str };
+}
+
+/**
+ * Format error message for Slack, detecting and formatting JSON content.
+ * Extracts JSON from error messages and formats them in code blocks.
+ */
+function formatErrorMessage(errorMessage: string): string {
+  const jsonMatch = errorMessage.match(/^(.+?)\s*-\s*(\{[\s\S]*\})$/);
+
+  if (jsonMatch) {
+    const prefix = jsonMatch[1].trim();
+    const jsonPart = jsonMatch[2];
+    const { isJson, formatted } = tryFormatJson(jsonPart);
+
+    if (isJson) {
+      return `${prefix}\n\`\`\`${formatted}\`\`\``;
+    }
+  }
+
+  const { isJson, formatted } = tryFormatJson(errorMessage);
+  if (isJson) {
+    return `\`\`\`${formatted}\`\`\``;
+  }
+
+  if (errorMessage.includes("\n") || errorMessage.length > 100) {
+    return `\`\`\`${errorMessage}\`\`\``;
+  }
+
+  return errorMessage;
 }
 
 /**
@@ -123,7 +168,8 @@ export function formatErrorForSlack(error: unknown, context?: string): SlackMess
     message += `*Source:* \`${source}\`\n`;
   }
 
-  message += `*Message:* ${errorMessage}\n`;
+  const formattedMessage = formatErrorMessage(errorMessage);
+  message += `*Message:*\n${formattedMessage}\n`;
 
   if (additionalDetails) {
     const truncatedDetails =

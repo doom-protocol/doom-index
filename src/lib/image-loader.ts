@@ -8,10 +8,20 @@ export default function cloudflareLoader({ src, width, quality }: ImageLoaderPro
   const isLocal = base.includes("localhost") || base.includes("127.0.0.1");
   if (isLocal) return src;
 
+  // Check if this is a preview URL (workers.dev domain)
+  // Cloudflare Image Transformations (/cdn-cgi/image/) don't work on preview URLs
+  const isPreviewUrl = base.includes(".workers.dev");
+
+  // If it's a preview URL or the src is already an absolute URL, return it directly
+  // This avoids using /cdn-cgi/image/ which doesn't work on preview URLs
+  if (isPreviewUrl || src.startsWith("http://") || src.startsWith("https://")) {
+    return src;
+  }
+
   const params = [`width=${width}`];
   if (quality) params.push(`quality=${quality}`);
 
-  const absolute = src.startsWith("http://") || src.startsWith("https://") ? src : `${base}/${normalizeSrc(src)}`;
+  const absolute = `${base}/${normalizeSrc(src)}`;
 
   return `/cdn-cgi/image/${params.join(",")}/${absolute}`;
 }
