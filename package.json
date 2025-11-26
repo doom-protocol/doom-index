@@ -55,6 +55,7 @@
     "@tavily/core": "^0.5.13",
     "@trpc/client": "^11.7.2",
     "@trpc/next": "^11.7.2",
+    "@trpc/react-query": "^11.7.2",
     "@trpc/server": "^11.7.2",
     "@trpc/tanstack-react-query": "^11.7.2",
     "drizzle-orm": "^0.44.7",
