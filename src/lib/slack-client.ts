@@ -66,6 +66,7 @@ function getSourceFromStack(stack?: string): string | undefined {
 /**
  * Decode JSON-style escape sequences in a string.
  * Handles \n, \", \\, etc. by treating the string as JSON string content.
+ * This works for strings that are already properly escaped (e.g., from JSON.stringify).
  */
 function decodeJsonEscapes(str: string): string | null {
   if (!str.includes("\\")) {
@@ -73,8 +74,7 @@ function decodeJsonEscapes(str: string): string | null {
   }
 
   try {
-    const escaped = str.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-    const wrapped = `"${escaped}"`;
+    const wrapped = `"${str}"`;
     return JSON.parse(wrapped);
   } catch {
     return null;
