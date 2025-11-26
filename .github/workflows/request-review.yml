@@ -1,0 +1,25 @@
+name: Request CodeRabbit review for Devin PRs
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  request-coderabbit-review:
+    permissions:
+      issues: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    if: github.event.pull_request.user.login == 'devin-ai-integration[bot]'
+    steps:
+      - name: Request CodeRabbit review
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '@coderabbitai review'
+            });
