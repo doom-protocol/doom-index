@@ -7,7 +7,7 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 // Create tRPC Context Provider and Hooks
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
 
-// tRPC React hooks
+// tRPC React hooks (legacy export, use useTRPC() hook instead)
 export const trpc = createTRPCReact<AppRouter>();
 
 // tRPC client creation function
