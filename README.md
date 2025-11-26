@@ -795,7 +795,7 @@ Detailed design documents for current features:
 ## Links
 
 - **Website**: [doomindex.fun](https://doomindex.fun)
-- **GitHub**: [github.com/posaune0423/doom-index](https://github.com/posaune0423/doom-index)
+- **GitHub**: [github.com/doom-protocol/doom-index](https://github.com/doom-protocol/doom-index)
 - **X (Twitter)**: [@doom_index](https://x.com/doom_index)
 - **Dev.fun**: [dev.fun/p/155bae58a27d2f0905ed](https://dev.fun/p/155bae58a27d2f0905ed)
 
