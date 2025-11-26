@@ -612,11 +612,13 @@ const ArchiveScene: React.FC<ArchiveSceneProps> = ({ items, onLoadMore, hasMore,
     // カメラ位置から可視範囲を計算（バッファ±3行）
     const visibleStart = Math.max(
       0,
-      Math.floor((cameraZ - gridConfig.initialCameraZ) / gridConfig.zSpacing) * gridConfig.columns - gridConfig.columns * 3
+      Math.floor((cameraZ - gridConfig.initialCameraZ) / gridConfig.zSpacing) * gridConfig.columns -
+        gridConfig.columns * 3,
     );
     const visibleEnd = Math.min(
       items.length,
-      Math.ceil((cameraZ - gridConfig.initialCameraZ) / gridConfig.zSpacing) * gridConfig.columns + gridConfig.columns * 8
+      Math.ceil((cameraZ - gridConfig.initialCameraZ) / gridConfig.zSpacing) * gridConfig.columns +
+        gridConfig.columns * 8,
     );
     setVisibleRange({ start: visibleStart, end: visibleEnd });
   });
@@ -641,9 +643,9 @@ const ArchiveScene: React.FC<ArchiveSceneProps> = ({ items, onLoadMore, hasMore,
           const gridX = globalIndex % gridConfig.columns;
           const gridZ = Math.floor(globalIndex / gridConfig.columns);
           const position: [number, number, number] = [
-            gridX * gridConfig.spacing - (gridConfig.columns - 1) * gridConfig.spacing / 2,
+            gridX * gridConfig.spacing - ((gridConfig.columns - 1) * gridConfig.spacing) / 2,
             0.8,
-            gridZ * gridConfig.zSpacing
+            gridZ * gridConfig.zSpacing,
           ];
           return (
             <ArchiveFramedPainting
@@ -1264,7 +1266,7 @@ const ArchiveDetailModal: React.FC<ArchiveDetailModalProps> = ({ item, isOpen, o
         alignItems: "center",
         justifyContent: "center",
       }}
-      onClick={(e) => {
+      onClick={e => {
         if (e.target === e.currentTarget && !isMobile) onClose();
       }}
     >
@@ -1312,7 +1314,7 @@ const ArchiveDetailModal: React.FC<ArchiveDetailModalProps> = ({ item, isOpen, o
             transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
             cursor: zoom > 1 ? "grab" : "default",
           }}
-          onWheel={(e) => {
+          onWheel={e => {
             e.preventDefault();
             const delta = e.deltaY > 0 ? -0.1 : 0.1;
             setZoom(Math.max(1, Math.min(2, zoom + delta)));

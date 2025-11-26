@@ -1157,12 +1157,12 @@ export function getTRPCClientConfig() {
 ```typescript
 // src/app/providers.tsx
 
-'use client';
+"use client";
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
-import { trpc, getTRPCClientConfig } from '@/lib/trpc/client';
-import { useViewer } from '@/hooks/use-viewer';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
+import { trpc, getTRPCClientConfig } from "@/lib/trpc/client";
+import { useViewer } from "@/hooks/use-viewer";
 
 export const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useViewer(); // start viewer worker
@@ -1248,7 +1248,7 @@ export async function getServerTRPC() {
 ```typescript
 // src/app/page.tsx
 
-import { getServerTRPC } from '@/lib/trpc/server';
+import { getServerTRPC } from "@/lib/trpc/server";
 
 export default async function HomePage() {
   const trpc = await getServerTRPC();

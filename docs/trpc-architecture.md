@@ -235,10 +235,8 @@ export const trpc = createTRPCReact<AppRouter>();
 
 // Provider設定
 <trpc.Provider client={trpcClient} queryClient={queryClient}>
-  <QueryClientProvider client={queryClient}>
-    {children}
-  </QueryClientProvider>
-</trpc.Provider>
+  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+</trpc.Provider>;
 ```
 
 ### React Server Components
