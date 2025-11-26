@@ -5,7 +5,8 @@ import { ok } from "neverthrow";
 
 export const createMockImageProvider = (): ImageProvider => ({
   name: "mock",
-  generate(input: ImageRequest, _options?: ImageGenerationOptions) {
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async generate(input: ImageRequest, _options?: ImageGenerationOptions) {
     // Estimate token count from prompt
     const promptTokens = estimateTokenCount(input.prompt);
     const negativeTokens = estimateTokenCount(input.negative);

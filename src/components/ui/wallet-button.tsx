@@ -54,7 +54,7 @@ export const WalletButton: FC = () => {
         type="button"
         onClick={handleConnect}
         disabled={connecting}
-        className={`liquid-glass-effect relative flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-medium text-white/70 backdrop-blur-md transition-all duration-300 hover:border-white/40 hover:bg-white/10 hover:text-white hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50`}
+        className="liquid-glass-effect relative flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-medium text-white/70 backdrop-blur-md transition-all duration-300 hover:border-white/40 hover:bg-white/10 hover:text-white hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {content}
       </button>
@@ -66,7 +66,7 @@ export const WalletButton: FC = () => {
       <button
         type="button"
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className={`liquid-glass-effect relative flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-md transition-all duration-300 hover:border-white/50 hover:bg-white/20 hover:shadow-[0_0_15px_rgba(255,255,255,0.15)] active:scale-95`}
+        className="liquid-glass-effect relative flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-md transition-all duration-300 hover:border-white/50 hover:bg-white/20 hover:shadow-[0_0_15px_rgba(255,255,255,0.15)] active:scale-95"
       >
         <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
         {content}
