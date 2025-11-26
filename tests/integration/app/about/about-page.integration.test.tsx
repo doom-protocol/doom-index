@@ -1,9 +1,9 @@
 /// <reference lib="dom" />
 
-import { describe, it, expect, mock } from "bun:test";
-import { render } from "@testing-library/react";
-import type { JSX } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render } from "@testing-library/react";
+import { describe, expect, it, mock } from "bun:test";
+import type { JSX } from "react";
 
 // Mock getBaseUrl before importing page to ensure it returns valid URL
 // This must be done at module level, before importing Page

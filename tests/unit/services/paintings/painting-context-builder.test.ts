@@ -1,12 +1,12 @@
-import { describe, it, expect } from "bun:test";
-import { ok, type Result } from "neverthrow";
-import { PaintingContextBuilder } from "@/services/paintings/painting-context-builder";
+import type { Token } from "@/db/schema/tokens";
 import { classifyDynamics } from "@/lib/pure/painting-context-classification";
 import type { TokensRepository } from "@/repositories/tokens-repository";
-import type { SelectedToken, MarketSnapshot, TokenSnapshot } from "@/types/paintings";
-import type { PaintingContext } from "@/types/painting-context";
-import type { Token } from "@/db/schema/tokens";
+import { PaintingContextBuilder } from "@/services/paintings/painting-context-builder";
 import type { AppError } from "@/types/app-error";
+import type { PaintingContext } from "@/types/painting-context";
+import type { MarketSnapshot, SelectedToken, TokenSnapshot } from "@/types/paintings";
+import { describe, expect, it } from "bun:test";
+import { ok, type Result } from "neverthrow";
 
 const token = (overrides: Partial<SelectedToken> = {}): SelectedToken => ({
   id: "alpha",

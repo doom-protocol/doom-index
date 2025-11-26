@@ -1,7 +1,7 @@
-import { GLTFExporter, GLTFLoader, SimplifyModifier } from "three-stdlib";
-import { Group, Mesh, Object3D } from "three";
-import { err, ok, type Result } from "neverthrow";
 import type { AppError } from "@/types/app-error";
+import { err, ok, type Result } from "neverthrow";
+import { type Group, Mesh, type Object3D } from "three";
+import { GLTFExporter, GLTFLoader, SimplifyModifier } from "three-stdlib";
 
 interface GLTFResult {
   scene: Group;

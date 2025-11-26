@@ -1,12 +1,12 @@
 "use client";
 
+import { getSolanaRpcUrl } from "@/constants/solana";
+import { mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
+import type { Umi } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-adapters";
-import { mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
-import type { Umi } from "@metaplex-foundation/umi";
-import { getSolanaRpcUrl } from "@/constants/solana";
 
 // Create Umi instance
 const createUmiInstance = (): Umi => {

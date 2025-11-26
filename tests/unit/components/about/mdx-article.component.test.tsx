@@ -3,9 +3,9 @@
 // Ensure DOM environment is initialized (preload may not be executed in time)
 import "../../../preload";
 
-import { describe, it, expect } from "bun:test";
-import { render } from "@testing-library/react";
 import MDXArticle from "@/components/about/mdx-article";
+import { render } from "@testing-library/react";
+import { describe, expect, it } from "bun:test";
 
 describe("MDXArticle", () => {
   it("should render article element with MDX content", () => {

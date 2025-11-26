@@ -1,5 +1,5 @@
-import { describe, expect, it, mock, beforeEach } from "bun:test";
-import { Group, Mesh, MeshStandardMaterial, PlaneGeometry, BufferGeometry } from "three";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { Group, Mesh, MeshStandardMaterial, PlaneGeometry, type BufferGeometry } from "three";
 
 // Mock GLTFExporter and GLTFLoader
 const mockParseExporter = mock(

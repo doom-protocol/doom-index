@@ -1,8 +1,8 @@
-import { describe, expect, it, beforeEach, afterEach, mock } from "bun:test";
-import { createPaintingsService } from "@/services/paintings";
-import { createTestR2Bucket } from "../../lib/memory-r2";
-import type { PaintingMetadata } from "@/types/paintings";
 import { encodeCursor } from "@/repositories/paintings-repository";
+import { createPaintingsService } from "@/services/paintings";
+import type { PaintingMetadata } from "@/types/paintings";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { createTestR2Bucket } from "../../lib/memory-r2";
 
 const TEST_IMAGE_KEYS = [
   "images/2025/11/14/DOOM_202511141200_abc12345_def456789012.webp",

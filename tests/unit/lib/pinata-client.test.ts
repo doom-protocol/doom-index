@@ -3,8 +3,8 @@
  * Tests the Anti-Corruption Layer for Pinata SDK
  */
 
-import { describe, expect, it, mock } from "bun:test";
 import { createPinataClient } from "@/lib/pinata-client";
+import { describe, expect, it, mock } from "bun:test";
 
 describe("unit/lib/pinata-client", () => {
   describe("createSignedUploadUrl", () => {

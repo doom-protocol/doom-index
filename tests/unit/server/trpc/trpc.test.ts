@@ -1,7 +1,7 @@
-import { describe, it, expect, mock } from "bun:test";
-import { router, publicProcedure } from "@/server/trpc/trpc";
-import { createMockContext } from "./helpers";
+import { publicProcedure, router } from "@/server/trpc/trpc";
 import { logger } from "@/utils/logger";
+import { describe, expect, it, mock } from "bun:test";
+import { createMockContext } from "./helpers";
 
 describe("tRPC Init", () => {
   it("should create a router", () => {

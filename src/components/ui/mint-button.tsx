@@ -1,7 +1,7 @@
 "use client";
 
-import { FC, useEffect, useState } from "react";
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
+import { type FC, useEffect, useState } from "react";
 import { useHaptic } from "use-haptic";
 
 interface MintButtonProps {
@@ -48,27 +48,17 @@ export const MintButton: FC<MintButtonProps> = ({
       type="button"
       disabled={disabled || isLoading || isErrorState}
       aria-disabled={disabled || isLoading || isErrorState}
-      className={`
-        relative w-[120px] h-[36px] rounded-[18px] border
-        backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.2)]
-        flex items-center justify-center transition-all duration-300 ease-in-out
-        touch-manipulation p-0 outline-none pointer-events-auto overflow-hidden
-        transform-gpu will-change-transform
-        ${
-          isErrorState
-            ? "bg-red-500/20 border-red-500/50 shadow-red-500/20 cursor-not-allowed"
-            : !isInteractive
-              ? "bg-white/5 border-white/15 cursor-not-allowed opacity-60 active:animate-shake liquid-glass-effect shadow-white/5"
-              : "bg-white/8 border-white/15 cursor-pointer opacity-100 hover:bg-white/12 hover:scale-105 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:shadow-white/10 active:scale-90 active:bg-white/20 active:shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:shadow-white/15 liquid-glass-effect shadow-white/5"
-        }
-      `}
+      className={`pointer-events-auto relative flex h-[36px] w-[120px] transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[18px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none ${
+        isErrorState
+          ? "cursor-not-allowed border-red-500/50 bg-red-500/20 shadow-red-500/20"
+          : !isInteractive
+            ? "active:animate-shake liquid-glass-effect cursor-not-allowed border-white/15 bg-white/5 opacity-60 shadow-white/5"
+            : "liquid-glass-effect cursor-pointer border-white/15 bg-white/8 opacity-100 shadow-white/5 hover:scale-105 hover:bg-white/12 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:shadow-white/10 active:scale-90 active:bg-white/20 active:shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:shadow-white/15"
+      } `}
       onClick={handleClick}
     >
       <span
-        className={`
-        relative z-10 text-xs font-medium tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]
-        ${isErrorState ? "text-red-200" : "text-white/70"}
-      `}
+        className={`relative z-10 text-xs font-medium tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] ${isErrorState ? "text-red-200" : "text-white/70"} `}
       >
         Mint
       </span>

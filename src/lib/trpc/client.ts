@@ -1,8 +1,8 @@
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
-import { createTRPCContext } from "@trpc/tanstack-react-query";
-import { createTRPCReact } from "@trpc/react-query";
 import type { AppRouter } from "@/server/trpc/routers/_app";
 import { getBaseUrl } from "@/utils/url";
+import { createTRPCClient, httpBatchLink } from "@trpc/client";
+import { createTRPCReact } from "@trpc/react-query";
+import { createTRPCContext } from "@trpc/tanstack-react-query";
 
 // Create tRPC Context Provider and Hooks
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
@@ -18,7 +18,7 @@ export function createTRPCClientInstance() {
         url: `${getBaseUrl()}/api/trpc`,
 
         // Custom headers
-        async headers() {
+        headers() {
           return {
             // Add authentication headers as needed
           };

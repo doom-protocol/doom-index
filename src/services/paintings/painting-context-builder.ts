@@ -1,19 +1,19 @@
-import { Result, ok, err } from "neverthrow";
-import type { AppError } from "@/types/app-error";
-import { TokensRepository } from "@/repositories/tokens-repository";
-import type { SelectedToken, MarketSnapshot, TokenSnapshot } from "@/types/paintings";
-import type { PaintingContext } from "@/types/painting-context";
 import {
+  classifyDynamics,
+  classifyEventPressure,
   classifyMarketClimate,
   classifyTokenArchetype,
-  classifyEventPressure,
-  pickComposition,
-  pickPalette,
-  classifyDynamics,
   deriveMotifs,
   deriveNarrativeHints,
+  pickComposition,
+  pickPalette,
 } from "@/lib/pure/painting-context-classification";
+import { type TokensRepository } from "@/repositories/tokens-repository";
+import type { AppError } from "@/types/app-error";
+import type { PaintingContext } from "@/types/painting-context";
+import type { MarketSnapshot, SelectedToken, TokenSnapshot } from "@/types/paintings";
 import { logger } from "@/utils/logger";
+import { type Result, err, ok } from "neverthrow";
 
 /**
  * Painting Context Input

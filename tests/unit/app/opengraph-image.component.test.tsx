@@ -1,6 +1,5 @@
 /// <reference lib="dom" />
 /// <reference types="@testing-library/jest-dom" />
-/* eslint-disable @next/next/no-img-element */
 
 /**
  * Unit Tests for OGP Image Generation Components
@@ -12,9 +11,9 @@
 // Ensure DOM environment is initialized (preload may not be executed in time)
 import "../../preload";
 
-import { describe, expect, test } from "bun:test";
+import { alt, size } from "@/app/opengraph-image";
 import { render } from "@testing-library/react";
-import { size, alt } from "@/app/opengraph-image";
+import { describe, expect, test } from "bun:test";
 
 describe("OGP Image Generation Components", () => {
   describe("Framed Layout JSX Structure", () => {

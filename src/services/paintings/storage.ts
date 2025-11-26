@@ -1,10 +1,10 @@
-import { err, ok, Result } from "neverthrow";
-import type { PaintingMetadata } from "@/types/paintings";
-import type { AppError } from "@/types/app-error";
-import { putImageR2, putJsonR2 } from "@/lib/r2";
-import { buildPaintingKey, extractIdFromFilename, buildPublicR2Path } from "@/utils/paintings";
 import { isPaintingMetadata } from "@/lib/pure/painting-metadata";
+import { putImageR2, putJsonR2 } from "@/lib/r2";
+import type { AppError } from "@/types/app-error";
+import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
+import { buildPaintingKey, buildPublicR2Path, extractIdFromFilename } from "@/utils/paintings";
+import { err, ok, type Result } from "neverthrow";
 
 /**
  * Store image and metadata atomically to R2

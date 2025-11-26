@@ -1,27 +1,27 @@
-import { err, ok, Result } from "neverthrow";
-import { type VisualParams } from "@/lib/pure/mapping";
-import { hashVisualParams, seedForMinute, buildGenerationFileName } from "@/lib/pure/hash";
+import { PROMPT_TUNING } from "@/constants/prompt-params";
 import {
-  WORLD_PAINTING_NEGATIVE_PROMPT,
+  CHARACTER_NARRATIVES,
   MEDIEVAL_ALLEGORICAL_OPENING,
   MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION,
   MEDIEVAL_FIGURES_ELEMENT,
-  SYMBOLIC_ELEMENTS,
-  getSymbolicElementForArchetypeClimate,
   NARRATIVE_MOMENTS,
-  getNarrativeMomentKey,
+  SYMBOLIC_ELEMENTS,
+  WORLD_PAINTING_NEGATIVE_PROMPT,
   getActionElement,
-  CHARACTER_NARRATIVES,
+  getNarrativeMomentKey,
+  getSymbolicElementForArchetypeClimate,
 } from "@/constants/prompts/world-painting";
-import { getMinuteBucket } from "@/utils/time";
-import { logger } from "@/utils/logger";
-import type { AppError } from "@/types/app-error";
-import type { PaintingContext } from "@/types/painting-context";
-import type { TokenAnalysisService, TokenMetaInput, TokenOperationInput } from "@/services/token-analysis-service";
-import { FALLBACK_SHORT_CONTEXT } from "@/services/token-analysis-service";
+import { buildGenerationFileName, hashVisualParams, seedForMinute } from "@/lib/pure/hash";
+import { type VisualParams } from "@/lib/pure/mapping";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
 import type { TokensRepository } from "@/repositories/tokens-repository";
-import { PROMPT_TUNING } from "@/constants/prompt-params";
+import type { TokenAnalysisService, TokenMetaInput, TokenOperationInput } from "@/services/token-analysis-service";
+import { FALLBACK_SHORT_CONTEXT } from "@/services/token-analysis-service";
+import type { AppError } from "@/types/app-error";
+import type { PaintingContext } from "@/types/painting-context";
+import { logger } from "@/utils/logger";
+import { getMinuteBucket } from "@/utils/time";
+import { err, ok, type Result } from "neverthrow";
 
 export type PromptComposition = {
   seed: string;

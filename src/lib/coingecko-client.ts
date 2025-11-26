@@ -1,8 +1,8 @@
-import Coingecko from "@coingecko/coingecko-typescript";
-import { Result, ok, err } from "neverthrow";
+import { handleApiError } from "@/lib/pure/error-handling";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
-import { handleApiError } from "@/lib/pure/error-handling";
+import Coingecko from "@coingecko/coingecko-typescript";
+import { type Result, err, ok } from "neverthrow";
 
 // Helper to extract return types from the SDK methods
 type CoinGeckoInstance = Coingecko;

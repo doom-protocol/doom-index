@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import { useTRPC, useTRPCClient } from "@/lib/trpc/client";
 import type { ArchiveListResponse } from "@/services/paintings";
 import type { PaginationOptions } from "@/types/domain";
 import { logger } from "@/utils/logger";
+import { useQuery } from "@tanstack/react-query";
 
 interface UseArchiveOptions extends PaginationOptions {
   enabled?: boolean;

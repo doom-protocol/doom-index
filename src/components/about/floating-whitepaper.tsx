@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import type { PropsWithChildren } from "react";
 import { Html } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
+import type { PropsWithChildren } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Group } from "three";
 import WhitepaperViewer from "./whitepaper-viewer";
 
@@ -161,7 +161,7 @@ export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
       >
         <div
           ref={scrollContainerRef}
-          className="w-full h-full overflow-y-auto overflow-x-hidden relative bg-white m-0 p-0 rounded-sm border border-[rgba(200,200,200,0.3)]"
+          className="relative m-0 h-full w-full overflow-x-hidden overflow-y-auto rounded-sm border border-[rgba(200,200,200,0.3)] bg-white p-0"
           style={{
             opacity: 0, // Start with opacity 0, will be animated to 1
             boxShadow: `

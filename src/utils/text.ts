@@ -4,8 +4,8 @@
  * Provides functions for text analysis, token estimation, and text extraction.
  */
 
-import { Result, err, ok } from "neverthrow";
 import type { ParsingError } from "@/types/app-error";
+import { type Result, err, ok } from "neverthrow";
 
 /**
  * Estimate token count from text using character and word-based heuristics

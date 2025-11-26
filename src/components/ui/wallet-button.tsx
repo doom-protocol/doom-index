@@ -1,10 +1,10 @@
 "use client";
 
-import { FC, useCallback, useState, useRef } from "react";
+import { useClickOutside } from "@/hooks/use-click-outside";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { type FC, useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useClickOutside } from "@/hooks/use-click-outside";
 
 export const WalletButton: FC = () => {
   const { publicKey, wallet, disconnect, connecting, connected } = useWallet();
@@ -32,7 +32,7 @@ export const WalletButton: FC = () => {
 
   const copyAddress = useCallback(() => {
     if (publicKey) {
-      navigator.clipboard.writeText(publicKey.toBase58());
+      void navigator.clipboard.writeText(publicKey.toBase58());
       setCopied(true);
       toast.success("Address copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
@@ -54,12 +54,7 @@ export const WalletButton: FC = () => {
         type="button"
         onClick={handleConnect}
         disabled={connecting}
-        className={`
-          relative flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-medium text-white/70
-          transition-all duration-300 hover:border-white/40 hover:bg-white/10 hover:text-white hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]
-          active:scale-95 disabled:cursor-not-allowed disabled:opacity-50
-          backdrop-blur-md liquid-glass-effect
-        `}
+        className="liquid-glass-effect relative flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-medium text-white/70 backdrop-blur-md transition-all duration-300 hover:border-white/40 hover:bg-white/10 hover:text-white hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {content}
       </button>
@@ -71,22 +66,17 @@ export const WalletButton: FC = () => {
       <button
         type="button"
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className={`
-          relative flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white
-          transition-all duration-300 hover:border-white/50 hover:bg-white/20 hover:shadow-[0_0_15px_rgba(255,255,255,0.15)]
-          active:scale-95
-          backdrop-blur-md liquid-glass-effect
-        `}
+        className="liquid-glass-effect relative flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-md transition-all duration-300 hover:border-white/50 hover:bg-white/20 hover:shadow-[0_0_15px_rgba(255,255,255,0.15)] active:scale-95"
       >
         <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
         {content}
       </button>
 
       {isDropdownOpen && (
-        <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-white/20 bg-black/80 p-1 shadow-xl backdrop-blur-xl transition-all animate-in fade-in zoom-in-95 duration-200">
+        <div className="animate-in fade-in zoom-in-95 absolute top-full right-0 mt-2 w-48 overflow-hidden rounded-xl border border-white/20 bg-black/80 p-1 shadow-xl backdrop-blur-xl transition-all duration-200">
           <button
             onClick={copyAddress}
-            className="flex w-full items-center rounded-lg px-3 py-2 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white text-left"
+            className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
           >
             <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {copied ? (
@@ -104,7 +94,7 @@ export const WalletButton: FC = () => {
           </button>
           <button
             onClick={handleDisconnect}
-            className="flex w-full items-center rounded-lg px-3 py-2 text-sm text-red-400 transition-colors hover:bg-white/10 hover:text-red-300 text-left"
+            className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-red-400 transition-colors hover:bg-white/10 hover:text-red-300"
           >
             <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

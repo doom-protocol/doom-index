@@ -1,5 +1,5 @@
-import { describe, expect, it } from "bun:test";
 import { listR2Objects } from "@/lib/r2";
+import { describe, expect, it } from "bun:test";
 
 describe("listR2Objects", () => {
   it("forwards options with clamped limit", async () => {

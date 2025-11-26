@@ -1,10 +1,10 @@
-import { and, or, lt, gt, eq, desc, asc, sql } from "drizzle-orm";
-import { err, ok, Result } from "neverthrow";
-import { paintings } from "@/db/schema/paintings";
 import { getDB } from "@/db";
-import type { PaintingMetadata } from "@/types/paintings";
+import { paintings } from "@/db/schema/paintings";
 import type { AppError } from "@/types/app-error";
+import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
+import { and, asc, desc, eq, gt, lt, or, sql } from "drizzle-orm";
+import { err, ok, type Result } from "neverthrow";
 
 export type PaintingCursor = { ts: number; id: string };
 

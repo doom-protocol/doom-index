@@ -1,5 +1,5 @@
-import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
+import type { NextConfig } from "next";
 import remarkGfm from "remark-gfm";
 
 const nextConfig: NextConfig = {
@@ -28,5 +28,5 @@ export default withMDX(nextConfig);
 
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 if (process.env.NODE_ENV === "development") {
-  initOpenNextCloudflareForDev({ remoteBindings: true });
+  void initOpenNextCloudflareForDev({ remoteBindings: true });
 }

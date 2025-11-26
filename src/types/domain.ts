@@ -1,5 +1,5 @@
-import type { Result } from "neverthrow";
 import type { AppError } from "@/types/app-error";
+import type { Result } from "neverthrow";
 
 /**
  * Legacy type aliases for backward compatibility

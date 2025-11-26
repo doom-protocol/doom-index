@@ -7,17 +7,17 @@
  * - Error handling (API failures, D1 failures)
  */
 
-import { describe, it, expect, mock, beforeEach } from "bun:test";
-import { ok, err } from "neverthrow";
+import { type MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
+import { type TokensRepository } from "@/repositories/tokens-repository";
+import { type MarketDataService } from "@/services/paintings/market-data";
+import { type PaintingContextBuilder } from "@/services/paintings/painting-context-builder";
 import { PaintingGenerationOrchestrator } from "@/services/paintings/painting-generation-orchestrator";
-import { TokenSelectionService } from "@/services/paintings/token-selection";
-import { MarketDataService } from "@/services/paintings/market-data";
-import { PaintingContextBuilder } from "@/services/paintings/painting-context-builder";
-import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
-import { TokensRepository } from "@/repositories/tokens-repository";
+import { type TokenSelectionService } from "@/services/paintings/token-selection";
 import type { AppError } from "@/types/app-error";
-import type { SelectedToken, MarketSnapshot } from "@/types/paintings";
 import type { PaintingContext } from "@/types/painting-context";
+import type { MarketSnapshot, SelectedToken } from "@/types/paintings";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { err, ok } from "neverthrow";
 
 // Mock env module
 mock.module("@/env", () => ({

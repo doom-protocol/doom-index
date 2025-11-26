@@ -1,5 +1,5 @@
-import { describe, it, expect } from "bun:test";
 import { appRouter } from "@/server/trpc/routers/_app";
+import { describe, expect, it } from "bun:test";
 import { createMockContext } from "../../../unit/server/trpc/helpers";
 
 describe("Viewer Integration", () => {

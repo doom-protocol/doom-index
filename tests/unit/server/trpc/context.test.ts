@@ -1,5 +1,5 @@
-import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
 // Mock must be set up before importing createContext so getCloudflareContext
 // is replaced when the module is evaluated

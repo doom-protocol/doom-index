@@ -3,8 +3,8 @@
  * Tests Metaplex standard compliance
  */
 
-import { describe, expect, it } from "bun:test";
 import { buildNftMetadata } from "@/lib/metadata-builder";
+import { describe, expect, it } from "bun:test";
 
 describe("unit/lib/metadata-builder", () => {
   describe("buildNftMetadata", () => {

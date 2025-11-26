@@ -1,7 +1,7 @@
 "use client";
 
-import { useViewerCount } from "@/hooks/use-viewer-count";
 import { useAnimatedNumber } from "@/hooks/use-animated-number";
+import { useViewerCount } from "@/hooks/use-viewer-count";
 import { type FC } from "react";
 
 export const ViewerCountBadge: FC = () => {

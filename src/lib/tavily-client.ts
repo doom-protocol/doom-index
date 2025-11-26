@@ -1,8 +1,8 @@
-import { Result, err, ok } from "neverthrow";
-import { tavily } from "@tavily/core";
+import { env } from "@/env";
 import type { AppError, TimeoutError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
-import { env } from "@/env";
+import { tavily } from "@tavily/core";
+import { type Result, err, ok } from "neverthrow";
 
 /**
  * Input for Tavily search query

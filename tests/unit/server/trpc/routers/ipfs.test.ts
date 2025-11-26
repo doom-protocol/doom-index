@@ -3,9 +3,9 @@
  * Tests the tRPC procedures for Pinata signed URL generation
  */
 
+import { ipfsRouter } from "@/server/trpc/routers/ipfs";
 import { describe, expect, it, mock } from "bun:test";
 import { err, ok } from "neverthrow";
-import { ipfsRouter } from "@/server/trpc/routers/ipfs";
 import { createMockContext } from "../helpers";
 
 describe("unit/server/trpc/routers/ipfs", () => {

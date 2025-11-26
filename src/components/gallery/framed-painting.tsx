@@ -1,30 +1,30 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect, useRef, useState, forwardRef } from "react";
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { useGLTF, useTexture } from "@react-three/drei";
-import {
-  AdditiveBlending,
-  EdgesGeometry,
-  Group,
-  LineBasicMaterial,
-  LineSegments,
-  Mesh,
-  MeshBasicMaterial,
-  MeshStandardMaterial,
-  PlaneGeometry,
-  SRGBColorSpace,
-  Texture,
-} from "three";
-import { openTweetIntent } from "@/utils/twitter";
+import { FrameModel, PaintingGroup, type PaintingContentProps } from "@/components/ui/framed-painting-base";
+import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import {
   calculatePlaneDimensions,
   handlePointerMoveForDrag,
   handlePointerUpForClick,
   isValidPointerEvent,
 } from "@/utils/three";
-import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
-import { FrameModel, PaintingGroup, type PaintingContentProps } from "@/components/ui/framed-painting-base";
+import { openTweetIntent } from "@/utils/twitter";
+import { useGLTF, useTexture } from "@react-three/drei";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
+import React, { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  AdditiveBlending,
+  EdgesGeometry,
+  LineBasicMaterial,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
+  PlaneGeometry,
+  SRGBColorSpace,
+  type Group,
+  type LineSegments,
+  type Mesh,
+  type Texture,
+} from "three";
 
 interface FramedPaintingProps {
   thumbnailUrl: string;

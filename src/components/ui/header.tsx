@@ -4,16 +4,16 @@ import Link from "next/link";
 import { useCallback, useRef, useState, type FC, type SVGProps } from "react";
 import { useHaptic } from "use-haptic";
 
-import { PumpFunIcon } from "@/components/icons/pump-fun-icon";
-import { GitHubIcon } from "@/components/icons/github-icon";
-import { XIcon } from "@/components/icons/x-icon";
-import { InfoIcon } from "@/components/icons/info-icon";
 import { ArchiveIcon } from "@/components/icons/archive-icon";
+import { GitHubIcon } from "@/components/icons/github-icon";
+import { InfoIcon } from "@/components/icons/info-icon";
+import { PumpFunIcon } from "@/components/icons/pump-fun-icon";
+import { XIcon } from "@/components/icons/x-icon";
 import { GITHUB_URL, X_URL } from "@/constants";
 
+import { useClickOutside, useEscapeKey } from "@/hooks/use-click-outside";
 import { HeaderProgress } from "./header-progress";
 import { ViewerCountBadge } from "./viewer-count-badge";
-import { useClickOutside, useEscapeKey } from "@/hooks/use-click-outside";
 
 type NavLinkConfig = {
   href: string;
@@ -65,14 +65,14 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
   useEscapeKey(() => setIsMenuOpen(false), isMenuOpen);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm">
-      <div className="container mx-auto md:px-4 px-2 py-3">
+    <div className="fixed top-0 right-0 left-0 z-50 bg-black/80 backdrop-blur-sm">
+      <div className="container mx-auto px-2 py-3 md:px-4">
         <div className="grid w-full gap-y-3 md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-x-6 md:gap-y-0">
           <div className="flex items-center justify-between md:justify-start">
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="text-white text-xl font-bold font-cinzel-decorative hover:text-white/80 transition-colors"
+                className="font-cinzel-decorative text-xl font-bold text-white transition-colors hover:text-white/80"
               >
                 DOOM INDEX
               </Link>
@@ -105,7 +105,7 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
                 <nav
                   id="header-mobile-menu"
                   aria-label="Navigation Links"
-                  className="absolute right-0 top-full mt-3 flex w-48 flex-col gap-1 rounded-xl border border-white/20 bg-black/70 p-3 text-white/90 shadow-2xl backdrop-blur-xl"
+                  className="absolute top-full right-0 mt-3 flex w-48 flex-col gap-1 rounded-xl border border-white/20 bg-black/70 p-3 text-white/90 shadow-2xl backdrop-blur-xl"
                 >
                   <Link
                     href="/about"

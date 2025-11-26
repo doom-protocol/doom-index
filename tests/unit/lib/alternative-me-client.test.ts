@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from "bun:test";
 import { AlternativeMeClient } from "@/lib/alternative-me-client";
+import { beforeEach, describe, expect, it } from "bun:test";
 
 describe("AlternativeMeClient", () => {
   let client: AlternativeMeClient;

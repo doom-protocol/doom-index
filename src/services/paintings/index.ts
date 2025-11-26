@@ -10,15 +10,15 @@
  * abstracting away the complexity of coordinating R2 and D1 storage.
  */
 
-import { Result } from "neverthrow";
-import type { AppError } from "@/types/app-error";
-import type { PaintingMetadata } from "@/types/paintings";
-import type { PaginationOptions } from "@/types/domain";
 import { resolveBucketOrThrow } from "@/lib/r2";
-import { createPaintingsRepository } from "@/repositories/paintings-repository";
 import type { PaintingsRepository } from "@/repositories/paintings-repository";
-import * as storage from "./storage";
+import { createPaintingsRepository } from "@/repositories/paintings-repository";
+import type { AppError } from "@/types/app-error";
+import type { PaginationOptions } from "@/types/domain";
+import type { PaintingMetadata } from "@/types/paintings";
+import { type Result } from "neverthrow";
 import * as list from "./list";
+import * as storage from "./storage";
 
 type PaintingsServiceDeps = {
   r2Bucket?: R2Bucket;

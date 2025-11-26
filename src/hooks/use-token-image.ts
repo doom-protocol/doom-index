@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
 import type { TokenTicker } from "@/types/domain";
+import { useQuery } from "@tanstack/react-query";
 
 export const useTokenImage = (ticker: TokenTicker) => {
   const trpc = useTRPC();

@@ -1,13 +1,13 @@
 "use client";
 
-import { PaginationControls } from "./pagination-controls";
-import { ArchiveGrid } from "./archive-grid";
-import { ArchiveDetailView } from "./archive-detail-view";
-import { DateFilter } from "./date-filter";
-import React, { useMemo, useState } from "react";
+import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
-import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
 import { formatDateShort } from "@/utils/time";
+import React, { useMemo, useState } from "react";
+import { ArchiveDetailView } from "./archive-detail-view";
+import { ArchiveGrid } from "./archive-grid";
+import { DateFilter } from "./date-filter";
+import { PaginationControls } from "./pagination-controls";
 
 interface ArchiveContentProps {
   items: Painting[];
@@ -60,7 +60,7 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ items, hasNextPa
   return (
     <>
       <div
-        className={`h-screen overflow-y-auto pb-[200px] p-8 transition-opacity duration-300 font-sans ${
+        className={`h-screen overflow-y-auto p-8 pb-[200px] font-sans transition-opacity duration-300 ${
           isTransitioning ? "opacity-0" : "opacity-100"
         }`}
         style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}

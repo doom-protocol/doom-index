@@ -1,5 +1,5 @@
+import { extractDatePrefixFromMinuteBucket, parseDatePrefix } from "@/lib/pure/painting-date";
 import { describe, expect, it } from "bun:test";
-import { parseDatePrefix, extractDatePrefixFromMinuteBucket } from "@/lib/pure/painting-date";
 
 describe("parseDatePrefix", () => {
   it("should parse date string to prefix structure", () => {

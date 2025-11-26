@@ -9,8 +9,8 @@
  * - Error handling and fallback logic
  */
 
-import { describe, expect, test, mock, beforeEach } from "bun:test";
-import { getArtworkDataUrl, getPlaceholderDataUrl, getFrameDataUrl } from "@/app/opengraph-image";
+import { getArtworkDataUrl, getFrameDataUrl, getPlaceholderDataUrl } from "@/app/opengraph-image";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { createTestR2Bucket } from "../../lib/memory-r2";
 
 describe("OGP Image Generation (Integration Tests)", () => {

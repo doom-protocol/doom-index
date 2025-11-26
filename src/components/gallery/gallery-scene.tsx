@@ -1,22 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
-import { ACESFilmicToneMapping, PCFSoftShadowMap, Group } from "three";
-import { OrbitControls, Grid, Stats } from "@react-three/drei";
-import { Lights } from "./lights";
-import { FramedPainting } from "./framed-painting";
-import { CameraRig } from "./camera-rig";
-import { GalleryRoom } from "./gallery-room";
-import { RealtimeDashboard } from "../ui/realtime-dashboard";
-import { MintButton } from "../ui/mint-button";
-import { MintModal } from "../ui/mint-modal";
+import { env } from "@/env";
 import { useLatestPainting } from "@/hooks/use-latest-painting";
 import { useSolanaWallet } from "@/hooks/use-solana-wallet";
-import { logger } from "@/utils/logger";
-import { env } from "@/env";
 import { glbExportService } from "@/lib/glb-export-service";
+import { logger } from "@/utils/logger";
+import { Grid, OrbitControls, Stats } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { ACESFilmicToneMapping, PCFSoftShadowMap, type Group } from "three";
+import { MintButton } from "../ui/mint-button";
+import { MintModal } from "../ui/mint-modal";
+import { RealtimeDashboard } from "../ui/realtime-dashboard";
+import { CameraRig } from "./camera-rig";
+import { FramedPainting } from "./framed-painting";
+import { GalleryRoom } from "./gallery-room";
+import { Lights } from "./lights";
 
 interface GallerySceneProps {
   cameraPreset?: "dashboard" | "painting";

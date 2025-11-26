@@ -1,5 +1,5 @@
-import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
 import { logger } from "@/utils/logger";
+import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
 
 let db: DrizzleD1Database<typeof schema> | undefined;

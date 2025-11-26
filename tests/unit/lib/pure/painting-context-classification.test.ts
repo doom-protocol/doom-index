@@ -1,16 +1,16 @@
-import { describe, it, expect } from "bun:test";
 import {
+  classifyDynamics,
+  classifyEventPressure,
   classifyMarketClimate,
   classifyTokenArchetype,
-  classifyEventPressure,
-  pickComposition,
-  pickPalette,
-  classifyDynamics,
   deriveMotifs,
   deriveNarrativeHints,
+  pickComposition,
+  pickPalette,
 } from "@/lib/pure/painting-context-classification";
-import type { MarketSnapshot, TokenSnapshot, SelectedToken } from "@/types/paintings";
 import type { MarketClimate, TokenArchetype } from "@/types/painting-context";
+import type { MarketSnapshot, SelectedToken, TokenSnapshot } from "@/types/paintings";
+import { describe, expect, it } from "bun:test";
 
 const snapshot = (overrides: Partial<MarketSnapshot> = {}): MarketSnapshot => ({
   totalMarketCapUsd: 2_000_000_000_000,

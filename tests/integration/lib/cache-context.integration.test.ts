@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { get, set } from "@/lib/cache";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
 describe("Cache Integration - tRPC Context Graceful Degradation", () => {
   let originalCaches: CacheStorage | undefined;

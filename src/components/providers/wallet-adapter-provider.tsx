@@ -1,17 +1,17 @@
 "use client";
 
+import { getSolanaRpcUrl } from "@/constants/solana";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import {
+  CoinbaseWalletAdapter,
+  LedgerWalletAdapter,
   PhantomWalletAdapter,
   SolflareWalletAdapter,
-  CoinbaseWalletAdapter,
   TrustWalletAdapter,
-  LedgerWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
-import React, { FC, useMemo } from "react";
-import { getSolanaRpcUrl } from "@/constants/solana";
+import React, { type FC, useMemo } from "react";
 
 // Default styles that can be overridden by your app
 import "@solana/wallet-adapter-react-ui/styles.css";

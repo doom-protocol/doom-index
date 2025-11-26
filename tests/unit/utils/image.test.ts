@@ -7,8 +7,8 @@
  * - Edge cases (empty buffer, binary data)
  */
 
-import { describe, expect, test } from "bun:test";
 import { arrayBufferToDataUrl } from "@/utils/image";
+import { describe, expect, test } from "bun:test";
 
 describe("Image Utilities", () => {
   describe("arrayBufferToDataUrl", () => {
