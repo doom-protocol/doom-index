@@ -1,9 +1,9 @@
-import { router, publicProcedure } from "../trpc";
-import { getJsonR2 } from "@/lib/r2";
-import { tokenGetStateSchema } from "../schemas";
-import type { TokenState } from "@/types/domain";
 import { get, set } from "@/lib/cache";
+import { getJsonR2 } from "@/lib/r2";
+import type { TokenState } from "@/types/domain";
 import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
+import { tokenGetStateSchema } from "../schemas";
+import { publicProcedure, router } from "../trpc";
 
 export const tokenRouter = router({
   getState: publicProcedure.input(tokenGetStateSchema).query(async ({ input, ctx }) => {

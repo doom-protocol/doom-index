@@ -1,8 +1,8 @@
 /// <reference lib="dom" />
 
-import { describe, it, expect } from "bun:test";
-import { render } from "@testing-library/react";
 import WhitepaperViewer from "@/components/about/whitepaper-viewer";
+import { render } from "@testing-library/react";
+import { describe, expect, it } from "bun:test";
 
 describe("WhitepaperViewer", () => {
   it("should render children content", () => {

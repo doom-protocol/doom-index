@@ -6,20 +6,20 @@
  * Simple, conversion-focused minting UI with 3D preview, price, and mint button
  */
 
-import { FC, useState, useCallback, useRef, Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
-import { ACESFilmicToneMapping, PCFSoftShadowMap, Group } from "three";
-import { OrbitControls } from "@react-three/drei";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { useSolanaWallet } from "@/hooks/use-solana-wallet";
-import { useSolanaMint } from "@/hooks/use-solana-mint";
-import { useIpfsUpload } from "@/hooks/use-ipfs-upload";
-import { logger } from "@/utils/logger";
-import { getErrorMessage } from "@/utils/error";
-import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import { FramedPainting } from "@/components/gallery/framed-painting";
 import { Lights } from "@/components/gallery/lights";
+import { useIpfsUpload } from "@/hooks/use-ipfs-upload";
+import { useSolanaMint } from "@/hooks/use-solana-mint";
+import { useSolanaWallet } from "@/hooks/use-solana-wallet";
+import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
+import { getErrorMessage } from "@/utils/error";
+import { logger } from "@/utils/logger";
+import { OrbitControls } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { Suspense, useCallback, useRef, useState, type FC } from "react";
 import { toast } from "sonner";
+import { ACESFilmicToneMapping, PCFSoftShadowMap, type Group } from "three";
 import { useHaptic } from "use-haptic";
 
 export interface MintModalProps {
@@ -161,32 +161,32 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm overflow-y-auto transition-all duration-500 ease-in-out ${
-        isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+      className={`fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-2 backdrop-blur-sm transition-all duration-500 ease-in-out sm:p-4 ${
+        isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
       }`}
       style={{ backgroundColor: isOpen ? "rgba(0, 0, 0, 0.6)" : "transparent" }}
       aria-hidden={!isOpen}
     >
       <div
-        className={`relative w-full max-w-2xl my-auto bg-black/80 border border-white/15 rounded-[16px] sm:rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-md overflow-hidden liquid-glass-effect transition-all duration-500 cubic-bezier(0.32, 0.72, 0, 1) ${
-          isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-8"
+        className={`liquid-glass-effect cubic-bezier(0.32, 0.72, 0, 1) relative my-auto w-full max-w-2xl overflow-hidden rounded-[16px] border border-white/15 bg-black/80 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-500 sm:rounded-[24px] ${
+          isOpen ? "translate-y-0 scale-100 opacity-100" : "translate-y-8 scale-95 opacity-0"
         }`}
       >
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md transition-all hover:bg-white/20 active:scale-95 sm:hover:scale-110 cursor-pointer touch-manipulation"
+          className="absolute top-3 right-3 z-10 flex h-10 w-10 cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md transition-all hover:bg-white/20 active:scale-95 sm:top-4 sm:right-4 sm:h-8 sm:w-8 sm:hover:scale-110"
           aria-label="Close modal"
           tabIndex={isOpen ? 0 : -1}
         >
-          <svg className="h-5 w-5 sm:h-4 sm:w-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-5 w-5 text-white/70 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
         <div className="flex flex-col lg:flex-row">
           {/* 3D Preview */}
-          <div className="relative h-[300px] sm:h-[350px] lg:h-[500px] w-full lg:w-[60%] bg-black/40">
+          <div className="relative h-[300px] w-full bg-black/40 sm:h-[350px] lg:h-[500px] lg:w-[60%]">
             {isOpen && (
               <Canvas
                 className="r3f-gallery-canvas"
@@ -230,13 +230,13 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
           </div>
 
           {/* Content Panel */}
-          <div className="flex flex-col justify-between p-4 sm:p-6 lg:w-[40%] space-y-4 sm:space-y-6">
+          <div className="flex flex-col justify-between space-y-4 p-4 sm:space-y-6 sm:p-6 lg:w-[40%]">
             {/* Title and Price */}
             <div className="space-y-3 sm:space-y-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-white/90">{collectionName}</h2>
+              <h2 className="text-xl font-bold text-white/90 sm:text-2xl">{collectionName}</h2>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-bold text-white/90">{MINT_PRICE}</span>
-                <span className="text-base sm:text-lg text-white/60">SOL</span>
+                <span className="text-2xl font-bold text-white/90 sm:text-3xl">{MINT_PRICE}</span>
+                <span className="text-base text-white/60 sm:text-lg">SOL</span>
               </div>
             </div>
 
@@ -247,20 +247,13 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
                 onClick={handleConnectWallet}
                 disabled={isLoading}
                 tabIndex={isOpen ? 0 : -1}
-                className={`
-                  relative w-full h-[52px] sm:h-[56px] rounded-[26px] sm:rounded-[28px] border
-                  backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.2)]
-                  flex items-center justify-center transition-all duration-300 ease-in-out
-                  touch-manipulation p-0 outline-none overflow-hidden
-                  transform-gpu will-change-transform
-                  ${
-                    isLoading
-                      ? "bg-white/15 border-white/25 cursor-not-allowed opacity-60 shadow-white/15"
-                      : "bg-white/25 border-white/35 cursor-pointer opacity-100 active:scale-[0.97] sm:hover:bg-white/30 sm:hover:scale-[1.02] sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25 active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 shadow-white/20"
-                  }
-                `}
+                className={`relative flex h-[52px] w-full transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[26px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none sm:h-[56px] sm:rounded-[28px] ${
+                  isLoading
+                    ? "cursor-not-allowed border-white/25 bg-white/15 opacity-60 shadow-white/15"
+                    : "cursor-pointer border-white/35 bg-white/25 opacity-100 shadow-white/20 active:scale-[0.97] active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 sm:hover:scale-[1.02] sm:hover:bg-white/30 sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25"
+                } `}
               >
-                <span className="relative z-10 text-sm sm:text-base font-bold tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] text-white">
+                <span className="relative z-10 text-sm font-bold tracking-[0.5px] text-white uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-base">
                   {isLoading ? "Processing..." : "Connect Wallet"}
                 </span>
               </button>
@@ -270,21 +263,14 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
                 onClick={handleMint}
                 disabled={isLoading || !glbFile || !isMintCompleted}
                 tabIndex={isOpen ? 0 : -1}
-                className={`
-                  relative w-full h-[52px] sm:h-[56px] rounded-[26px] sm:rounded-[28px] border
-                  backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.2)]
-                  flex items-center justify-center transition-all duration-300 ease-in-out
-                  touch-manipulation p-0 outline-none overflow-hidden
-                  transform-gpu will-change-transform
-                  ${
-                    isLoading || !glbFile || !isMintCompleted
-                      ? "bg-white/10 border-white/20 cursor-not-allowed opacity-40 shadow-white/10"
-                      : "bg-white/25 border-white/35 cursor-pointer opacity-100 active:scale-[0.97] sm:hover:bg-white/30 sm:hover:scale-[1.02] sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25 active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 shadow-white/20"
-                  }
-                `}
+                className={`relative flex h-[52px] w-full transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[26px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none sm:h-[56px] sm:rounded-[28px] ${
+                  isLoading || !glbFile || !isMintCompleted
+                    ? "cursor-not-allowed border-white/20 bg-white/10 opacity-40 shadow-white/10"
+                    : "cursor-pointer border-white/35 bg-white/25 opacity-100 shadow-white/20 active:scale-[0.97] active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 sm:hover:scale-[1.02] sm:hover:bg-white/30 sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25"
+                } `}
               >
                 <span
-                  className={`relative z-10 text-sm sm:text-base font-bold tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] ${
+                  className={`relative z-10 text-sm font-bold tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-base ${
                     isLoading || !glbFile || !isMintCompleted ? "text-white/50" : "text-white"
                   }`}
                 >

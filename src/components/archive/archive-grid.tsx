@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import type { Painting } from "@/types/paintings";
+import React from "react";
 import { PaintingComponent } from "./painting-item";
 import { PaintingSkeleton } from "./painting-item-skeleton";
 

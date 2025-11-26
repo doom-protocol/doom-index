@@ -1,4 +1,4 @@
-import { sqliteTable, text, real, integer, index } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
  * Market Snapshots table - stores global market data snapshots

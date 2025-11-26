@@ -1,11 +1,11 @@
+import { Providers } from "@/app/providers";
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { getBaseUrl } from "@/utils/url";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
 import { Cinzel_Decorative } from "next/font/google";
-import "./globals.css";
-import { Providers } from "@/app/providers";
-import { GoogleAnalytics } from "@next/third-parties/google";
-import { getBaseUrl } from "@/utils/url";
 import { ViewTransition } from "react";
-import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import "./globals.css";
 
 const cinzelDecorative = Cinzel_Decorative({
   variable: "--font-cinzel-decorative",
@@ -24,7 +24,7 @@ const cinzelDecorative = Cinzel_Decorative({
  * Using generateMetadata() to ensure environment variables are available at runtime.
  * Fallback to production URL if NEXT_PUBLIC_BASE_URL is not set.
  */
-export async function generateMetadata(): Promise<Metadata> {
+export function generateMetadata(): Metadata {
   const description =
     "A decentralized archive of financial emotions. AI generates one painting every minute, translating the collective psychology of 8 pump.fun tokens ($CO2, $ICE, $FOREST, $NUKE, $MACHINE, $PANDEMIC, $FEAR, $HOPE) into visual art.";
   const title = "DOOM INDEX";

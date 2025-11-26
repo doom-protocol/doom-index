@@ -1,5 +1,5 @@
-import { describe, it, expect } from "bun:test";
 import { createImageProvider, resolveProviderWithMock } from "@/lib/image-generation-providers";
+import { describe, expect, it } from "bun:test";
 
 describe("Provider Resolution", () => {
   describe("createImageProvider", () => {

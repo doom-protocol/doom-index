@@ -1,7 +1,7 @@
-import { describe, expect, it, mock } from "bun:test";
-import { render, fireEvent } from "@testing-library/react";
 import { MintButton } from "@/components/ui/mint-button";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render } from "@testing-library/react";
+import { describe, expect, it, mock } from "bun:test";
 import type { ReactNode } from "react";
 
 // Mock analytics

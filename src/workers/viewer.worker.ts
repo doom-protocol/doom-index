@@ -155,10 +155,10 @@ if (isValidBrowserRequest()) {
   debugLog("Worker started", { sessionId });
 
   // Send initial ping
-  ping();
+  void ping();
 
   // Setup heartbeat interval
-  const pingTimer = setInterval(ping, VIEWER_HEARTBEAT_INTERVAL);
+  const pingTimer = setInterval(() => void ping(), VIEWER_HEARTBEAT_INTERVAL);
 
   // Setup tRPC subscription for real-time viewer count updates
   const subscription = setupViewerCountSubscription();
@@ -169,7 +169,7 @@ if (isValidBrowserRequest()) {
     if (subscription) {
       subscription.unsubscribe();
     }
-    remove();
+    void remove();
   };
 
   self.addEventListener("beforeunload", cleanup);

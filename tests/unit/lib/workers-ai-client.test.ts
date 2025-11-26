@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeEach, mock } from "bun:test";
+import type { JsonGenerationRequest, TextGenerationRequest } from "@/lib/workers-ai-client";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import type { TextGenerationRequest, JsonGenerationRequest } from "@/lib/workers-ai-client";
 import type { Ai, AiModels, AiTextGenerationOutput } from "@cloudflare/workers-types";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 /**
  * Create a mock AI binding that satisfies the Ai interface

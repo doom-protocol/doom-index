@@ -1,8 +1,16 @@
 "use client";
 
-import { useMemo, useRef } from "react";
-import { CircleGeometry, DoubleSide, Float32BufferAttribute, Mesh, Object3D, SpotLight, Vector3 } from "three";
 import { useFrame } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import {
+  CircleGeometry,
+  DoubleSide,
+  Float32BufferAttribute,
+  type Mesh,
+  type Object3D,
+  type SpotLight,
+  Vector3,
+} from "three";
 
 export const Lights: React.FC = () => {
   const keyLightRef = useRef<SpotLight>(null);

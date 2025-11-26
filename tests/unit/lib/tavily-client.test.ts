@@ -1,9 +1,9 @@
-import { describe, expect, it, beforeEach, mock } from "bun:test";
+import type { TavilyClient, TavilyQueryInput, TavilySearchResult } from "@/lib/tavily-client";
 import { createTavilyClient } from "@/lib/tavily-client";
-import type { TavilyQueryInput, TavilyClient, TavilySearchResult } from "@/lib/tavily-client";
-import { ok, err } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import type { TavilyClient as TavilySDK } from "@tavily/core";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { err, ok } from "neverthrow";
 
 describe("TavilyClient", () => {
   let mockTavilyClient: TavilyClient;

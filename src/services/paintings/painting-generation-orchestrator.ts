@@ -13,28 +13,27 @@
  * Requirements: 10, 12
  */
 
-import { Result, ok, err } from "neverthrow";
-import type { AppError } from "@/types/app-error";
-import { getIntervalBucket } from "@/utils/time";
 import { GENERATION_INTERVAL_MS } from "@/constants";
-import { logger } from "@/utils/logger";
-import { TokenSelectionService } from "./token-selection";
-import { MarketDataService } from "./market-data";
-import { PaintingContextBuilder } from "./painting-context-builder";
-import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
-import { TokensRepository } from "@/repositories/tokens-repository";
-import { createWorldPromptService } from "@/services/world-prompt-service";
-import { createImageGenerationService } from "@/services/image-generation";
-import { createImageProvider } from "@/lib/image-generation-providers";
-import { createPaintingsService } from "./index";
-import { resolveBucketOrThrow } from "@/lib/r2";
-import { extractIdFromFilename, buildPaintingKey } from "@/utils/paintings";
-import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import { createTokenAnalysisService } from "@/services/token-analysis-service";
-import { createTavilyClient } from "@/lib/tavily-client";
-import type { SelectedToken } from "@/types/paintings";
-import type { PaintingMetadata } from "@/types/paintings";
 import { env } from "@/env";
+import { createImageProvider } from "@/lib/image-generation-providers";
+import { resolveBucketOrThrow } from "@/lib/r2";
+import { createTavilyClient } from "@/lib/tavily-client";
+import { createWorkersAiClient } from "@/lib/workers-ai-client";
+import { type MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
+import { type TokensRepository } from "@/repositories/tokens-repository";
+import { createImageGenerationService } from "@/services/image-generation";
+import { createTokenAnalysisService } from "@/services/token-analysis-service";
+import { createWorldPromptService } from "@/services/world-prompt-service";
+import type { AppError } from "@/types/app-error";
+import type { PaintingMetadata, SelectedToken } from "@/types/paintings";
+import { logger } from "@/utils/logger";
+import { buildPaintingKey, extractIdFromFilename } from "@/utils/paintings";
+import { getIntervalBucket } from "@/utils/time";
+import { type Result, err, ok } from "neverthrow";
+import { createPaintingsService } from "./index";
+import { type MarketDataService } from "./market-data";
+import { type PaintingContextBuilder } from "./painting-context-builder";
+import { type TokenSelectionService } from "./token-selection";
 
 /**
  * Painting Generation Result

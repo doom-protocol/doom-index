@@ -3,7 +3,7 @@ import { ArchiveGrid } from "./archive-grid";
 export const ArchiveLoader = () => {
   return (
     <div
-      className="h-screen overflow-y-auto pb-[200px] p-8 font-sans"
+      className="h-screen overflow-y-auto p-8 pb-[200px] font-sans"
       style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
     >
       <h1 className="mb-4 normal-case" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>

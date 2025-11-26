@@ -1,10 +1,10 @@
-import { describe, expect, it } from "bun:test";
-import { ok, err } from "neverthrow";
-import { MarketDataService } from "@/services/paintings/market-data";
-import type { CoinGeckoClient, GlobalMarketDataResponse } from "@/lib/coingecko-client";
 import type { AlternativeMeClient } from "@/lib/alternative-me-client";
+import type { CoinGeckoClient, GlobalMarketDataResponse } from "@/lib/coingecko-client";
 import type { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
+import { MarketDataService } from "@/services/paintings/market-data";
 import type { AppError } from "@/types/app-error";
+import { describe, expect, it } from "bun:test";
+import { err, ok } from "neverthrow";
 
 type CoinGeckoClientStub = Pick<CoinGeckoClient, "getGlobalMarketData">;
 type AlternativeMeClientStub = Pick<AlternativeMeClient, "getFearGreedIndex">;

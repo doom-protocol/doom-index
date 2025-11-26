@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
-import { ok } from "neverthrow";
-import { createWorldPromptService } from "@/services/world-prompt-service";
-import type { TokenAnalysisService } from "@/services/token-analysis-service";
-import type { WorkersAiClient } from "@/lib/workers-ai-client";
-import type { PaintingContext } from "@/types/painting-context";
 import {
   MEDIEVAL_ALLEGORICAL_OPENING,
   MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION,
 } from "@/constants/prompts/world-painting";
+import type { WorkersAiClient } from "@/lib/workers-ai-client";
+import type { TokenAnalysisService } from "@/services/token-analysis-service";
+import { createWorldPromptService } from "@/services/world-prompt-service";
+import type { PaintingContext } from "@/types/painting-context";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { ok } from "neverthrow";
 
 describe("WorldPromptService - FLUX Prompt Structure", () => {
   let mockTokenAnalysisService: TokenAnalysisService;

@@ -1,13 +1,13 @@
-import { describe, expect, it } from "bun:test";
-import { ok, err } from "neverthrow";
-import { TokenDataFetchService } from "@/services/paintings/token-data-fetch";
 import type {
   CoinGeckoClient,
+  CoinsListResponse,
   CoinsMarketsOptions,
   CoinsMarketsResponse,
   TrendingSearchResponse,
 } from "@/lib/coingecko-client";
-import type { CoinsListResponse } from "@/lib/coingecko-client";
+import { TokenDataFetchService } from "@/services/paintings/token-data-fetch";
+import { describe, expect, it } from "bun:test";
+import { err, ok } from "neverthrow";
 
 type CoinGeckoClientStub = Pick<CoinGeckoClient, "getCoinsMarkets" | "getTrendingSearch" | "getCoinsList">;
 

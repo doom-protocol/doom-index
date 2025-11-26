@@ -1,6 +1,6 @@
-import { describe, it, expect } from "bun:test";
-import { roundMc4 } from "@/utils/round";
 import { computeStableHash } from "@/utils/hash";
+import { roundMc4 } from "@/utils/round";
+import { describe, expect, it } from "bun:test";
 
 describe("2.2 丸めとマップ構築 + ハッシュ影響検証", () => {
   it("rounds all values to 6 decimals", () => {

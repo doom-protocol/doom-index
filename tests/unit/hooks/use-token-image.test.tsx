@@ -1,5 +1,5 @@
-import { describe, it, expect } from "bun:test";
 import { useTokenImage } from "@/hooks/use-token-image";
+import { describe, expect, it } from "bun:test";
 
 describe("useTokenImage Hook", () => {
   it("should export useTokenImage hook", () => {

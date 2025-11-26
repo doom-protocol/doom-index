@@ -1,5 +1,5 @@
-import { logger } from "@/utils/logger";
 import { RUNWARE_AIR_MODELS } from "@/constants/runware";
+import { logger } from "@/utils/logger";
 
 const API_BASE_URL = "https://api.runware.ai/v1";
 

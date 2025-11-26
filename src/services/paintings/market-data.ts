@@ -1,10 +1,10 @@
-import { Result, ok, err } from "neverthrow";
+import { type AlternativeMeClient } from "@/lib/alternative-me-client";
+import { type CoinGeckoClient } from "@/lib/coingecko-client";
+import { type MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
 import type { AppError } from "@/types/app-error";
-import { CoinGeckoClient } from "@/lib/coingecko-client";
-import { AlternativeMeClient } from "@/lib/alternative-me-client";
-import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
 import type { MarketSnapshot } from "@/types/paintings";
 import { logger } from "@/utils/logger";
+import { type Result, err, ok } from "neverthrow";
 
 /**
  * Market Data Service

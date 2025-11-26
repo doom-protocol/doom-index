@@ -1,17 +1,17 @@
 "use client";
 
-import React, { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ACESFilmicToneMapping, PCFSoftShadowMap, Vector3 } from "three";
-import { Stats } from "@react-three/drei";
-import { Lights } from "@/components/gallery/lights";
 import { GalleryRoom } from "@/components/gallery/gallery-room";
-import { ArchiveFramedPainting } from "./archive-framed-painting";
+import { Lights } from "@/components/gallery/lights";
 import { env } from "@/env";
-import type { Painting } from "@/types/paintings";
-import { sendGAEvent } from "@/lib/analytics";
 import { useEscapeKey } from "@/hooks/use-click-outside";
+import { sendGAEvent } from "@/lib/analytics";
+import type { Painting } from "@/types/paintings";
+import { Stats } from "@react-three/drei";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import React, { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { ACESFilmicToneMapping, PCFSoftShadowMap, Vector3 } from "three";
 import { useHaptic } from "use-haptic";
+import { ArchiveFramedPainting } from "./archive-framed-painting";
 
 interface ArchiveDetailViewProps {
   item: Painting;
@@ -126,7 +126,7 @@ export const ArchiveDetailView: React.FC<ArchiveDetailViewProps> = ({ item, onCl
       {/* Back Button - Liquid Glass Style */}
       <button
         onClick={handleClose}
-        className="fixed left-4 top-4 z-50 flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110 cursor-pointer"
+        className="fixed top-4 left-4 z-50 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md transition-all hover:scale-110 hover:bg-white/20"
         aria-label="Back to list"
       >
         <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

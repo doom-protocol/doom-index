@@ -1,5 +1,5 @@
-import { describe, it, expect } from "bun:test";
 import { QUANTIZE_DECIMALS } from "@/constants/token";
+import { describe, expect, it } from "bun:test";
 
 /**
  * Legacy token configuration tests

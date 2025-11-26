@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach } from "bun:test";
-import { drizzle } from "drizzle-orm/bun-sqlite";
-import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import type { BatchItem, BatchResponse } from "drizzle-orm/batch";
-import { Database } from "bun:sqlite";
-import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
-import { marketSnapshots, type NewMarketSnapshot } from "@/db/schema/market-snapshots";
 import * as dbSchema from "@/db/schema";
+import { marketSnapshots, type NewMarketSnapshot } from "@/db/schema/market-snapshots";
+import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
+import { Database } from "bun:sqlite";
+import { beforeEach, describe, expect, it } from "bun:test";
+import type { BatchItem, BatchResponse } from "drizzle-orm/batch";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { drizzle } from "drizzle-orm/bun-sqlite";
 
 // Extended DB type with batch method for test compatibility
 type TestDb = BunSQLiteDatabase<typeof dbSchema> & {

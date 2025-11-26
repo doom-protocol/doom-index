@@ -1,11 +1,11 @@
-import { ok } from "neverthrow";
 import type { ImageGenerationOptions, ImageProvider, ImageRequest, ImageResponse } from "@/types/domain";
 import { logger } from "@/utils/logger";
 import { estimateTokenCount } from "@/utils/text";
+import { ok } from "neverthrow";
 
 export const createMockImageProvider = (): ImageProvider => ({
   name: "mock",
-  async generate(input: ImageRequest, _options?: ImageGenerationOptions) {
+  generate(input: ImageRequest, _options?: ImageGenerationOptions) {
     // Estimate token count from prompt
     const promptTokens = estimateTokenCount(input.prompt);
     const negativeTokens = estimateTokenCount(input.negative);

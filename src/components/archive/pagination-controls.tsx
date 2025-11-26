@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import Link from "next/link";
-import { sendGAEvent, GA_EVENTS } from "@/lib/analytics";
+import React from "react";
 
 interface PaginationButtonProps {
   href?: string;
@@ -65,7 +65,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   };
 
   return (
-    <div className="fixed bottom-[75px] left-1/2 z-1000 flex -translate-x-1/2 items-center gap-1.5 rounded-lg border border-white/10 bg-black/60 px-2.5 py-1 backdrop-blur-xl opacity-60 hover:opacity-100 transition-opacity duration-200 md:bottom-[60px] md:gap-2 md:px-3 md:py-1.5">
+    <div className="fixed bottom-[75px] left-1/2 z-1000 flex -translate-x-1/2 items-center gap-1.5 rounded-lg border border-white/10 bg-black/60 px-2.5 py-1 opacity-60 backdrop-blur-xl transition-opacity duration-200 hover:opacity-100 md:bottom-[60px] md:gap-2 md:px-3 md:py-1.5">
       <PaginationButton
         href={hasPreviousPage ? `/archive${createPageUrl(currentPage - 1)}` : undefined}
         onClick={() => {

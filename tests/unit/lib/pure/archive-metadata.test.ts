@@ -1,6 +1,6 @@
-import { describe, expect, it } from "bun:test";
-import type { PaintingMetadata } from "@/types/paintings";
 import { isPaintingMetadata } from "@/lib/pure/painting-metadata";
+import type { PaintingMetadata } from "@/types/paintings";
+import { describe, expect, it } from "bun:test";
 
 describe("isPaintingMetadata", () => {
   it("should validate valid archive metadata", () => {

@@ -1,5 +1,5 @@
-import type { TokenCandidate } from "@/types/paintings";
 import type { MarketClimate } from "@/types/painting-context";
+import type { TokenCandidate } from "@/types/paintings";
 
 /**
  * Scoring Engine

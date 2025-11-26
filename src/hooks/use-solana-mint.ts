@@ -7,18 +7,18 @@
  * @see https://developers.metaplex.com/token-metadata
  */
 
-import { useState, useCallback } from "react";
-import { generateSigner, percentAmount, publicKey } from "@metaplex-foundation/umi";
-import { createNft } from "@metaplex-foundation/mpl-token-metadata";
 import { useUmi } from "@/components/providers/umi-provider";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { logger } from "@/utils/logger";
 import {
+  CREATORS,
+  DEFAULT_SELLER_FEE_BASIS_POINTS,
   DOOM_INDEX_COLLECTION_ADDRESS,
   UPDATE_AUTHORITY_ADDRESS,
-  DEFAULT_SELLER_FEE_BASIS_POINTS,
-  CREATORS,
 } from "@/constants/solana";
+import { logger } from "@/utils/logger";
+import { createNft } from "@metaplex-foundation/mpl-token-metadata";
+import { generateSigner, percentAmount, publicKey } from "@metaplex-foundation/umi";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useCallback, useState } from "react";
 
 type CreateNftInput = Parameters<typeof createNft>[1];
 

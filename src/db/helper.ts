@@ -6,7 +6,7 @@ import * as schema from "./schema";
  * Setup local database with schema tables
  * Creates tables if they don't exist
  */
-export const setupLocalDb = async (dbPath: string = "local-test.db") => {
+export const setupLocalDb = (dbPath: string = "local-test.db") => {
   const sqlite = new Database(dbPath);
   const db = drizzle(sqlite, { schema });
 

@@ -1,6 +1,6 @@
-import { Result, ok, err } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
+import { type Result, err, ok } from "neverthrow";
 
 /**
  * Fear & Greed Index Response

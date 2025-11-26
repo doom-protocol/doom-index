@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import { useRef } from "react";
 import { Vector3 } from "three";
 
 type CameraPreset = "dashboard" | "painting";

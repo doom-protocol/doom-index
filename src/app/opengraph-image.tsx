@@ -6,14 +6,14 @@
  * - Resizes image to 1200×630 with black background
  */
 
-import { ImageResponse } from "next/og";
-import { getImageR2 } from "@/lib/r2";
-import { arrayBufferToDataUrl } from "@/utils/image";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { getBaseUrl } from "@/utils/url";
-import { logger } from "@/utils/logger";
-import { createPaintingsRepository } from "@/repositories/paintings-repository";
 import { env } from "@/env";
+import { getImageR2 } from "@/lib/r2";
+import { createPaintingsRepository } from "@/repositories/paintings-repository";
+import { arrayBufferToDataUrl } from "@/utils/image";
+import { logger } from "@/utils/logger";
+import { getBaseUrl } from "@/utils/url";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { ImageResponse } from "next/og";
 
 // Route Segment Config
 export const dynamic = "force-dynamic";

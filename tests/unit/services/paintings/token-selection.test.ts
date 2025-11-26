@@ -1,11 +1,11 @@
-import { describe, it, expect } from "bun:test";
-import { ok } from "neverthrow";
-import { TokenSelectionService } from "@/services/paintings/token-selection";
-import type { TokenCandidate, MarketSnapshot } from "@/types/paintings";
-import type { AppError } from "@/types/app-error";
-import type { TokenDataFetchService } from "@/services/paintings/token-data-fetch";
-import type { MarketDataService } from "@/services/paintings/market-data";
 import type { TokensRepository } from "@/repositories/tokens-repository";
+import type { MarketDataService } from "@/services/paintings/market-data";
+import type { TokenDataFetchService } from "@/services/paintings/token-data-fetch";
+import { TokenSelectionService } from "@/services/paintings/token-selection";
+import type { AppError } from "@/types/app-error";
+import type { MarketSnapshot, TokenCandidate } from "@/types/paintings";
+import { describe, expect, it } from "bun:test";
+import { ok } from "neverthrow";
 
 const createCandidate = (overrides: Partial<TokenCandidate> = {}): TokenCandidate => ({
   id: `token-${overrides.symbol ?? "AAA"}`.toLowerCase(),

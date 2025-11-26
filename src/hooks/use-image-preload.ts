@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
 import { logger } from "@/utils/logger";
+import { useEffect, useRef, useState } from "react";
 
 interface UseImagePreloadResult {
   loadedCount: number;

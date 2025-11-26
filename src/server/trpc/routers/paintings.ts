@@ -1,8 +1,8 @@
-import { router, publicProcedure } from "../trpc";
-import { paintingsListSchema } from "../schemas";
-import { createPaintingsService } from "@/services/paintings";
 import { get, set } from "@/lib/cache";
+import { createPaintingsService } from "@/services/paintings";
 import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
+import { paintingsListSchema } from "../schemas";
+import { publicProcedure, router } from "../trpc";
 
 export const paintingsRouter = router({
   list: publicProcedure.input(paintingsListSchema).query(async ({ input, ctx }) => {

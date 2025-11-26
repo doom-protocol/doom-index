@@ -1,6 +1,6 @@
-import { createTRPCClient, httpBatchLink, httpSubscriptionLink, splitLink } from "@trpc/client";
 import type { AppRouter } from "@/server/trpc/routers/_app";
 import { getBaseUrl } from "@/utils/url";
+import { createTRPCClient, httpBatchLink, httpSubscriptionLink, splitLink } from "@trpc/client";
 
 type CreateVanillaTRPCClientOptions = {
   baseUrl?: string;
@@ -21,7 +21,7 @@ export function createVanillaTRPCClient(options: CreateVanillaTRPCClientOptions 
         }),
         false: httpBatchLink({
           url: `${baseUrl}/api/trpc`,
-          async headers() {
+          headers() {
             return {
               "content-type": "application/json",
             };

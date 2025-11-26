@@ -1,5 +1,5 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { logger } from "@/utils/logger";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 
 export type Context = {

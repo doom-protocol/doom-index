@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { DoubleSide, PlaneGeometry, MeshStandardMaterial } from "three";
+import { DoubleSide, MeshStandardMaterial, PlaneGeometry } from "three";
 
 export const GalleryRoom: React.FC = () => {
   // Shared geometries

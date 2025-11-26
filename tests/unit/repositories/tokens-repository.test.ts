@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from "bun:test";
-import { drizzle } from "drizzle-orm/bun-sqlite";
-import { Database } from "bun:sqlite";
-import { TokensRepository } from "@/repositories/tokens-repository";
-import { tokens } from "@/db/schema/tokens";
 import * as dbSchema from "@/db/schema";
+import { tokens } from "@/db/schema/tokens";
+import { TokensRepository } from "@/repositories/tokens-repository";
+import { Database } from "bun:sqlite";
+import { beforeEach, describe, expect, it } from "bun:test";
+import { drizzle } from "drizzle-orm/bun-sqlite";
 
 describe("TokensRepository", () => {
   let db: ReturnType<typeof drizzle>;
@@ -31,7 +31,7 @@ describe("TokensRepository", () => {
     `);
 
     db = drizzle(sqlite, { schema: dbSchema });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     repository = new TokensRepository(db as any);
   });
 

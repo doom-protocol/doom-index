@@ -12,33 +12,33 @@
  *   bun run --env-file=.dev.vars scripts/gen-img.ts
  */
 
-import { join } from "node:path";
-import { mkdir } from "node:fs/promises";
-import { ok } from "neverthrow";
-import { logger } from "@/utils/logger";
 import { setupLocalDb } from "@/db/helper";
-import { TokensRepository } from "@/repositories/tokens-repository";
+import type * as schema from "@/db/schema";
+import { paintings } from "@/db/schema/paintings";
+import { env } from "@/env";
+import { AlternativeMeClient } from "@/lib/alternative-me-client";
+import { CoinGeckoClient } from "@/lib/coingecko-client";
+import { createRunwareProvider } from "@/lib/image-generation-providers/runware";
+import { createTavilyClient } from "@/lib/tavily-client";
+import { createWorkersAiClient } from "@/lib/workers-ai-client";
 import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
-import { PaintingGenerationOrchestrator } from "@/services/paintings/painting-generation-orchestrator";
-import { TokenSelectionService } from "@/services/paintings/token-selection";
+import type { PaintingsRepository } from "@/repositories/paintings-repository";
+import { TokensRepository } from "@/repositories/tokens-repository";
+import { createImageGenerationService } from "@/services/image-generation";
+import { createPaintingsService } from "@/services/paintings";
 import { MarketDataService } from "@/services/paintings/market-data";
 import { PaintingContextBuilder } from "@/services/paintings/painting-context-builder";
-import { createWorldPromptService } from "@/services/world-prompt-service";
-import { createImageGenerationService } from "@/services/image-generation";
-import { createRunwareProvider } from "@/lib/image-generation-providers/runware";
-import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import { createTavilyClient } from "@/lib/tavily-client";
-import { createTokenAnalysisService } from "@/services/token-analysis-service";
-import { CoinGeckoClient } from "@/lib/coingecko-client";
-import { AlternativeMeClient } from "@/lib/alternative-me-client";
-import { createPaintingsService } from "@/services/paintings";
-import type { PaintingsRepository } from "@/repositories/paintings-repository";
-import type { PaintingMetadata } from "@/types/paintings";
-import { env } from "@/env";
+import { PaintingGenerationOrchestrator } from "@/services/paintings/painting-generation-orchestrator";
 import { TokenDataFetchService } from "@/services/paintings/token-data-fetch";
+import { TokenSelectionService } from "@/services/paintings/token-selection";
+import { createTokenAnalysisService } from "@/services/token-analysis-service";
+import { createWorldPromptService } from "@/services/world-prompt-service";
+import type { PaintingMetadata } from "@/types/paintings";
+import { logger } from "@/utils/logger";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import * as schema from "@/db/schema";
-import { paintings } from "@/db/schema/paintings";
+import { ok } from "neverthrow";
+import { mkdir } from "node:fs/promises";
+import { join } from "node:path";
 
 type Args = {
   seed?: string;

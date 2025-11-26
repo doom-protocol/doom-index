@@ -1,6 +1,6 @@
-import { describe, it, expect } from "bun:test";
 import { ScoringEngine } from "@/services/paintings/scoring-engine";
 import type { TokenCandidate } from "@/types/paintings";
+import { describe, expect, it } from "bun:test";
 
 const createCandidate = (overrides: Partial<TokenCandidate> = {}): TokenCandidate => ({
   id: "token-a",

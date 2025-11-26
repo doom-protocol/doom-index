@@ -1,6 +1,6 @@
+import { defineConfig } from "drizzle-kit";
 import { existsSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { defineConfig } from "drizzle-kit";
 
 function getLocalDb(): string {
   const root = resolve(".wrangler");

@@ -13,23 +13,23 @@
  * NOTE: The cron trigger in wrangler.toml must match NEXT_PUBLIC_GENERATION_INTERVAL_MS
  */
 
-import { Result } from "neverthrow";
-import { logger } from "./utils/logger";
-import { getErrorMessage, getErrorStack } from "./utils/error";
-import { reportError } from "./lib/error-reporter";
-import { PaintingGenerationOrchestrator } from "./services/paintings/painting-generation-orchestrator";
-import { TokenSelectionService } from "./services/paintings/token-selection";
-import { TokenDataFetchService } from "./services/paintings/token-data-fetch";
-import { MarketDataService } from "./services/paintings/market-data";
-import { PaintingContextBuilder } from "./services/paintings/painting-context-builder";
-import { CoinGeckoClient } from "./lib/coingecko-client";
+import { type Result } from "neverthrow";
+import { getDB } from "./db";
+import { env as runtimeEnv } from "./env";
 import { AlternativeMeClient } from "./lib/alternative-me-client";
+import { CoinGeckoClient } from "./lib/coingecko-client";
+import { reportError } from "./lib/error-reporter";
 import { MarketSnapshotsRepository } from "./repositories/market-snapshots-repository";
 import { TokensRepository } from "./repositories/tokens-repository";
-import { getDB } from "./db";
-import type { AppError } from "./types/app-error";
+import { MarketDataService } from "./services/paintings/market-data";
+import { PaintingContextBuilder } from "./services/paintings/painting-context-builder";
 import type { PaintingGenerationResult } from "./services/paintings/painting-generation-orchestrator";
-import { env as runtimeEnv } from "./env";
+import { PaintingGenerationOrchestrator } from "./services/paintings/painting-generation-orchestrator";
+import { TokenDataFetchService } from "./services/paintings/token-data-fetch";
+import { TokenSelectionService } from "./services/paintings/token-selection";
+import type { AppError } from "./types/app-error";
+import { getErrorMessage, getErrorStack } from "./utils/error";
+import { logger } from "./utils/logger";
 
 // Generation interval from environment variable (default: 10 minutes = 600000ms)
 // This is used for logging purposes only. The actual execution frequency is controlled by the cron trigger.

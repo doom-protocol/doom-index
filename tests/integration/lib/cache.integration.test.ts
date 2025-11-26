@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { get, set, remove } from "@/lib/cache";
+import { get, remove, set } from "@/lib/cache";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
 describe("Cache Integration - get/set Pattern", () => {
   let originalCaches: CacheStorage | undefined;

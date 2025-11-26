@@ -1,5 +1,5 @@
-import type { PaintingMetadata } from "@/types/paintings";
 import type { VisualParams } from "@/lib/pure/mapping";
+import type { PaintingMetadata } from "@/types/paintings";
 
 /**
  * Type guard for PaintingMetadata

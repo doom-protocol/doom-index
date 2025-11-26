@@ -8,7 +8,7 @@ export const LoadingIndicator: React.FC = () => {
   return (
     <span
       aria-hidden
-      className={`fixed top-0 left-0 right-0 h-1 z-[9999] transition-opacity duration-200 ${
+      className={`fixed top-0 right-0 left-0 z-[9999] h-1 transition-opacity duration-200 ${
         pending ? "opacity-100" : "opacity-0"
       }`}
       style={{

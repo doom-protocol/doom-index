@@ -29,7 +29,6 @@ function useBrowserDetection(detector: () => boolean, deps: React.DependencyList
         window.removeEventListener("resize", check);
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return result ?? false;

@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useMemo, useState, Suspense, useEffect } from "react";
-import type { PropsWithChildren } from "react";
-import { Canvas } from "@react-three/fiber";
+import { useIOS, useMobile } from "@/hooks/use-mobile";
+import { sendGAEvent } from "@/lib/analytics";
+import { logger } from "@/utils/logger";
 import { OrbitControls } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import type { PropsWithChildren } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
 import { GalleryRoom } from "../gallery/gallery-room";
 import { Lights } from "../gallery/lights";
-import { logger } from "@/utils/logger";
-import { useIOS, useMobile } from "@/hooks/use-mobile";
 import { FloatingWhitepaper } from "./floating-whitepaper";
 import WhitepaperViewer from "./whitepaper-viewer";
-import { sendGAEvent } from "@/lib/analytics";
 
 interface AboutSceneProps extends PropsWithChildren {
   initialCameraPosition?: [number, number, number];

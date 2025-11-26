@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useRef } from "react";
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import { Group, Mesh, MeshStandardMaterial, MeshBasicMaterial } from "three";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
+import React, { useRef } from "react";
+import { Mesh, MeshBasicMaterial, MeshStandardMaterial, type Group } from "three";
 import type { GLTF } from "three-stdlib";
 
 // Shared Types
