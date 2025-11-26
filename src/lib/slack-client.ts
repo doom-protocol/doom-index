@@ -64,18 +64,53 @@ function getSourceFromStack(stack?: string): string | undefined {
 }
 
 /**
+ * Decode JSON-style escape sequences in a string.
+ * Handles \n, \", \\, etc. by treating the string as JSON string content.
+ * This works for strings that are already properly escaped (e.g., from JSON.stringify).
+ */
+function decodeJsonEscapes(str: string): string | null {
+  if (!str.includes("\\")) {
+    return null;
+  }
+
+  try {
+    const wrapped = `"${str}"`;
+    return JSON.parse(wrapped);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Try to parse and format JSON content for better readability.
  * Returns formatted JSON if successful, otherwise returns the original string.
+ * Handles both regular JSON and JSON with escaped sequences (e.g., from stringified API responses).
  */
 function tryFormatJson(str: string): { isJson: boolean; formatted: string } {
   const trimmed = str.trim();
 
-  if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+  const looksLikeObjectOrArray =
+    (trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"));
+
+  if (looksLikeObjectOrArray) {
     try {
       const parsed = JSON.parse(trimmed);
       return { isJson: true, formatted: JSON.stringify(parsed, null, 2) };
     } catch {
-      return { isJson: false, formatted: str };
+      // First parse failed, try decoding escape sequences
+    }
+
+    const decoded = decodeJsonEscapes(trimmed);
+    if (decoded) {
+      const decodedTrimmed = decoded.trim();
+      if (decodedTrimmed.startsWith("{") || decodedTrimmed.startsWith("[")) {
+        try {
+          const reparsed = JSON.parse(decodedTrimmed);
+          return { isJson: true, formatted: JSON.stringify(reparsed, null, 2) };
+        } catch {
+          return { isJson: false, formatted: decoded };
+        }
+      }
     }
   }
 
