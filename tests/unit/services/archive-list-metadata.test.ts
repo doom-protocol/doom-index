@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeEach } from "bun:test";
 import { createPaintingsService } from "@/services/paintings";
-import { createTestR2Bucket } from "../../lib/memory-r2";
 import type { PaintingMetadata } from "@/types/paintings";
+import { beforeEach, describe, expect, it } from "bun:test";
+import { createTestR2Bucket } from "../../lib/memory-r2";
 
 describe("Archive List Service - Metadata Loading", () => {
   let bucket: R2Bucket;

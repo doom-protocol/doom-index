@@ -8,13 +8,13 @@
  * @see https://github.com/metaplex-foundation/umi
  */
 
-import { useState, useCallback } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { useUmi } from "@/components/providers/umi-provider";
-import type { Transaction } from "@metaplex-foundation/umi";
-import * as nt from "neverthrow";
-import { logger } from "@/utils/logger";
 import { getErrorMessage } from "@/utils/error";
+import { logger } from "@/utils/logger";
+import type { Transaction } from "@metaplex-foundation/umi";
+import { useWallet } from "@solana/wallet-adapter-react";
+import * as nt from "neverthrow";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 /**

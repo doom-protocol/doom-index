@@ -1,7 +1,7 @@
-import "../../preload";
-import { describe, it, expect, beforeEach, afterEach, vi } from "bun:test";
-import { renderHook, waitFor } from "@testing-library/react";
 import { useImagePreload } from "@/hooks/use-image-preload";
+import { renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
+import "../../preload";
 
 // Mock Image constructor
 class MockImage {

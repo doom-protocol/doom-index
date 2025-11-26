@@ -1,8 +1,8 @@
-import { router, publicProcedure } from "../trpc";
 import { createViewerService } from "@/services/viewer";
 import { isBotUserAgent } from "@/utils/user-agent";
 import { TRPCError } from "@trpc/server";
 import { viewerRegisterSchema, viewerRemoveSchema } from "../schemas";
+import { publicProcedure, router } from "../trpc";
 
 export const viewerRouter = router({
   register: publicProcedure.input(viewerRegisterSchema).mutation(async ({ input, ctx }) => {

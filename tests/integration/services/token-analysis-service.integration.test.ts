@@ -7,14 +7,14 @@
  * - Error handling
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { createTokenAnalysisService } from "@/services/token-analysis-service";
-import { TokensRepository } from "@/repositories/tokens-repository";
+import { getDB } from "@/db";
 import { createTavilyClient } from "@/lib/tavily-client";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { TokensRepository } from "@/repositories/tokens-repository";
 import type { TokenMetaInput } from "@/services/token-analysis-service";
-import { getDB } from "@/db";
+import { createTokenAnalysisService } from "@/services/token-analysis-service";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
 // TODO: Fix D1 binding mock for integration tests
 describe.skip("TokenAnalysisService Integration", () => {

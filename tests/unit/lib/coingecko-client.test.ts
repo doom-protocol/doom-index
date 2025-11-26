@@ -1,6 +1,6 @@
-import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import type { CoinsListResponse, CoinsMarketsResponse, TrendingSearchResponse } from "@/lib/coingecko-client";
 import { CoinGeckoClient } from "@/lib/coingecko-client";
-import type { TrendingSearchResponse, CoinsListResponse, CoinsMarketsResponse } from "@/lib/coingecko-client";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
 // Mock fetch globally
 const originalFetch = global.fetch;

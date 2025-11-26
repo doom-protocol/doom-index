@@ -1,5 +1,5 @@
-import { formatErrorForSlack, sendSlackMessage } from "./slack-client";
 import { logger } from "@/utils/logger";
+import { formatErrorForSlack, sendSlackMessage } from "./slack-client";
 
 /**
  * Report an error to external monitoring services (Slack).

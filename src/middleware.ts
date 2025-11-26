@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { get, set } from "@/lib/cache";
 import { logger } from "@/utils/logger";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 /**
  * Suspicious path patterns that are commonly targeted by bots/scanners

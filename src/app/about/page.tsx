@@ -1,9 +1,8 @@
-import MDXArticle from "@/components/about/mdx-article";
 import { AboutScene } from "@/components/about/about-scene";
+import MDXArticle from "@/components/about/mdx-article";
 import { Header } from "@/components/ui/header";
-import type { Metadata } from "next";
-import type { NextPage } from "next";
 import { getBaseUrl } from "@/utils/url";
+import type { Metadata, NextPage } from "next";
 
 const metadataBase = new URL(getBaseUrl());
 
@@ -14,7 +13,7 @@ export const metadata: Metadata = {
   metadataBase,
 };
 
-const AboutPage: NextPage = async () => {
+const AboutPage: NextPage = () => {
   return (
     <main style={{ width: "100%", height: "100%", margin: 0, padding: 0, overflow: "hidden" }}>
       <Header showProgress={false} />

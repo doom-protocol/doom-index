@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { logger } from "@/utils/logger";
 import { viewerCountStore } from "@/lib/viewer-count-store";
+import { logger } from "@/utils/logger";
+import { useEffect, useRef } from "react";
 
 type ViewerCountMessage = {
   type: "viewer-count";

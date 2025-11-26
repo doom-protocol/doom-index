@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
-import { ok, err } from "neverthrow";
-import type { AppError } from "@/types/app-error";
-import { createWorldPromptService } from "@/services/world-prompt-service";
-import type { TokenAnalysisService, TokenMetaInput } from "@/services/token-analysis-service";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
+import type { TokenAnalysisService, TokenMetaInput } from "@/services/token-analysis-service";
+import { createWorldPromptService } from "@/services/world-prompt-service";
+import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { err, ok } from "neverthrow";
 
 describe("WorldPromptService (token mode)", () => {
   let mockTokenAnalysisService: TokenAnalysisService;

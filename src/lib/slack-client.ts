@@ -1,5 +1,5 @@
 import { env } from "@/env";
-import { err, ok, Result } from "neverthrow";
+import { err, ok, type Result } from "neverthrow";
 
 type SlackMessage = {
   text?: string;

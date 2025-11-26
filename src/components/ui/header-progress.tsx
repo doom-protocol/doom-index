@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type FC } from "react";
-import useSound from "use-sound";
-import { useHaptic } from "use-haptic";
+import { GENERATION_INTERVAL_MS } from "@/constants";
 import { useLatestPainting, useLatestPaintingRefetch } from "@/hooks/use-latest-painting";
 import { logger } from "@/utils/logger";
-import { GENERATION_INTERVAL_MS } from "@/constants";
+import { useEffect, useRef, useState, type FC } from "react";
+import { useHaptic } from "use-haptic";
+import useSound from "use-sound";
 
 const INTERVAL_MS = GENERATION_INTERVAL_MS;
 const HAPTIC_WINDOW_START_REMAINING_SECOND = 10;
@@ -119,7 +119,7 @@ export const HeaderProgress: FC = () => {
 
   return (
     <div className="flex h-[68px] flex-col items-center gap-2">
-      <span className="text-white/60 text-sm font-cinzel-decorative tracking-wide">{intervalLabel}</span>
+      <span className="font-cinzel-decorative text-sm tracking-wide text-white/60">{intervalLabel}</span>
       <span className="font-mono text-sm text-white/70 tabular-nums">{timeLabel}</span>
       <div className="h-1 w-32 overflow-hidden rounded-full bg-white/20">
         <div ref={progressBarRef} className="h-full bg-white" />

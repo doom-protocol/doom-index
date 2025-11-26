@@ -1,3 +1,4 @@
+import { RUNWARE_AIR_MODELS } from "@/constants/runware";
 import { logger } from "@/utils/logger";
 
 const API_BASE_URL = "https://api.runware.ai/v1";
@@ -6,7 +7,7 @@ const API_BASE_URL = "https://api.runware.ai/v1";
  * Default model for FLUX kontext [dev] on Runware
  * Used for dynamic-draw flow (1h auto-generation with reference image).
  */
-export const FLUX_KONTEXT_DEV_MODEL = "runware:106@1";
+export const FLUX_KONTEXT_DEV_MODEL = RUNWARE_AIR_MODELS.FLUX_KONTEXT_DEV.model;
 
 type RunwareImageInferenceRequest = {
   taskType: "imageInference";

@@ -1,11 +1,11 @@
-import { describe, it, expect } from "bun:test";
 import {
+  r2GetObjectSchema,
+  tokenGetStateSchema,
   tokenTickerSchema,
   viewerRegisterSchema,
   viewerRemoveSchema,
-  tokenGetStateSchema,
-  r2GetObjectSchema,
 } from "@/server/trpc/schemas";
+import { describe, expect, it } from "bun:test";
 // TOKEN_TICKERS no longer exists - legacy token system removed
 
 describe("Zod Schemas", () => {

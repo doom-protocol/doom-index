@@ -23,10 +23,10 @@ import {
 } from "@/constants/runware";
 
 // デフォルトモデルを使用
-const model = DEFAULT_RUNWARE_MODEL; // "runware:106@1" (FLUX.1 Kontext [dev])
+const model = DEFAULT_RUNWARE_MODEL; // "runware:400@1" (FLUX.2 [dev])
 
 // 事前定義されたモデルを使用
-const kontextModel = RUNWARE_AIR_MODELS.DEFAULT.model; // "runware:106@1" (FLUX.1 Kontext [dev])
+const flux2DevModel = RUNWARE_AIR_MODELS.DEFAULT.model; // "runware:400@1" (FLUX.2 [dev])
 const schnellModel = RUNWARE_AIR_MODELS.FLUX_SCHNELL.model; // "runware:100@1" (FLUX.1 [schnell])
 
 // デフォルト設定
@@ -132,7 +132,7 @@ const result = await provider.generate({
   height: 1024,
   format: "webp",
   seed: "abc123",
-  model: RUNWARE_AIR_MODELS.DEFAULT.model, // "runware:106@1" (FLUX.1 Kontext [dev])
+  model: RUNWARE_AIR_MODELS.DEFAULT.model, // "runware:400@1" (FLUX.2 [dev])
 });
 
 // または高速生成にはFLUX.1 [schnell]を使用
@@ -153,10 +153,10 @@ const fastResult = await provider.generate({
 
    ```typescript
    // ❌ 悪い例
-   const model = "runware:106@1";
+   const model = "runware:400@1";
 
    // ✅ 良い例
-   const model = RUNWARE_AIR_MODELS.DEFAULT.model;
+   const model = RUNWARE_AIR_MODELS.DEFAULT.model; // FLUX.2 [dev]
 
    // 高速生成が必要な場合
    const fastModel = RUNWARE_AIR_MODELS.FLUX_SCHNELL.model;

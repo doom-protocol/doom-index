@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-
 import type matchers from "@testing-library/jest-dom/matchers";
 
 declare module "bun:test" {

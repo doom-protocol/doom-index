@@ -4,8 +4,8 @@
  * Provides common utilities for Three.js and React Three Fiber components.
  */
 
-import type React from "react";
 import type { ThreeEvent } from "@react-three/fiber";
+import type React from "react";
 import type { Texture } from "three";
 
 /**

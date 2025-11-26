@@ -1,11 +1,11 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useViewer } from "@/hooks/use-viewer";
-import { useState } from "react";
-import { TRPCProvider, createTRPCClientInstance } from "@/lib/trpc/client";
-import { WalletAdapterProvider } from "@/components/providers/wallet-adapter-provider";
 import { UmiProvider } from "@/components/providers/umi-provider";
+import { WalletAdapterProvider } from "@/components/providers/wallet-adapter-provider";
+import { useViewer } from "@/hooks/use-viewer";
+import { TRPCProvider, createTRPCClientInstance } from "@/lib/trpc/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 import { Toaster } from "sonner";
 
 function makeQueryClient() {

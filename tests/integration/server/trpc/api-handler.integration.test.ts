@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
 describe("API Handler Integration", () => {
   it("should handle HTTP requests via tRPC endpoint", async () => {

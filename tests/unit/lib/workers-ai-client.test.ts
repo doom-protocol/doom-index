@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeEach, mock } from "bun:test";
+import type { JsonGenerationRequest, TextGenerationRequest } from "@/lib/workers-ai-client";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import type { TextGenerationRequest, JsonGenerationRequest } from "@/lib/workers-ai-client";
 import type { Ai, AiModels, AiTextGenerationOutput } from "@cloudflare/workers-types";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 /**
  * Create a mock AI binding that satisfies the Ai interface
@@ -78,7 +78,8 @@ describe("WorkersAiClient", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro" as keyof AiModels);
+        // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+        expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro");
       }
     });
 
@@ -115,7 +116,8 @@ describe("WorkersAiClient", () => {
       // Should succeed using hardcoded default model
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro" as keyof AiModels);
+        // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+        expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro");
       }
     });
 
@@ -173,7 +175,8 @@ describe("WorkersAiClient", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.text).toBe("Generated text from OpenAI format");
-        expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro" as keyof AiModels);
+        // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+        expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro");
       }
       expect(openAiMock).toHaveBeenCalledTimes(1);
     });

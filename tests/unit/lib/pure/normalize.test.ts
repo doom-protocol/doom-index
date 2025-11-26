@@ -1,6 +1,6 @@
-import { describe, it, expect } from "bun:test";
-import { normalizeValue, normalizeMcMap } from "@/lib/pure/normalize";
+import { normalizeMcMap, normalizeValue } from "@/lib/pure/normalize";
 import { quantize01 } from "@/lib/pure/quantize";
+import { describe, expect, it } from "bun:test";
 // TOKEN_CONFIG_MAP and TOKEN_TICKERS no longer exist - legacy token system removed
 
 describe("Normalization utilities (1.1)", () => {

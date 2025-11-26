@@ -5,10 +5,10 @@
  * These tests require ENABLE_EXTERNAL_API_TESTS=true and AI binding.
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import type { JsonGenerationRequest, TextGenerationRequest } from "@/lib/workers-ai-client";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import type { TextGenerationRequest, JsonGenerationRequest } from "@/lib/workers-ai-client";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { beforeEach, describe, expect, it } from "bun:test";
 
 const ENABLE_EXTERNAL_API_TESTS = process.env.ENABLE_EXTERNAL_API_TESTS === "true";
 

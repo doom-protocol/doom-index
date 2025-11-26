@@ -1,8 +1,8 @@
-import { describe, expect, it, beforeEach, mock } from "bun:test";
 import { appRouter } from "@/server/trpc/routers/_app";
-import { createMockContext } from "../../../unit/server/trpc/helpers";
-import { createTestR2Bucket } from "../../../lib/memory-r2";
 import type { PaintingMetadata } from "@/types/paintings";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { createTestR2Bucket } from "../../../lib/memory-r2";
+import { createMockContext } from "../../../unit/server/trpc/helpers";
 
 function createTestMetadata(id: string, imageKey: string, timestamp: string): PaintingMetadata {
   return {

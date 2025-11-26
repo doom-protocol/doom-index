@@ -1,10 +1,10 @@
-import { Result, ok, err } from "neverthrow";
-import type { AppError } from "@/types/app-error";
-import { logger } from "@/utils/logger";
 import type { TavilyClient } from "@/lib/tavily-client";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
 import type { TokensRepository } from "@/repositories/tokens-repository";
+import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
+import { logger } from "@/utils/logger";
+import { type Result, err, ok } from "neverthrow";
 
 /**
  * Token metadata input

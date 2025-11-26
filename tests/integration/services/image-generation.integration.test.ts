@@ -8,13 +8,13 @@
  * - Reference image URL handling
  */
 
-import { describe, it, expect, mock, beforeEach } from "bun:test";
-import { ok, err } from "neverthrow";
 import { createImageGenerationService } from "@/services/image-generation";
-import type { ImageProvider } from "@/types/domain";
-import type { AppError } from "@/types/app-error";
-import type { PaintingContext } from "@/types/painting-context";
 import type { PromptComposition, WorldPromptService } from "@/services/world-prompt-service";
+import type { AppError } from "@/types/app-error";
+import type { ImageProvider } from "@/types/domain";
+import type { PaintingContext } from "@/types/painting-context";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { err, ok } from "neverthrow";
 
 const mockPaintingContext: PaintingContext = {
   t: { n: "Bitcoin", c: "bitcoin" },

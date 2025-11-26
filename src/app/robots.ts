@@ -1,5 +1,5 @@
-import type { MetadataRoute } from "next";
 import { getBaseUrl } from "@/utils/url";
+import type { MetadataRoute } from "next";
 
 /**
  * robots.txt generator

@@ -1,9 +1,9 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useTRPCClient } from "@/lib/trpc/client";
 import type { ArchiveListResponse } from "@/services/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { useTRPCClient } from "@/lib/trpc/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 
 import { GENERATION_INTERVAL_MS } from "@/constants";
 

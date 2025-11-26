@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
-import type { Painting } from "@/types/paintings";
-import { PaintingSkeleton } from "./painting-item-skeleton";
 import { ProgressiveImage } from "@/components/ui/progressive-image";
+import type { Painting } from "@/types/paintings";
+import React from "react";
+import { PaintingSkeleton } from "./painting-item-skeleton";
 
 interface PaintingProps {
   item: Painting;
@@ -35,7 +35,7 @@ export const PaintingComponent: React.FC<PaintingProps> = ({ item, onClick }) =>
       }}
     >
       {/* time label */}
-      <div className="pointer-events-none absolute left-1 top-1 z-20 rounded bg-black/60 px-1.5 py-0.5 text-[10px] leading-none text-white/80 backdrop-blur-sm">
+      <div className="pointer-events-none absolute top-1 left-1 z-20 rounded bg-black/60 px-1.5 py-0.5 text-[10px] leading-none text-white/80 backdrop-blur-sm">
         {timeLabel}
       </div>
       <ProgressiveImage

@@ -1,12 +1,12 @@
 "use client";
 
-import React from "react";
 import type { PropsWithChildren } from "react";
+import React from "react";
 
 const WhitepaperViewer: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <div
-      className="w-full h-full min-h-[110vh] bg-white p-0 m-0 font-serif leading-relaxed overflow-auto flex flex-col relative print:max-w-full print:p-[1in] print:shadow-none print:bg-white print:overflow-auto"
+      className="relative m-0 flex h-full min-h-[110vh] w-full flex-col overflow-auto bg-white p-0 font-serif leading-relaxed print:max-w-full print:overflow-auto print:bg-white print:p-[1in] print:shadow-none"
       data-scrollable="true"
     >
       {children}

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "bun:test";
-import { getMinuteBucket, getIntervalBucket } from "@/utils/time";
+import { getIntervalBucket, getMinuteBucket } from "@/utils/time";
+import { describe, expect, it } from "bun:test";
 
 describe("getMinuteBucket", () => {
   it("returns the same bucket within the same minute", () => {

@@ -1,8 +1,8 @@
-import { Result, ok, err } from "neverthrow";
+import { type CoinGeckoClient } from "@/lib/coingecko-client";
 import type { AppError } from "@/types/app-error";
-import { CoinGeckoClient } from "@/lib/coingecko-client";
 import type { TokenCandidate } from "@/types/paintings";
 import { logger } from "@/utils/logger";
+import { type Result, err, ok } from "neverthrow";
 
 /**
  * Token Data Fetch Service
@@ -95,7 +95,6 @@ export class TokenDataFetchService {
       // Log simplified trending data for better visibility
       const trendingSummary = {
         coins: (trending.coins ?? []).slice(0, 15).map((coin, index) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const item = (coin as any).item;
           return {
             rank: index + 1,
@@ -110,7 +109,7 @@ export class TokenDataFetchService {
       // Extract CoinGecko IDs from trending search (max 15)
       const ids = (trending.coins ?? []).slice(0, 15).map((coin, index) => {
         // Handle nested item structure if present (API behavior vs SDK types)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const id = (coin as any).item?.id ?? (coin as any).id ?? "";
         return {
           id,

@@ -5,10 +5,10 @@
  * Follows existing tRPC patterns with neverthrow Result types
  */
 
-import { router, publicProcedure } from "../trpc";
+import { createPinataClient, type PinataClient } from "@/lib/pinata-client";
 import { TRPCError } from "@trpc/server";
 import { createSignedUploadUrlSchema } from "../schemas";
-import { createPinataClient, type PinataClient } from "@/lib/pinata-client";
+import { publicProcedure, router } from "../trpc";
 
 /**
  * IPFS Router

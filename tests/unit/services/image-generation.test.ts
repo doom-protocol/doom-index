@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, mock } from "bun:test";
-import { ok, err } from "neverthrow";
+import type { VisualParams } from "@/lib/pure/mapping";
 import { createImageGenerationService } from "@/services/image-generation";
-import type { WorldPromptService, PromptComposition } from "@/services/world-prompt-service";
+import type { TokenMetaInput } from "@/services/token-analysis-service";
+import type { PromptComposition, WorldPromptService } from "@/services/world-prompt-service";
+import type { AppError } from "@/types/app-error";
 import type { ImageProvider, ImageRequest } from "@/types/domain";
 import type { PaintingContext } from "@/types/painting-context";
-import type { TokenMetaInput } from "@/services/token-analysis-service";
-import type { AppError } from "@/types/app-error";
-import type { VisualParams } from "@/lib/pure/mapping";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { err, ok } from "neverthrow";
 
 const paintingContext: PaintingContext = {
   t: { n: "Doom Token", c: "solana" },

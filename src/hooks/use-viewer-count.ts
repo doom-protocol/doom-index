@@ -1,7 +1,7 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { viewerCountStore } from "@/lib/viewer-count-store";
+import { useSyncExternalStore } from "react";
 
 /**
  * Hook to get the current viewer count from the store

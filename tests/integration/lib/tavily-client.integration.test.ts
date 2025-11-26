@@ -5,9 +5,9 @@
  * These tests require ENABLE_EXTERNAL_API_TESTS=true and TAVILY_API_KEY.
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
-import { createTavilyClient } from "@/lib/tavily-client";
 import type { TavilyQueryInput } from "@/lib/tavily-client";
+import { createTavilyClient } from "@/lib/tavily-client";
+import { beforeEach, describe, expect, it } from "bun:test";
 
 const ENABLE_EXTERNAL_API_TESTS = process.env.ENABLE_EXTERNAL_API_TESTS === "true";
 const TAVILY_API_KEY = process.env.TAVILY_API_KEY;

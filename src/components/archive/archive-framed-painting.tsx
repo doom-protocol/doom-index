@@ -1,21 +1,6 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { useTexture } from "@react-three/drei";
-import {
-  AdditiveBlending,
-  EdgesGeometry,
-  Group,
-  LineBasicMaterial,
-  LineSegments,
-  Mesh,
-  MeshBasicMaterial,
-  MeshStandardMaterial,
-  PlaneGeometry,
-  SRGBColorSpace,
-  Texture,
-} from "three";
+import { FrameModel, PaintingGroup, type PaintingContentProps } from "@/components/ui/framed-painting-base";
 import type { Painting } from "@/types/paintings";
 import {
   calculatePlaneDimensions,
@@ -23,7 +8,22 @@ import {
   handlePointerUpForClick,
   isValidPointerEvent,
 } from "@/utils/three";
-import { FrameModel, PaintingGroup, type PaintingContentProps } from "@/components/ui/framed-painting-base";
+import { useTexture } from "@react-three/drei";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  AdditiveBlending,
+  EdgesGeometry,
+  PlaneGeometry,
+  SRGBColorSpace,
+  type Group,
+  type LineBasicMaterial,
+  type LineSegments,
+  type Mesh,
+  type MeshBasicMaterial,
+  type MeshStandardMaterial,
+  type Texture,
+} from "three";
 
 interface ArchiveFramedPaintingProps {
   item: Painting;

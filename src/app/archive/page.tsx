@@ -1,12 +1,11 @@
-import { Header } from "@/components/ui/header";
 import { ArchiveContent } from "@/components/archive/archive-content";
-import type { NextPage } from "next";
-import type { Metadata } from "next";
+import { Header } from "@/components/ui/header";
+import { listImages } from "@/services/paintings/list";
+import type { Painting } from "@/types/paintings";
+import { logger } from "@/utils/logger";
 import { getBaseUrl } from "@/utils/url";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { listImages } from "@/services/paintings/list";
-import { logger } from "@/utils/logger";
-import type { Painting } from "@/types/paintings";
+import type { Metadata, NextPage } from "next";
 
 const metadataBase = new URL(getBaseUrl());
 

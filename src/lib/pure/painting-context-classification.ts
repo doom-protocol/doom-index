@@ -1,13 +1,13 @@
 import type {
-  MarketClimate,
-  TokenArchetype,
-  EventKind,
-  EventIntensity,
   Composition,
+  EventIntensity,
+  EventKind,
+  MarketClimate,
+  MotifTag,
   Palette,
+  TokenArchetype,
   TrendDirection,
   VolatilityLevel,
-  MotifTag,
 } from "@/types/painting-context";
 import type { MarketSnapshot, SelectedToken, TokenSnapshot } from "@/types/paintings";
 

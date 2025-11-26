@@ -1,12 +1,12 @@
-import { Result, ok, err } from "neverthrow";
+import { type TokensRepository } from "@/repositories/tokens-repository";
 import type { AppError } from "@/types/app-error";
-import { TokenDataFetchService } from "./token-data-fetch";
-import { MarketDataService } from "./market-data";
-import { ScoringEngine } from "./scoring-engine";
-import { TokensRepository } from "@/repositories/tokens-repository";
-import type { TokenCandidate, SelectedToken } from "@/types/paintings";
 import type { MarketClimate } from "@/types/painting-context";
+import type { SelectedToken, TokenCandidate } from "@/types/paintings";
 import { logger } from "@/utils/logger";
+import { type Result, err, ok } from "neverthrow";
+import { type MarketDataService } from "./market-data";
+import { ScoringEngine } from "./scoring-engine";
+import { type TokenDataFetchService } from "./token-data-fetch";
 
 /**
  * Constants
@@ -28,7 +28,7 @@ const MARKET_CAP_CHANGE_COOLING_THRESHOLD = 0.5;
 const MARKET_CAP_CHANGE_DESPAIR_THRESHOLD = -5;
 const MARKET_CAP_CHANGE_PANIC_THRESHOLD = -1.5;
 
-import { MarketSnapshot } from "@/types/paintings";
+import { type MarketSnapshot } from "@/types/paintings";
 
 /**
  * Token Selection Options
