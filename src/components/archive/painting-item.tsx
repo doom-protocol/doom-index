@@ -2,7 +2,7 @@
 
 import { ProgressiveImage } from "@/components/ui/progressive-image";
 import type { Painting } from "@/types/paintings";
-import React from "react";
+import { type FC } from "react";
 import { PaintingSkeleton } from "./painting-item-skeleton";
 
 interface PaintingProps {
@@ -10,7 +10,7 @@ interface PaintingProps {
   onClick?: () => void;
 }
 
-export const PaintingComponent: React.FC<PaintingProps> = ({ item, onClick }) => {
+export const PaintingComponent: FC<PaintingProps> = ({ item, onClick }) => {
   const timeLabel = (() => {
     const date = new Date(item.timestamp);
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

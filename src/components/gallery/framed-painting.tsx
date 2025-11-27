@@ -11,7 +11,7 @@ import {
 import { openTweetIntent } from "@/utils/twitter";
 import { useGLTF, useTexture } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import React, { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, type FC } from "react";
 import {
   AdditiveBlending,
   EdgesGeometry,
@@ -46,7 +46,7 @@ const PAINTING_MATERIAL_ROUGHNESS = 0.25;
 const PAINTING_MATERIAL_METALNESS = 0.05;
 
 // Painting content component - handles texture transitions
-const PaintingContent: React.FC<PaintingContentProps> = ({
+const PaintingContent: FC<PaintingContentProps> = ({
   thumbnailUrl,
   onPointerDown,
   onPointerMove,
@@ -65,13 +65,15 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
   const { triggerHaptic } = useHaptic();
   // Load texture - useTexture automatically handles URL changes
   const texture = useTexture(thumbnailUrl, loadedTexture => {
-    loadedTexture.colorSpace = SRGBColorSpace;
-    loadedTexture.anisotropy = 4;
-    loadedTexture.needsUpdate = true;
+    const tex = loadedTexture as Texture;
+    tex.colorSpace = SRGBColorSpace;
+    tex.anisotropy = 4;
+    tex.needsUpdate = true;
+    return tex;
   });
 
   // Texture transition state
-  const [currentTexture, setCurrentTexture] = useState<Texture | null>(texture);
+  const [currentTexture, setCurrentTexture] = useState<Texture | null>(texture as Texture);
   const [previousTexture, setPreviousTexture] = useState<Texture | null>(null);
   const [isTransitionActive, setIsTransitionActive] = useState(false);
   const previousThumbnailUrlRef = useRef<string | null>(thumbnailUrl);
@@ -103,11 +105,12 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
 
   // Watch for texture.image loading to catch when new texture is ready
   useEffect(() => {
-    if (!texture?.image) {
+    const tex = texture as Texture;
+    if (!tex?.image) {
       return;
     }
 
-    const image = texture.image as HTMLImageElement;
+    const image = tex.image as HTMLImageElement;
     const imageSrc = image.src || image.currentSrc || "";
 
     // If we have a pending URL, check if this texture matches it
@@ -128,7 +131,7 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
     }
 
     // Also check if texture reference changed (useTexture returned new texture)
-    if (currentTextureRef.current !== texture && texture.image) {
+    if (currentTextureRef.current !== tex && tex.image) {
       const currentImage = currentTextureRef.current?.image as HTMLImageElement | undefined;
       const currentImageSrc = currentImage?.src || currentImage?.currentSrc || "";
 
@@ -139,8 +142,8 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
           setPreviousTexture(oldTexture);
         }
 
-        currentTextureRef.current = texture;
-        setCurrentTexture(texture);
+        currentTextureRef.current = tex;
+        setCurrentTexture(tex);
         transitionElapsedRef.current = 0;
         setIsTransitionActive(true);
       }
@@ -292,7 +295,7 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
   // Calculate dimensions for previous texture if it exists
   const [previousPlaneWidth, previousPlaneHeight] = calculatePlaneDimensions(previousTexture, innerWidth, innerHeight);
 
-  const displayTexture = currentTexture || texture;
+  const displayTexture = (currentTexture || texture) as Texture;
 
   return (
     <>

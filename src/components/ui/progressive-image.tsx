@@ -2,7 +2,7 @@
 
 import { logger } from "@/utils/logger";
 import Image from "next/image";
-import React, { useState } from "react";
+import { useState, type FC, type ReactNode, type SyntheticEvent } from "react";
 
 interface ProgressiveImageProps {
   src: string;
@@ -13,9 +13,9 @@ interface ProgressiveImageProps {
   height?: number;
   priority?: boolean;
   onLoad?: () => void;
-  onError?: (error: React.SyntheticEvent<HTMLImageElement, Event>) => void;
-  fallback?: React.ReactNode;
-  skeleton?: React.ReactNode;
+  onError?: (error: SyntheticEvent<HTMLImageElement, Event>) => void;
+  fallback?: ReactNode;
+  skeleton?: ReactNode;
   logContext?: Record<string, unknown>;
 }
 
@@ -25,7 +25,7 @@ interface ProgressiveImageProps {
  * A reusable image component with loading and error states.
  * Provides automatic logging for debugging and monitoring.
  */
-export const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
+export const ProgressiveImage: FC<ProgressiveImageProps> = ({
   src,
   alt,
   className = "",
@@ -51,7 +51,7 @@ export const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
     onLoad?.();
   };
 
-  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const handleImageError = (event: SyntheticEvent<HTMLImageElement, Event>) => {
     logger.error("progressive-image.failed", {
       src,
       error: event,

@@ -6,7 +6,7 @@ import { logger } from "@/utils/logger";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import type { PropsWithChildren } from "react";
-import React, { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState, type FC } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
 import { GalleryRoom } from "../gallery/gallery-room";
 import { Lights } from "../gallery/lights";
@@ -20,7 +20,7 @@ interface AboutSceneProps extends PropsWithChildren {
 const ENTRANCE_DURATION = 500; // milliseconds for CSS transition
 
 // WebGL error fallback component with entrance animation
-const WebGLErrorFallback: React.FC<PropsWithChildren & { paperSize: { width: string; height: string } }> = ({
+const WebGLErrorFallback: FC<PropsWithChildren & { paperSize: { width: string; height: string } }> = ({
   children,
   paperSize,
 }) => {
@@ -70,9 +70,11 @@ const WebGLErrorFallback: React.FC<PropsWithChildren & { paperSize: { width: str
 };
 
 // iOS fallback component with entrance animation
-const IOSFallback: React.FC<
-  PropsWithChildren & { paperSize: { width: string; height: string }; headerHeight: number }
-> = ({ children, paperSize, headerHeight }) => {
+const IOSFallback: FC<PropsWithChildren & { paperSize: { width: string; height: string }; headerHeight: number }> = ({
+  children,
+  paperSize,
+  headerHeight,
+}) => {
   const [opacity, setOpacity] = useState(0);
 
   useEffect(() => {
@@ -129,7 +131,7 @@ const IOSFallback: React.FC<
   );
 };
 
-export const AboutScene: React.FC<AboutSceneProps> = ({ children, initialCameraPosition = [0, 0.8, 0.8] }) => {
+export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPosition = [0, 0.8, 0.8] }) => {
   const HEADER_HEIGHT = 56;
   const isMobile = useMobile();
   const isIOS = useIOS();

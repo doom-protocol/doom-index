@@ -71,6 +71,52 @@ export const useLatestPainting = () => {
         logger.error("use-latest-painting.fetch-failed", {
           error: error instanceof Error ? error.message : String(error),
         });
+
+        // Development fallback: Return a mock painting if tRPC fails
+        if (process.env.NODE_ENV === "development") {
+          logger.info("use-latest-painting.development-fallback");
+          return {
+            id: "mock-painting-1",
+            timestamp: new Date().toISOString(),
+            minuteBucket: "2025/11/27/14/30",
+            paramsHash: "mock-hash",
+            seed: "12345",
+            imageUrl: "/placeholder-painting.webp",
+            fileSize: 1024000,
+            visualParams: {
+              fogDensity: 0.5,
+              skyTint: 0.3,
+              reflectivity: 0.2,
+              blueBalance: 0.1,
+              vegetationDensity: 0.4,
+              organicPattern: 0.3,
+              radiationGlow: 0.1,
+              debrisIntensity: 0.2,
+              mechanicalPattern: 0.1,
+              metallicRatio: 0.2,
+              fractalDensity: 0.3,
+              bioluminescence: 0.1,
+              shadowDepth: 0.4,
+              redHighlight: 0.1,
+              lightIntensity: 0.8,
+              warmHue: 0.2,
+              tokenWeights: {
+                fear: 0.2,
+                hope: 0.3,
+                machine: 0.1,
+                ice: 0.1,
+                forest: 0.1,
+                co2: 0.1,
+                pandemic: 0.05,
+                nuke: 0.05,
+              },
+              worldPrompt: "A world on the brink of change...",
+            },
+            prompt: "Mock painting for development",
+            negative: "",
+          };
+        }
+
         return null;
       }
     },

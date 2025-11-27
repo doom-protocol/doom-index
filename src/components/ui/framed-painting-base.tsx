@@ -2,7 +2,7 @@
 
 import { useGLTF } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import React, { useRef } from "react";
+import React, { useRef, type FC, type ReactNode } from "react";
 import { Mesh, MeshBasicMaterial, MeshStandardMaterial, type Group } from "three";
 import type { GLTF } from "three-stdlib";
 
@@ -19,7 +19,7 @@ export interface PaintingContentProps {
 export interface PaintingGroupProps {
   position: [number, number, number];
   rotation: [number, number, number];
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 // Constants
@@ -27,7 +27,7 @@ const ENTRANCE_DURATION = 0.5;
 
 // Shared Components
 
-export const FrameModel: React.FC = () => {
+export const FrameModel: FC = () => {
   const { scene: frameModel } = useGLTF("/frame.glb") as GLTF;
   const clonedModel = frameModel.clone();
 

@@ -1,5 +1,6 @@
 import type { AppError } from "@/types/app-error";
 import { err, ok, type Result } from "neverthrow";
+import type { RefObject } from "react";
 import { type Group, Mesh, type Object3D } from "three";
 import { GLTFExporter, GLTFLoader, SimplifyModifier } from "three-stdlib";
 
@@ -12,12 +13,12 @@ interface GLTFResult {
 }
 
 interface GlbExportService {
-  exportPaintingModel(paintingRef: React.RefObject<Group | null>): Promise<Result<File, AppError>>;
+  exportPaintingModel(paintingRef: RefObject<Group | null>): Promise<Result<File, AppError>>;
   optimizeGlb(glbBuffer: ArrayBuffer, targetSizeMB: number): Promise<Result<ArrayBuffer, AppError>>;
 }
 
 export class GlbExportServiceImpl implements GlbExportService {
-  async exportPaintingModel(paintingRef: React.RefObject<Group | null>): Promise<Result<File, AppError>> {
+  async exportPaintingModel(paintingRef: RefObject<Group | null>): Promise<Result<File, AppError>> {
     if (!paintingRef.current) {
       return err({
         type: "ValidationError" as const,

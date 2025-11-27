@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { FrameModel, PaintingGroup, type PaintingContentProps } from "@/components/ui/framed-painting-base";
 import type { Painting } from "@/types/paintings";
 import {
@@ -10,7 +11,7 @@ import {
 } from "@/utils/three";
 import { useTexture } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
 import {
   AdditiveBlending,
   EdgesGeometry,
@@ -45,7 +46,7 @@ const PAINTING_MATERIAL_METALNESS = 0.05;
 const FRAME_INNER_WIDTH = 0.6;
 const FRAME_INNER_HEIGHT = 0.8;
 
-const PaintingContent: React.FC<PaintingContentProps> = ({
+const PaintingContent: FC<PaintingContentProps> = ({
   thumbnailUrl,
   onPointerDown,
   onPointerMove,
@@ -317,7 +318,7 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
   );
 };
 
-export const ArchiveFramedPainting: React.FC<ArchiveFramedPaintingProps> = ({
+export const ArchiveFramedPainting: FC<ArchiveFramedPaintingProps> = ({
   item,
   framePosition = DEFAULT_FRAME_POSITION,
   onPointerClick,

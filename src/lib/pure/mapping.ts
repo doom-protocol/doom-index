@@ -15,6 +15,8 @@ export type VisualParams = {
   redHighlight: number;
   lightIntensity: number;
   warmHue: number;
+  tokenWeights?: Record<string, number>;
+  worldPrompt?: string;
 };
 
 /**

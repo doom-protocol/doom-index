@@ -8,7 +8,7 @@ import { sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
 import { Stats } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import React, { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState, type FC } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, Vector3 } from "three";
 import { useHaptic } from "use-haptic";
 import { ArchiveFramedPainting } from "./archive-framed-painting";
@@ -30,7 +30,7 @@ interface CameraAnimationProps {
   onZoomOutComplete?: () => void;
 }
 
-const CameraAnimation: React.FC<CameraAnimationProps> = ({ isZoomingOut, onZoomOutComplete }) => {
+const CameraAnimation: FC<CameraAnimationProps> = ({ isZoomingOut, onZoomOutComplete }) => {
   const { camera } = useThree();
   const targetPositionRef = useRef(new Vector3(...ZOOMED_CAMERA_POSITION));
   const targetLookAtRef = useRef(new Vector3(...DETAIL_FRAME_POSITION));
@@ -77,7 +77,7 @@ const CameraAnimation: React.FC<CameraAnimationProps> = ({ isZoomingOut, onZoomO
   return null;
 };
 
-export const ArchiveDetailView: React.FC<ArchiveDetailViewProps> = ({ item, onClose }) => {
+export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const { triggerHaptic } = useHaptic();

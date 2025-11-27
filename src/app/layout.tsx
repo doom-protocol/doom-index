@@ -5,6 +5,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
 import { Cinzel_Decorative } from "next/font/google";
 import { ViewTransition } from "react";
+import type { ReactNode } from "react";
 import "./globals.css";
 
 const cinzelDecorative = Cinzel_Decorative({
@@ -87,7 +88,7 @@ export const viewport: Viewport = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <ViewTransition>

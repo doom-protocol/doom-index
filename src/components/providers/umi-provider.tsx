@@ -6,7 +6,7 @@ import type { Umi } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-adapters";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type FC, type ReactNode } from "react";
 
 // Create Umi instance
 const createUmiInstance = (): Umi => {
@@ -34,7 +34,7 @@ interface UmiProviderProps {
   children: ReactNode;
 }
 
-export const UmiProvider: React.FC<UmiProviderProps> = ({ children }) => {
+export const UmiProvider: FC<UmiProviderProps> = ({ children }) => {
   const wallet = useWallet();
 
   const umi = useMemo(() => {

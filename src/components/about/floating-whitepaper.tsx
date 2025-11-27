@@ -3,7 +3,7 @@
 import { Html } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import type { PropsWithChildren } from "react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FC } from "react";
 import type { Group } from "three";
 import WhitepaperViewer from "./whitepaper-viewer";
 
@@ -15,7 +15,7 @@ interface FloatingWhitepaperProps extends PropsWithChildren {
 
 const ENTRANCE_DURATION = 0.5;
 
-export const FloatingWhitepaper: React.FC<FloatingWhitepaperProps> = ({
+export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
   children,
   position = [0, 0.8, 4.0],
   isMobile = false,

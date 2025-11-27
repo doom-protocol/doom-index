@@ -2,16 +2,16 @@
 
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import Link from "next/link";
-import React from "react";
+import { type FC, type ReactNode } from "react";
 
 interface PaginationButtonProps {
   href?: string;
   onClick?: () => void;
   disabled?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-const PaginationButton: React.FC<PaginationButtonProps> = ({ href, onClick, disabled, children }) => {
+const PaginationButton: FC<PaginationButtonProps> = ({ href, onClick, disabled, children }) => {
   const baseStyles = "rounded border border-white/20 px-2 py-0.5 text-[10px] font-medium md:px-2.5 md:py-1 md:text-xs";
   const activeStyles = "bg-white/10 text-white transition-all hover:border-white/30 hover:bg-white/15";
   const disabledStyles = "bg-white/5 text-white/40 opacity-50 cursor-not-allowed";
@@ -39,7 +39,7 @@ interface PaginationControlsProps {
   to?: string;
 }
 
-export const PaginationControls: React.FC<PaginationControlsProps> = ({
+export const PaginationControls: FC<PaginationControlsProps> = ({
   currentPage,
   itemsPerPage,
   totalItems,

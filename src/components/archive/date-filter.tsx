@@ -2,14 +2,14 @@
 
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import { useRouter } from "next/navigation";
-import React from "react";
+import { type FC, type FocusEvent } from "react";
 
 interface DateFilterProps {
   from?: string;
   to?: string;
 }
 
-export const DateFilter: React.FC<DateFilterProps> = ({ from = "", to = "" }) => {
+export const DateFilter: FC<DateFilterProps> = ({ from = "", to = "" }) => {
   const router = useRouter();
 
   const updateURL = (newFrom?: string, newTo?: string) => {
@@ -27,14 +27,14 @@ export const DateFilter: React.FC<DateFilterProps> = ({ from = "", to = "" }) =>
     router.push(`/archive?${params.toString()}`);
   };
 
-  const handlefromBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handlefromBlur = (e: FocusEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     if (newValue !== from) {
       updateURL(newValue || undefined, to || undefined);
     }
   };
 
-  const handletoBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handletoBlur = (e: FocusEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     if (newValue !== to) {
       updateURL(from || undefined, newValue || undefined);

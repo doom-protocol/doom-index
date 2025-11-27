@@ -38,7 +38,17 @@ const quantize = (value: number): number => {
 export async function hashVisualParams(params: VisualParams): Promise<string> {
   const serialized = Object.entries(params)
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([key, value]) => `${key}:${quantize(value).toFixed(QUANTIZE_DECIMALS)}`)
+    .map(([key, value]) => {
+      if (typeof value === "number") {
+        return `${key}:${quantize(value).toFixed(QUANTIZE_DECIMALS)}`;
+      } else if (typeof value === "string") {
+        return `${key}:${value}`;
+      } else if (typeof value === "object" && value !== null) {
+        return `${key}:${stableStringify(value)}`;
+      } else {
+        return `${key}:${String(value)}`;
+      }
+    })
     .join("|");
   const digest = await sha256Hex(serialized);
   return digest.slice(0, 8);

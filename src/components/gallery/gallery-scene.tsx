@@ -7,7 +7,7 @@ import { glbExportService } from "@/lib/glb-export-service";
 import { logger } from "@/utils/logger";
 import { Grid, OrbitControls, Stats } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, type FC } from "react";
 import { toast } from "sonner";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, type Group } from "three";
 import { MintButton } from "../ui/mint-button";
@@ -27,9 +27,12 @@ const isDevelopment = env.NODE_ENV === "development";
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
 
-export const GalleryScene: React.FC<GallerySceneProps> = ({ cameraPreset: initialCameraPreset = "painting" }) => {
-  const { data: latestPainting } = useLatestPainting();
+export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCameraPreset = "painting" }) => {
+  const { data: latestPainting, isLoading } = useLatestPainting();
   const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
+
+  // Debug logging
+  console.log("GalleryScene debug:", { latestPainting, isLoading, thumbnailUrl });
 
   // Wallet hooks
   const { connecting: isWalletConnecting } = useSolanaWallet();

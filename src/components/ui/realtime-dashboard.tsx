@@ -1,5 +1,7 @@
 "use client";
 
+import { type FC } from "react";
+
 /**
  * Legacy RealtimeDashboard component
  * @deprecated This component is part of the legacy 8-token system and should not be used.
@@ -10,7 +12,7 @@ interface RealtimeDashboardProps {
   onHelpToggle: (open: boolean) => void;
 }
 
-export const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
+export const RealtimeDashboard: FC<RealtimeDashboardProps> = ({
   isHelpOpen: _isHelpOpen,
   onHelpToggle: _onHelpToggle,
 }) => {

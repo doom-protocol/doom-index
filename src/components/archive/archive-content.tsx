@@ -3,7 +3,7 @@
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
 import { formatDateShort } from "@/utils/time";
-import React, { useMemo, useState, Suspense, lazy } from "react";
+import { useMemo, useState, Suspense, lazy, type FC } from "react";
 import { ArchiveGrid } from "./archive-grid";
 import { DateFilter } from "./date-filter";
 import { PaginationControls } from "./pagination-controls";
@@ -18,7 +18,7 @@ interface ArchiveContentProps {
   to?: string;
 }
 
-export const ArchiveContent: React.FC<ArchiveContentProps> = ({ items, hasNextPage, page, from, to }) => {
+export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, page, from, to }) => {
   const [selectedItem, setSelectedItem] = useState<Painting | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 

@@ -4,7 +4,7 @@ import { UmiProvider } from "@/components/providers/umi-provider";
 import { useViewer } from "@/hooks/use-viewer";
 import { TRPCProvider, createTRPCClientInstance } from "@/lib/trpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, Suspense } from "react";
+import { useState, type FC, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import dynamic from "next/dynamic";
 
@@ -40,7 +40,7 @@ function getQueryClient() {
   }
 }
 
-export const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const Providers: FC<{ children: ReactNode }> = ({ children }) => {
   useViewer(); // start viewer worker
   const queryClient = getQueryClient();
 

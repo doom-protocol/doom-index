@@ -11,13 +11,18 @@ import {
   SolflareWalletAdapter,
   TrustWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import React, { type FC, useMemo } from "react";
+import { type FC, type ReactNode, useMemo } from "react";
+
+// Default styles that can be overridden by your app
 
 type Props = {
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export const WalletAdapterProvider: FC<Props> = ({ children }) => {
+  // Note: Wallet adapter styles are not loaded to avoid build issues
+  // The wallet modal will use browser default styles
+
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
   const network = WalletAdapterNetwork.Devnet;
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type FC } from "react";
 import {
   CircleGeometry,
   DoubleSide,
@@ -12,7 +12,7 @@ import {
   Vector3,
 } from "three";
 
-export const Lights: React.FC = () => {
+export const Lights: FC = () => {
   const keyLightRef = useRef<SpotLight>(null);
   const fillLightRef = useRef<SpotLight>(null);
   const targetRef = useRef<Object3D>(null);

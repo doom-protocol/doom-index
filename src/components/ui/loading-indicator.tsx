@@ -1,8 +1,9 @@
 "use client";
 
 import { useLinkStatus } from "next/link";
+import { type FC } from "react";
 
-export const LoadingIndicator: React.FC = () => {
+export const LoadingIndicator: FC = () => {
   const { pending } = useLinkStatus();
 
   return (

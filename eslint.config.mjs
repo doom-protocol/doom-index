@@ -13,6 +13,9 @@ const baseRules = {
 // React rules
 const reactRules = {
   "react/jsx-curly-brace-presence": "error",
+  // New JSX Transform: React import is not required for JSX
+  "react/jsx-uses-react": "off",
+  "react/react-in-jsx-scope": "off",
   // React hooks
   "react-hooks/rules-of-hooks": "error",
   "react-hooks/exhaustive-deps": "warn",

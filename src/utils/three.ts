@@ -5,7 +5,7 @@
  */
 
 import type { ThreeEvent } from "@react-three/fiber";
-import type React from "react";
+import type { MutableRefObject } from "react";
 import type { Texture } from "three";
 
 /**
@@ -77,9 +77,9 @@ export function calculatePlaneDimensions(
  */
 export function handlePointerMoveForDrag(
   event: ThreeEvent<PointerEvent>,
-  pointerDownPositionRef: React.MutableRefObject<{ x: number; y: number } | null>,
-  hasPointerMovedRef: React.MutableRefObject<boolean>,
-  activePointerIdRef: React.MutableRefObject<number | null>,
+  pointerDownPositionRef: MutableRefObject<{ x: number; y: number } | null>,
+  hasPointerMovedRef: MutableRefObject<boolean>,
+  activePointerIdRef: MutableRefObject<number | null>,
 ): void {
   if (!isValidPointerEvent(event, activePointerIdRef.current)) {
     return;
@@ -115,9 +115,9 @@ export function handlePointerMoveForDrag(
  */
 export function handlePointerUpForClick(
   event: ThreeEvent<PointerEvent>,
-  pointerDownPositionRef: React.MutableRefObject<{ x: number; y: number } | null>,
-  hasPointerMovedRef: React.MutableRefObject<boolean>,
-  activePointerIdRef: React.MutableRefObject<number | null>,
+  pointerDownPositionRef: MutableRefObject<{ x: number; y: number } | null>,
+  hasPointerMovedRef: MutableRefObject<boolean>,
+  activePointerIdRef: MutableRefObject<number | null>,
   resetPointerState: () => void,
   onClickAction: (event: ThreeEvent<PointerEvent>) => void,
 ): boolean {
