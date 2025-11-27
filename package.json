@@ -32,7 +32,7 @@
     "deploy": "opennextjs-cloudflare deploy"
   },
   "dependencies": {
-    "@coingecko/coingecko-typescript": "^2.2.0",
+    "@coingecko/coingecko-typescript": "^2.3.0",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
     "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
@@ -41,11 +41,12 @@
     "@metaplex-foundation/umi-signer-wallet-adapters": "^1.4.1",
     "@metaplex-foundation/umi-uploader-irys": "^1.4.1",
     "@metaplex-foundation/umi-web3js-adapters": "^1.4.1",
-    "@next/mdx": "^16.0.4",
-    "@next/third-parties": "^16.0.4",
+    "@next/mdx": "^16.0.5",
+    "@next/third-parties": "^16.0.5",
     "@opennextjs/cloudflare": "^1.13.1",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.0",
+    "@sentry/nextjs": "^10.27.0",
     "@solana/wallet-adapter-base": "^0.9.27",
     "@solana/wallet-adapter-react": "^0.15.39",
     "@solana/wallet-adapter-react-ui": "^0.9.39",
@@ -75,7 +76,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20251126.0",
+    "@cloudflare/workers-types": "^4.20251127.0",
     "@happy-dom/global-registrator": "^20.0.10",
     "@prettier/plugin-oxc": "^0.0.5",
     "@tailwindcss/postcss": "^4.1.17",
