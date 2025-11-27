@@ -14,14 +14,10 @@ interface FramedPaintingBoundaryProps {
   innerRef: React.Ref<Group>;
 }
 
-export function FramedPaintingErrorBoundary({
-  thumbnailUrl,
-  paintingId,
-  innerRef,
-}: FramedPaintingBoundaryProps) {
+export function FramedPaintingErrorBoundary({ thumbnailUrl, paintingId, innerRef }: FramedPaintingBoundaryProps) {
   return (
     <Sentry.ErrorBoundary
-      resetKeys={[thumbnailUrl]}
+      key={thumbnailUrl}
       onError={(error, componentStack) => {
         logger.error("framed-painting.error", {
           error,
