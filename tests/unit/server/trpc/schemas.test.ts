@@ -151,25 +151,31 @@ describe("Valibot Schemas", () => {
     });
 
     it("should reject empty filename", () => {
-      expect(() => v.parse(createSignedUploadUrlSchema, {
-        filename: "",
-        contentType: "application/octet-stream",
-      })).toThrow();
+      expect(() =>
+        v.parse(createSignedUploadUrlSchema, {
+          filename: "",
+          contentType: "application/octet-stream",
+        }),
+      ).toThrow();
     });
 
     it("should reject filename too long", () => {
       const longFilename = "a".repeat(256);
-      expect(() => v.parse(createSignedUploadUrlSchema, {
-        filename: longFilename,
-        contentType: "application/octet-stream",
-      })).toThrow();
+      expect(() =>
+        v.parse(createSignedUploadUrlSchema, {
+          filename: longFilename,
+          contentType: "application/octet-stream",
+        }),
+      ).toThrow();
     });
 
     it("should reject disallowed contentType", () => {
-      expect(() => v.parse(createSignedUploadUrlSchema, {
-        filename: "file.txt",
-        contentType: "text/plain",
-      })).toThrow();
+      expect(() =>
+        v.parse(createSignedUploadUrlSchema, {
+          filename: "file.txt",
+          contentType: "text/plain",
+        }),
+      ).toThrow();
     });
 
     it("should reject missing required keyvalues fields", () => {
