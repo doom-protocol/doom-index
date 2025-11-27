@@ -7,14 +7,14 @@ import { glbExportService } from "@/lib/glb-export-service";
 import { logger } from "@/utils/logger";
 import { Grid, OrbitControls, Stats } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, type Group } from "three";
 import { MintButton } from "../ui/mint-button";
 import { MintModal } from "../ui/mint-modal";
 import { RealtimeDashboard } from "../ui/realtime-dashboard";
 import { CameraRig } from "./camera-rig";
-import { FramedPainting } from "./framed-painting";
+import { FramedPaintingErrorBoundary } from "./framed-painting-boundary";
 import { GalleryRoom } from "./gallery-room";
 import { Lights } from "./lights";
 
@@ -196,9 +196,11 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         )}
         <GalleryRoom />
 
-        <Suspense fallback={null}>
-          <FramedPainting ref={paintingRef} thumbnailUrl={thumbnailUrl} paintingId={latestPainting?.id} />
-        </Suspense>
+        <FramedPaintingErrorBoundary
+          innerRef={paintingRef}
+          thumbnailUrl={thumbnailUrl}
+          paintingId={latestPainting?.id}
+        />
         {showDashboard && <RealtimeDashboard isHelpOpen={isDashboardHelpOpen} onHelpToggle={setIsDashboardHelpOpen} />}
         {isDevelopment && <Stats />}
       </Canvas>
