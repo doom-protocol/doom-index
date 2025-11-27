@@ -12,7 +12,8 @@ import { toast } from "sonner";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, type Group } from "three";
 import { MintButton } from "../ui/mint-button";
 import { MintModal } from "../ui/mint-modal";
-import { RealtimeDashboard } from "../ui/realtime-dashboard";
+import { ThreeErrorBoundary } from "../ui/three-error-boundary";
+
 import { CameraRig } from "./camera-rig";
 import { FramedPainting } from "./framed-painting";
 import { GalleryRoom } from "./gallery-room";
@@ -20,25 +21,13 @@ import { Lights } from "./lights";
 
 interface GallerySceneProps {
   cameraPreset?: "dashboard" | "painting";
-  showDashboard?: boolean;
-  isHelpOpen?: boolean;
-  onHelpToggle?: (open: boolean) => void;
 }
 
 const isDevelopment = env.NODE_ENV === "development";
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
 
-export const GalleryScene: React.FC<GallerySceneProps> = ({
-  cameraPreset: initialCameraPreset = "painting",
-  showDashboard = false,
-  isHelpOpen: externalIsHelpOpen,
-  onHelpToggle: externalOnHelpToggle,
-}) => {
-  const [internalIsHelpOpen, setInternalIsHelpOpen] = useState(false);
-  const isDashboardHelpOpen = externalIsHelpOpen ?? internalIsHelpOpen;
-  const setIsDashboardHelpOpen = externalOnHelpToggle ?? setInternalIsHelpOpen;
-
+export const GalleryScene: React.FC<GallerySceneProps> = ({ cameraPreset: initialCameraPreset = "painting" }) => {
   const { data: latestPainting } = useLatestPainting();
   const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 
@@ -169,7 +158,6 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
           rotateSpeed={0.5}
           zoomSpeed={0.5}
           panSpeed={0.25}
-          enabled={!isDashboardHelpOpen}
           enableRotate
           mouseButtons={{ LEFT: 0, MIDDLE: 1, RIGHT: 2 }}
         />
@@ -197,9 +185,10 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({
         <GalleryRoom />
 
         <Suspense fallback={null}>
-          <FramedPainting ref={paintingRef} thumbnailUrl={thumbnailUrl} paintingId={latestPainting?.id} />
+          <ThreeErrorBoundary fallback={<FramedPainting thumbnailUrl={DEFAULT_THUMBNAIL} paintingId={undefined} />}>
+            <FramedPainting ref={paintingRef} thumbnailUrl={thumbnailUrl} paintingId={latestPainting?.id} />
+          </ThreeErrorBoundary>
         </Suspense>
-        {showDashboard && <RealtimeDashboard isHelpOpen={isDashboardHelpOpen} onHelpToggle={setIsDashboardHelpOpen} />}
         {isDevelopment && <Stats />}
       </Canvas>
       <div

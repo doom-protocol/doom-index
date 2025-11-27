@@ -35,14 +35,16 @@ describe("tRPC Init", () => {
     expect(mockLogger.info).toHaveBeenCalled();
   });
 
-  it("should format zod errors correctly", async () => {
-    const { z } = await import("zod");
+  it("should format valibot errors correctly", async () => {
+    const v = await import("valibot");
     const { TRPCError } = await import("@trpc/server");
 
     const testRouter = router({
-      test: publicProcedure.input(z.object({ name: z.string().min(1) })).query(() => {
-        return { message: "test" };
-      }),
+      test: publicProcedure
+        .input(val => v.parse(v.object({ name: v.pipe(v.string(), v.minLength(1)) }), val))
+        .query(() => {
+          return { message: "test" };
+        }),
     });
 
     const ctx = createMockContext();
@@ -53,7 +55,9 @@ describe("tRPC Init", () => {
       throw new Error("Should have thrown an error");
     } catch (error) {
       expect(error).toBeDefined();
-      // zodエラーがフォーマットされていることを確認
+      // zodエラー（今はvalibotError）がフォーマットされていることを確認
+      // Note: tRPC client might wrap error differently in tests depending on how it's called.
+      // But here we check TRPCError.
       if (error instanceof TRPCError) {
         expect(error.code).toBe("BAD_REQUEST");
       }

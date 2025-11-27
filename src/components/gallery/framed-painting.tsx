@@ -11,7 +11,7 @@ import {
 import { openTweetIntent } from "@/utils/twitter";
 import { useGLTF, useTexture } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import React, { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   AdditiveBlending,
   EdgesGeometry,
@@ -25,6 +25,7 @@ import {
   type Mesh,
   type Texture,
 } from "three";
+import { useHaptic } from "use-haptic";
 
 interface FramedPaintingProps {
   thumbnailUrl: string;
@@ -61,6 +62,7 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
   const pulseElapsedRef = useRef(0);
   const isPulseActiveRef = useRef(false);
 
+  const { triggerHaptic } = useHaptic();
   // Load texture - useTexture automatically handles URL changes
   const texture = useTexture(thumbnailUrl, loadedTexture => {
     loadedTexture.colorSpace = SRGBColorSpace;
@@ -155,7 +157,7 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
   const activeTexture = currentTexture || texture;
   const [planeWidth, planeHeight] = calculatePlaneDimensions(activeTexture, innerWidth, innerHeight);
 
-  const pulseOutlineGeometry = React.useMemo(() => {
+  const pulseOutlineGeometry = useMemo(() => {
     const plane = new PlaneGeometry(planeWidth, planeHeight);
     const edges = new EdgesGeometry(plane, 1);
     plane.dispose();
@@ -278,23 +280,11 @@ const PaintingContent: React.FC<PaintingContentProps> = ({
     }
   };
 
-  const triggerHaptics = () => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    try {
-      window.navigator.vibrate?.(40);
-    } catch {
-      // ignore haptics failures
-    }
-  };
-
   const handlePointerUpWithPulse = (event: ThreeEvent<PointerEvent>) => {
     const shouldTrigger = onPointerUp(event);
     if (shouldTrigger) {
       triggerPulse();
-      triggerHaptics();
+      triggerHaptic();
       if (paintingId) sendGAEvent(GA_EVENTS.GALLERY_PAINTING_CLICK, { painting_id: paintingId });
     }
   };
