@@ -146,14 +146,17 @@ function tryFormatJson(str: string): { isJson: boolean; formatted: string } {
   return { isJson: false, formatted: str };
 }
 
+export type ErrorSource = "server" | "client";
+
 /**
  * Format an error object for Slack reporting.
  *
  * @param error - The error to report
  * @param context - Additional context about where the error occurred (e.g. log message)
+ * @param source - The source of the error: "server" (default) or "client"
  * @returns Slack message payload
  */
-export function formatErrorForSlack(error: unknown, context?: string): SlackMessage {
+export function formatErrorForSlack(error: unknown, context?: string, source: ErrorSource = "server"): SlackMessage {
   let errorMessage: string;
   let stackTrace: string | undefined;
   let additionalDetails: string | undefined;
@@ -192,7 +195,7 @@ export function formatErrorForSlack(error: unknown, context?: string): SlackMess
     errorMessage = String(error);
   }
 
-  const source = getSourceFromStack(stackTrace);
+  const stackSource = getSourceFromStack(stackTrace);
 
   const fields: SlackAttachmentField[] = [
     {
@@ -207,10 +210,10 @@ export function formatErrorForSlack(error: unknown, context?: string): SlackMess
     },
   ];
 
-  if (source) {
+  if (stackSource) {
     fields.push({
       title: "Source",
-      value: `\`${source}\``,
+      value: `\`${stackSource}\``,
       short: false,
     });
   }
@@ -230,10 +233,15 @@ export function formatErrorForSlack(error: unknown, context?: string): SlackMess
     });
   }
 
+  const isClientError = source === "client";
+  const errorLabel = isClientError ? "Client Error" : "Server Error";
+  const emoji = isClientError ? "⚠️" : "🚨";
+  const color = isClientError ? "#FFA500" : "#D00000"; // Orange for client, Red for server
+
   const attachment: SlackAttachment = {
-    fallback: `🚨 Server Error: ${errorMessage}`,
-    color: "#D00000", // Red color for errors
-    pretext: "🚨 *Server Error Occurred*",
+    fallback: `${emoji} ${errorLabel}: ${errorMessage}`,
+    color,
+    pretext: `${emoji} *${errorLabel} Occurred*`,
     title: displayTitle,
     fields,
     footer: "Doom Protocol Error Reporter",
