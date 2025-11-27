@@ -1,12 +1,17 @@
 "use client";
 
 import { UmiProvider } from "@/components/providers/umi-provider";
-import { WalletAdapterProvider } from "@/components/providers/wallet-adapter-provider";
 import { useViewer } from "@/hooks/use-viewer";
 import { TRPCProvider, createTRPCClientInstance } from "@/lib/trpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Toaster } from "sonner";
+import dynamic from "next/dynamic";
+
+const WalletAdapterProvider = dynamic(
+  () => import("@/components/providers/wallet-adapter-provider").then(mod => ({ default: mod.WalletAdapterProvider })),
+  { ssr: false },
+);
 
 function makeQueryClient() {
   return new QueryClient({

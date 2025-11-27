@@ -11,7 +11,6 @@ interface OpenNextMeta {
 const metaPath = ".open-next/server-functions/default/handler.mjs.meta.json";
 const meta: OpenNextMeta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
 
-const inputs = meta.inputs;
 const entries = Object.entries(meta.inputs).map(([path, data]: [string, OpenNextMetaInput]) => ({
   path,
   bytes: data.bytes,

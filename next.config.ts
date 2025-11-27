@@ -31,8 +31,51 @@ const nextConfig: NextConfig = {
         "@react-three/fiber": path.resolve(process.cwd(), "src/mocks/stub.js"),
         "@react-three/drei": path.resolve(process.cwd(), "src/mocks/stub.js"),
         "@solana/web3.js": path.resolve(process.cwd(), "src/mocks/stub.js"),
+        // Solana wallet adapter 関連
+        "@solana/wallet-adapter-base": path.resolve(process.cwd(), "src/mocks/stub.js"),
+        "@solana/wallet-adapter-react": path.resolve(process.cwd(), "src/mocks/stub.js"),
+        "@solana/wallet-adapter-react-ui": path.resolve(process.cwd(), "src/mocks/stub.js"),
+        "@solana/wallet-adapter-wallets": path.resolve(process.cwd(), "src/mocks/stub.js"),
+        // ブラウザ専用ライブラリ
+        "use-sound": path.resolve(process.cwd(), "src/mocks/stub.js"),
+        "use-haptic": path.resolve(process.cwd(), "src/mocks/stub.js"),
+        sonner: path.resolve(process.cwd(), "src/mocks/stub.js"),
+        // CSSファイル（サーバーサイドでは不要）
+        "@solana/wallet-adapter-react-ui/styles.css": path.resolve(process.cwd(), "src/mocks/stub.js"),
       };
     }
+
+    // クライアントサイドでのバンドル最適化
+    if (!isServer) {
+      // ベンダーチャンクの分割
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: "all",
+          cacheGroups: {
+            // React関連ライブラリを分離
+            react: {
+              test: /[\\/]node_modules[\\/](react|react-dom|@react-three\/fiber|@react-three\/drei|three|three-stdlib)[\\/]/,
+              name: "react-vendor",
+              priority: 10,
+            },
+            // Solana関連ライブラリを分離
+            solana: {
+              test: /[\\/]node_modules[\\/](@solana\/|@metaplex-foundation\/)[\\/]/,
+              name: "solana-vendor",
+              priority: 10,
+            },
+            // その他のベンダーライブラリ
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: "vendor",
+              priority: 5,
+            },
+          },
+        },
+      };
+    }
+
     return config;
   },
 };

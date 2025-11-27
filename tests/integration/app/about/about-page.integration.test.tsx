@@ -14,9 +14,9 @@ mock.module("@/utils/url", () => ({
 
 import Page from "@/app/about/page";
 
-const renderAboutPage = async () => {
-  const pageFactory = Page as () => Promise<JSX.Element>;
-  return await pageFactory();
+const renderAboutPage = () => {
+  const pageFactory = Page as () => JSX.Element;
+  return pageFactory();
 };
 
 const createTestQueryClient = () => {

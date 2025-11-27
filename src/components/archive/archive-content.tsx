@@ -3,11 +3,12 @@
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
 import { formatDateShort } from "@/utils/time";
-import React, { useMemo, useState } from "react";
-import { ArchiveDetailView } from "./archive-detail-view";
+import React, { useMemo, useState, Suspense, lazy } from "react";
 import { ArchiveGrid } from "./archive-grid";
 import { DateFilter } from "./date-filter";
 import { PaginationControls } from "./pagination-controls";
+
+const ArchiveDetailView = lazy(() => import("./archive-detail-view").then(mod => ({ default: mod.ArchiveDetailView })));
 
 interface ArchiveContentProps {
   items: Painting[];
@@ -54,7 +55,11 @@ export const ArchiveContent: React.FC<ArchiveContentProps> = ({ items, hasNextPa
 
   // Show detail view if item is selected (after all hooks)
   if (selectedItem) {
-    return <ArchiveDetailView item={selectedItem} onClose={handleClose} />;
+    return (
+      <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
+        <ArchiveDetailView item={selectedItem} onClose={handleClose} />
+      </Suspense>
+    );
   }
 
   return (

@@ -217,7 +217,7 @@ describe("Archive List Service", () => {
       if (result.isOk()) {
         expect(result.value.items.length).toBeGreaterThan(0);
         expect(result.value.items.length).toBeLessThanOrEqual(20); // default limit
-        expect(result.value.items.every(item => item.imageUrl.endsWith(".webp"))).toBe(true);
+        expect(result.value.items.every(item => item.imageUrl.includes(".webp"))).toBe(true);
       }
     });
 
@@ -256,7 +256,7 @@ describe("Archive List Service", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.items.every(item => item.imageUrl.endsWith(".webp"))).toBe(true);
+        expect(result.value.items.every(item => item.imageUrl.includes(".webp"))).toBe(true);
         expect(result.value.items.some(item => item.imageUrl.includes("test.png"))).toBe(false);
       }
     });

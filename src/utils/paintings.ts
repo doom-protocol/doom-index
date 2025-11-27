@@ -11,16 +11,18 @@ import { IMAGE_CACHE_VERSION } from "@/constants";
  * If NEXT_PUBLIC_R2_URL is set, returns absolute URL (e.g. https://storage.doomindex.fun/key)
  * Otherwise returns relative API path (e.g. /api/r2/key)
  *
+ * NOTE: This returns a URL WITHOUT version query param.
+ * Use `addVersionToImageUrl()` when returning URLs to clients to add cache busting version.
+ *
  * Supports both formats:
  * - With protocol: "https://storage.doomindex.fun" or "http://localhost:8787/api/r2"
  * - Without protocol: "storage.doomindex.fun" (will default to https, or http for localhost)
  *
  * @param key - R2 object key (e.g. "images/2025/11/27/DOOM_...webp")
- * @param version - Optional version string to append as query param to bust browser cache (defaults to IMAGE_CACHE_VERSION)
+ * @returns URL without version query param (for DB storage)
  */
-export function buildPublicR2Path(key: string, version: string = IMAGE_CACHE_VERSION): string {
+export function buildPublicR2Path(key: string): string {
   const normalized = key.replace(/^\/+/, "");
-  let url: string;
 
   if (env.NEXT_PUBLIC_R2_URL) {
     // Remove trailing slashes
@@ -29,17 +31,15 @@ export function buildPublicR2Path(key: string, version: string = IMAGE_CACHE_VER
     // Check if URL already includes protocol
     if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
       // Already has protocol, use as-is
-      url = `${baseUrl}/${normalized}`;
-    } else {
-      // No protocol, determine based on domain
-      const protocol = baseUrl.startsWith("localhost") ? "http" : "https";
-      url = `${protocol}://${baseUrl}/${normalized}`;
+      return `${baseUrl}/${normalized}`;
     }
-  } else {
-    url = `/api/r2/${normalized}`;
+
+    // No protocol, determine based on domain
+    const protocol = baseUrl.startsWith("localhost") ? "http" : "https";
+    return `${protocol}://${baseUrl}/${normalized}`;
   }
 
-  return version ? `${url}?v=${version}` : url;
+  return `/api/r2/${normalized}`;
 }
 
 /**
@@ -77,4 +77,33 @@ export function isValidPaintingFilename(filename: string): boolean {
  */
 export function extractIdFromFilename(filename: string): string {
   return filename.replace(/\.webp$/, "");
+}
+
+/**
+ * Add or replace version query parameter to an existing image URL.
+ * This is useful for URLs retrieved from database that may not have version,
+ * or may have an outdated version.
+ *
+ * @param imageUrl - Existing image URL (may or may not have version)
+ * @param version - Version string to add (defaults to IMAGE_CACHE_VERSION)
+ * @returns URL with version query parameter
+ */
+export function addVersionToImageUrl(imageUrl: string, version: string = IMAGE_CACHE_VERSION): string {
+  if (!version) {
+    return imageUrl;
+  }
+
+  try {
+    const url = new URL(imageUrl, "https://placeholder.com");
+    url.searchParams.set("v", version);
+    // If it was a relative URL, return just the pathname + search
+    if (imageUrl.startsWith("/")) {
+      return `${url.pathname}${url.search}`;
+    }
+    return url.toString();
+  } catch {
+    // Fallback for malformed URLs: simple string manipulation
+    const baseUrl = imageUrl.split("?")[0];
+    return `${baseUrl}?v=${version}`;
+  }
 }
