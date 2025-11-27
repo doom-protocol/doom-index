@@ -41,6 +41,8 @@ export const env = createEnv({
     NEXT_PUBLIC_R2_URL: z.string().min(1),
     // Solana RPC URL for client-side transactions
     NEXT_PUBLIC_SOLANA_RPC_URL: z.string().url().default("https://api.devnet.solana.com"),
+    // Sentry DSN for client-side error tracking
+    NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
   },
 
   /**
@@ -78,6 +80,7 @@ export const env = createEnv({
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     NEXT_PUBLIC_R2_URL: process.env.NEXT_PUBLIC_R2_URL,
     NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     // Shared
     IMAGE_MODEL: process.env.IMAGE_MODEL,
     NODE_ENV: process.env.NODE_ENV,

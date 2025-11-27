@@ -3,10 +3,13 @@
 import { UmiProvider } from "@/components/providers/umi-provider";
 import { WalletAdapterProvider } from "@/components/providers/wallet-adapter-provider";
 import { useViewer } from "@/hooks/use-viewer";
+import { initSentry } from "@/lib/sentry";
 import { TRPCProvider, createTRPCClientInstance } from "@/lib/trpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "sonner";
+
+initSentry();
 
 function makeQueryClient() {
   return new QueryClient({
