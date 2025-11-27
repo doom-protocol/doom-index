@@ -40,13 +40,22 @@ const nextConfig: NextConfig = {
         "use-sound": path.resolve(process.cwd(), "src/mocks/stub.js"),
         "use-haptic": path.resolve(process.cwd(), "src/mocks/stub.js"),
         sonner: path.resolve(process.cwd(), "src/mocks/stub.js"),
-        // CSSファイル（サーバーサイドでは不要）
-        "@solana/wallet-adapter-react-ui/styles.css": path.resolve(process.cwd(), "src/mocks/stub.js"),
+        // CSSファイルはクライアントサイドでのみ使用
+        // "@solana/wallet-adapter-react-ui/styles.css": path.resolve(process.cwd(), "src/mocks/stub.js"),
       };
     }
 
     // クライアントサイドでのバンドル最適化
     if (!isServer) {
+      // CSSファイルの解決を追加
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        "@solana/wallet-adapter-react-ui/styles.css": path.resolve(
+          process.cwd(),
+          "node_modules/@solana/wallet-adapter-react-ui/styles.css",
+        ),
+      };
+
       // ベンダーチャンクの分割
       config.optimization = {
         ...config.optimization,
