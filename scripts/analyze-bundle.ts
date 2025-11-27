@@ -1,10 +1,18 @@
 import fs from "fs";
 
+interface OpenNextMetaInput {
+  bytes: number;
+}
+
+interface OpenNextMeta {
+  inputs: Record<string, OpenNextMetaInput>;
+}
+
 const metaPath = ".open-next/server-functions/default/handler.mjs.meta.json";
-const meta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+const meta: OpenNextMeta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
 
 const inputs = meta.inputs;
-const entries = Object.entries(inputs).map(([path, data]: [string, any]) => ({
+const entries = Object.entries(meta.inputs).map(([path, data]: [string, OpenNextMetaInput]) => ({
   path,
   bytes: data.bytes,
 }));

@@ -185,9 +185,7 @@ export const GalleryScene: React.FC<GallerySceneProps> = ({ cameraPreset: initia
         <GalleryRoom />
 
         <Suspense fallback={null}>
-          <ThreeErrorBoundary
-            fallback={<FramedPainting ref={paintingRef} thumbnailUrl={DEFAULT_THUMBNAIL} paintingId={undefined} />}
-          >
+          <ThreeErrorBoundary fallback={<FramedPainting thumbnailUrl={DEFAULT_THUMBNAIL} paintingId={undefined} />}>
             <FramedPainting ref={paintingRef} thumbnailUrl={thumbnailUrl} paintingId={latestPainting?.id} />
           </ThreeErrorBoundary>
         </Suspense>
