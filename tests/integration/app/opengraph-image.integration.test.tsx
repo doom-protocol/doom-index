@@ -4,12 +4,12 @@
  * Integration Tests for OGP Image Generation
  *
  * Tests the actual functions from opengraph-image.tsx:
- * - getArtworkDataUrl with mocked R2 responses
+ * - getCurrentPaintingDataUrl with mocked R2 responses
  * - getPlaceholderDataUrl
  * - Error handling and fallback logic
  */
 
-import { getArtworkDataUrl, getFrameDataUrl, getPlaceholderDataUrl } from "@/app/opengraph-image";
+import { getCurrentPaintingDataUrl, getFrameDataUrl, getPlaceholderDataUrl } from "@/app/opengraph-image";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { createTestR2Bucket } from "../../lib/memory-r2";
 
@@ -77,7 +77,7 @@ describe("OGP Image Generation (Integration Tests)", () => {
     });
   });
 
-  describe("getArtworkDataUrl", () => {
+  describe("getCurrentPaintingDataUrl", () => {
     test("should return artwork data URL when image exists", async () => {
       const { bucket } = createTestR2Bucket();
       const mockFetcher = createMockFetcher(true, "placeholder");
@@ -89,7 +89,7 @@ describe("OGP Image Generation (Integration Tests)", () => {
         },
       });
 
-      const result = await getArtworkDataUrl(mockFetcher, bucket, "images/test.webp");
+      const result = await getCurrentPaintingDataUrl(mockFetcher, bucket, "images/test.webp");
 
       expect(result.fallbackUsed).toBe(false);
       expect(result.dataUrl).toStartWith("data:image/webp;base64,");
@@ -106,7 +106,7 @@ describe("OGP Image Generation (Integration Tests)", () => {
         }),
       } as unknown as R2Bucket;
 
-      const result = await getArtworkDataUrl(mockFetcher, failingBucket, "images/test.webp");
+      const result = await getCurrentPaintingDataUrl(mockFetcher, failingBucket, "images/test.webp");
 
       expect(result.fallbackUsed).toBe(true);
       expect(result.dataUrl).toStartWith("data:image/webp;base64,");
@@ -118,7 +118,7 @@ describe("OGP Image Generation (Integration Tests)", () => {
       const { bucket } = createTestR2Bucket();
       // No image stored
 
-      const result = await getArtworkDataUrl(mockFetcher, bucket, "images/missing.webp");
+      const result = await getCurrentPaintingDataUrl(mockFetcher, bucket, "images/missing.webp");
 
       expect(result.fallbackUsed).toBe(true);
       expect(result.dataUrl).toStartWith("data:image/webp;base64,");

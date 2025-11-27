@@ -9,7 +9,7 @@ import { GitHubIcon } from "@/components/icons/github-icon";
 import { InfoIcon } from "@/components/icons/info-icon";
 import { PumpFunIcon } from "@/components/icons/pump-fun-icon";
 import { XIcon } from "@/components/icons/x-icon";
-import { GITHUB_URL, X_URL } from "@/constants";
+import { GITHUB_URL, PUMP_FUN_URL, X_URL } from "@/constants";
 
 import { useClickOutside, useEscapeKey } from "@/hooks/use-click-outside";
 import { HeaderProgress } from "./header-progress";
@@ -23,7 +23,7 @@ type NavLinkConfig = {
 
 const NAV_LINKS: NavLinkConfig[] = [
   {
-    href: "https://pump.fun/coin/AJfn5M1bWeSsZDq89TgkKXm7AdtAQCsqzkYRxYGoqdev",
+    href: PUMP_FUN_URL,
     label: "Pump.fun",
     Icon: PumpFunIcon,
   },

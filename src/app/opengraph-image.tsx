@@ -2,7 +2,7 @@
  * Dynamic OGP Image Generator
  *
  * Generates Open Graph Protocol images for social media sharing.
- * - Fetches latest artwork from R2 storage
+ * - Fetches latest painting from R2 storage
  * - Resizes image to 1200×630 with black background
  */
 
@@ -63,11 +63,11 @@ async function getFallbackImageDataUrl(assetsFetcher: Fetcher): Promise<string> 
 }
 
 /**
- * Fetch artwork image from R2 and return an image src usable by <img>.
+ * Fetch current painting image from R2 and return an image src usable by <img>.
  * - Prefer Cloudflare Image Transformations to get PNG (Satori-friendly)
  * - If transformation not applied (e.g., local dev), return absolute URL to static fallback PNG
  */
-async function getArtworkImageSrc(
+async function getCurrentPaintingImageSrc(
   bucket: R2Bucket,
   db: D1Database,
   requestUrl: string,
@@ -133,6 +133,7 @@ async function getArtworkImageSrc(
   const keySegments = imageKey.split("/").map(segment => encodeURIComponent(segment));
   const keyPath = keySegments.join("/");
   let baseImageUrl: string;
+  let useInternalRoute = false;
 
   if (env.NEXT_PUBLIC_R2_URL) {
     // Remove trailing slashes
@@ -150,13 +151,14 @@ async function getArtworkImageSrc(
   } else {
     const origin = new URL(requestUrl).origin;
     baseImageUrl = `${origin}/api/r2/${keyPath}`;
+    useInternalRoute = true;
   }
 
-  logger.info("ogp.step4-url-built", { baseImageUrl });
+  logger.info("ogp.step4-url-built", { baseImageUrl, useInternalRoute });
 
   logger.info("ogp.step5-transform-image");
   // Step 5: Convert WebP to PNG using Cloudflare Image Transformations
-  const imageResponse = await fetch(baseImageUrl, {
+  let imageResponse = await fetch(baseImageUrl, {
     cf: {
       image: {
         width: 1200,
@@ -166,6 +168,37 @@ async function getArtworkImageSrc(
       },
     },
   } as RequestInit);
+
+  let contentType = imageResponse.headers.get("Content-Type") || "";
+  let isPng = contentType.includes("image/png");
+
+  // Retry logic: if public URL failed to transform (e.g. R2 dev URL without resizing), try internal route
+  if ((!imageResponse.ok || !isPng) && !useInternalRoute) {
+    logger.warn("ogp.step5-public-url-failed-retrying-internal", {
+      status: imageResponse.status,
+      contentType,
+      isPng,
+      note: "Retrying with internal /api/r2/ route and X-Allow-R2-Route header",
+    });
+
+    const origin = new URL(requestUrl).origin;
+    baseImageUrl = `${origin}/api/r2/${keyPath}`;
+
+    imageResponse = await fetch(baseImageUrl, {
+      headers: { "X-Allow-R2-Route": "true" },
+      cf: {
+        image: {
+          width: 1200,
+          height: 630,
+          fit: "contain",
+          format: "png",
+        },
+      },
+    } as RequestInit);
+
+    contentType = imageResponse.headers.get("Content-Type") || "";
+    isPng = contentType.includes("image/png");
+  }
 
   if (!imageResponse.ok) {
     logger.warn("ogp.step5-transform-failed", {
@@ -182,19 +215,18 @@ async function getArtworkImageSrc(
   }
 
   const transformedBuffer = await imageResponse.arrayBuffer();
-  const contentType = imageResponse.headers.get("Content-Type") || "";
-  const isPng = contentType.includes("image/png");
-  const sizeChanged = transformedBuffer.byteLength !== imageResult.value.byteLength;
+  // Update content type after buffer read (headers are already from final response)
+  contentType = imageResponse.headers.get("Content-Type") || "";
+  isPng = contentType.includes("image/png");
 
   // Verify that transformation actually worked
-  // In local dev, cf.image might not work, so check Content-Type and size
-  if (!isPng || !sizeChanged) {
+  // In local dev, cf.image might not work, so check Content-Type
+  if (!isPng) {
     logger.warn("ogp.step5-transform-not-applied", {
       contentType,
       isPng,
       originalSize: imageResult.value.byteLength,
       transformedSize: transformedBuffer.byteLength,
-      sizeChanged,
       note: "cf.image may not work in local dev - using fallback PNG image",
     });
     // Fallback: prefer returning absolute URL to the static PNG to avoid huge data URLs in Satori
@@ -229,7 +261,7 @@ export async function getPlaceholderDataUrl(assetsFetcher: Fetcher): Promise<str
 /**
  * Test-facing helper: Read state and image from R2, return WEBP data URL, or fallback to placeholder via ASSETS.
  */
-export async function getArtworkDataUrl(
+export async function getCurrentPaintingDataUrl(
   assetsFetcher: Fetcher,
   bucket: R2Bucket,
   imageKey: string,
@@ -263,6 +295,7 @@ export async function getFrameDataUrl(assetsFetcher: Fetcher): Promise<string | 
     return null;
   }
 }
+
 /**
  * Generate OGP image using ImageResponse
  */
@@ -300,10 +333,10 @@ export default async function Image(): Promise<ImageResponse> {
     const requestUrl = getBaseUrl();
     logger.info("ogp.step-init-url-success", { requestUrl });
 
-    logger.info("ogp.step-fetch-artwork");
-    // Fetch artwork image
-    const dataUrl = await getArtworkImageSrc(r2Bucket, db, requestUrl, assetsFetcher);
-    logger.info("ogp.step-fetch-artwork-success", {
+    logger.info("ogp.step-fetch-current-painting");
+    // Fetch current painting image
+    const dataUrl = await getCurrentPaintingImageSrc(r2Bucket, db, requestUrl, assetsFetcher);
+    logger.info("ogp.step-fetch-current-painting-success", {
       dataUrlLength: dataUrl.length,
       dataUrlLengthKB: (dataUrl.length / 1024).toFixed(2),
     });

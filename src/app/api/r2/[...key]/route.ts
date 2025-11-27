@@ -41,7 +41,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
 
   // In development, always allow local R2 access
   // In production, disable if R2 public URL is configured and doesn't point to this endpoint
-  if (r2Url && !isLocalR2Route && !isDevelopment) {
+  // UNLESS we have a specific header allowing access (e.g. for OGP generation)
+  const allowHeader = req.headers.get("X-Allow-R2-Route");
+  if (r2Url && !isLocalR2Route && !isDevelopment && allowHeader !== "true") {
     logger.warn("[R2 Route] Endpoint disabled - Public R2 URL is configured", {
       publicUrl: env.NEXT_PUBLIC_R2_URL,
       url: requestUrl,

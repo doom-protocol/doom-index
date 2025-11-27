@@ -79,7 +79,9 @@ async function buildPaintingsWithMetadata(
       continue;
     }
 
+    // Add cache busting version to handle CORS/content changes correctly
     const imageUrl = buildPublicR2Path(obj.key);
+
     logger.debug("archive.list.item.built", {
       itemId: metadata.id,
       r2Key: obj.key,

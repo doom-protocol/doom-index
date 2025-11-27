@@ -4,6 +4,7 @@
  */
 
 import { env } from "@/env";
+import { IMAGE_CACHE_VERSION } from "@/constants";
 
 /**
  * Build public API path for an R2 object key.
@@ -13,26 +14,32 @@ import { env } from "@/env";
  * Supports both formats:
  * - With protocol: "https://storage.doomindex.fun" or "http://localhost:8787/api/r2"
  * - Without protocol: "storage.doomindex.fun" (will default to https, or http for localhost)
+ *
+ * @param key - R2 object key (e.g. "images/2025/11/27/DOOM_...webp")
+ * @param version - Optional version string to append as query param to bust browser cache (defaults to IMAGE_CACHE_VERSION)
  */
-export function buildPublicR2Path(key: string): string {
+export function buildPublicR2Path(key: string, version: string = IMAGE_CACHE_VERSION): string {
   const normalized = key.replace(/^\/+/, "");
+  let url: string;
 
   if (env.NEXT_PUBLIC_R2_URL) {
     // Remove trailing slashes
-    const url = env.NEXT_PUBLIC_R2_URL.replace(/\/+$/, "");
+    const baseUrl = env.NEXT_PUBLIC_R2_URL.replace(/\/+$/, "");
 
     // Check if URL already includes protocol
-    if (url.startsWith("http://") || url.startsWith("https://")) {
+    if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
       // Already has protocol, use as-is
-      return `${url}/${normalized}`;
+      url = `${baseUrl}/${normalized}`;
+    } else {
+      // No protocol, determine based on domain
+      const protocol = baseUrl.startsWith("localhost") ? "http" : "https";
+      url = `${protocol}://${baseUrl}/${normalized}`;
     }
-
-    // No protocol, determine based on domain
-    const protocol = url.startsWith("localhost") ? "http" : "https";
-    return `${protocol}://${url}/${normalized}`;
+  } else {
+    url = `/api/r2/${normalized}`;
   }
 
-  return `/api/r2/${normalized}`;
+  return version ? `${url}?v=${version}` : url;
 }
 
 /**
