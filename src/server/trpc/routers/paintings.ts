@@ -1,46 +1,49 @@
 import { get, set } from "@/lib/cache";
 import { createPaintingsService } from "@/services/paintings";
+import * as v from "valibot";
 import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
 import { paintingsListSchema } from "../schemas";
 import { publicProcedure, router } from "../trpc";
 
 export const paintingsRouter = router({
-  list: publicProcedure.input(paintingsListSchema).query(async ({ input, ctx }) => {
-    const { limit, cursor, from, to } = input;
+  list: publicProcedure
+    .input(val => v.parse(paintingsListSchema, val))
+    .query(async ({ input, ctx }) => {
+      const { limit, cursor, from, to } = input;
 
-    const cacheKey = `archive:list:v2:${JSON.stringify({ limit, cursor, from, to })}`;
-    const cached = await get<{ items: unknown[]; cursor?: string; hasMore: boolean }>(cacheKey, {
-      logger: ctx.logger,
-    });
-
-    if (cached !== null) {
-      ctx.logger.debug("trpc.archive.list.cache-hit", {
-        cacheKey,
-        itemsCount: cached.items.length,
+      const cacheKey = `archive:list:v2:${JSON.stringify({ limit, cursor, from, to })}`;
+      const cached = await get<{ items: unknown[]; cursor?: string; hasMore: boolean }>(cacheKey, {
+        logger: ctx.logger,
       });
-      return cached;
-    }
 
-    // Resolve R2 bucket and create archive service with D1 binding
-    const bucket = resolveR2BucketOrThrow(ctx);
-    const d1Binding = ctx.env?.DB;
-    const archiveService = createPaintingsService({
-      r2Bucket: bucket,
-      d1Binding,
-    });
+      if (cached !== null) {
+        ctx.logger.debug("trpc.archive.list.cache-hit", {
+          cacheKey,
+          itemsCount: cached.items.length,
+        });
+        return cached;
+      }
 
-    // List images
-    const listResult = await archiveService.listImages({
-      limit,
-      cursor,
-      from,
-      to,
-    });
+      // Resolve R2 bucket and create archive service with D1 binding
+      const bucket = resolveR2BucketOrThrow(ctx);
+      const d1Binding = ctx.env?.DB;
+      const archiveService = createPaintingsService({
+        r2Bucket: bucket,
+        d1Binding,
+      });
 
-    const result = resultOrThrow(listResult, ctx);
+      // List images
+      const listResult = await archiveService.listImages({
+        limit,
+        cursor,
+        from,
+        to,
+      });
 
-    await set(cacheKey, result, { ttlSeconds: 60, logger: ctx.logger });
+      const result = resultOrThrow(listResult, ctx);
 
-    return result;
-  }),
+      await set(cacheKey, result, { ttlSeconds: 60, logger: ctx.logger });
+
+      return result;
+    }),
 });

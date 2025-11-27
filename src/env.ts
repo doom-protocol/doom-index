@@ -6,7 +6,7 @@
  */
 
 import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod";
+import * as v from "valibot";
 
 export const env = createEnv({
   /**
@@ -15,19 +15,19 @@ export const env = createEnv({
    */
   server: {
     // Image Provider API Keys
-    OPENAI_API_KEY: z.string().optional(),
-    RUNWARE_API_KEY: z.string().min(1),
+    OPENAI_API_KEY: v.optional(v.string()),
+    RUNWARE_API_KEY: v.pipe(v.string(), v.minLength(1)),
     // External API Keys
-    TAVILY_API_KEY: z.string().optional(),
-    COINGECKO_API_KEY: z.string().optional(),
-    FORCE_TOKEN_LIST: z.string().optional(),
-    SLACK_WEBHOOK_URL: z.string().optional(),
+    TAVILY_API_KEY: v.optional(v.string()),
+    COINGECKO_API_KEY: v.optional(v.string()),
+    FORCE_TOKEN_LIST: v.optional(v.string()),
+    SLACK_WEBHOOK_URL: v.optional(v.string()),
     // IPFS / Pinata
-    PINATA_JWT: z.string().optional(),
+    PINATA_JWT: v.optional(v.string()),
     // Admin Tools
-    ADMIN_SECRET: z.string().optional(),
-    CACHE_PURGE_API_TOKEN: z.string().optional(),
-    CACHE_PURGE_ZONE_ID: z.string().optional(),
+    ADMIN_SECRET: v.optional(v.string()),
+    CACHE_PURGE_API_TOKEN: v.optional(v.string()),
+    CACHE_PURGE_ZONE_ID: v.optional(v.string()),
   },
 
   /**
@@ -35,12 +35,12 @@ export const env = createEnv({
    * These must be prefixed with NEXT_PUBLIC_ and will be bundled to the client
    */
   client: {
-    NEXT_PUBLIC_BASE_URL: z.string().min(1),
+    NEXT_PUBLIC_BASE_URL: v.pipe(v.string(), v.minLength(1)),
     // R2 Public URL (e.g., "https://storage.doomindex.fun" or "http://localhost:8787/api/r2")
     // If set, images will be served directly from this URL instead of /api/r2 endpoint
-    NEXT_PUBLIC_R2_URL: z.string().min(1),
+    NEXT_PUBLIC_R2_URL: v.pipe(v.string(), v.minLength(1)),
     // Solana RPC URL for client-side transactions
-    NEXT_PUBLIC_SOLANA_RPC_URL: z.string().url().default("https://api.devnet.solana.com"),
+    NEXT_PUBLIC_SOLANA_RPC_URL: v.optional(v.pipe(v.string(), v.url()), "https://api.devnet.solana.com"),
   },
 
   /**
@@ -52,10 +52,10 @@ export const env = createEnv({
     // The model name to use for image generation (e.g., "runware:106@1", "civitai:38784@44716")
     // If not specified, defaults to "runware:106@1"
     // The provider will be automatically resolved based on the model
-    IMAGE_MODEL: z.string().optional(),
-    LOG_LEVEL: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]).default("DEBUG"),
-    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-    NEXT_PUBLIC_GENERATION_INTERVAL_MS: z.coerce.number().default(600000), // 10 minutes
+    IMAGE_MODEL: v.optional(v.string()),
+    LOG_LEVEL: v.optional(v.picklist(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]), "DEBUG"),
+    NODE_ENV: v.optional(v.picklist(["development", "test", "production"]), "development"),
+    NEXT_PUBLIC_GENERATION_INTERVAL_MS: v.optional(v.pipe(v.unknown(), v.transform(Number)), 600000), // 10 minutes
   },
 
   /**

@@ -71,8 +71,8 @@
     "three-stdlib": "^2.36.1",
     "use-haptic": "^1.1.13",
     "use-sound": "^5.0.0",
-    "wrangler": "^4.51.0",
-    "zod": "^3.25.76"
+    "valibot": "^1.2.0",
+    "wrangler": "^4.51.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251126.0",

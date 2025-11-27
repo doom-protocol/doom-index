@@ -1,5 +1,5 @@
 import { initTRPC } from "@trpc/server";
-import { ZodError } from "zod";
+import * as v from "valibot";
 import type { Context } from "./context";
 
 const t = initTRPC.context<Context>().create({
@@ -8,7 +8,7 @@ const t = initTRPC.context<Context>().create({
       ...shape,
       data: {
         ...shape.data,
-        zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
+        valibotError: v.isValiError(error.cause) ? v.flatten(error.cause.issues) : null,
       },
     };
   },
@@ -35,5 +35,3 @@ export const publicProcedure = t.procedure.use(loggingMiddleware);
 
 // Router creation helper
 export const router = t.router;
-
-// Middleware creation helper

@@ -1,10 +1,35 @@
 import { env } from "@/env";
 import { err, ok, type Result } from "neverthrow";
 
+type SlackAttachmentField = {
+  title: string;
+  value: string;
+  short?: boolean;
+};
+
+type SlackAttachment = {
+  fallback?: string;
+  color?: string;
+  pretext?: string;
+  author_name?: string;
+  author_link?: string;
+  author_icon?: string;
+  title?: string;
+  title_link?: string;
+  text?: string;
+  fields?: SlackAttachmentField[];
+  image_url?: string;
+  thumb_url?: string;
+  footer?: string;
+  footer_icon?: string;
+  ts?: number;
+  mrkdwn_in?: string[];
+};
+
 type SlackMessage = {
   text?: string;
   blocks?: unknown[];
-  attachments?: unknown[];
+  attachments?: SlackAttachment[];
 };
 
 type SlackError = {
@@ -59,8 +84,12 @@ export async function sendSlackMessage(message: SlackMessage): Promise<Result<vo
 function getSourceFromStack(stack?: string): string | undefined {
   if (!stack) return undefined;
   const lines = stack.split("\n");
-  const firstFrame = lines.find(line => line.trim().startsWith("at ") || line.includes(":"));
-  return firstFrame ? firstFrame.trim() : undefined;
+  // Look for lines starting with "at " (V8/Node) or containing explicit file paths
+  const stackFrame = lines.find(line => {
+    const trimmed = line.trim();
+    return trimmed.startsWith("at ") || (trimmed.includes("/") && trimmed.includes(":"));
+  });
+  return stackFrame ? stackFrame.trim() : undefined;
 }
 
 /**
@@ -118,35 +147,6 @@ function tryFormatJson(str: string): { isJson: boolean; formatted: string } {
 }
 
 /**
- * Format error message for Slack, detecting and formatting JSON content.
- * Extracts JSON from error messages and formats them in code blocks.
- */
-function formatErrorMessage(errorMessage: string): string {
-  const jsonMatch = errorMessage.match(/^(.+?)\s*-\s*(\{[\s\S]*\})$/);
-
-  if (jsonMatch) {
-    const prefix = jsonMatch[1].trim();
-    const jsonPart = jsonMatch[2];
-    const { isJson, formatted } = tryFormatJson(jsonPart);
-
-    if (isJson) {
-      return `${prefix}\n\`\`\`${formatted}\`\`\``;
-    }
-  }
-
-  const { isJson, formatted } = tryFormatJson(errorMessage);
-  if (isJson) {
-    return `\`\`\`${formatted}\`\`\``;
-  }
-
-  if (errorMessage.includes("\n") || errorMessage.length > 100) {
-    return `\`\`\`${errorMessage}\`\`\``;
-  }
-
-  return errorMessage;
-}
-
-/**
  * Format an error object for Slack reporting.
  *
  * @param error - The error to report
@@ -194,39 +194,66 @@ export function formatErrorForSlack(error: unknown, context?: string): SlackMess
 
   const source = getSourceFromStack(stackTrace);
 
-  // Build a simple text message to avoid Block Kit issues
-  let message = `🚨 Server Error\n\n`;
-  message += `*Environment:* ${env.NODE_ENV}\n`;
-  message += `*Context:* ${context || "N/A"}\n`;
+  const fields: SlackAttachmentField[] = [
+    {
+      title: "Environment",
+      value: env.NODE_ENV,
+      short: true,
+    },
+    {
+      title: "Context",
+      value: context || "N/A",
+      short: true,
+    },
+  ];
 
   if (source) {
-    message += `*Source:* \`${source}\`\n`;
+    fields.push({
+      title: "Source",
+      value: `\`${source}\``,
+      short: false,
+    });
   }
 
-  const formattedMessage = formatErrorMessage(errorMessage);
-  message += `*Message:*\n${formattedMessage}\n`;
+  // Check if errorMessage is JSON and if so, use a generic title
+  const { isJson, formatted } = tryFormatJson(errorMessage);
+  const displayTitle = isJson ? "Error Object" : errorMessage;
+  const displayText = isJson ? `\`\`\`${formatted}\`\`\`` : undefined;
 
   if (additionalDetails) {
     const truncatedDetails =
       additionalDetails.length > 1000 ? additionalDetails.substring(0, 1000) + "...(truncated)" : additionalDetails;
-    message += `*Details:* \`\`\`${truncatedDetails}\`\`\`\n`;
+    fields.push({
+      title: "Details",
+      value: `\`\`\`${truncatedDetails}\`\`\``,
+      short: false,
+    });
   }
+
+  const attachment: SlackAttachment = {
+    fallback: `🚨 Server Error: ${errorMessage}`,
+    color: "#D00000", // Red color for errors
+    pretext: "🚨 *Server Error Occurred*",
+    title: displayTitle,
+    fields,
+    footer: "Doom Protocol Error Reporter",
+    ts: Math.floor(Date.now() / 1000),
+    mrkdwn_in: ["pretext", "text", "fields"],
+  };
+
+  // If we have a JSON error message, put it in the text (or append if stack exists)
+  let mainText = displayText || "";
 
   if (stackTrace) {
     const truncatedStack = stackTrace.length > 2000 ? stackTrace.substring(0, 2000) + "\n...(truncated)" : stackTrace;
-    message += `*Stack Trace:* \`\`\`${truncatedStack}\`\`\`\n`;
+    mainText += (mainText ? "\n\n" : "") + `*Stack Trace:*\n\`\`\`${truncatedStack}\`\`\``;
+  }
+
+  if (mainText) {
+    attachment.text = mainText;
   }
 
   return {
-    text: `Server Error: ${context || errorMessage}`,
-    blocks: [
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: message,
-        },
-      },
-    ],
+    attachments: [attachment],
   };
 }
