@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { TextureLoader, type Texture } from "three";
 import { logger } from "@/utils/logger";
 
@@ -23,77 +23,137 @@ type UseSafeTextureOptions = {
   debug?: boolean;
 };
 
-type LoadEntry = { key: string; url: string };
-
 // ============================================================================
-// Helpers
+// Texture Cache (Suspense-compatible)
 // ============================================================================
 
-/** Normalize input to unified LoadEntry array */
-function normalizeInput(
-  input: string | string[] | Record<string, string>,
-  transformUrl?: (url: string) => string,
-): { entries: LoadEntry[]; inputType: "single" | "array" | "object" } {
-  const transform = (url: string) => transformUrl?.(url) ?? url;
+type CacheEntry =
+  | { status: "pending"; promise: Promise<Texture> }
+  | { status: "resolved"; texture: Texture }
+  | { status: "rejected"; error: Error; url: string };
 
-  if (typeof input === "string") {
-    return {
-      entries: [{ key: "0", url: transform(input) }],
-      inputType: "single",
-    };
+const textureCache = new Map<string, CacheEntry>();
+
+/** Create a texture loader with options */
+function createLoader(crossOrigin: CrossOrigin): TextureLoader {
+  const loader = new TextureLoader();
+  if (crossOrigin) {
+    loader.setCrossOrigin(crossOrigin);
   }
-
-  if (Array.isArray(input)) {
-    return {
-      entries: input.map((url, i) => ({ key: String(i), url: transform(url) })),
-      inputType: "array",
-    };
-  }
-
-  return {
-    entries: Object.entries(input).map(([key, url]) => ({ key, url: transform(url) })),
-    inputType: "object",
-  };
+  return loader;
 }
 
-/** Convert loaded textures map to appropriate output format */
-function formatOutput(
-  textureMap: Map<string, Texture>,
-  inputType: "single" | "array" | "object",
-  entries: LoadEntry[],
-): Texture | Texture[] | Record<string, Texture> {
-  if (inputType === "single") {
-    return textureMap.get("0")!;
+/** Load a single texture with caching and Suspense support */
+function loadTexture(url: string, crossOrigin: CrossOrigin): Texture {
+  const cacheKey = `${crossOrigin}:${url}`;
+  const cached = textureCache.get(cacheKey);
+
+  if (cached) {
+    switch (cached.status) {
+      case "resolved":
+        return cached.texture;
+      case "rejected":
+        // Log error when re-throwing cached error
+        logger.error("[useSafeTexture] Texture load failed (cached):", {
+          url: cached.url,
+          error: cached.error.message,
+        });
+        throw cached.error;
+      case "pending":
+        throw cached.promise;
+    }
   }
 
-  if (inputType === "array") {
-    return entries.map(e => textureMap.get(e.key)!);
-  }
+  // Create new loading promise
+  const loader = createLoader(crossOrigin);
+  const promise = new Promise<Texture>((resolve, reject) => {
+    loader.load(
+      url,
+      texture => {
+        logger.debug("[useSafeTexture] Texture loaded successfully:", { url });
+        textureCache.set(cacheKey, { status: "resolved", texture });
+        resolve(texture);
+      },
+      undefined,
+      err => {
+        const error = err instanceof Error ? err : new Error(String(err));
+        logger.error("[useSafeTexture] Texture load failed:", {
+          url,
+          error: error.message,
+          crossOrigin: crossOrigin || "(none)",
+        });
+        textureCache.set(cacheKey, { status: "rejected", error, url });
+        reject(error);
+      },
+    );
+  });
 
-  const result: Record<string, Texture> = {};
-  for (const e of entries) {
-    result[e.key] = textureMap.get(e.key)!;
-  }
-  return result;
+  textureCache.set(cacheKey, { status: "pending", promise });
+  throw promise;
 }
 
-/** Safe error conversion */
-function toError(err: unknown): Error {
-  return err instanceof Error ? err : new Error(String(err));
+/** Clear texture cache (useful for testing or memory management) */
+export function clearTextureCache(): void {
+  textureCache.clear();
 }
 
 // ============================================================================
-// Hook
+// Type Overloads (drei-compatible)
 // ============================================================================
+
+// Internal callback type for implementation
+type InternalCallback = (texture: Texture | Texture[] | Record<string, Texture>) => void;
 
 /**
  * Safe texture loader using THREE.TextureLoader directly.
- * Supports single URL, array of URLs, or object of URLs.
+ * Suspense-compatible - throws Promise while loading (use with <Suspense>).
+ * API-compatible with @react-three/drei's useTexture.
+ *
+ * @example
+ * // Single URL
+ * const texture = useSafeTexture("/path/to/image.jpg");
+ *
+ * // With callback
+ * const texture = useSafeTexture("/path/to/image.jpg", (tex) => {
+ *   tex.colorSpace = SRGBColorSpace;
+ * });
+ *
+ * // Array of URLs
+ * const [tex1, tex2] = useSafeTexture(["/img1.jpg", "/img2.jpg"]);
+ *
+ * // Object of URLs
+ * const { diffuse, normal } = useSafeTexture({
+ *   diffuse: "/diffuse.jpg",
+ *   normal: "/normal.jpg",
+ * });
  */
+// Single URL with callback
+export function useSafeTexture(url: string, onLoad: (texture: Texture) => void): Texture;
+// Single URL with options
+export function useSafeTexture(url: string, options?: UseSafeTextureOptions): Texture;
+// Array of URLs with callback
+export function useSafeTexture(urls: string[], onLoad: (textures: Texture[]) => void): Texture[];
+// Array of URLs with options
+export function useSafeTexture(urls: string[], options?: UseSafeTextureOptions): Texture[];
+// Object of URLs with callback
+export function useSafeTexture<T extends Record<string, string>>(
+  urls: T,
+  onLoad: (textures: { [K in keyof T]: Texture }) => void,
+): { [K in keyof T]: Texture };
+// Object of URLs with options
+export function useSafeTexture<T extends Record<string, string>>(
+  urls: T,
+  options?: UseSafeTextureOptions,
+): { [K in keyof T]: Texture };
+// Implementation
 export function useSafeTexture(
   input: string | string[] | Record<string, string>,
-  optionsOrCallback?: UseSafeTextureOptions | ((texture: Texture | Texture[]) => void),
-): Texture | Texture[] | Record<string, Texture> | null {
+  optionsOrCallback?:
+    | UseSafeTextureOptions
+    | ((texture: Texture) => void)
+    | ((textures: Texture[]) => void)
+    | ((textures: Record<string, Texture>) => void),
+): Texture | Texture[] | Record<string, Texture> {
   // Parse options
   const isCallback = typeof optionsOrCallback === "function";
   const options = isCallback ? {} : (optionsOrCallback ?? {});
@@ -101,86 +161,84 @@ export function useSafeTexture(
 
   const { crossOrigin = "", transformUrl, onError, debug = process.env.NODE_ENV === "development" } = options;
 
-  // Normalize input to unified structure
-  const { entries, inputType } = useMemo(() => normalizeInput(input, transformUrl), [input, transformUrl]);
+  // Transform URLs
+  const transform = (url: string) => transformUrl?.(url) ?? url;
 
-  const [result, setResult] = useState<Texture | Texture[] | Record<string, Texture> | null>(null);
-  const [_loading, setLoading] = useState(true);
-  const [_error, setError] = useState<Error | null>(null);
+  // Load textures based on input type
+  const result = useMemo(() => {
+    try {
+      // Single URL
+      if (typeof input === "string") {
+        const url = transform(input);
+        const texture = loadTexture(url, crossOrigin);
 
-  useEffect(() => {
-    if (entries.length === 0) {
-      setResult(null);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    const loader = new TextureLoader();
-    if (crossOrigin) {
-      loader.setCrossOrigin(crossOrigin);
-    }
-
-    const textureMap = new Map<string, Texture>();
-    let loadedCount = 0;
-    let hasError = false;
-
-    const handleSuccess = (entry: LoadEntry, texture: Texture) => {
-      if (hasError) return;
-
-      textureMap.set(entry.key, texture);
-      loadedCount++;
-
-      // All textures loaded
-      if (loadedCount < entries.length) return;
-
-      const output = formatOutput(textureMap, inputType, entries);
-      setResult(output);
-      setLoading(false);
-      setError(null);
-
-      // Execute callback
-      try {
-        onLoadCallback?.(inputType === "single" ? (output as Texture) : (output as Texture[]));
         if (debug) {
-          logger.debug("[useSafeTexture] Loaded:", { count: entries.length, type: inputType });
+          logger.debug("[useSafeTexture] Loaded single texture:", { url });
         }
-      } catch (callbackError) {
-        const err = toError(callbackError);
-        if (debug) {
-          logger.debug("[useSafeTexture] Callback error:", { error: err.message });
-        }
-        onError?.(err, entry.url);
+        return texture;
       }
-    };
 
-    const handleError = (entry: LoadEntry, err: unknown) => {
-      if (hasError) return;
-      hasError = true;
+      // Array of URLs
+      if (Array.isArray(input)) {
+        const textures = input.map(url => loadTexture(transform(url), crossOrigin));
 
-      const error = toError(err);
-      setError(error);
-      setLoading(false);
+        if (debug) {
+          logger.debug("[useSafeTexture] Loaded texture array:", { count: textures.length });
+        }
+        return textures;
+      }
+
+      // Object of URLs
+      const entries = Object.entries(input);
+      const textures: Record<string, Texture> = {};
+      for (const [key, url] of entries) {
+        textures[key] = loadTexture(transform(url), crossOrigin);
+      }
 
       if (debug) {
-        logger.debug("[useSafeTexture] Load error:", { url: entry.url, error: error.message });
+        logger.debug("[useSafeTexture] Loaded texture object:", { keys: Object.keys(textures) });
       }
-      onError?.(error, entry.url);
-    };
+      return textures;
+    } catch (err) {
+      // Re-throw Promise for Suspense
+      if (err instanceof Promise) {
+        throw err;
+      }
 
-    // Load all textures
-    for (const entry of entries) {
-      loader.load(
-        entry.url,
-        texture => handleSuccess(entry, texture),
-        undefined,
-        err => handleError(entry, err),
-      );
+      // Handle actual errors - log and notify
+      const error = err instanceof Error ? err : new Error(String(err));
+      const urlInfo = typeof input === "string" ? input : JSON.stringify(input);
+
+      logger.error("[useSafeTexture] Failed to load texture:", {
+        input: urlInfo,
+        error: error.message,
+        crossOrigin: crossOrigin || "(none)",
+      });
+
+      onError?.(error, urlInfo);
+      throw error;
     }
-  }, [entries, inputType, crossOrigin, onLoadCallback, onError, debug]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- transform is derived from transformUrl
+  }, [input, crossOrigin, transformUrl, debug, onError]);
+
+  // Execute onLoad callback after successful load
+  useMemo(() => {
+    if (result && onLoadCallback) {
+      try {
+        // Callback receives the same type as result
+        (onLoadCallback as InternalCallback)(result);
+      } catch (callbackError) {
+        const err = callbackError instanceof Error ? callbackError : new Error(String(callbackError));
+        logger.error("[useSafeTexture] onLoad callback error:", { error: err.message });
+      }
+    }
+  }, [result, onLoadCallback]);
 
   return result;
 }
+
+// ============================================================================
+// Re-export for compatibility
+// ============================================================================
+
+export type { UseSafeTextureOptions };

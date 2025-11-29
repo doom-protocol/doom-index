@@ -1,12 +1,13 @@
 "use client";
 
 import { useSafeTexture } from "@/hooks/use-safe-texture";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { logger } from "@/utils/logger";
+import { useEffect, useRef, useState } from "react";
 import { SRGBColorSpace, type Texture } from "three";
 
 export interface TextureTransitionState {
   /** Current active texture for rendering */
-  currentTexture: Texture | null;
+  currentTexture: Texture;
   /** Previous texture (shown during transition) */
   previousTexture: Texture | null;
   /** Whether a transition is currently active */
@@ -18,7 +19,7 @@ export interface TextureTransitionState {
   /** Function to mark transition as complete */
   completeTransition: () => void;
   /** The raw texture from useSafeTexture (for fallback) */
-  rawTexture: Texture | null;
+  rawTexture: Texture;
 }
 
 export interface UseTextureTransitionOptions {
@@ -30,6 +31,7 @@ export interface UseTextureTransitionOptions {
 
 /**
  * Hook for managing texture transitions with crossfade effect.
+ * Suspense-compatible - will suspend while texture is loading.
  * Handles URL changes, texture loading, and cleanup.
  */
 export function useTextureTransition(
@@ -41,128 +43,63 @@ export function useTextureTransition(
   // Build texture URL with threejs=true parameter for R2 route access
   const textureUrl = `${thumbnailUrl}${thumbnailUrl.includes("?") ? "&" : "?"}threejs=true`;
 
-  // Load texture with useSafeTexture
-  const texture = useSafeTexture(textureUrl, {
-    onLoad: (loadedTexture: Texture | Texture[]) => {
-      // Handle both single texture and array (though we expect single texture here)
-      const tex = Array.isArray(loadedTexture) ? loadedTexture[0] : loadedTexture;
-      if (tex) {
-        tex.colorSpace = SRGBColorSpace;
-        tex.anisotropy = 4;
-        tex.needsUpdate = true;
-      }
-    },
-    onError: (error, url) => {
-      if (debug) {
-        console.error(`[${componentName}] Texture load error:`, url, error);
-      }
-    },
-    debug,
-  }) as Texture | null;
+  // Load texture with useSafeTexture (Suspense-compatible - throws Promise while loading)
+  // Single URL always returns Texture (not array or object)
+  const texture = useSafeTexture(textureUrl, (loadedTexture: Texture) => {
+    loadedTexture.colorSpace = SRGBColorSpace;
+    loadedTexture.anisotropy = 4;
+    loadedTexture.needsUpdate = true;
+
+    if (debug) {
+      logger.debug(`[${componentName}] Texture loaded successfully:`, { url: textureUrl });
+    }
+  });
 
   // Transition state
-  const [currentTexture, setCurrentTexture] = useState<Texture | null>(texture);
+  const [currentTexture, setCurrentTexture] = useState<Texture>(texture);
   const [previousTexture, setPreviousTexture] = useState<Texture | null>(null);
   const [isTransitionActive, setIsTransitionActive] = useState(false);
 
   // Refs for tracking state across renders
-  const previousThumbnailUrlRef = useRef<string | null>(thumbnailUrl);
   const transitionElapsedRef = useRef(0);
   const previousTextureRef = useRef<Texture | null>(null);
-  const currentTextureRef = useRef<Texture | null>(texture);
-  const pendingUrlRef = useRef<string | null>(null);
+  const currentTextureRef = useRef<Texture>(texture);
+  const previousUrlRef = useRef<string>(textureUrl);
 
-  // Handle thumbnailUrl changes - prepare for transition
-  useLayoutEffect(() => {
-    if (previousThumbnailUrlRef.current !== thumbnailUrl) {
-      pendingUrlRef.current = thumbnailUrl;
-      previousThumbnailUrlRef.current = thumbnailUrl;
-
-      // If texture is already loaded and different, start transition immediately
-      if (texture && currentTextureRef.current && texture !== currentTextureRef.current) {
-        const oldTexture = currentTextureRef.current;
-        previousTextureRef.current = oldTexture;
-        setPreviousTexture(oldTexture);
-        currentTextureRef.current = texture;
-        setCurrentTexture(texture);
-        transitionElapsedRef.current = 0;
-        setIsTransitionActive(true);
-        pendingUrlRef.current = null;
-      }
-    }
-  }, [thumbnailUrl, texture]);
-
-  // Watch for texture.image loading to catch when new texture is ready
+  // Handle texture changes (when URL changes and new texture loads)
   useEffect(() => {
-    if (!texture?.image) {
-      return;
-    }
+    // Skip if same texture reference
+    if (texture === currentTextureRef.current) return;
 
-    const image = texture.image as HTMLImageElement;
-    const imageSrc = image.src || image.currentSrc || "";
+    // Skip if same URL (texture reference might change due to cache)
+    if (textureUrl === previousUrlRef.current && texture.image === currentTextureRef.current.image) return;
 
-    // If we have a pending URL, check if this texture matches it
-    if (pendingUrlRef.current) {
-      if (imageSrc && imageSrc.includes(pendingUrlRef.current)) {
-        const oldTexture = currentTextureRef.current;
-        if (oldTexture && oldTexture !== texture) {
-          previousTextureRef.current = oldTexture;
-          setPreviousTexture(oldTexture);
-        }
+    // Start transition from old to new texture
+    const oldTexture = currentTextureRef.current;
+    previousTextureRef.current = oldTexture;
+    setPreviousTexture(oldTexture);
 
-        currentTextureRef.current = texture;
-        setCurrentTexture(texture);
-        transitionElapsedRef.current = 0;
-        setIsTransitionActive(true);
-        pendingUrlRef.current = null;
-        return;
-      }
-    }
+    currentTextureRef.current = texture;
+    setCurrentTexture(texture);
+    previousUrlRef.current = textureUrl;
 
-    // Also check if texture reference changed
-    if (currentTextureRef.current !== texture && texture.image) {
-      const currentImage = currentTextureRef.current?.image as HTMLImageElement | undefined;
-      const currentImageSrc = currentImage?.src || currentImage?.currentSrc || "";
-
-      // If image source is different, this is a new texture
-      if (imageSrc && imageSrc !== currentImageSrc) {
-        const oldTexture = currentTextureRef.current;
-        if (oldTexture) {
-          previousTextureRef.current = oldTexture;
-          setPreviousTexture(oldTexture);
-        }
-
-        currentTextureRef.current = texture;
-        setCurrentTexture(texture);
-        transitionElapsedRef.current = 0;
-        setIsTransitionActive(true);
-      }
-    }
-  }, [texture]);
+    transitionElapsedRef.current = 0;
+    setIsTransitionActive(true);
+  }, [texture, textureUrl]);
 
   // Cleanup textures on unmount
   useEffect(() => {
     return () => {
-      if (previousTextureRef.current) {
-        previousTextureRef.current.dispose();
-      }
-      if (currentTexture && currentTexture !== texture) {
-        currentTexture.dispose();
-      }
+      // Don't dispose cached textures - they're managed by useSafeTexture cache
     };
-  }, [currentTexture, texture]);
+  }, []);
 
   // Function to mark transition as complete
   const completeTransition = () => {
     setIsTransitionActive(false);
-    const textureToDispose = previousTextureRef.current;
     previousTextureRef.current = null;
     setPreviousTexture(null);
-
-    // Clean up previous texture
-    if (textureToDispose) {
-      textureToDispose.dispose();
-    }
+    // Don't dispose - textures are cached and may be reused
   };
 
   return {
