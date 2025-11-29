@@ -2,7 +2,7 @@
 
 import { useSafeTexture } from "@/hooks/use-safe-texture";
 import { logger } from "@/utils/logger";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import { SRGBColorSpace, type Texture } from "three";
 
 export interface TextureTransitionState {
@@ -13,9 +13,9 @@ export interface TextureTransitionState {
   /** Whether a transition is currently active */
   isTransitionActive: boolean;
   /** Ref to track previous texture for cleanup */
-  previousTextureRef: React.MutableRefObject<Texture | null>;
+  previousTextureRef: MutableRefObject<Texture | null>;
   /** Ref to track transition elapsed time */
-  transitionElapsedRef: React.MutableRefObject<number>;
+  transitionElapsedRef: MutableRefObject<number>;
   /** Function to mark transition as complete */
   completeTransition: () => void;
   /** The raw texture from useSafeTexture (for fallback) */

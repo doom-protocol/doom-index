@@ -1,88 +1,42 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { TextureLoader, type Texture } from "three";
+import { useEffect, useRef, useState } from "react";
+import { DataTexture, RGBAFormat, TextureLoader, UnsignedByteType, type Texture } from "three";
 import { logger } from "@/utils/logger";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type CrossOrigin = "" | "anonymous" | "use-credentials";
-
-type UseSafeTextureOptions = {
-  /** TextureLoader.setCrossOrigin value. Default "" (no CORS) */
-  crossOrigin?: CrossOrigin;
-  /** Transform URL if needed */
-  transformUrl?: (url: string) => string;
+export type UseSafeTextureOptions = {
+  /** TextureLoader.setCrossOrigin value. Default "anonymous" */
+  crossOrigin?: string;
   /** Called when texture is loaded */
   onLoad?: (texture: Texture | Texture[] | Record<string, Texture>) => void;
   /** Called when error occurs */
-  onError?: (error: Error, url: string) => void;
-  /** Enable debug logging */
-  debug?: boolean;
+  onError?: (error: Error) => void;
 };
-
-type LoadEntry = { key: string; url: string };
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
-/** Normalize input to unified LoadEntry array */
-function normalizeInput(
-  input: string | string[] | Record<string, string>,
-  transformUrl?: (url: string) => string,
-): { entries: LoadEntry[]; inputType: "single" | "array" | "object" } {
-  const transform = (url: string) => transformUrl?.(url) ?? url;
-
-  if (typeof input === "string") {
-    return {
-      entries: [{ key: "0", url: transform(input) }],
-      inputType: "single",
-    };
+/** Create a reusable black 1x1 texture for fallback */
+let _fallbackTexture: Texture | null = null;
+function getFallbackTexture(): Texture {
+  if (!_fallbackTexture) {
+    const data = new Uint8Array([0, 0, 0, 255]); // Black opaque
+    _fallbackTexture = new DataTexture(data, 1, 1, RGBAFormat, UnsignedByteType);
+    _fallbackTexture.needsUpdate = true;
+    _fallbackTexture.name = "fallback_black";
   }
-
-  if (Array.isArray(input)) {
-    return {
-      entries: input.map((url, i) => ({ key: String(i), url: transform(url) })),
-      inputType: "array",
-    };
-  }
-
-  return {
-    entries: Object.entries(input).map(([key, url]) => ({ key, url: transform(url) })),
-    inputType: "object",
-  };
+  return _fallbackTexture;
 }
 
-/** Convert loaded textures map to appropriate output format */
-function formatOutput(
-  textureMap: Map<string, Texture>,
-  inputType: "single" | "array" | "object",
-  entries: LoadEntry[],
-): Texture | Texture[] | Record<string, Texture> {
-  if (inputType === "single") {
-    return textureMap.get("0")!;
-  }
-
-  if (inputType === "array") {
-    return entries.map(e => textureMap.get(e.key)!);
-  }
-
-  const result: Record<string, Texture> = {};
-  for (const e of entries) {
-    result[e.key] = textureMap.get(e.key)!;
-  }
-  return result;
-}
-
-/** Safe error conversion */
-function toError(err: unknown): Error {
-  return err instanceof Error ? err : new Error(String(err));
-}
-
+// ============================================================================
 // Implementation
+// ============================================================================
+
 export function useSafeTexture(
   input: string | string[] | Record<string, string>,
   optionsOrCallback?: UseSafeTextureOptions | ((texture: Texture | Texture[] | Record<string, Texture>) => void),
@@ -90,116 +44,92 @@ export function useSafeTexture(
   // Parse options
   const isCallback = typeof optionsOrCallback === "function";
   const options = isCallback ? {} : (optionsOrCallback ?? {});
-  const onLoadCallback = isCallback ? optionsOrCallback : options.onLoad;
-
-  const { crossOrigin = "", transformUrl, onError, debug = process.env.NODE_ENV === "development" } = options;
-
-  // Normalize input to unified structure
-  const { entries, inputType } = useMemo(() => normalizeInput(input, transformUrl), [input, transformUrl]);
+  const onLoad = isCallback ? optionsOrCallback : options.onLoad;
+  const { crossOrigin = "anonymous", onError } = options;
 
   const [result, setResult] = useState<Texture | Texture[] | Record<string, Texture> | null>(null);
-  const [_loading, setLoading] = useState(true);
-  const [_error, setError] = useState<Error | null>(null);
 
-  // Track mounted state for cleanup
-  const mountedRef = useRef(true);
+  // Refs for callbacks to prevent useEffect re-triggering
+  const onLoadRef = useRef(onLoad);
+  const onErrorRef = useRef(onError);
+  useEffect(() => {
+    onLoadRef.current = onLoad;
+  }, [onLoad]);
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  // Stable input key to prevent re-loading on every render if object/array is passed inline
+  const inputKey = typeof input === "string" ? input : JSON.stringify(input);
 
   useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (entries.length === 0) {
-      setResult(null);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
     const loader = new TextureLoader();
     if (crossOrigin) {
       loader.setCrossOrigin(crossOrigin);
     }
 
-    const textureMap = new Map<string, Texture>();
-    let loadedCount = 0;
-    let hasError = false;
+    let mounted = true;
 
-    const handleSuccess = (entry: LoadEntry, texture: Texture) => {
-      // Ignore callbacks if component has unmounted
-      if (!mountedRef.current || hasError) return;
+    const loadTexture = (url: string): Promise<Texture> => {
+      return new Promise((resolve, reject) => {
+        loader.load(
+          url,
+          tex => resolve(tex),
+          undefined,
+          err => reject(err),
+        );
+      });
+    };
 
-      textureMap.set(entry.key, texture);
-      loadedCount++;
-
-      // All textures loaded
-      if (loadedCount < entries.length) return;
-
-      const output = formatOutput(textureMap, inputType, entries);
-      setResult(output);
-      setLoading(false);
-      setError(null);
-
-      // Execute callback with correct shape
+    const load = async () => {
       try {
-        onLoadCallback?.(output);
-        if (debug) {
-          logger.debug("[useSafeTexture] Loaded:", { count: entries.length, type: inputType });
+        let data: Texture | Texture[] | Record<string, Texture>;
+
+        if (Array.isArray(input)) {
+          data = await Promise.all(input.map(url => loadTexture(url)));
+        } else if (typeof input === "object" && input !== null) {
+          const keys = Object.keys(input);
+          const textures = await Promise.all(keys.map(key => loadTexture(input[key])));
+          data = {};
+          keys.forEach((key, i) => {
+            (data as Record<string, Texture>)[key] = textures[i];
+          });
+        } else {
+          data = await loadTexture(input as string);
         }
-      } catch (callbackError) {
-        const err = toError(callbackError);
-        if (debug) {
-          logger.debug("[useSafeTexture] Callback error:", { error: err.message });
+
+        if (mounted) {
+          setResult(data);
+          onLoadRef.current?.(data);
         }
-        onError?.(err, entry.url);
+      } catch (err) {
+        if (mounted) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          logger.error("[useSafeTexture] Load failed", { error: error.message });
+          onErrorRef.current?.(error);
+
+          // Return fallback texture(s) to prevent white screen
+          const fallback = getFallbackTexture();
+          if (Array.isArray(input)) {
+            setResult(input.map(() => fallback));
+          } else if (typeof input === "object" && input !== null) {
+            const fallbackObj: Record<string, Texture> = {};
+            Object.keys(input).forEach(k => (fallbackObj[k] = fallback));
+            setResult(fallbackObj);
+          } else {
+            setResult(fallback);
+          }
+        }
       }
     };
 
-    const handleError = (entry: LoadEntry, err: unknown) => {
-      // Ignore callbacks if component has unmounted
-      if (!mountedRef.current || hasError) return;
-      hasError = true;
+    void load();
 
-      const error = toError(err);
-      setError(error);
-      setLoading(false);
-      // Clear any stale result on error
-      setResult(null);
-
-      if (debug) {
-        logger.debug("[useSafeTexture] Load error:", { url: entry.url, error: error.message });
-      }
-      onError?.(error, entry.url);
-    };
-
-    // Load all textures
-    for (const entry of entries) {
-      loader.load(
-        entry.url,
-        texture => handleSuccess(entry, texture),
-        undefined,
-        err => handleError(entry, err),
-      );
-    }
-
-    // Cleanup function to prevent callbacks after unmount
     return () => {
-      // Note: THREE.TextureLoader doesn't have a built-in abort method,
-      // but we use mountedRef to ignore callbacks after unmount
+      mounted = false;
     };
-  }, [entries, inputType, crossOrigin, onLoadCallback, onError, debug]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputKey, crossOrigin]);
 
   return result;
 }
-
-// ============================================================================
-// Re-export for compatibility
-// ============================================================================
-
-export type { UseSafeTextureOptions };

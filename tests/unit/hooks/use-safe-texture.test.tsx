@@ -54,12 +54,10 @@ describe("useSafeTexture", () => {
 
   it("should accept options object", () => {
     const options: UseSafeTextureOptions = {
-      transformUrl: (url: string) => url,
-      onError: (_error: Error, _url: string) => {},
-      debug: true,
+      onError: (_error: Error) => {},
     };
     // Type check - should accept options
-    expect(options.debug).toBe(true);
+    expect(typeof options.onError).toBe("function");
   });
 
   it("should accept callback function", () => {
