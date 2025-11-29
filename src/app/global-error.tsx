@@ -4,8 +4,16 @@ import { reportGlobalError } from "@/lib/actions/report-error";
 import NextError from "next/error";
 import { useEffect } from "react";
 
+const CHUNK_RELOAD_KEY = "doom-index:chunk-reload";
+
+function isChunkLoadError(error: Error): boolean {
+  return error.name === "ChunkLoadError" || error.message.includes("Loading chunk");
+}
+
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
   useEffect(() => {
+    const isChunkError = isChunkLoadError(error);
+
     // Report error to Slack via Server Action
     const report = async () => {
       try {
@@ -21,6 +29,20 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
     };
 
     void report();
+
+    // Handle ChunkLoadError with auto-reload (once)
+    if (isChunkError) {
+      const hasReloaded = sessionStorage.getItem(CHUNK_RELOAD_KEY);
+
+      if (!hasReloaded) {
+        // Set flag to prevent infinite reload loop
+        sessionStorage.setItem(CHUNK_RELOAD_KEY, "true");
+        // Give time for error report to be sent, then reload
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
+    }
   }, [error]);
 
   return (
