@@ -43,10 +43,14 @@ export function useTextureTransition(
 
   // Load texture with useSafeTexture
   const texture = useSafeTexture(textureUrl, {
-    onLoad: (loadedTexture: Texture) => {
-      loadedTexture.colorSpace = SRGBColorSpace;
-      loadedTexture.anisotropy = 4;
-      loadedTexture.needsUpdate = true;
+    onLoad: (loadedTexture: Texture | Texture[]) => {
+      // Handle both single texture and array (though we expect single texture here)
+      const tex = Array.isArray(loadedTexture) ? loadedTexture[0] : loadedTexture;
+      if (tex) {
+        tex.colorSpace = SRGBColorSpace;
+        tex.anisotropy = 4;
+        tex.needsUpdate = true;
+      }
     },
     onError: (error, url) => {
       if (debug) {

@@ -1,22 +1,28 @@
 import { useSafeTexture } from "@/hooks/use-safe-texture";
 import { beforeEach, describe, expect, it, mock, vi } from "bun:test";
 
-// Mock useTexture from drei
-const mockUseTexture = mock(() => ({}));
-mock.module("@react-three/drei", () => ({
-  useTexture: mockUseTexture,
+// Mock THREE.TextureLoader
+const mockLoad = mock((url: string, onLoad?: (texture: any) => void) => {
+  // Simulate successful load
+  setTimeout(() => {
+    const mockTexture = { colorSpace: "srgb", anisotropy: 1, needsUpdate: false };
+    onLoad?.(mockTexture);
+  }, 10);
+});
+const mockSetCrossOrigin = mock(() => {});
+
+class MockTextureLoader {
+  setCrossOrigin = mockSetCrossOrigin;
+  load = mockLoad;
+}
+
+mock.module("three", () => ({
+  TextureLoader: MockTextureLoader,
 }));
 
 describe("useSafeTexture", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseTexture.mockReturnValue({});
-  });
-
-  it("should call useTexture with string input", () => {
-    // Note: This is a hook, so we can't test it directly without React context
-    // In real usage, it would be called within a React component
-    expect(typeof useSafeTexture).toBe("function");
   });
 
   it("should export useSafeTexture function", () => {
