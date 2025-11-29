@@ -16,7 +16,7 @@ type UseSafeTextureOptions = {
   /** Transform URL if needed */
   transformUrl?: (url: string) => string;
   /** Called when texture is loaded */
-  onLoad?: (texture: Texture | Texture[]) => void;
+  onLoad?: (texture: Texture | Texture[] | Record<string, Texture>) => void;
   /** Called when error occurs */
   onError?: (error: Error, url: string) => void;
   /** Enable debug logging */
