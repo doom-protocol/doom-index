@@ -44,7 +44,7 @@ export function useTextureTransition(
   const textureUrl = `${thumbnailUrl}${thumbnailUrl.includes("?") ? "&" : "?"}threejs=true`;
 
   // Load texture with useSafeTexture
-  // Single URL returns Texture | null
+  // Always returns a Texture (fallback or loaded)
   const texture = useSafeTexture(textureUrl, loadedTexture => {
     // loadedTexture could be Texture, Texture[], or Record<string, Texture>
     // Since we passed a single URL, it should be Texture
@@ -56,10 +56,10 @@ export function useTextureTransition(
     if (debug) {
       logger.debug(`[${componentName}] Texture loaded successfully:`, { url: textureUrl });
     }
-  }) as Texture | null;
+  }) as Texture;
 
-  // Transition state - handle null texture
-  const [currentTexture, setCurrentTexture] = useState<Texture | null>(texture);
+  // Transition state
+  const [currentTexture, setCurrentTexture] = useState<Texture>(texture);
   const [previousTexture, setPreviousTexture] = useState<Texture | null>(null);
   const [isTransitionActive, setIsTransitionActive] = useState(false);
 
@@ -71,14 +71,12 @@ export function useTextureTransition(
 
   // Handle texture changes (when URL changes and new texture loads)
   useEffect(() => {
-    // Skip if no texture loaded yet
-    if (!texture) return;
-
     // Skip if same texture reference
     if (texture === currentTextureRef.current) return;
 
     // Skip if same URL (texture reference might change due to cache)
-    if (textureUrl === previousUrlRef.current && texture.image === currentTextureRef.current?.image) return;
+    if (textureUrl === previousUrlRef.current && texture.image && texture.image === currentTextureRef.current?.image)
+      return;
 
     // Start transition from old to new texture
     const oldTexture = currentTextureRef.current;

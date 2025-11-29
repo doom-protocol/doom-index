@@ -40,21 +40,38 @@ function getFallbackTexture(): Texture {
 export function useSafeTexture(
   input: string | string[] | Record<string, string>,
   optionsOrCallback?: UseSafeTextureOptions | ((texture: Texture | Texture[] | Record<string, Texture>) => void),
-): Texture | Texture[] | Record<string, Texture> | null {
+): Texture | Texture[] | Record<string, Texture> {
   // Parse options
   const isCallback = typeof optionsOrCallback === "function";
   const options = isCallback ? {} : (optionsOrCallback ?? {});
   const onLoad = isCallback ? optionsOrCallback : options.onLoad;
   const { crossOrigin = "anonymous", onError } = options;
 
-  const [result, setResult] = useState<Texture | Texture[] | Record<string, Texture> | null>(null);
+  // Helper to get fallback based on input shape
+  const getFallback = (): Texture | Texture[] | Record<string, Texture> => {
+    const fallback = getFallbackTexture();
+    if (Array.isArray(input)) {
+      return input.map(() => fallback);
+    }
+    if (typeof input === "object" && input !== null) {
+      const fallbackObj: Record<string, Texture> = {};
+      Object.keys(input).forEach(k => (fallbackObj[k] = fallback));
+      return fallbackObj;
+    }
+    return fallback;
+  };
+
+  // Initialize with fallback texture immediately to prevent null/white screen
+  const [result, setResult] = useState<Texture | Texture[] | Record<string, Texture>>(getFallback);
 
   // Refs for callbacks to prevent useEffect re-triggering
   const onLoadRef = useRef(onLoad);
   const onErrorRef = useRef(onError);
+
   useEffect(() => {
     onLoadRef.current = onLoad;
   }, [onLoad]);
+
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
@@ -108,17 +125,8 @@ export function useSafeTexture(
           logger.error("[useSafeTexture] Load failed", { error: error.message });
           onErrorRef.current?.(error);
 
-          // Return fallback texture(s) to prevent white screen
-          const fallback = getFallbackTexture();
-          if (Array.isArray(input)) {
-            setResult(input.map(() => fallback));
-          } else if (typeof input === "object" && input !== null) {
-            const fallbackObj: Record<string, Texture> = {};
-            Object.keys(input).forEach(k => (fallbackObj[k] = fallback));
-            setResult(fallbackObj);
-          } else {
-            setResult(fallback);
-          }
+          // Even on error, ensure we have a fallback (though state might already be fallback)
+          setResult(getFallback());
         }
       }
     };
