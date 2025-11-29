@@ -12,12 +12,7 @@ import {
 } from "@/utils/three";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useRef, type FC } from "react";
-import {
-  AdditiveBlending,
-  type MeshStandardMaterial,
-  type Mesh,
-  type Texture,
-} from "three";
+import { AdditiveBlending, type MeshStandardMaterial, type Mesh, type Texture } from "three";
 
 interface ArchiveFramedPaintingProps {
   item: Painting;
@@ -47,14 +42,8 @@ const PaintingContent: FC<PaintingContentProps> = ({
   const previousPaintingMeshRef = useRef<Mesh>(null);
 
   // Use shared texture transition hook
-  const {
-    currentTexture,
-    previousTexture,
-    isTransitionActive,
-    transitionElapsedRef,
-    completeTransition,
-    rawTexture,
-  } = useTextureTransition(thumbnailUrl, { componentName: "ArchiveFramedPainting" });
+  const { currentTexture, previousTexture, isTransitionActive, transitionElapsedRef, completeTransition, rawTexture } =
+    useTextureTransition(thumbnailUrl, { componentName: "ArchiveFramedPainting" });
 
   // Calculate aspect ratio fit (contain) based on current texture
   const activeTexture = currentTexture || rawTexture;

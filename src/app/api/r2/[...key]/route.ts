@@ -46,7 +46,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const requestedByThreeJs = req.headers.get("X-Requested-By") === "three.js";
   const url = new URL(req.url);
   const isThreeJsRequest = url.searchParams.get("threejs") === "true";
-  if (r2Url && !isLocalR2Route && !isDevelopment && allowHeader !== "true" && !requestedByThreeJs && !isThreeJsRequest) {
+  if (
+    r2Url &&
+    !isLocalR2Route &&
+    !isDevelopment &&
+    allowHeader !== "true" &&
+    !requestedByThreeJs &&
+    !isThreeJsRequest
+  ) {
     logger.warn("[R2 Route] Endpoint disabled - Public R2 URL is configured", {
       publicUrl: env.NEXT_PUBLIC_R2_URL,
       url: requestUrl,
@@ -68,7 +75,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   }
 
   // Join key segments and normalize (exclude query parameters)
-  const objectKey = joinR2Key(key.map(segment => segment.split('?')[0]));
+  const objectKey = joinR2Key(key.map(segment => segment.split("?")[0]));
 
   logger.debug("[R2 Route] Parsed object key", {
     keySegments: key,

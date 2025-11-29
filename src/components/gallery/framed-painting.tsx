@@ -14,13 +14,7 @@ import { openTweetIntent } from "@/utils/twitter";
 import { useGLTF } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { forwardRef, useRef, type FC } from "react";
-import {
-  AdditiveBlending,
-  MeshStandardMaterial,
-  type Group,
-  type Mesh,
-  type Texture,
-} from "three";
+import { AdditiveBlending, MeshStandardMaterial, type Group, type Mesh, type Texture } from "three";
 import { useHaptic } from "use-haptic";
 
 interface FramedPaintingProps {
@@ -56,14 +50,8 @@ const PaintingContent: FC<PaintingContentProps> = ({
   const { triggerHaptic } = useHaptic();
 
   // Use shared texture transition hook
-  const {
-    currentTexture,
-    previousTexture,
-    isTransitionActive,
-    transitionElapsedRef,
-    completeTransition,
-    rawTexture,
-  } = useTextureTransition(thumbnailUrl, { componentName: "FramedPainting" });
+  const { currentTexture, previousTexture, isTransitionActive, transitionElapsedRef, completeTransition, rawTexture } =
+    useTextureTransition(thumbnailUrl, { componentName: "FramedPainting" });
 
   // Calculate aspect ratio fit (contain) based on current texture
   const activeTexture = currentTexture || rawTexture;
