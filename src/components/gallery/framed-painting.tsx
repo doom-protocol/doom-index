@@ -9,7 +9,8 @@ import {
   isValidPointerEvent,
 } from "@/utils/three";
 import { openTweetIntent } from "@/utils/twitter";
-import { useGLTF, useTexture } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
+import { useSafeTexture } from "@/hooks/use-safe-texture";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, type FC } from "react";
 import {
@@ -63,14 +64,18 @@ const PaintingContent: FC<PaintingContentProps> = ({
   const isPulseActiveRef = useRef(false);
 
   const { triggerHaptic } = useHaptic();
-  // Load texture - useTexture automatically handles URL changes
-  const texture = useTexture(thumbnailUrl, loadedTexture => {
-    const tex = loadedTexture as Texture;
-    tex.colorSpace = SRGBColorSpace;
-    tex.anisotropy = 4;
-    tex.needsUpdate = true;
-    return tex;
-  });
+  // Load texture with query parameter to indicate Three.js request for R2 route access
+  const textureUrl = `${thumbnailUrl}${thumbnailUrl.includes('?') ? '&' : '?'}threejs=true`;
+  const texture = useSafeTexture(textureUrl, {
+    onLoad: (loadedTexture: any) => {
+      loadedTexture.colorSpace = SRGBColorSpace;
+      loadedTexture.anisotropy = 4;
+      loadedTexture.needsUpdate = true;
+    },
+    onError: (error, url) => {
+      console.error('[FramedPainting] Texture load error:', url, error);
+    },
+  }) as Texture | null;
 
   // Texture transition state
   const [currentTexture, setCurrentTexture] = useState<Texture | null>(texture as Texture);
@@ -130,7 +135,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
       }
     }
 
-    // Also check if texture reference changed (useTexture returned new texture)
+    // Also check if texture reference changed (useSafeTexture returned new texture)
     if (currentTextureRef.current !== tex && tex.image) {
       const currentImage = currentTextureRef.current?.image as HTMLImageElement | undefined;
       const currentImageSrc = currentImage?.src || currentImage?.currentSrc || "";

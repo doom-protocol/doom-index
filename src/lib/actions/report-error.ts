@@ -15,6 +15,7 @@ export async function reportGlobalError(error: { digest?: string; message: strin
         name: error.name,
       },
       context,
+      "client",
     );
 
     const result = await sendSlackMessage(slackMessage);

@@ -9,7 +9,7 @@ import {
   handlePointerUpForClick,
   isValidPointerEvent,
 } from "@/utils/three";
-import { useTexture } from "@react-three/drei";
+import { useSafeTexture } from "@/hooks/use-safe-texture";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
 import {
@@ -61,11 +61,17 @@ const PaintingContent: FC<PaintingContentProps> = ({
   const pulseElapsedRef = useRef(0);
   const isPulseActiveRef = useRef(false);
 
-  const texture = useTexture(thumbnailUrl, loadedTexture => {
-    loadedTexture.colorSpace = SRGBColorSpace;
-    loadedTexture.anisotropy = 4;
-    loadedTexture.needsUpdate = true;
-  });
+  const textureUrl = `${thumbnailUrl}${thumbnailUrl.includes('?') ? '&' : '?'}threejs=true`;
+  const texture = useSafeTexture(textureUrl, {
+    onLoad: (loadedTexture: any) => {
+      loadedTexture.colorSpace = SRGBColorSpace;
+      loadedTexture.anisotropy = 4;
+      loadedTexture.needsUpdate = true;
+    },
+    onError: (error, url) => {
+      console.error('[ArchiveFramedPainting] Texture load error:', url, error);
+    },
+  }) as Texture | null;
 
   const [currentTexture, setCurrentTexture] = useState<Texture | null>(texture);
   const [previousTexture, setPreviousTexture] = useState<Texture | null>(null);

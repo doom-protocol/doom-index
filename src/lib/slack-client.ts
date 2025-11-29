@@ -235,8 +235,8 @@ export function formatErrorForSlack(error: unknown, context?: string, source: Er
 
   const isClientError = source === "client";
   const errorLabel = isClientError ? "Client Error" : "Server Error";
-  const emoji = isClientError ? "⚠️" : "🚨";
-  const color = isClientError ? "#FFA500" : "#D00000"; // Orange for client, Red for server
+  const emoji = "🚨";
+  const color = "#D00000";
 
   const attachment: SlackAttachment = {
     fallback: `${emoji} ${errorLabel}: ${errorMessage}`,

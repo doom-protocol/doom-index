@@ -41,9 +41,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
 
   // In development, always allow local R2 access
   // In production, disable if R2 public URL is configured and doesn't point to this endpoint
-  // UNLESS we have a specific header allowing access (e.g. for OGP generation)
+  // UNLESS we have specific headers or query parameters allowing access (e.g. for OGP generation or Three.js)
   const allowHeader = req.headers.get("X-Allow-R2-Route");
-  if (r2Url && !isLocalR2Route && !isDevelopment && allowHeader !== "true") {
+  const requestedByThreeJs = req.headers.get("X-Requested-By") === "three.js";
+  const url = new URL(req.url);
+  const isThreeJsRequest = url.searchParams.get("threejs") === "true";
+  if (r2Url && !isLocalR2Route && !isDevelopment && allowHeader !== "true" && !requestedByThreeJs && !isThreeJsRequest) {
     logger.warn("[R2 Route] Endpoint disabled - Public R2 URL is configured", {
       publicUrl: env.NEXT_PUBLIC_R2_URL,
       url: requestUrl,
@@ -64,8 +67,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
     return NextResponse.json({ error: "Invalid R2 object key" }, { status: 400 });
   }
 
-  // Join key segments and normalize
-  const objectKey = joinR2Key(key);
+  // Join key segments and normalize (exclude query parameters)
+  const objectKey = joinR2Key(key.map(segment => segment.split('?')[0]));
 
   logger.debug("[R2 Route] Parsed object key", {
     keySegments: key,
@@ -156,6 +159,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   // Images are immutable (filename includes timestamp, hash, and seed)
   // Cache for 1 year with immutable directive
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
+
+  // Add CORS headers for Three.js requests
+  if (requestedByThreeJs || isThreeJsRequest) {
+    headers.set("Access-Control-Allow-Origin", "*");
+    headers.set("Access-Control-Allow-Methods", "GET");
+    headers.set("Access-Control-Allow-Headers", "*");
+  }
 
   if (object.etag) {
     headers.set("ETag", object.etag);
