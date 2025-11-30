@@ -10,6 +10,7 @@ import {
   isValidPointerEvent,
 } from "@/utils/three";
 import { useSafeTexture } from "@/hooks/use-safe-texture";
+import { useTransformedTextureUrl } from "@/hooks/use-transformed-texture-url";
 import { logger } from "@/utils/logger";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
@@ -63,8 +64,11 @@ const PaintingContent: FC<PaintingContentProps> = ({
   const pulseElapsedRef = useRef(0);
   const isPulseActiveRef = useRef(false);
 
+  // Transform texture URL with Cloudflare Image Transformations for detail view (higher quality)
+  const transformedTextureUrl = useTransformedTextureUrl(thumbnailUrl, "modalFull");
+
   const texture = useSafeTexture(
-    thumbnailUrl,
+    transformedTextureUrl,
     loadedTexture => {
       loadedTexture.colorSpace = SRGBColorSpace;
       loadedTexture.anisotropy = 4;
@@ -73,7 +77,8 @@ const PaintingContent: FC<PaintingContentProps> = ({
     {
       onError: error => {
         logger.error("Failed to load archive painting texture", {
-          url: thumbnailUrl,
+          url: transformedTextureUrl,
+          originalUrl: thumbnailUrl,
           error: error instanceof Error ? error.message : String(error),
           paintingId,
         });

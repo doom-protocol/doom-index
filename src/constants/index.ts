@@ -7,9 +7,6 @@ export const DEV_FUN_URL = "https://dev.fun/p/155bae58a27d2f0905ed";
 
 export const GENERATION_INTERVAL_MS = Number(env.NEXT_PUBLIC_GENERATION_INTERVAL_MS ?? 600000);
 
-// Image cache version for busting browser cache (increment when CORS or content changes)
-export const IMAGE_CACHE_VERSION = "2";
-
 // Fallback image path for when painting images fail to load
 export const FALLBACK_PAINTING_IMAGE = "/placeholder-painting.webp";
 
