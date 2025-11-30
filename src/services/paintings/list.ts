@@ -7,7 +7,7 @@ import { createPaintingsRepository } from "@/repositories/paintings-repository";
 import type { AppError } from "@/types/app-error";
 import type { Painting, PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { addVersionToImageUrl, buildPublicR2Path, isValidPaintingFilename } from "@/utils/paintings";
+import { buildPublicR2Path, isValidPaintingFilename } from "@/utils/paintings";
 import { err, ok, type Result } from "neverthrow";
 
 const DEFAULT_LIMIT = 20;
@@ -79,8 +79,7 @@ async function buildPaintingsWithMetadata(
       continue;
     }
 
-    // Build base URL (without version) and add cache busting version for client
-    const imageUrl = addVersionToImageUrl(buildPublicR2Path(obj.key));
+    const imageUrl = buildPublicR2Path(obj.key);
 
     logger.debug("archive.list.item.built", {
       itemId: metadata.id,
@@ -257,9 +256,6 @@ export async function listImages(
       const d1Data = d1Result.value;
 
       const items: Painting[] = d1Data.items.map(item => {
-        // Add cache busting version to imageUrl from D1
-        const versionedImageUrl = addVersionToImageUrl(item.imageUrl);
-
         try {
           const visualParams = JSON.parse(item.visualParamsJson) as VisualParams;
 
@@ -269,7 +265,7 @@ export async function listImages(
             minuteBucket: item.minuteBucket,
             paramsHash: item.paramsHash,
             seed: item.seed,
-            imageUrl: versionedImageUrl,
+            imageUrl: item.imageUrl,
             fileSize: item.fileSize,
             visualParams,
             prompt: item.prompt,
@@ -287,7 +283,7 @@ export async function listImages(
             minuteBucket: item.minuteBucket,
             paramsHash: item.paramsHash,
             seed: item.seed,
-            imageUrl: versionedImageUrl,
+            imageUrl: item.imageUrl,
             fileSize: item.fileSize,
             visualParams: {} as VisualParams,
             prompt: item.prompt,
