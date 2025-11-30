@@ -1,4 +1,5 @@
 import { get, set } from "@/lib/cache";
+import { CACHE_TTL_SECONDS } from "@/constants";
 import { logger } from "@/utils/logger";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -86,7 +87,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse | n
   // Cache 404 responses for suspicious paths for 1 hour
   // This reduces repeated processing of the same attack patterns
   const cacheHeaders: Record<string, string> = {
-    "Cache-Control": "public, max-age=3600",
+    "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_HOUR}`,
   };
 
   await set(
@@ -95,7 +96,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse | n
       status: 404,
       headers: cacheHeaders,
     },
-    { ttlSeconds: 3600 },
+    { ttlSeconds: CACHE_TTL_SECONDS.ONE_HOUR },
   );
 
   // Log only once per path (when cache is set) to reduce log noise

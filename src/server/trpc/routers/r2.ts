@@ -1,5 +1,6 @@
 import { get, set } from "@/lib/cache";
 import { getJsonR2, joinR2Key } from "@/lib/r2";
+import { CACHE_TTL_SECONDS } from "@/constants";
 import { TRPCError } from "@trpc/server";
 import * as v from "valibot";
 import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
@@ -29,7 +30,7 @@ export const r2Router = router({
       const bucket = resolveR2BucketOrThrow(ctx, { objectKey });
       const result = await getJsonR2<unknown>(bucket, objectKey);
       const value = resultOrThrow(result, ctx, { objectKey });
-      await set(cacheKey, value, { ttlSeconds: 60, logger: ctx.logger });
+      await set(cacheKey, value, { ttlSeconds: CACHE_TTL_SECONDS.ONE_MINUTE, logger: ctx.logger });
 
       return value;
     }),

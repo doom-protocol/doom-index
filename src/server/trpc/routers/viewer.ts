@@ -1,4 +1,5 @@
 import { createViewerService } from "@/services/viewer";
+import { CACHE_TTL_SECONDS } from "@/constants";
 import { isBotUserAgent } from "@/utils/user-agent";
 import { TRPCError } from "@trpc/server";
 import * as v from "valibot";
@@ -148,7 +149,7 @@ export const viewerRouter = router({
 
     return {
       count: result.value,
-      ttlSeconds: 60, // VIEWER_TTL_SECONDS from service
+      ttlSeconds: CACHE_TTL_SECONDS.ONE_MINUTE, // VIEWER_TTL_SECONDS from service
     };
   }),
 

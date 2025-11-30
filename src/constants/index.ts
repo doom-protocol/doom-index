@@ -12,3 +12,16 @@ export const IMAGE_CACHE_VERSION = "2";
 
 // Fallback image path for when painting images fail to load
 export const FALLBACK_PAINTING_IMAGE = "/placeholder-painting.webp";
+
+// Cache TTL constants (in seconds)
+export const CACHE_TTL_SECONDS = {
+  // 1 minute
+  ONE_MINUTE: 60,
+  // 1 hour
+  ONE_HOUR: 3600,
+  // 1 day
+  ONE_DAY: 86400,
+} as const;
+
+// R2 image cache TTL (1 day)
+export const R2_IMAGE_CACHE_TTL_SECONDS = CACHE_TTL_SECONDS.ONE_DAY;

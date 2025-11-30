@@ -1,5 +1,6 @@
 import { get, set } from "@/lib/cache";
 import { createPaintingsService } from "@/services/paintings";
+import { CACHE_TTL_SECONDS } from "@/constants";
 import * as v from "valibot";
 import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
 import { paintingsListSchema } from "../schemas";
@@ -42,7 +43,7 @@ export const paintingsRouter = router({
 
       const result = resultOrThrow(listResult, ctx);
 
-      await set(cacheKey, result, { ttlSeconds: 60, logger: ctx.logger });
+      await set(cacheKey, result, { ttlSeconds: CACHE_TTL_SECONDS.ONE_MINUTE, logger: ctx.logger });
 
       return result;
     }),

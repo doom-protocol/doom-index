@@ -9,7 +9,8 @@ import {
   handlePointerUpForClick,
   isValidPointerEvent,
 } from "@/utils/three";
-import { useTexture } from "@react-three/drei";
+import { useSafeTexture } from "@/hooks/use-safe-texture";
+import { logger } from "@/utils/logger";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
 import {
@@ -52,6 +53,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
   onPointerMove,
   onPointerUp,
   onPointerCancel,
+  paintingId,
 }) => {
   const paintingMeshRef = useRef<Mesh>(null);
   const previousPaintingMeshRef = useRef<Mesh>(null);
@@ -61,11 +63,24 @@ const PaintingContent: FC<PaintingContentProps> = ({
   const pulseElapsedRef = useRef(0);
   const isPulseActiveRef = useRef(false);
 
-  const texture = useTexture(thumbnailUrl, loadedTexture => {
-    loadedTexture.colorSpace = SRGBColorSpace;
-    loadedTexture.anisotropy = 4;
-    loadedTexture.needsUpdate = true;
-  });
+  const texture = useSafeTexture(
+    thumbnailUrl,
+    loadedTexture => {
+      loadedTexture.colorSpace = SRGBColorSpace;
+      loadedTexture.anisotropy = 4;
+      loadedTexture.needsUpdate = true;
+    },
+    {
+      crossOrigin: "",
+      onError: error => {
+        logger.error("Failed to load archive painting texture", {
+          url: thumbnailUrl,
+          error: error instanceof Error ? error.message : String(error),
+          paintingId,
+        });
+      },
+    },
+  );
 
   const [currentTexture, setCurrentTexture] = useState<Texture | null>(texture);
   const [previousTexture, setPreviousTexture] = useState<Texture | null>(null);
@@ -389,6 +404,7 @@ export const ArchiveFramedPainting: FC<ArchiveFramedPaintingProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
+        paintingId={item.id}
       />
     </PaintingGroup>
   );

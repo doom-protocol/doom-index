@@ -1,6 +1,7 @@
 import { env } from "@/env";
 import { get, set } from "@/lib/cache";
 import { joinR2Key, resolveR2BucketAsync } from "@/lib/r2";
+import { R2_IMAGE_CACHE_TTL_SECONDS } from "@/constants";
 import { logger } from "@/utils/logger";
 import { NextResponse } from "next/server";
 
@@ -18,10 +19,11 @@ type CachedResponse = {
  *
  * URL format: /api/r2/key1/key2/file.webp
  *
- * NOTE: This endpoint is primarily for local development use.
- * - When NEXT_PUBLIC_R2_URL is configured (production), this endpoint returns 404.
- *   Images are served directly from the public R2 bucket (e.g., https://storage.doomindex.fun).
- * - When NEXT_PUBLIC_R2_URL is not set (local dev), this endpoint serves images via R2 binding.
+ * NOTE: This endpoint is available for both development and production environments.
+ * - Images are served via R2 binding, regardless of NEXT_PUBLIC_R2_URL configuration.
+ * - When NEXT_PUBLIC_R2_URL is configured, images are also served directly from the public R2 bucket,
+ *   but this endpoint provides an alternative access method.
+ * - The X-Allow-R2-Route header is still supported for compatibility.
  */
 export async function GET(req: Request, { params }: { params: Promise<{ key: string[] }> }): Promise<Response> {
   const startTime = Date.now();
@@ -36,26 +38,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   // All images should be served directly from the public bucket
   // EXCEPT when the public URL points to this endpoint itself (local development)
   const r2Url = env.NEXT_PUBLIC_R2_URL || process.env.NEXT_PUBLIC_R2_URL;
-  const isLocalR2Route = r2Url?.includes("/api/r2");
-  const isDevelopment = env.NODE_ENV === "development" || process.env.NODE_ENV === "development";
+  const _isLocalR2Route = r2Url?.includes("/api/r2");
+  const _isDevelopment = env.NODE_ENV === "development" || process.env.NODE_ENV === "development";
 
-  // In development, always allow local R2 access
-  // In production, disable if R2 public URL is configured and doesn't point to this endpoint
-  // UNLESS we have a specific header allowing access (e.g. for OGP generation)
-  const allowHeader = req.headers.get("X-Allow-R2-Route");
-  if (r2Url && !isLocalR2Route && !isDevelopment && allowHeader !== "true") {
-    logger.warn("[R2 Route] Endpoint disabled - Public R2 URL is configured", {
-      publicUrl: env.NEXT_PUBLIC_R2_URL,
-      url: requestUrl,
-    });
-    return NextResponse.json(
-      {
-        error: "This endpoint is disabled. Images are served directly from the public R2 bucket.",
-        publicUrl: env.NEXT_PUBLIC_R2_URL,
-      },
-      { status: 404 },
-    );
-  }
+  // This endpoint is available for both development and production
+  // Images are served via R2 binding, regardless of NEXT_PUBLIC_R2_URL configuration
 
   const { key } = await params;
 
@@ -154,8 +141,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   }
 
   // Images are immutable (filename includes timestamp, hash, and seed)
-  // Cache for 1 year with immutable directive
-  headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  // Cache for 1 day with immutable directive
+  headers.set("Cache-Control", `public, max-age=${R2_IMAGE_CACHE_TTL_SECONDS}, immutable`);
 
   if (object.etag) {
     headers.set("ETag", object.etag);
@@ -200,8 +187,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
       objectKey,
       cacheKey,
     });
-    // Cache for 1 year since images never change
-    await set(cacheKey, cachedResponse, { ttlSeconds: 31536000 });
+    // Cache for 1 day since images never change
+    await set(cacheKey, cachedResponse, { ttlSeconds: R2_IMAGE_CACHE_TTL_SECONDS });
 
     const duration = Date.now() - startTime;
     logger.info("[R2 Route] Success", {

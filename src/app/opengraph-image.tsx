@@ -8,6 +8,7 @@
 
 import { env } from "@/env";
 import { getImageR2 } from "@/lib/r2";
+import { CACHE_TTL_SECONDS } from "@/constants";
 import { createPaintingsRepository } from "@/repositories/paintings-repository";
 import { arrayBufferToDataUrl } from "@/utils/image";
 import { logger } from "@/utils/logger";
@@ -385,7 +386,7 @@ export default async function Image(): Promise<ImageResponse> {
       status: 200,
       headers: {
         "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=60, stale-while-revalidate=30",
+        "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_MINUTE}, stale-while-revalidate=30`,
       },
     }) as unknown as ImageResponse;
 
@@ -451,7 +452,7 @@ export default async function Image(): Promise<ImageResponse> {
           status: 200,
           headers: {
             "Content-Type": "image/png",
-            "Cache-Control": "public, max-age=60",
+            "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_MINUTE}`,
           },
         }) as unknown as ImageResponse;
       }
@@ -494,7 +495,7 @@ export default async function Image(): Promise<ImageResponse> {
       status: 200,
       headers: {
         "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=60",
+        "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_MINUTE}`,
       },
     }) as unknown as ImageResponse;
   }

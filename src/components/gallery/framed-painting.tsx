@@ -9,7 +9,9 @@ import {
   isValidPointerEvent,
 } from "@/utils/three";
 import { openTweetIntent } from "@/utils/twitter";
-import { useGLTF, useTexture } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
+import { useSafeTexture } from "@/hooks/use-safe-texture";
+import { logger } from "@/utils/logger";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, type FC } from "react";
 import {
@@ -64,13 +66,26 @@ const PaintingContent: FC<PaintingContentProps> = ({
 
   const { triggerHaptic } = useHaptic();
   // Load texture - useTexture automatically handles URL changes
-  const texture = useTexture(thumbnailUrl, loadedTexture => {
-    const tex = loadedTexture as Texture;
-    tex.colorSpace = SRGBColorSpace;
-    tex.anisotropy = 4;
-    tex.needsUpdate = true;
-    return tex;
-  });
+  const texture = useSafeTexture(
+    thumbnailUrl,
+    loadedTexture => {
+      const tex = loadedTexture as Texture;
+      tex.colorSpace = SRGBColorSpace;
+      tex.anisotropy = 4;
+      tex.needsUpdate = true;
+      return tex;
+    },
+    {
+      crossOrigin: "",
+      onError: error => {
+        logger.error("Failed to load painting texture", {
+          url: thumbnailUrl,
+          error: error instanceof Error ? error.message : String(error),
+          paintingId,
+        });
+      },
+    },
+  );
 
   // Texture transition state
   const [currentTexture, setCurrentTexture] = useState<Texture | null>(texture as Texture);

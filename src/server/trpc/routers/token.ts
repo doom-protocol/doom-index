@@ -1,5 +1,6 @@
 import { get, set } from "@/lib/cache";
 import { getJsonR2 } from "@/lib/r2";
+import { CACHE_TTL_SECONDS } from "@/constants";
 import type { TokenState } from "@/types/domain";
 import * as v from "valibot";
 import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
@@ -25,7 +26,7 @@ export const tokenRouter = router({
         return null;
       }
 
-      await set(cacheKey, value, { ttlSeconds: 60, logger: ctx.logger });
+      await set(cacheKey, value, { ttlSeconds: CACHE_TTL_SECONDS.ONE_MINUTE, logger: ctx.logger });
 
       return value;
     }),
