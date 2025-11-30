@@ -81,14 +81,14 @@ const PaintingContent: FC<PaintingContentProps> = ({
       return tex;
     },
     {
-        onError: error => {
-          logger.error("Failed to load painting texture", {
-            url: transformedTextureUrl,
-            originalUrl: thumbnailUrl,
-            error: error instanceof Error ? error.message : String(error),
-            paintingId,
-          });
-        },
+      onError: error => {
+        logger.error("Failed to load painting texture", {
+          url: transformedTextureUrl,
+          originalUrl: thumbnailUrl,
+          error: error instanceof Error ? error.message : String(error),
+          paintingId,
+        });
+      },
     },
   );
 
