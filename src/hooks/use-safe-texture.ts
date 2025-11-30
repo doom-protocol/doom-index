@@ -34,7 +34,8 @@ export type MappedTextureType<T extends string[] | string | Record<string, strin
 export interface UseSafeTextureOptions {
   /**
    * Sets the crossOrigin property on TextureLoader for CORS handling.
-   * Common values: 'anonymous', 'use-credentials', or undefined for no CORS.
+   * Common values: 'anonymous', 'use-credentials', or "" for no CORS (default).
+   * Defaults to "" (no CORS) to avoid cached loader crossOrigin issues.
    */
   crossOrigin?: string;
 
@@ -61,16 +62,15 @@ export function useSafeTexture<Url extends string[] | string | Record<string, st
   onLoad?: (texture: MappedTextureType<Url>) => void,
   options: UseSafeTextureOptions = {},
 ): MappedTextureType<Url> {
-  const { crossOrigin, onError } = options;
+  const { crossOrigin = "", onError } = options;
   const gl = useThree(state => state.gl);
 
   // Enhanced useLoader call with custom extensions for crossOrigin and error handling
   // This differs from drei's implementation by adding crossOrigin and onError support
+  // Always sets crossOrigin to avoid cached loader issues
   const textures = useLoader(TextureLoader, IsObject(input) ? Object.values(input) : input, (loader: TextureLoader) => {
-    // Set crossOrigin for CORS handling - not available in standard drei useTexture
-    if (crossOrigin !== undefined) {
-      loader.crossOrigin = crossOrigin;
-    }
+    // Always set crossOrigin to override any cached loader settings
+    loader.crossOrigin = crossOrigin;
 
     // Set custom error handler - not available in standard drei useTexture
     if (onError) {
@@ -119,11 +119,10 @@ export function useSafeTexture<Url extends string[] | string | Record<string, st
 }
 
 useSafeTexture.preload = (url: string | string[], options: UseSafeTextureOptions = {}) => {
-  const { crossOrigin, onError } = options;
+  const { crossOrigin = "", onError } = options;
   return useLoader.preload(TextureLoader, url, (loader: TextureLoader) => {
-    if (crossOrigin !== undefined) {
-      loader.crossOrigin = crossOrigin;
-    }
+    // Always set crossOrigin to override any cached loader settings
+    loader.crossOrigin = crossOrigin;
     if (onError) {
       loader.manager.onError = onError;
     }

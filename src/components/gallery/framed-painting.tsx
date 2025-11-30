@@ -76,7 +76,6 @@ const PaintingContent: FC<PaintingContentProps> = ({
       return tex;
     },
     {
-      crossOrigin: "",
       onError: error => {
         logger.error("Failed to load painting texture", {
           url: thumbnailUrl,

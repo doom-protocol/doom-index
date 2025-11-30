@@ -71,7 +71,6 @@ const PaintingContent: FC<PaintingContentProps> = ({
       loadedTexture.needsUpdate = true;
     },
     {
-      crossOrigin: "",
       onError: error => {
         logger.error("Failed to load archive painting texture", {
           url: thumbnailUrl,
