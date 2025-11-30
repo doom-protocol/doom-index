@@ -11,6 +11,7 @@ interface ProgressiveImageProps {
   fill?: boolean;
   width?: number;
   height?: number;
+  sizes?: string;
   priority?: boolean;
   onLoad?: () => void;
   onError?: (error: SyntheticEvent<HTMLImageElement, Event>) => void;
@@ -32,6 +33,7 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
   fill = false,
   width,
   height,
+  sizes,
   priority = false,
   onLoad,
   onError,
@@ -83,6 +85,7 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
         fill={fill}
         width={!fill ? width : undefined}
         height={!fill ? height : undefined}
+        sizes={sizes}
         priority={priority}
         className={`${className} ${isLoading ? "opacity-0" : "opacity-100"}`}
         onLoad={handleImageLoad}
