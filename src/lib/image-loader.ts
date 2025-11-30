@@ -3,6 +3,17 @@ import type { ImageLoaderProps } from "next/image";
 
 const normalizeSrc = (src: string) => (src.startsWith("/") ? src.slice(1) : src);
 
+/**
+ * Cloudflare Image Loader for Next.js Image component
+ *
+ * Automatically applies Cloudflare Image Transformations with:
+ * - Responsive width based on Next.js srcset
+ * - Auto format (WebP/AVIF based on browser support)
+ * - Scale-down fit to prevent enlargement
+ * - Configurable quality
+ *
+ * @see https://developers.cloudflare.com/images/transform-images/transform-via-url/
+ */
 export default function cloudflareLoader({ src, width, quality }: ImageLoaderProps) {
   const base = getBaseUrl();
   const isLocal = base.includes("localhost") || base.includes("127.0.0.1");
@@ -18,8 +29,17 @@ export default function cloudflareLoader({ src, width, quality }: ImageLoaderPro
     return src;
   }
 
-  const params = [`width=${width}`];
-  if (quality) params.push(`quality=${quality}`);
+  // Build transformation parameters
+  const params: string[] = [
+    `width=${width}`,
+    `fit=scale-down`, // Never enlarge images
+    `format=auto`, // Serve WebP/AVIF based on browser support
+  ];
+
+  // Add quality if specified (default is 85 in Cloudflare)
+  if (quality) {
+    params.push(`quality=${quality}`);
+  }
 
   const absolute = `${base}/${normalizeSrc(src)}`;
 

@@ -11,6 +11,7 @@ import {
 import { openTweetIntent } from "@/utils/twitter";
 import { useGLTF } from "@react-three/drei";
 import { useSafeTexture } from "@/hooks/use-safe-texture";
+import { useTransformedTextureUrl } from "@/hooks/use-transformed-texture-url";
 import { logger } from "@/utils/logger";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, type FC } from "react";
@@ -65,9 +66,13 @@ const PaintingContent: FC<PaintingContentProps> = ({
   const isPulseActiveRef = useRef(false);
 
   const { triggerHaptic } = useHaptic();
+
+  // Transform texture URL with Cloudflare Image Transformations for optimal size
+  const transformedTextureUrl = useTransformedTextureUrl(thumbnailUrl, "galleryTexture");
+
   // Load texture - useTexture automatically handles URL changes
   const texture = useSafeTexture(
-    thumbnailUrl,
+    transformedTextureUrl,
     loadedTexture => {
       const tex = loadedTexture as Texture;
       tex.colorSpace = SRGBColorSpace;
@@ -76,13 +81,14 @@ const PaintingContent: FC<PaintingContentProps> = ({
       return tex;
     },
     {
-      onError: error => {
-        logger.error("Failed to load painting texture", {
-          url: thumbnailUrl,
-          error: error instanceof Error ? error.message : String(error),
-          paintingId,
-        });
-      },
+        onError: error => {
+          logger.error("Failed to load painting texture", {
+            url: transformedTextureUrl,
+            originalUrl: thumbnailUrl,
+            error: error instanceof Error ? error.message : String(error),
+            paintingId,
+          });
+        },
     },
   );
 
