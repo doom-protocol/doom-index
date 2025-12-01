@@ -7,13 +7,13 @@ import { useEffect, useRef } from "react";
 
 import { GENERATION_INTERVAL_MS } from "@/constants";
 
-const MIN_REFETCH_INTERVAL_MS = 30_000;
-const STALE_POLL_INTERVAL_MS = 60_000;
-const POST_GENERATION_DELAY_MS = 15_000;
+export const MIN_REFETCH_INTERVAL_MS = 30_000;
+export const STALE_POLL_INTERVAL_MS = 60_000;
+export const POST_GENERATION_DELAY_MS = 15_000;
 
-const clampInterval = (value: number): number => Math.max(MIN_REFETCH_INTERVAL_MS, value);
+export const clampInterval = (value: number): number => Math.max(MIN_REFETCH_INTERVAL_MS, value);
 
-const computeRefetchDelay = (lastTimestamp?: string | null): number => {
+export const computeRefetchDelay = (lastTimestamp?: string | null): number => {
   if (!GENERATION_INTERVAL_MS || GENERATION_INTERVAL_MS <= 0) {
     return STALE_POLL_INTERVAL_MS;
   }
@@ -40,6 +40,45 @@ const computeRefetchDelay = (lastTimestamp?: string | null): number => {
 
   return clampInterval(delay);
 };
+
+/**
+ * Result of fetching the latest painting
+ */
+export interface FetchLatestPaintingResult {
+  painting: PaintingMetadata | null;
+  durationMs: number;
+}
+
+/**
+ * Pure function to fetch the latest painting from the API.
+ * Extracted for testability - allows measuring fetch duration without React hooks.
+ *
+ * @param queryFn - Function that performs the actual API call
+ * @param now - Optional function to get current time (for testing)
+ * @returns Promise with painting data and duration in milliseconds
+ */
+export async function fetchLatestPainting(
+  queryFn: () => Promise<ArchiveListResponse>,
+  now: () => number = performance.now,
+): Promise<FetchLatestPaintingResult> {
+  const start = now();
+  logger.debug("use-latest-painting.fetch.start");
+
+  const result = await queryFn();
+  const durationMs = now() - start;
+
+  if (!result.items || result.items.length === 0) {
+    logger.debug("use-latest-painting.no-paintings", { durationMs });
+    return { painting: null, durationMs };
+  }
+
+  logger.debug("use-latest-painting.fetch.success", {
+    durationMs,
+    paintingId: result.items[0]?.id,
+  });
+
+  return { painting: result.items[0], durationMs };
+}
 
 /**
  * Hook to fetch the latest painting

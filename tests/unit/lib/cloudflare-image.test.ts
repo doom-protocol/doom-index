@@ -318,4 +318,79 @@ describe("cloudflare-image", () => {
       expect(IMAGE_PRESETS.galleryTexture.format).toBe("auto");
     });
   });
+
+  describe("performance-guarantees", () => {
+    /**
+     * Performance guarantee tests for image transformation
+     * These tests ensure image sizes stay within reasonable bounds for optimal TTFB
+     */
+
+    it("should keep galleryTexture width under 1024px for fast initial load", async () => {
+      const { IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
+
+      // Gallery texture should be optimized for fast initial load
+      // Max 1024px width ensures reasonable file size and decode time
+      expect(IMAGE_PRESETS.galleryTexture.width).toBeLessThanOrEqual(1024);
+    });
+
+    it("should keep archiveGrid width under 480px for fast grid loading", async () => {
+      const { IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
+
+      // Archive grid thumbnails should be small for fast grid loading
+      expect(IMAGE_PRESETS.archiveGrid.width).toBeLessThanOrEqual(480);
+    });
+
+    it("should keep modalFull width under 1600px for reasonable detail view", async () => {
+      const { IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
+
+      // Modal full view can be larger but should stay reasonable
+      expect(IMAGE_PRESETS.modalFull.width).toBeLessThanOrEqual(1600);
+    });
+
+    it("should clamp DPR to 1.5 to prevent excessive image sizes", async () => {
+      mock.module("@/utils/url", () => ({
+        getBaseUrl: () => "https://doomindex.fun",
+      }));
+
+      const { getImageUrlWithDpr, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
+
+      // Even with DPR of 3, the effective DPR should be clamped to 1.5
+      const result = getImageUrlWithDpr("/images/test.jpg", "galleryTexture", 3);
+      const maxExpectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * 1.5);
+
+      expect(result).toContain(`width=${maxExpectedWidth}`);
+      // Ensure we never exceed 1.5x the base width
+      expect(maxExpectedWidth).toBeLessThanOrEqual(IMAGE_PRESETS.galleryTexture.width * 1.5);
+    });
+
+    it("should ensure maximum transformed width stays under 2048px", async () => {
+      const { IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
+
+      // With max DPR of 1.5, no preset should exceed 2048px
+      const maxDpr = 1.5;
+      for (const [_presetName, preset] of Object.entries(IMAGE_PRESETS)) {
+        const maxWidth = Math.round(preset.width * maxDpr);
+        expect(maxWidth).toBeLessThanOrEqual(2048);
+      }
+    });
+
+    it("should use quality values between 70-85 for optimal size/quality balance", async () => {
+      const { IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
+
+      for (const [_presetName, preset] of Object.entries(IMAGE_PRESETS)) {
+        // Quality should be in the sweet spot for web images
+        expect(preset.quality).toBeGreaterThanOrEqual(70);
+        expect(preset.quality).toBeLessThanOrEqual(85);
+      }
+    });
+
+    it("should use format=auto for automatic WebP/AVIF delivery", async () => {
+      const { IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
+
+      for (const [_presetName, preset] of Object.entries(IMAGE_PRESETS)) {
+        // All presets should use format=auto for best compression
+        expect(preset.format).toBe("auto");
+      }
+    });
+  });
 });
