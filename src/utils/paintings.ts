@@ -3,7 +3,6 @@
  * For complex validation and business logic, see lib/pure/archive-*.ts
  */
 
-import { env } from "@/env";
 import { IMAGE_CACHE_VERSION } from "@/constants";
 
 /**
@@ -23,22 +22,8 @@ import { IMAGE_CACHE_VERSION } from "@/constants";
  */
 export function buildPublicR2Path(key: string): string {
   const normalized = key.replace(/^\/+/, "");
-
-  if (env.NEXT_PUBLIC_R2_URL) {
-    // Remove trailing slashes
-    const baseUrl = env.NEXT_PUBLIC_R2_URL.replace(/\/+$/, "");
-
-    // Check if URL already includes protocol or starts with slash (relative)
-    if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://") || baseUrl.startsWith("/")) {
-      // Already has protocol or is relative, use as-is
-      return `${baseUrl.replace(/\/+$/, "")}/${normalized}`;
-    }
-
-    // No protocol, determine based on domain
-    const protocol = baseUrl.startsWith("localhost") ? "http" : "https";
-    return `${protocol}://${baseUrl}/${normalized}`;
-  }
-
+  // Always use relative path via API route to ensure same-origin access
+  // and avoid CORS/mixed-content issues
   return `/api/r2/${normalized}`;
 }
 
