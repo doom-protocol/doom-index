@@ -6,12 +6,10 @@ export function buildPublicR2Path(key: string): string {
   if (env.NEXT_PUBLIC_R2_URL) {
     const baseUrl = env.NEXT_PUBLIC_R2_URL.replace(/\/+$/, "");
 
-    if (baseUrl.startsWith("/")) {
-      return `${baseUrl}/${normalized}`;
-    }
-
-    if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
-      return `${baseUrl}/${normalized}`;
+    // Check if URL already includes protocol or starts with slash (relative)
+    if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://") || baseUrl.startsWith("/")) {
+      // Already has protocol or is relative, use as-is
+      return `${baseUrl.replace(/\/+$/, "")}/${normalized}`;
     }
 
     const protocol = baseUrl.startsWith("localhost") ? "http" : "https";

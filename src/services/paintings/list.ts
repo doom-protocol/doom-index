@@ -256,6 +256,9 @@ export async function listImages(
       const d1Data = d1Result.value;
 
       const items: Painting[] = d1Data.items.map(item => {
+        // Construct imageUrl dynamically from r2Key to support current origin
+        // This ignores the stored imageUrl in DB which might be outdated or absolute URL
+
         try {
           const visualParams = JSON.parse(item.visualParamsJson) as VisualParams;
 
