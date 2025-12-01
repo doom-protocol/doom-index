@@ -393,4 +393,117 @@ describe("cloudflare-image", () => {
       }
     });
   });
+
+  describe("texture-load-timing", () => {
+    /**
+     * Tests for texture load timing measurement functions
+     * These tests guarantee the timing measurement logic is correct
+     */
+
+    it("should measure texture load duration correctly", async () => {
+      const { measureTextureLoadDuration } = await import("@/lib/cloudflare-image");
+
+      const startTime = 1000;
+      const url = "/api/r2/paintings/test.webp";
+      const paintingId = "test-painting-1";
+
+      // Mock now() to return 1500 (500ms elapsed)
+      const mockNow = () => 1500;
+
+      const result = measureTextureLoadDuration(startTime, url, paintingId, mockNow);
+
+      expect(result.durationMs).toBe(500);
+      expect(result.url).toBe(url);
+      expect(result.paintingId).toBe(paintingId);
+    });
+
+    it("should handle undefined paintingId", async () => {
+      const { measureTextureLoadDuration } = await import("@/lib/cloudflare-image");
+
+      const startTime = 0;
+      const url = "/test.webp";
+      const mockNow = () => 100;
+
+      const result = measureTextureLoadDuration(startTime, url, undefined, mockNow);
+
+      expect(result.durationMs).toBe(100);
+      expect(result.url).toBe(url);
+      expect(result.paintingId).toBeUndefined();
+    });
+
+    it("should use performance.now by default", async () => {
+      const { measureTextureLoadDuration } = await import("@/lib/cloudflare-image");
+
+      const startTime = performance.now();
+      const url = "/test.webp";
+
+      // Small delay to ensure measurable duration
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      const result = measureTextureLoadDuration(startTime, url);
+
+      // Duration should be at least 10ms (the delay we added)
+      expect(result.durationMs).toBeGreaterThanOrEqual(10);
+      // Duration should be reasonable (less than 100ms for this simple operation)
+      expect(result.durationMs).toBeLessThan(100);
+    });
+
+    it("should check if texture load is within threshold", async () => {
+      const { isTextureLoadWithinThreshold, TEXTURE_LOAD_THRESHOLD_MS } = await import("@/lib/cloudflare-image");
+
+      // Within default threshold
+      expect(isTextureLoadWithinThreshold(1000)).toBe(true);
+      expect(isTextureLoadWithinThreshold(TEXTURE_LOAD_THRESHOLD_MS)).toBe(true);
+
+      // Exceeds default threshold
+      expect(isTextureLoadWithinThreshold(TEXTURE_LOAD_THRESHOLD_MS + 1)).toBe(false);
+      expect(isTextureLoadWithinThreshold(10000)).toBe(false);
+    });
+
+    it("should check if texture load is within custom threshold", async () => {
+      const { isTextureLoadWithinThreshold } = await import("@/lib/cloudflare-image");
+
+      // Custom threshold of 2000ms
+      expect(isTextureLoadWithinThreshold(1500, 2000)).toBe(true);
+      expect(isTextureLoadWithinThreshold(2000, 2000)).toBe(true);
+      expect(isTextureLoadWithinThreshold(2001, 2000)).toBe(false);
+    });
+
+    it("should have reasonable default threshold for texture loading", async () => {
+      const { TEXTURE_LOAD_THRESHOLD_MS } = await import("@/lib/cloudflare-image");
+
+      // Threshold should be reasonable for web texture loading
+      // At least 1 second to account for network latency
+      expect(TEXTURE_LOAD_THRESHOLD_MS).toBeGreaterThanOrEqual(1000);
+      // At most 10 seconds to ensure reasonable UX
+      expect(TEXTURE_LOAD_THRESHOLD_MS).toBeLessThanOrEqual(10000);
+    });
+
+    it("should not add overhead to timing measurement", async () => {
+      const { measureTextureLoadDuration } = await import("@/lib/cloudflare-image");
+
+      // Track how many times now() is called
+      let callCount = 0;
+      const mockNow = () => {
+        callCount++;
+        return 1000;
+      };
+
+      measureTextureLoadDuration(500, "/test.webp", "test-id", mockNow);
+
+      // Should only call now() once (to get end time)
+      expect(callCount).toBe(1);
+    });
+
+    it("should return correct timing result structure", async () => {
+      const { measureTextureLoadDuration } = await import("@/lib/cloudflare-image");
+
+      const result = measureTextureLoadDuration(0, "/test.webp", "test-id", () => 250);
+
+      // Verify result structure
+      expect(typeof result.durationMs).toBe("number");
+      expect(typeof result.url).toBe("string");
+      expect(result).toHaveProperty("paintingId");
+    });
+  });
 });

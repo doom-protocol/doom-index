@@ -176,3 +176,58 @@ export function getTransformedTextureUrl(
 ): string {
   return getImageUrlWithDpr(imageUrl, preset, dpr);
 }
+
+/**
+ * Result of texture load timing measurement
+ */
+export interface TextureLoadTimingResult {
+  durationMs: number;
+  url: string;
+  paintingId?: string;
+}
+
+/**
+ * Measure texture load duration from start time to now.
+ * Pure function for testable timing measurement.
+ *
+ * @param startTime - Start time from performance.now()
+ * @param url - Texture URL being loaded
+ * @param paintingId - Optional painting ID for logging
+ * @param now - Optional function to get current time (for testing)
+ * @returns Timing result with duration in milliseconds
+ */
+export function measureTextureLoadDuration(
+  startTime: number,
+  url: string,
+  paintingId?: string,
+  now: () => number = performance.now,
+): TextureLoadTimingResult {
+  const durationMs = now() - startTime;
+  return {
+    durationMs,
+    url,
+    paintingId,
+  };
+}
+
+/**
+ * Maximum acceptable texture load duration in milliseconds.
+ * This threshold is used for performance monitoring and testing.
+ * Includes network time + decode time, but not GPU upload.
+ */
+export const TEXTURE_LOAD_THRESHOLD_MS = 5000;
+
+/**
+ * Check if texture load duration is within acceptable threshold.
+ * Used for performance monitoring and testing.
+ *
+ * @param durationMs - Measured duration in milliseconds
+ * @param threshold - Maximum acceptable duration (default: TEXTURE_LOAD_THRESHOLD_MS)
+ * @returns true if duration is within threshold
+ */
+export function isTextureLoadWithinThreshold(
+  durationMs: number,
+  threshold: number = TEXTURE_LOAD_THRESHOLD_MS,
+): boolean {
+  return durationMs <= threshold;
+}
