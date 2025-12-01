@@ -400,7 +400,6 @@ describe("unit/components/gallery-scene", () => {
       const endTime = mockTime;
       expect(endTime - startTime).toBeLessThanOrEqual(200);
     });
-
   });
 
   describe("performance-guarantees", () => {
