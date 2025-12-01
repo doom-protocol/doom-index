@@ -9,7 +9,11 @@ export default function cloudflareLoader({ src, width, quality }: ImageLoaderPro
   if (isLocal) return src;
 
   const isPreviewUrl = base.includes(".workers.dev");
-  if (isPreviewUrl || src.startsWith("http://") || src.startsWith("https://")) {
+
+  // If it's a preview URL or the src is already an absolute URL, return it directly
+  // This avoids using /cdn-cgi/image/ which doesn't work on preview URLs
+  // Also bypass if src starts with /api/r2/ as this endpoint serves images directly
+  if (isPreviewUrl || src.startsWith("http://") || src.startsWith("https://") || src.startsWith("/api/r2/")) {
     return src;
   }
 

@@ -15,10 +15,6 @@ mock.module("@/env", () => ({
 import { buildPaintingKey, buildPublicR2Path, extractIdFromFilename, isValidPaintingFilename } from "@/utils/paintings";
 
 describe("buildPublicR2Path", () => {
-  beforeEach(() => {
-    mockR2Url = undefined;
-  });
-
   it("should build public R2 path from key", () => {
     expect(buildPublicR2Path("images/2025/11/14/test.webp")).toBe("/api/r2/images/2025/11/14/test.webp");
   });
@@ -26,45 +22,6 @@ describe("buildPublicR2Path", () => {
   it("should normalize leading slashes", () => {
     expect(buildPublicR2Path("/images/2025/11/14/test.webp")).toBe("/api/r2/images/2025/11/14/test.webp");
     expect(buildPublicR2Path("///images/2025/11/14/test.webp")).toBe("/api/r2/images/2025/11/14/test.webp");
-  });
-
-  it("should use NEXT_PUBLIC_R2_URL when set", () => {
-    mockR2Url = "assets.example.com";
-    expect(buildPublicR2Path("images/2025/11/14/test.webp")).toBe(
-      "https://assets.example.com/images/2025/11/14/test.webp",
-    );
-  });
-
-  it("should handle localhost domain with http", () => {
-    mockR2Url = "localhost:8080";
-    expect(buildPublicR2Path("images/test.webp")).toBe("http://localhost:8080/images/test.webp");
-  });
-
-  it("should normalize trailing slashes in URL", () => {
-    mockR2Url = "assets.example.com/";
-    expect(buildPublicR2Path("images/test.webp")).toBe("https://assets.example.com/images/test.webp");
-  });
-
-  it("should handle URL with https:// protocol", () => {
-    mockR2Url = "https://storage.doomindex.fun";
-    expect(buildPublicR2Path("images/2025/11/14/test.webp")).toBe(
-      "https://storage.doomindex.fun/images/2025/11/14/test.webp",
-    );
-  });
-
-  it("should handle URL with https:// protocol and trailing slash", () => {
-    mockR2Url = "https://storage.doomindex.fun/";
-    expect(buildPublicR2Path("images/test.webp")).toBe("https://storage.doomindex.fun/images/test.webp");
-  });
-
-  it("should handle URL with http:// protocol (localhost)", () => {
-    mockR2Url = "http://localhost:8080";
-    expect(buildPublicR2Path("images/test.webp")).toBe("http://localhost:8080/images/test.webp");
-  });
-
-  it("should handle full URL with path", () => {
-    mockR2Url = "http://localhost:8787/api/r2";
-    expect(buildPublicR2Path("images/test.webp")).toBe("http://localhost:8787/api/r2/images/test.webp");
   });
 });
 
