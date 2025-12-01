@@ -27,12 +27,24 @@ const isDevelopment = env.NODE_ENV === "development";
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
 
+const mountTimeRef = { current: performance.now() };
+
 export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCameraPreset = "painting" }) => {
   const { data: latestPainting, isLoading } = useLatestPainting();
   const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 
-  // Debug logging
-  console.log("GalleryScene debug:", { latestPainting, isLoading, thumbnailUrl });
+  useEffect(() => {
+    logger.debug("gallery-scene.mounted", { sinceMountMs: performance.now() - mountTimeRef.current });
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading && latestPainting) {
+      logger.debug("gallery-scene.painting-ready", {
+        sinceMountMs: performance.now() - mountTimeRef.current,
+        paintingId: latestPainting.id,
+      });
+    }
+  }, [isLoading, latestPainting]);
 
   // Wallet hooks
   const { connecting: isWalletConnecting } = useSolanaWallet();

@@ -55,17 +55,23 @@ export const useLatestPainting = () => {
   const queryResult = useQuery({
     queryKey: ["paintings", "latest"],
     queryFn: async (): Promise<PaintingMetadata | null> => {
+      const start = performance.now();
       try {
-        // Fetch the latest painting (limit: 1)
+        logger.debug("use-latest-painting.fetch.start");
         const result = (await client.paintings.list.query({
           limit: 1,
         })) as ArchiveListResponse;
+        const durationMs = performance.now() - start;
 
         if (!result.items || result.items.length === 0) {
-          logger.debug("use-latest-painting.no-paintings");
+          logger.debug("use-latest-painting.no-paintings", { durationMs });
           return null;
         }
 
+        logger.debug("use-latest-painting.fetch.success", {
+          durationMs,
+          paintingId: result.items[0]?.id,
+        });
         return result.items[0];
       } catch (error) {
         logger.error("use-latest-painting.fetch-failed", {

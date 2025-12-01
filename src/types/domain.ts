@@ -48,3 +48,23 @@ export interface ImageProvider {
   name: string;
   generate(input: ImageRequest, options?: ImageGenerationOptions): Promise<Result<ImageResponse, AppError>>;
 }
+
+export type SizeValue = `${number}vw` | `${number}px`;
+
+export type ViewportSize =
+  | { maxWidth: number; size: SizeValue }
+  | { minWidth: number; size: SizeValue }
+  | { size: SizeValue };
+
+export type ResponsiveSizes = ViewportSize[];
+
+export function buildSizesAttr(sizes?: ResponsiveSizes): string | undefined {
+  if (!sizes || sizes.length === 0) return undefined;
+  return sizes
+    .map(s => {
+      if ("maxWidth" in s) return `(max-width: ${s.maxWidth}px) ${s.size}`;
+      if ("minWidth" in s) return `(min-width: ${s.minWidth}px) ${s.size}`;
+      return s.size;
+    })
+    .join(", ");
+}

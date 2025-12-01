@@ -49,6 +49,8 @@ const PAINTING_MATERIAL_ROUGHNESS = 0.25;
 const PAINTING_MATERIAL_METALNESS = 0.05;
 
 // Painting content component - handles texture transitions
+const textureLoadStartTime = { current: performance.now() };
+
 const PaintingContent: FC<PaintingContentProps> = ({
   thumbnailUrl,
   onPointerDown,
@@ -67,10 +69,8 @@ const PaintingContent: FC<PaintingContentProps> = ({
 
   const { triggerHaptic } = useHaptic();
 
-  // Transform texture URL with Cloudflare Image Transformations for optimal size
   const transformedTextureUrl = useTransformedTextureUrl(thumbnailUrl, "galleryTexture");
 
-  // Load texture - useTexture automatically handles URL changes
   const texture = useSafeTexture(
     transformedTextureUrl,
     loadedTexture => {
@@ -78,11 +78,16 @@ const PaintingContent: FC<PaintingContentProps> = ({
       tex.colorSpace = SRGBColorSpace;
       tex.anisotropy = 4;
       tex.needsUpdate = true;
+      logger.debug("framed-painting.texture.loaded", {
+        url: transformedTextureUrl,
+        durationMs: performance.now() - textureLoadStartTime.current,
+        paintingId,
+      });
       return tex;
     },
     {
       onError: error => {
-        logger.error("Failed to load painting texture", {
+        logger.error("framed-painting.texture.failed", {
           url: transformedTextureUrl,
           originalUrl: thumbnailUrl,
           error: error instanceof Error ? error.message : String(error),
