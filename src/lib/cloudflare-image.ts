@@ -132,3 +132,47 @@ export function getDevicePixelRatio(): number {
   }
   return window.devicePixelRatio || 1;
 }
+
+/**
+ * Build image URL for Next.js Image loader
+ * Centralizes all bypass logic for local, preview, and special paths
+ *
+ * @param src - Source image URL
+ * @param width - Target width
+ * @param quality - Optional quality (1-100)
+ * @returns Transformed URL or original if bypass conditions are met
+ */
+export function buildLoaderImageUrl(src: string, width: number, quality?: number): string {
+  const base = getBaseUrl();
+  const isLocal = base.includes("localhost") || base.includes("127.0.0.1");
+  const isPreview = base.includes(".workers.dev");
+
+  // Bypass conditions: local dev, preview environment, absolute URLs, or API proxy paths
+  if (isLocal || isPreview || src.startsWith("http://") || src.startsWith("https://") || src.startsWith("/api/r2/")) {
+    return src;
+  }
+
+  return transformImageUrl(src, {
+    width,
+    quality,
+    fit: "scale-down",
+    format: "auto",
+  });
+}
+
+/**
+ * Get transformed texture URL for 3D rendering
+ * Pure function replacement for useTransformedTextureUrl hook
+ *
+ * @param imageUrl - Original image URL
+ * @param preset - Image preset (default: galleryTexture)
+ * @param dpr - Device pixel ratio (default: 1)
+ * @returns Transformed URL with appropriate size for the device
+ */
+export function getTransformedTextureUrl(
+  imageUrl: string,
+  preset: ImagePreset = "galleryTexture",
+  dpr: number = 1,
+): string {
+  return getImageUrlWithDpr(imageUrl, preset, dpr);
+}

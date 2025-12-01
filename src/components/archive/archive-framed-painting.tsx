@@ -10,7 +10,7 @@ import {
   isValidPointerEvent,
 } from "@/utils/three";
 import { useSafeTexture } from "@/hooks/use-safe-texture";
-import { useTransformedTextureUrl } from "@/hooks/use-transformed-texture-url";
+import { getDevicePixelRatio, getTransformedTextureUrl } from "@/lib/cloudflare-image";
 import { logger } from "@/utils/logger";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
@@ -65,7 +65,8 @@ const PaintingContent: FC<PaintingContentProps> = ({
   const isPulseActiveRef = useRef(false);
 
   // Transform texture URL with Cloudflare Image Transformations for detail view (higher quality)
-  const transformedTextureUrl = useTransformedTextureUrl(thumbnailUrl, "modalFull");
+  const dpr = getDevicePixelRatio();
+  const transformedTextureUrl = getTransformedTextureUrl(thumbnailUrl, "modalFull", dpr);
 
   const texture = useSafeTexture(
     transformedTextureUrl,
