@@ -40,6 +40,7 @@ type ArchiveIndexRow = {
   minuteBucket: string;
   paramsHash: string;
   seed: string;
+  r2Key: string;
   imageUrl: string;
   fileSize: number;
   ts: number;
@@ -167,6 +168,7 @@ export function createPaintingsRepository({
           minuteBucket: paintings.minuteBucket,
           paramsHash: paintings.paramsHash,
           seed: paintings.seed,
+          r2Key: paintings.r2Key,
           imageUrl: paintings.imageUrl,
           fileSize: paintings.fileSize,
           ts: paintings.ts,

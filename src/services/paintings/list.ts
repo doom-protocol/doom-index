@@ -257,8 +257,10 @@ export async function listImages(
       const d1Data = d1Result.value;
 
       const items: Painting[] = d1Data.items.map(item => {
-        // Add cache busting version to imageUrl from D1
-        const versionedImageUrl = addVersionToImageUrl(item.imageUrl);
+        // Construct imageUrl dynamically from r2Key to support current origin
+        // This ignores the stored imageUrl in DB which might be outdated or absolute URL
+        const dynamicImageUrl = buildPublicR2Path(item.r2Key);
+        const versionedImageUrl = addVersionToImageUrl(dynamicImageUrl);
 
         try {
           const visualParams = JSON.parse(item.visualParamsJson) as VisualParams;

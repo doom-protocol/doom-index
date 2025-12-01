@@ -28,10 +28,10 @@ export function buildPublicR2Path(key: string): string {
     // Remove trailing slashes
     const baseUrl = env.NEXT_PUBLIC_R2_URL.replace(/\/+$/, "");
 
-    // Check if URL already includes protocol
-    if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
-      // Already has protocol, use as-is
-      return `${baseUrl}/${normalized}`;
+    // Check if URL already includes protocol or starts with slash (relative)
+    if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://") || baseUrl.startsWith("/")) {
+      // Already has protocol or is relative, use as-is
+      return `${baseUrl.replace(/\/+$/, "")}/${normalized}`;
     }
 
     // No protocol, determine based on domain
