@@ -91,11 +91,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
       tex.needsUpdate = true;
 
       // Use pure function for timing measurement
-      const timing = measureTextureLoadDuration(
-        textureLoadStartRef.current,
-        transformedTextureUrl,
-        paintingId,
-      );
+      const timing = measureTextureLoadDuration(textureLoadStartRef.current, transformedTextureUrl, paintingId);
       logger.debug("framed-painting.texture.loaded", timing);
 
       return tex;
