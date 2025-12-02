@@ -197,7 +197,7 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
               className="r3f-gallery-canvas"
               frameloop={isOpen ? "always" : "never"}
               shadows={false}
-              dpr={[1, 1]}
+              dpr={[1, 1.5]}
               camera={{
                 fov: 50,
                 position: [0, 0.8, 0.8],
@@ -205,7 +205,7 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
                 far: 100,
               }}
               gl={{
-                antialias: false,
+                antialias: true,
                 stencil: false,
                 powerPreference: "high-performance",
               }}

@@ -92,7 +92,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
     loadedTexture => {
       const tex = loadedTexture as Texture;
       tex.colorSpace = SRGBColorSpace;
-      tex.anisotropy = 1;
+      tex.anisotropy = 4;
       tex.needsUpdate = true;
 
       // Use pure function for timing measurement

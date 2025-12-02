@@ -117,7 +117,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
         className="r3f-gallery-canvas"
         frameloop="demand"
         shadows={false}
-        dpr={[1, 1]}
+        dpr={[1, 1.5]}
         camera={{
           fov: 50,
           position: [0, 0.8, 0.8],
@@ -125,7 +125,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
           far: 100,
         }}
         gl={{
-          antialias: false,
+          antialias: true,
           stencil: false,
           powerPreference: "high-performance",
         }}

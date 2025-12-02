@@ -139,7 +139,7 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
         <Canvas
           frameloop="always"
           shadows={false}
-          dpr={[1, 1]}
+          dpr={[1, 1.5]}
           camera={{
             fov: 50,
             position: INITIAL_CAMERA_POSITION,
@@ -147,7 +147,7 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
             far: 100,
           }}
           gl={{
-            antialias: false,
+            antialias: true,
             stencil: false,
             powerPreference: "high-performance",
           }}

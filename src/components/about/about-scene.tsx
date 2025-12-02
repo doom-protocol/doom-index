@@ -253,7 +253,7 @@ export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPositio
       <Canvas
         frameloop="demand"
         shadows={false}
-        dpr={[1, 1]}
+        dpr={[1, 1.5]}
         camera={{
           fov: 50,
           position: initialCameraPosition,
@@ -261,7 +261,7 @@ export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPositio
           far: 100,
         }}
         gl={{
-          antialias: false,
+          antialias: true,
           stencil: false,
           powerPreference: "high-performance",
         }}
