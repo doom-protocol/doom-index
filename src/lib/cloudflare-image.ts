@@ -1,13 +1,20 @@
 import { getBaseUrl } from "@/utils/url";
 
-export interface CloudflareImageOptions {
-  width?: number;
-  height?: number;
-  quality?: number;
-  fit?: "scale-down" | "contain" | "cover" | "crop" | "pad";
-  format?: "auto" | "webp" | "avif" | "jpeg" | "png";
+/**
+ * Image transformation options derived from Cloudflare IMAGES binding types.
+ * Combines ImageTransform fields (width, height, fit, sharpen) with
+ * ImageOutputOptions fields (quality) plus client-side extras (dpr, format with "auto").
+ *
+ * @see ImageTransform - from cloudflare-env.d.ts (IMAGES binding)
+ * @see ImageOutputOptions - from cloudflare-env.d.ts (IMAGES binding)
+ */
+export interface CloudflareImageOptions
+  extends Pick<ImageTransform, "width" | "height" | "fit" | "sharpen">,
+    Pick<ImageOutputOptions, "quality"> {
+  /** Device pixel ratio for responsive images (client-side only, not sent to IMAGES binding) */
   dpr?: number;
-  sharpen?: number;
+  /** Output format - "auto" is client-side only, mapped to MIME types for IMAGES binding */
+  format?: "auto" | "webp" | "avif" | "jpeg" | "png";
 }
 
 export const IMAGE_PRESETS = {

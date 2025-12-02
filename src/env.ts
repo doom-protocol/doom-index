@@ -28,10 +28,6 @@ export const env = createEnv({
     ADMIN_SECRET: v.optional(v.string()),
     CACHE_PURGE_API_TOKEN: v.optional(v.string()),
     CACHE_PURGE_ZONE_ID: v.optional(v.string()),
-    // R2 Image Origin for Workers Image Resizing (server-side only)
-    // Used internally by /api/r2 to apply Cloudflare Image Transformations
-    // e.g., "https://storage.doomindex.fun" or R2 public bucket URL
-    R2_IMAGE_ORIGIN: v.optional(v.string()),
   },
 
   /**
@@ -78,7 +74,6 @@ export const env = createEnv({
     ADMIN_SECRET: process.env.ADMIN_SECRET,
     CACHE_PURGE_API_TOKEN: process.env.CACHE_PURGE_API_TOKEN,
     CACHE_PURGE_ZONE_ID: process.env.CACHE_PURGE_ZONE_ID,
-    R2_IMAGE_ORIGIN: process.env.R2_IMAGE_ORIGIN,
     // Client
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     NEXT_PUBLIC_R2_URL: process.env.NEXT_PUBLIC_R2_URL,

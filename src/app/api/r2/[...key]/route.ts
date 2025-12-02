@@ -212,10 +212,29 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
         objectKey,
         error: error instanceof Error ? error.message : String(error),
       });
-      // Fall through to direct R2 access
+      // Re-fetch the object since the stream was consumed during transformation attempt
+      const freshObject = await bucket.get(objectKey);
+      if (!freshObject) {
+        return NextResponse.json({ error: "Object not found" }, { status: 404 });
+      }
+      // Continue with the fresh object for direct R2 access
+      return serveR2Object(freshObject, objectKey, cacheKey, startTime);
     }
   }
 
+  return serveR2Object(object, objectKey, cacheKey, startTime);
+}
+
+/**
+ * Serve an R2 object directly without transformation
+ * Extracted to avoid code duplication between normal path and transform fallback
+ */
+async function serveR2Object(
+  object: R2Object | R2ObjectBody,
+  objectKey: string,
+  cacheKey: string,
+  startTime: number,
+): Promise<Response> {
   const headers = new Headers();
 
   // Manually set headers from httpMetadata to avoid serialization issues

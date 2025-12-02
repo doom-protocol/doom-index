@@ -1,55 +1,33 @@
 /**
  * Unit tests for GalleryScene texture loading and rendering
  * Tests the time from texture request to texture loaded callback
+ *
+ * Uses real image URLs from /api/r2/ endpoint to test actual image loading behavior
  */
 
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { render, waitFor, cleanup } from "@testing-library/react";
 import type { FC, ReactNode } from "react";
+import {
+  createLoggerMock,
+  type LoggerCall,
+  createMockPerformance,
+  setMockTime,
+  resetMockTime,
+  advanceMockTime,
+  getMockTime,
+} from "../../helpers";
 
-// Store captured logger calls for assertions
-const loggerCalls: { method: string; args: unknown[] }[] = [];
+// Store captured logger calls for assertions using shared helper
+const { logger: mockLogger, calls: loggerCalls } = createLoggerMock();
 
 // Mock logger to capture timing logs
 mock.module("@/utils/logger", () => ({
-  logger: {
-    debug: (...args: unknown[]) => {
-      loggerCalls.push({ method: "debug", args });
-    },
-    error: (...args: unknown[]) => {
-      loggerCalls.push({ method: "error", args });
-    },
-    info: (...args: unknown[]) => {
-      loggerCalls.push({ method: "info", args });
-    },
-    warn: (...args: unknown[]) => {
-      loggerCalls.push({ method: "warn", args });
-    },
-    log: (...args: unknown[]) => {
-      loggerCalls.push({ method: "log", args });
-    },
-    getCurrentLevel: () => "DEBUG",
-    getLevels: () => ["ERROR", "WARN", "LOG", "INFO", "DEBUG"],
-  },
+  logger: mockLogger,
 }));
 
-// Mock performance.now for deterministic timing
-let mockTime = 0;
+// Store original performance for restoration
 const originalPerformance = globalThis.performance;
-
-// Create a complete performance mock that includes measure() for React 19
-const createMockPerformance = (): Performance => ({
-  ...originalPerformance,
-  now: () => mockTime,
-  measure: () => ({}) as PerformanceMeasure,
-  mark: () => ({}) as PerformanceMark,
-  clearMarks: () => {},
-  clearMeasures: () => {},
-  getEntries: () => [],
-  getEntriesByName: () => [],
-  getEntriesByType: () => [],
-  toJSON: () => ({}),
-});
 
 // Mock env
 mock.module("@/env", () => ({
@@ -60,16 +38,20 @@ mock.module("@/env", () => ({
   },
 }));
 
+// Real image URL from /api/r2/ endpoint for realistic testing
+// This URL format matches production image paths
+const REAL_IMAGE_URL = "/api/r2/images/2025/12/02/DOOM_202512020110_03309aff_5779632aeaa9.webp";
+
 // Mock use-latest-painting hook
 // IMPORTANT: We spread the real module's exports to avoid breaking
 // use-latest-painting.test.ts which tests the actual functions/constants
 const mockPainting = {
-  id: "test-painting-1",
-  timestamp: new Date().toISOString(),
-  minuteBucket: "2025/11/30/12/00",
-  paramsHash: "test-hash",
-  seed: "12345",
-  imageUrl: "/api/r2/paintings/test.webp",
+  id: "DOOM_202512020110_03309aff_5779632aeaa9",
+  timestamp: "2025-12-02T01:10:00.000Z",
+  minuteBucket: "2025/12/02/01/10",
+  paramsHash: "03309aff",
+  seed: "5779632aeaa9",
+  imageUrl: REAL_IMAGE_URL,
   fileSize: 1024000,
   visualParams: {
     fogDensity: 0.5,
@@ -158,13 +140,13 @@ mock.module("@/hooks/use-transformed-texture-url", () => ({
   useTransformedTextureUrl: (url: string) => url,
 }));
 
-// Mock useSafeTextureto capture onLoad callback and call it synchronously
+// Mock useSafeTexture to capture onLoad callback and call it synchronously
 mock.module("@/hooks/use-safe-texture", () => {
   const mockTexture = {
     colorSpace: "",
     anisotropy: 1,
     needsUpdate: false,
-    image: { src: "/api/r2/paintings/test.webp", width: 512, height: 512 },
+    image: { src: REAL_IMAGE_URL, width: 512, height: 512 },
     dispose: mock(() => {}),
   };
 
@@ -173,7 +155,7 @@ mock.module("@/hooks/use-safe-texture", () => {
     if (onLoad) {
       // Simulate texture load completion after a controlled delay
       // Advance mock time to simulate network/decode time
-      mockTime += 150; // 150ms simulated load time
+      advanceMockTime(150); // 150ms simulated load time
       onLoad(mockTexture);
     }
 
@@ -285,12 +267,12 @@ mock.module("@/utils/url", () => ({
 
 describe("unit/components/gallery-scene", () => {
   beforeEach(() => {
-    // Reset mock time
-    mockTime = 0;
+    // Reset mock time using shared helper
+    resetMockTime();
     // Clear logger calls
     loggerCalls.length = 0;
 
-    // Override performancewith complete mock for React 19
+    // Override performance with complete mock for React 19
     globalThis.performance = createMockPerformance();
   });
 
@@ -358,7 +340,7 @@ describe("unit/components/gallery-scene", () => {
         expect(textureLoadedLog).toBeDefined();
         if (textureLoadedLog) {
           const payload = textureLoadedLog.args[1] as { durationMs: number; url: string; paintingId?: string };
-          expect(payload.paintingId).toBe("test-painting-1");
+          expect(payload.paintingId).toBe("DOOM_202512020110_03309aff_5779632aeaa9");
         }
       });
     });
@@ -376,7 +358,8 @@ describe("unit/components/gallery-scene", () => {
         expect(textureLoadedLog).toBeDefined();
         if (textureLoadedLog) {
           const payload = textureLoadedLog.args[1] as { durationMs: number; url: string; paintingId?: string };
-          expect(payload.url).toContain("/api/r2/paintings/test.webp");
+          // URL should contain the real image path with transformation params
+          expect(payload.url).toContain("/api/r2/images/2025/12/02/DOOM_202512020110_03309aff_5779632aeaa9.webp");
         }
       });
     });
@@ -384,7 +367,7 @@ describe("unit/components/gallery-scene", () => {
     it("should call onLoad callback synchronously when texture is ready", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 
-      const startTime = mockTime;
+      const startTime = getMockTime();
       render(<GalleryScene />);
 
       // The texture onLoad should have been called during render
@@ -397,7 +380,7 @@ describe("unit/components/gallery-scene", () => {
 
       // Verify no artificial delays were added beyond our simulated load time
       // The total time should be close to our simulated 150ms
-      const endTime = mockTime;
+      const endTime = getMockTime();
       expect(endTime - startTime).toBeLessThanOrEqual(200);
     });
   });
@@ -406,7 +389,7 @@ describe("unit/components/gallery-scene", () => {
     it("should not add artificial delays to texture loading", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 
-      const renderStart = mockTime;
+      const renderStart = getMockTime();
       render(<GalleryScene />);
 
       await waitFor(() => {
@@ -417,7 +400,7 @@ describe("unit/components/gallery-scene", () => {
       });
 
       // Total render time should be reasonable (no setTimeout delays)
-      const renderEnd = mockTime;
+      const renderEnd = getMockTime();
       const totalRenderTime = renderEnd - renderStart;
 
       // Should complete within our simulated load time + small overhead
