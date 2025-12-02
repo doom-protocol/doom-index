@@ -85,10 +85,10 @@ const FullLights: FC = () => {
       <spotLight
         ref={keyLightRef}
         position={[0, 2.95, 4.0]}
-        angle={0.62}
+        angle={0.7}
         penumbra={0.96}
-        intensity={20}
-        distance={5.8}
+        intensity={26}
+        distance={6.5}
         decay={2}
         color="#f6e3c4"
         castShadow
@@ -98,11 +98,11 @@ const FullLights: FC = () => {
       {/* Secondary spill from the front to soften falloff */}
       <spotLight
         ref={fillLightRef}
-        position={[0.35, 2.4, 2.8]}
-        angle={0.6}
+        position={[0.15, 2.3, 2.6]}
+        angle={0.7}
         penumbra={0.95}
-        intensity={12}
-        distance={6.2}
+        intensity={16}
+        distance={6.5}
         decay={2}
         color="#dccab0"
       />
