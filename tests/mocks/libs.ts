@@ -10,6 +10,8 @@
  */
 
 import { mock } from "bun:test";
+import { ok } from "neverthrow";
+import type { AppError } from "@/types/app-error";
 
 /**
  * Create mock for @/lib/analytics
@@ -36,16 +38,10 @@ export function createAnalyticsMock() {
 export function createGlbExportServiceMock() {
   return () => ({
     glbExportService: {
-      exportPaintingModel: mock(async () => ({
-        isOk: () => true,
-        isErr: () => false,
-        value: new File([], "test.glb", { type: "application/octet-stream" }),
-      })),
-      optimizeGlb: mock(async () => ({
-        isOk: () => true,
-        isErr: () => false,
-        value: new ArrayBuffer(1024),
-      })),
+      exportPaintingModel: mock(async () =>
+        ok<File, AppError>(new File([], "test.glb", { type: "application/octet-stream" })),
+      ),
+      optimizeGlb: mock(async () => ok<ArrayBuffer, AppError>(new ArrayBuffer(1024))),
     },
   });
 }

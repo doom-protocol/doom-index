@@ -13,7 +13,7 @@ import "../../preload";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock } from "bun:test";
 import type { JSX } from "react";
 import {
   createUrlMock,
@@ -30,6 +30,7 @@ import {
   createGlbExportServiceMock,
   createUseSolanaWalletMock,
 } from "../../mocks";
+import { glbExportService } from "@/lib/glb-export-service";
 
 // Setup mocks before importing modules
 mock.module("@/utils/url", createUrlMock());
@@ -46,7 +47,20 @@ mock.module("@/hooks/use-viewer", createUseViewerMock());
 mock.module("@/lib/viewer-count-store", createViewerCountStoreMock());
 mock.module("@/hooks/use-transformed-texture-url", createUseTransformedTextureUrlMock());
 mock.module("@/hooks/use-safe-texture", createUseSafeTextureMock());
-mock.module("@/lib/glb-export-service", createGlbExportServiceMock());
+
+const glbExportServiceMockModule = createGlbExportServiceMock()();
+const originalExportPaintingModel = glbExportService.exportPaintingModel;
+const originalOptimizeGlb = glbExportService.optimizeGlb;
+
+beforeAll(() => {
+  glbExportService.exportPaintingModel = glbExportServiceMockModule.glbExportService.exportPaintingModel;
+  glbExportService.optimizeGlb = glbExportServiceMockModule.glbExportService.optimizeGlb;
+});
+
+afterAll(() => {
+  glbExportService.exportPaintingModel = originalExportPaintingModel;
+  glbExportService.optimizeGlb = originalOptimizeGlb;
+});
 
 // Create mock function for use-latest-painting that can be configured per-test
 let mockUseLatestPaintingFn: ReturnType<typeof mock> | null = null;
