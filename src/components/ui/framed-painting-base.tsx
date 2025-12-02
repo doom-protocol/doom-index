@@ -2,7 +2,7 @@
 
 import { useGLTF } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import React, { useRef, type FC, type ReactNode } from "react";
+import React, { memo, useRef, type FC, type ReactNode } from "react";
 import { Mesh, MeshBasicMaterial, MeshStandardMaterial, type Group } from "three";
 import type { GLTF } from "three-stdlib";
 
@@ -27,12 +27,16 @@ const ENTRANCE_DURATION = 0.5;
 
 // Shared Components
 
-export const FrameModel: FC = () => {
+// Memoized to prevent re-renders when parent's thumbnailUrl changes
+// FrameModel has no props and doesn't depend on changing context
+const FrameModelBase: FC = () => {
   const { scene: frameModel } = useGLTF("/frame.glb") as GLTF;
   const clonedModel = frameModel.clone();
 
   return <primitive object={clonedModel} scale={[-1, 1, 1]} castShadow />;
 };
+
+export const FrameModel = memo(FrameModelBase);
 FrameModel.displayName = "FrameModel";
 
 export const PaintingGroup = React.forwardRef<Group, PaintingGroupProps>(({ position, rotation, children }, ref) => {
