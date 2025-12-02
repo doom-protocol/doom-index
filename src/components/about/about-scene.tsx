@@ -262,11 +262,14 @@ export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPositio
           far: 100,
         }}
         gl={async props => {
+          const start = performance.now();
           const renderer = new WebGPURenderer(props as any);
           await renderer.init();
+          const initMs = performance.now() - start;
           logger.debug("about-scene.renderer", {
             renderer,
             backend: (renderer as any).backend?.constructor?.name,
+            initMs,
           });
           return renderer as any;
         }}

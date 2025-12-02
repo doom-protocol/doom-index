@@ -149,11 +149,14 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
             far: 100,
           }}
           gl={async props => {
+            const start = performance.now();
             const renderer = new WebGPURenderer(props as any);
             await renderer.init();
+            const initMs = performance.now() - start;
             logger.debug("archive-detail-view.renderer", {
               renderer,
               backend: (renderer as any).backend?.constructor?.name,
+              initMs,
             });
             return renderer as any;
           }}
