@@ -1,6 +1,14 @@
 /**
- * Shared performance mock utilities for tests
+ * Mock utilities for performance
  * Provides deterministic timing control for texture loading and other timing-sensitive tests
+ *
+ * Usage:
+ *   import { createMockPerformance, resetMockTime, advanceMockTime } from "@/tests/mocks/performance";
+ *
+ *   beforeEach(() => {
+ *     resetMockTime();
+ *     globalThis.performance = createMockPerformance();
+ *   });
  */
 
 /**

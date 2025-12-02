@@ -1,6 +1,13 @@
 /**
- * Shared logger mock utilities for tests
- * Provides a consistent way to capture and assert on logger calls
+ * Mock utilities for logger
+ * Provides reusable mocks for logger modules
+ *
+ * Usage:
+ *   import { mock } from "bun:test";
+ *   import { createLoggerMockFactory } from "@/tests/mocks/logger";
+ *
+ *   const { mockFactory, mockLogger } = createLoggerMockFactory();
+ *   mock.module("@/utils/logger", mockFactory);
  */
 
 export interface LoggerCall {
@@ -46,6 +53,19 @@ export function createLoggerMock(): { logger: LoggerMock; calls: LoggerCall[] } 
   };
 
   return { logger, calls };
+}
+
+/**
+ * Create mock factory for @/utils/logger
+ * Returns both the mock factory function and the logger instance
+ */
+export function createLoggerMockFactory() {
+  const { logger: mockLogger, calls } = createLoggerMock();
+  return {
+    mockFactory: () => ({ logger: mockLogger }),
+    mockLogger,
+    calls,
+  };
 }
 
 /**

@@ -1,5 +1,6 @@
 import pluginReact from "eslint-plugin-react";
 import pluginReactHooks from "eslint-plugin-react-hooks";
+import pluginUnusedImports from "eslint-plugin-unused-imports";
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
@@ -23,7 +24,7 @@ const reactRules = {
 
 // TypeScript rules for production code
 const typescriptRules = {
-  // import は必ず type import / value import を区別
+  // distinguish type import and value import
   "@typescript-eslint/consistent-type-imports": [
     "error",
     {
@@ -31,29 +32,35 @@ const typescriptRules = {
       fixStyle: "inline-type-imports",
     },
   ],
-  // Promise を投げっぱなしにしない
+  // don't throw promises
   "@typescript-eslint/no-floating-promises": ["error", { ignoreIIFE: true }],
-  // イベントハンドラなどでの Promise misuse を検出
+  // detect Promise misuse in event handlers
   "@typescript-eslint/no-misused-promises": [
     "error",
     {
       checksVoidReturn: {
-        attributes: false, // onClick={() => void asyncFn()} などは実運用で許す
+        attributes: false, // allow onClick={() => void asyncFn()}
         properties: true,
         inheritedMethods: true,
       },
     },
   ],
-  // 非同期関数で await を使用していない場合を検出
+  // detect and remove unnecessary await (when await is used on a value that is not a Promise)
+  // Some external libraries may have incorrect type definitions, so use warn instead of error
+  "@typescript-eslint/await-thenable": "warn",
+  // detect when await is not used in an async function
   "@typescript-eslint/require-await": "error",
   // React components don't need explicit return types (JSX.Element is inferred)
   "@typescript-eslint/explicit-function-return-type": "off",
-  // Allow unused variables with underscore prefix
-  "@typescript-eslint/no-unused-vars": [
+  // Disable @typescript-eslint/no-unused-vars (imports and vars handled by unused-imports plugin)
+  "@typescript-eslint/no-unused-vars": "off",
+  // Automatically remove unused imports and detect unused variables
+  "unused-imports/no-unused-imports": "error",
+  "unused-imports/no-unused-vars": [
     "warn",
     {
-      argsIgnorePattern: "^_",
       varsIgnorePattern: "^_",
+      argsIgnorePattern: "^_",
       caughtErrorsIgnorePattern: "^_",
     },
   ],
@@ -61,7 +68,7 @@ const typescriptRules = {
 
 // TypeScript rules for test files (more lenient)
 const testTypescriptRules = {
-  // import は必ず type import / value import を区別
+  // distinguish type import and value import
   "@typescript-eslint/consistent-type-imports": [
     "error",
     {
@@ -72,14 +79,20 @@ const testTypescriptRules = {
   // Test and script files often have mock async functions without await
   "@typescript-eslint/no-floating-promises": "off",
   "@typescript-eslint/require-await": "off",
+  // detect and remove unnecessary await (when await is used on a value that is not a Promise)
+  // expect(...).rejects and dynamic import are actually returning a Promise, so only warn
+  "@typescript-eslint/await-thenable": ["warn"],
   // Next.js img element rule not applicable in tests
   "@next/next/no-img-element": "off",
-  // Allow unused variables with underscore prefix
-  "@typescript-eslint/no-unused-vars": [
+  // Disable @typescript-eslint/no-unused-vars (imports and vars handled by unused-imports plugin)
+  "@typescript-eslint/no-unused-vars": "off",
+  // Automatically remove unused imports and detect unused variables
+  "unused-imports/no-unused-imports": "error",
+  "unused-imports/no-unused-vars": [
     "warn",
     {
-      argsIgnorePattern: "^_",
       varsIgnorePattern: "^_",
+      argsIgnorePattern: "^_",
       caughtErrorsIgnorePattern: "^_",
     },
   ],
@@ -131,6 +144,7 @@ const typescriptConfig = {
   },
   plugins: {
     "@typescript-eslint": tseslint.plugin,
+    "unused-imports": pluginUnusedImports,
   },
   rules: typescriptRules,
 };
@@ -146,6 +160,7 @@ const testTypescriptConfig = {
   },
   plugins: {
     "@typescript-eslint": tseslint.plugin,
+    "unused-imports": pluginUnusedImports,
   },
   rules: testTypescriptRules,
 };

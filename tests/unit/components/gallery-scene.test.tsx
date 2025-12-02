@@ -8,15 +8,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { render, waitFor, cleanup } from "@testing-library/react";
 import type { FC, ReactNode } from "react";
-import {
-  createLoggerMock,
-  type LoggerCall,
-  createMockPerformance,
-  setMockTime,
-  resetMockTime,
-  advanceMockTime,
-  getMockTime,
-} from "../../helpers";
+import { createLoggerMock, createMockPerformance, resetMockTime, advanceMockTime, getMockTime } from "../../mocks";
 
 // Store captured logger calls for assertions using shared helper
 const { logger: mockLogger, calls: loggerCalls } = createLoggerMock();
