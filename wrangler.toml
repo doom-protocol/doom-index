@@ -91,6 +91,10 @@ NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
 NEXT_PUBLIC_R2_URL = "/api/r2"
 IMAGE_MODEL = "runware:400@1"
 NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000    # 10 minutes
+# R2_IMAGE_ORIGIN is used for Cloudflare Workers Image Resizing
+# Set this to your R2 public bucket URL or custom domain (e.g., "https://storage.doomindex.fun")
+# When configured, /api/r2 will apply image transformations (resize, quality, format) via cf.image
+# R2_IMAGE_ORIGIN = "https://storage.doomindex.fun"
 
 [observability]
 enabled = false

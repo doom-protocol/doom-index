@@ -69,7 +69,7 @@ describe("cloudflare-image", () => {
       expect(result).toBe("https://example.com/image.jpg");
     });
 
-    it("should return original src when src starts with /api/r2/", async () => {
+    it("should add query params for /api/r2/ paths for server-side transformation", async () => {
       mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
@@ -77,7 +77,11 @@ describe("cloudflare-image", () => {
       const { buildLoaderImageUrl } = await import("@/lib/cloudflare-image");
       const result = buildLoaderImageUrl("/api/r2/paintings/test.jpg", 800);
 
-      expect(result).toBe("/api/r2/paintings/test.jpg");
+      // /api/r2 URLs now get query params for server-side transformation
+      expect(result).toContain("/api/r2/paintings/test.jpg");
+      expect(result).toContain("w=800");
+      expect(result).toContain("fit=scale-down");
+      expect(result).toContain("fmt=auto");
     });
 
     it("should transform relative path in production", async () => {
@@ -504,6 +508,171 @@ describe("cloudflare-image", () => {
       expect(typeof result.durationMs).toBe("number");
       expect(typeof result.url).toBe("string");
       expect(result).toHaveProperty("paintingId");
+    });
+  });
+
+  describe("buildApiR2TransformQuery", () => {
+    it("should build query string with width", async () => {
+      const { buildApiR2TransformQuery } = await import("@/lib/cloudflare-image");
+      const result = buildApiR2TransformQuery({ width: 512 });
+      expect(result).toBe("w=512");
+    });
+
+    it("should build query string with multiple options", async () => {
+      const { buildApiR2TransformQuery } = await import("@/lib/cloudflare-image");
+      const result = buildApiR2TransformQuery({
+        width: 512,
+        height: 384,
+        quality: 75,
+        fit: "scale-down",
+        format: "auto",
+      });
+      expect(result).toContain("w=512");
+      expect(result).toContain("h=384");
+      expect(result).toContain("q=75");
+      expect(result).toContain("fit=scale-down");
+      expect(result).toContain("fmt=auto");
+    });
+
+    it("should include dpr only when not 1", async () => {
+      const { buildApiR2TransformQuery } = await import("@/lib/cloudflare-image");
+
+      const resultWithDpr1 = buildApiR2TransformQuery({ width: 512, dpr: 1 });
+      expect(resultWithDpr1).not.toContain("dpr");
+
+      const resultWithDpr2 = buildApiR2TransformQuery({ width: 512, dpr: 2 });
+      expect(resultWithDpr2).toContain("dpr=2");
+    });
+
+    it("should include sharpen when provided", async () => {
+      const { buildApiR2TransformQuery } = await import("@/lib/cloudflare-image");
+      const result = buildApiR2TransformQuery({ width: 512, sharpen: 5 });
+      expect(result).toContain("sharpen=5");
+    });
+
+    it("should return empty string when no options provided", async () => {
+      const { buildApiR2TransformQuery } = await import("@/lib/cloudflare-image");
+      const result = buildApiR2TransformQuery({});
+      expect(result).toBe("");
+    });
+  });
+
+  describe("parseApiR2TransformParams", () => {
+    it("should parse width parameter", async () => {
+      const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
+      const url = new URL("https://example.com/api/r2/test.jpg?w=512");
+      const result = parseApiR2TransformParams(url);
+      expect(result).toEqual({ width: 512 });
+    });
+
+    it("should parse multiple parameters", async () => {
+      const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
+      const url = new URL("https://example.com/api/r2/test.jpg?w=512&h=384&q=75&fit=scale-down&fmt=auto");
+      const result = parseApiR2TransformParams(url);
+      expect(result).toEqual({
+        width: 512,
+        height: 384,
+        quality: 75,
+        fit: "scale-down",
+        format: "auto",
+      });
+    });
+
+    it("should parse dpr parameter", async () => {
+      const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
+      const url = new URL("https://example.com/api/r2/test.jpg?w=512&dpr=2");
+      const result = parseApiR2TransformParams(url);
+      expect(result).toEqual({ width: 512, dpr: 2 });
+    });
+
+    it("should parse sharpen parameter", async () => {
+      const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
+      const url = new URL("https://example.com/api/r2/test.jpg?w=512&sharpen=5");
+      const result = parseApiR2TransformParams(url);
+      expect(result).toEqual({ width: 512, sharpen: 5 });
+    });
+
+    it("should return null when no transform params present", async () => {
+      const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
+      const url = new URL("https://example.com/api/r2/test.jpg");
+      const result = parseApiR2TransformParams(url);
+      expect(result).toBeNull();
+    });
+
+    it("should clamp width to valid range (0-4096)", async () => {
+      const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
+
+      // Width too large
+      const urlLarge = new URL("https://example.com/api/r2/test.jpg?w=5000");
+      const resultLarge = parseApiR2TransformParams(urlLarge);
+      expect(resultLarge).toBeNull();
+
+      // Width zero or negative
+      const urlZero = new URL("https://example.com/api/r2/test.jpg?w=0");
+      const resultZero = parseApiR2TransformParams(urlZero);
+      expect(resultZero).toBeNull();
+    });
+
+    it("should clamp quality to valid range (1-100)", async () => {
+      const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
+
+      // Quality too large
+      const urlLarge = new URL("https://example.com/api/r2/test.jpg?q=150");
+      const resultLarge = parseApiR2TransformParams(urlLarge);
+      expect(resultLarge).toBeNull();
+
+      // Quality zero
+      const urlZero = new URL("https://example.com/api/r2/test.jpg?q=0");
+      const resultZero = parseApiR2TransformParams(urlZero);
+      expect(resultZero).toBeNull();
+    });
+
+    it("should clamp dpr to valid range (1-3)", async () => {
+      const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
+
+      // DPR too large
+      const urlLarge = new URL("https://example.com/api/r2/test.jpg?dpr=5");
+      const resultLarge = parseApiR2TransformParams(urlLarge);
+      expect(resultLarge).toBeNull();
+
+      // DPR too small
+      const urlSmall = new URL("https://example.com/api/r2/test.jpg?dpr=0.5");
+      const resultSmall = parseApiR2TransformParams(urlSmall);
+      expect(resultSmall).toBeNull();
+    });
+
+    it("should validate fit values", async () => {
+      const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
+
+      // Valid fit values
+      const validFits = ["scale-down", "contain", "cover", "crop", "pad"];
+      for (const fit of validFits) {
+        const url = new URL(`https://example.com/api/r2/test.jpg?fit=${fit}`);
+        const result = parseApiR2TransformParams(url);
+        expect(result).toEqual({ fit });
+      }
+
+      // Invalid fit value
+      const urlInvalid = new URL("https://example.com/api/r2/test.jpg?fit=invalid");
+      const resultInvalid = parseApiR2TransformParams(urlInvalid);
+      expect(resultInvalid).toBeNull();
+    });
+
+    it("should validate format values", async () => {
+      const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
+
+      // Valid format values
+      const validFormats = ["auto", "webp", "avif", "jpeg", "png"];
+      for (const fmt of validFormats) {
+        const url = new URL(`https://example.com/api/r2/test.jpg?fmt=${fmt}`);
+        const result = parseApiR2TransformParams(url);
+        expect(result).toEqual({ format: fmt });
+      }
+
+      // Invalid format value
+      const urlInvalid = new URL("https://example.com/api/r2/test.jpg?fmt=gif");
+      const resultInvalid = parseApiR2TransformParams(urlInvalid);
+      expect(resultInvalid).toBeNull();
     });
   });
 });
