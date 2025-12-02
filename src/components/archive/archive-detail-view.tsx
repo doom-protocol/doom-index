@@ -137,7 +137,7 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
       {/* 3D Scene */}
       <div className="relative h-[50vh] w-full lg:h-full lg:w-[60%]">
         <Canvas
-          frameloop="always"
+          frameloop="demand"
           shadows={false}
           dpr={[1, 1.5]}
           camera={{

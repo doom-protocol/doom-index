@@ -9,7 +9,6 @@ import {
   type Mesh,
   type Object3D,
   type SpotLight,
-  Vector3,
 } from "three";
 
 interface LightsProps {
@@ -30,9 +29,7 @@ const FullLights: FC = () => {
   const fillLightRef = useRef<SpotLight>(null);
   const targetRef = useRef<Object3D>(null);
   const floorGlowRef = useRef<Mesh>(null);
-
-  const lightPosition = useRef(new Vector3());
-  const targetPosition = useRef(new Vector3());
+  const initializedRef = useRef(false);
 
   const floorGlowGeometry = useMemo(() => {
     const geometry = new CircleGeometry(0.48, 64);
@@ -52,29 +49,32 @@ const FullLights: FC = () => {
     return geometry;
   }, []);
 
-  useFrame(({ invalidate }) => {
-    if (!targetRef.current) {
+  // Initialize light targets once on mount (no continuous updates needed)
+  useFrame(() => {
+    // Skip if already initialized or refs not ready
+    if (initializedRef.current || !targetRef.current) {
       return;
     }
 
-    targetPosition.current.copy(targetRef.current.position);
-
+    // Set up light targets once - they don't change during runtime
     if (keyLightRef.current) {
       keyLightRef.current.target = targetRef.current;
       keyLightRef.current.shadow.bias = -0.0012;
-      lightPosition.current.copy(keyLightRef.current.position);
     }
 
     if (fillLightRef.current) {
       fillLightRef.current.target = targetRef.current;
     }
 
+    // Position floor glow once
     if (floorGlowRef.current) {
-      floorGlowRef.current.position.set(targetPosition.current.x, 0.004, targetPosition.current.z - 0.16);
+      const targetPos = targetRef.current.position;
+      floorGlowRef.current.position.set(targetPos.x, 0.004, targetPos.z - 0.16);
     }
 
-    // Invalidate for demand mode
-    invalidate();
+    // Mark as initialized - no more updates needed
+    initializedRef.current = true;
+    // No invalidate() call - lights are static, no need for continuous rendering
   });
 
   return (
