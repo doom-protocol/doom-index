@@ -87,7 +87,7 @@ const FullLights: FC = () => {
         position={[0, 3.1, 4.0]}
         angle={0.45}
         penumbra={0.7}
-        intensity={30}
+        intensity={36}
         distance={6.0}
         decay={2}
         color="#f6e3c4"
@@ -95,13 +95,13 @@ const FullLights: FC = () => {
         shadow-mapSize={[1024, 1024]}
       />
 
-      {/* Fill spotlight (subtle front fill) */}
+      {/* Fill spotlight (front-facing readability light) */}
       <spotLight
         ref={fillLightRef}
-        position={[0.2, 2.5, 2.4]}
-        angle={0.5}
+        position={[0, 1.2, 1.8]}
+        angle={0.55}
         penumbra={0.85}
-        intensity={8}
+        intensity={16}
         distance={5.0}
         decay={2}
         color="#dccab0"

@@ -348,6 +348,8 @@ const PaintingContent: FC<PaintingContentProps> = ({
             map={previousTexture}
             roughness={PAINTING_MATERIAL_ROUGHNESS}
             metalness={PAINTING_MATERIAL_METALNESS}
+            emissive="#ffffff"
+            emissiveIntensity={0.03}
             transparent
             opacity={1}
           />
@@ -372,6 +374,8 @@ const PaintingContent: FC<PaintingContentProps> = ({
           map={displayTexture}
           roughness={PAINTING_MATERIAL_ROUGHNESS}
           metalness={PAINTING_MATERIAL_METALNESS}
+          emissive="#ffffff"
+          emissiveIntensity={0.03}
           transparent={isTransitionActive}
           opacity={isTransitionActive ? 0 : 1}
         />
