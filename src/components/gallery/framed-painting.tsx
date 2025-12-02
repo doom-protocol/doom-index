@@ -50,7 +50,7 @@ const DEFAULT_FRAME_POSITION: [number, number, number] = [0, 0.8, 4.0];
 const FRAME_ROTATION: [number, number, number] = [0, Math.PI, 0];
 
 // Material properties constants
-const PAINTING_MATERIAL_ROUGHNESS = 0.32;
+const PAINTING_MATERIAL_ROUGHNESS = 0.36;
 const PAINTING_MATERIAL_METALNESS = 0.0;
 
 // Painting content component - handles texture transitions
@@ -349,7 +349,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
             roughness={PAINTING_MATERIAL_ROUGHNESS}
             metalness={PAINTING_MATERIAL_METALNESS}
             emissive="#ffffff"
-            emissiveIntensity={0.03}
+            emissiveIntensity={0.02}
             transparent
             opacity={1}
           />
@@ -375,7 +375,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
           roughness={PAINTING_MATERIAL_ROUGHNESS}
           metalness={PAINTING_MATERIAL_METALNESS}
           emissive="#ffffff"
-          emissiveIntensity={0.03}
+          emissiveIntensity={0.02}
           transparent={isTransitionActive}
           opacity={isTransitionActive ? 0 : 1}
         />

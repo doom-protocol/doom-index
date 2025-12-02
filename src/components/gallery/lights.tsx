@@ -87,10 +87,10 @@ const FullLights: FC = () => {
         position={[0, 3.1, 4.0]}
         angle={0.4}
         penumbra={0.7}
-        intensity={28}
+        intensity={24}
         distance={6.0}
         decay={2}
-        color="#f6e3c4"
+        color="#f0ddc8"
         castShadow
         shadow-mapSize={[1024, 1024]}
       />
@@ -101,10 +101,10 @@ const FullLights: FC = () => {
         position={[0, 1.1, 1.9]}
         angle={0.4}
         penumbra={0.8}
-        intensity={9}
+        intensity={7}
         distance={5.0}
         decay={2}
-        color="#dccab0"
+        color="#e7d2ba"
       />
 
       {/* Floor wash - almost gone */}
