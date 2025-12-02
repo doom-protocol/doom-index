@@ -1,11 +1,17 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef, type FC } from "react";
+import { useEffect, useMemo, useRef, useState, type FC } from "react";
 import { CircleGeometry, DoubleSide, Float32BufferAttribute, type Mesh, type Object3D, type SpotLight } from "three";
+
+import { isDevelopment } from "@/env";
+
+import { LightsWithControls } from "./lights-controls";
 
 interface LightsProps {
   variant?: "simple" | "full";
+  /** Force disable dev controls even in development */
+  disableDevControls?: boolean;
 }
 
 // Simple lights for fast initial render (no hooks, no shadows)
@@ -72,57 +78,57 @@ const FullLights: FC = () => {
 
   return (
     <>
-      {/* Gentle ambient glow to lift the space */}
-      <ambientLight intensity={0.48} color="#323248" />
+      {/* Ambient: just enough to avoid total black crush */}
+      <ambientLight intensity={0.04} color="#151520" />
 
-      {/* Ceiling bounce to keep wall details visible */}
-      <hemisphereLight args={["#737395", "#1e1e2c", 0.55]} />
+      {/* Hemisphere: very subtle cool bounce */}
+      <hemisphereLight args={["#3c3c54", "#070711", 0.06]} />
 
-      {/* Subtle overhead wash to outline architecture */}
-      <directionalLight position={[-1.8, 2.8, 3]} intensity={0.45} color="#5c5c74" />
+      {/* Directional: nearly off, only to hint at architecture */}
+      <directionalLight position={[-1.8, 2.8, 3]} intensity={0.06} color="#36364a" />
 
-      {/* Key spotlight directly above the painting */}
+      {/* Key spotlight (hero light) - tight focused beam */}
       <spotLight
         ref={keyLightRef}
-        position={[0, 2.95, 4.0]}
-        angle={0.62}
-        penumbra={0.96}
-        intensity={20}
-        distance={5.8}
+        position={[0, 3.1, 4.0]}
+        angle={0.4}
+        penumbra={0.7}
+        intensity={24}
+        distance={6.0}
         decay={2}
-        color="#f6e3c4"
+        color="#f0ddc8"
         castShadow
         shadow-mapSize={[1024, 1024]}
       />
 
-      {/* Secondary spill from the front to soften falloff */}
+      {/* Fill spotlight (side kicker light - off camera axis to avoid reflection) */}
       <spotLight
         ref={fillLightRef}
-        position={[0.35, 2.4, 2.8]}
-        angle={0.6}
-        penumbra={0.95}
+        position={[0.9, 1.6, 2.3]}
+        angle={0.38}
+        penumbra={0.8}
         intensity={12}
-        distance={6.2}
+        distance={5.0}
         decay={2}
-        color="#dccab0"
+        color="#e7d2ba"
       />
 
-      {/* Subtle floor wash */}
-      <pointLight position={[0, 1.05, 3.45]} intensity={1.2} distance={5.2} decay={2.1} color="#4a4a66" />
+      {/* Floor wash - almost gone */}
+      <pointLight position={[0, 1.05, 3.45]} intensity={0.12} distance={5.2} decay={2.1} color="#26263a" />
 
-      {/* Wall grazers for a luxurious ambient glow */}
-      <pointLight position={[-2.4, 1.7, 3.8]} intensity={1.55} distance={7.2} decay={2.05} color="#5a5a75" />
-      <pointLight position={[2.4, 1.7, 3.6]} intensity={1.45} distance={7.2} decay={2.05} color="#5c5c78" />
+      {/* Wall grazers - very faint */}
+      <pointLight position={[-2.4, 1.7, 3.8]} intensity={0.15} distance={7.2} decay={2.05} color="#323248" />
+      <pointLight position={[2.4, 1.7, 3.6]} intensity={0.12} distance={7.2} decay={2.05} color="#343453" />
 
-      {/* Back wall uplight to silhouette the frame */}
-      <pointLight position={[0, 0.78, 4.45]} intensity={1.05} distance={5.8} decay={2.2} color="#3c3c52" />
+      {/* Back wall uplight - just a rim behind the frame */}
+      <pointLight position={[0, 0.78, 4.45]} intensity={0.2} distance={5.8} decay={2.2} color="#26263a" />
 
-      {/* Soft floor glow to hint at the spotlight focus */}
+      {/* Floor glow - very subtle */}
       <mesh ref={floorGlowRef} rotation={[-Math.PI / 2, 0, 0]} geometry={floorGlowGeometry}>
         <meshBasicMaterial
           color="#fef3d4"
           transparent
-          opacity={0.14}
+          opacity={0.04}
           depthWrite={false}
           side={DoubleSide}
           vertexColors
@@ -135,10 +141,32 @@ const FullLights: FC = () => {
   );
 };
 
-// Exported component that switches between simple and full lights
-export const Lights: FC<LightsProps> = ({ variant = "full" }) => {
+/**
+ * Custom hook to safely check dev mode after hydration
+ * Returns false during initial render, then true if in dev mode after mount
+ */
+function useDevMode(): boolean {
+  const [isDevMode, setIsDevMode] = useState(false);
+
+  useEffect(() => {
+    setIsDevMode(isDevelopment());
+  }, []);
+
+  return isDevMode;
+}
+
+// Exported component that switches between simple, full, or dev-controlled lights
+export const Lights: FC<LightsProps> = ({ variant = "full", disableDevControls = false }) => {
+  const isDevMode = useDevMode();
+
   if (variant === "simple") {
     return <SimpleLights />;
   }
+
+  // In development mode, use interactive controls unless explicitly disabled
+  if (isDevMode && !disableDevControls) {
+    return <LightsWithControls />;
+  }
+
   return <FullLights />;
 };

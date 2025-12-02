@@ -101,3 +101,23 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 });
+
+/**
+ * Check if the current environment is development based on NEXT_PUBLIC_BASE_URL.
+ * Returns true if the base URL contains "localhost".
+ *
+ * This is preferred over NODE_ENV because NODE_ENV can be unreliable in Cloudflare Workers
+ * due to Next.js build optimizations setting it to "production" at build time.
+ */
+export function isDevelopment(): boolean {
+  const baseUrl = env.NEXT_PUBLIC_BASE_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  return baseUrl.includes("localhost");
+}
+
+/**
+ * Get the current environment name based on NEXT_PUBLIC_BASE_URL.
+ * Returns "development" if localhost, otherwise "production".
+ */
+export function getEnvironmentName(): "development" | "production" {
+  return isDevelopment() ? "development" : "production";
+}

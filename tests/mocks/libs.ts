@@ -93,12 +93,19 @@ export function createViewerCountStoreMock() {
  * Create mock for @/env
  * Returns a function that returns the mock module object
  */
-export function createEnvMock(options?: { NODE_ENV?: string; LOG_LEVEL?: string; NEXT_PUBLIC_R2_URL?: string }) {
+export function createEnvMock(options?: {
+  NEXT_PUBLIC_BASE_URL?: string;
+  LOG_LEVEL?: string;
+  NEXT_PUBLIC_R2_URL?: string;
+}) {
+  const baseUrl = options?.NEXT_PUBLIC_BASE_URL ?? "http://localhost:8787";
   return () => ({
     env: {
-      NODE_ENV: options?.NODE_ENV ?? "test",
+      NEXT_PUBLIC_BASE_URL: baseUrl,
       LOG_LEVEL: options?.LOG_LEVEL ?? "DEBUG",
       NEXT_PUBLIC_R2_URL: options?.NEXT_PUBLIC_R2_URL ?? "/api/r2",
     },
+    isDevelopment: () => baseUrl.includes("localhost"),
+    getEnvironmentName: () => (baseUrl.includes("localhost") ? "development" : "production"),
   });
 }

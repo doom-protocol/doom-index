@@ -2,7 +2,6 @@
 
 import { GalleryRoom } from "@/components/gallery/gallery-room";
 import { Lights } from "@/components/gallery/lights";
-import { env } from "@/env";
 import { useEscapeKey } from "@/hooks/use-click-outside";
 import { sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
@@ -22,7 +21,9 @@ const DETAIL_FRAME_POSITION: [number, number, number] = [0, 0.8, 4.0];
 const INITIAL_CAMERA_POSITION: [number, number, number] = [0, 0.8, 0.8];
 const ZOOMED_CAMERA_POSITION: [number, number, number] = [0, 0.8, 2.5];
 const CAMERA_LERP_FACTOR = 0.05;
-const isDevelopment = env.NODE_ENV === "development";
+import { isDevelopment } from "@/env";
+
+const isDevMode = isDevelopment();
 
 // Camera animation component
 interface CameraAnimationProps {
@@ -169,7 +170,7 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
           <Suspense fallback={null}>
             <ArchiveFramedPainting item={item} framePosition={DETAIL_FRAME_POSITION} />
           </Suspense>
-          {isDevelopment && <Stats />}
+          {isDevMode && <Stats />}
         </Canvas>
       </div>
 

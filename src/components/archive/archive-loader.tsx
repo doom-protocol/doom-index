@@ -34,13 +34,13 @@ export const ArchiveLoader: FC = () => {
           <div className="flex w-full flex-row items-stretch justify-around md:w-auto md:flex-row md:items-center md:gap-2">
             <div className="flex items-center gap-1">
               <span className="text-[10px] whitespace-nowrap text-white/70 md:text-xs">From:</span>
-              <div className="w-[7.5rem] animate-pulse rounded border border-white/20 bg-white/10 px-2 py-2 text-[9px] md:w-36 md:py-1 md:text-[11px]">
+              <div className="w-30 animate-pulse rounded border border-white/20 bg-white/10 px-2 py-2 text-[9px] md:w-36 md:py-1 md:text-[11px]">
                 <span className="invisible">0000-00-00</span>
               </div>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-[10px] whitespace-nowrap text-white/70 md:text-xs">To:</span>
-              <div className="w-[7.5rem] animate-pulse rounded border border-white/20 bg-white/10 px-2 py-2 text-[9px] md:w-36 md:py-1 md:text-[11px]">
+              <div className="w-30 animate-pulse rounded border border-white/20 bg-white/10 px-2 py-2 text-[9px] md:w-36 md:py-1 md:text-[11px]">
                 <span className="invisible">0000-00-00</span>
               </div>
             </div>

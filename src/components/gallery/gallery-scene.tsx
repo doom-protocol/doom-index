@@ -1,12 +1,12 @@
 "use client";
 
-import { env } from "@/env";
 import { useLatestPainting } from "@/hooks/use-latest-painting";
 import { useSolanaWallet } from "@/hooks/use-solana-wallet";
 import { glbExportService } from "@/lib/glb-export-service";
 import { logger } from "@/utils/logger";
 import { Grid, OrbitControls, Stats } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
+import dynamic from "next/dynamic";
 import { Suspense, useEffect, useRef, useState, type FC } from "react";
 import { toast } from "sonner";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, type Group } from "three";
@@ -17,17 +17,48 @@ import { ThreeErrorBoundary } from "../ui/three-error-boundary";
 import { CameraRig } from "./camera-rig";
 import { FramedPainting } from "./framed-painting";
 import { GalleryRoom } from "./gallery-room";
-import { Lights } from "./lights";
+
+// Dynamic import for Lights to avoid hydration issues with dev controls
+const Lights = dynamic(() => import("./lights").then(mod => ({ default: mod.Lights })), {
+  ssr: false,
+  loading: () => (
+    <>
+      <ambientLight intensity={0.5} color="#323248" />
+      <directionalLight position={[-1.5, 2.5, 3]} intensity={0.8} color="#f6e3c4" />
+    </>
+  ),
+});
+
+// Dynamic import for Leva to avoid SSR/document issues in test environment
+const Leva = dynamic(() => import("leva").then(mod => ({ default: mod.Leva })), {
+  ssr: false,
+});
 
 interface GallerySceneProps {
   cameraPreset?: "dashboard" | "painting";
 }
 
-const isDevelopment = env.NODE_ENV === "development";
+import { isDevelopment } from "@/env";
+
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
 
+/**
+ * Custom hook to safely check dev mode after hydration
+ * Returns false during SSR and initial render, then true if in dev mode after mount
+ */
+function useDevMode(): boolean {
+  const [isDevMode, setIsDevMode] = useState(false);
+
+  useEffect(() => {
+    setIsDevMode(isDevelopment());
+  }, []);
+
+  return isDevMode;
+}
+
 export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCameraPreset = "painting" }) => {
+  const isDevMode = useDevMode();
   const { data: latestPainting } = useLatestPainting();
   const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 
@@ -113,6 +144,27 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
 
   return (
     <>
+      {/* Leva GUI Panel - only visible in development mode */}
+      {isDevMode && (
+        <Leva
+          collapsed={false}
+          oneLineLabels={false}
+          flat={false}
+          theme={{
+            colors: {
+              elevation1: "#1a1a2e",
+              elevation2: "#16213e",
+              elevation3: "#0f3460",
+              accent1: "#e94560",
+              accent2: "#ff6b6b",
+              accent3: "#4ecdc4",
+              highlight1: "#ffffff",
+              highlight2: "#aaaaaa",
+              highlight3: "#888888",
+            },
+          }}
+        />
+      )}
       <Canvas
         className="r3f-gallery-canvas"
         frameloop="demand"
@@ -167,7 +219,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
         />
         <Lights />
 
-        {isDevelopment && (
+        {isDevMode && (
           <>
             <axesHelper args={[5]} />
             <Grid
@@ -193,7 +245,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
             <FramedPainting ref={paintingRef} thumbnailUrl={thumbnailUrl} paintingId={latestPainting?.id} />
           </ThreeErrorBoundary>
         </Suspense>
-        {isDevelopment && <Stats />}
+        {isDevMode && <Stats />}
       </Canvas>
       <div
         style={{
