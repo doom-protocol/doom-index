@@ -85,9 +85,9 @@ const FullLights: FC = () => {
       <spotLight
         ref={keyLightRef}
         position={[0, 3.1, 4.0]}
-        angle={0.45}
+        angle={0.4}
         penumbra={0.7}
-        intensity={36}
+        intensity={28}
         distance={6.0}
         decay={2}
         color="#f6e3c4"
@@ -98,10 +98,10 @@ const FullLights: FC = () => {
       {/* Fill spotlight (front-facing readability light) */}
       <spotLight
         ref={fillLightRef}
-        position={[0, 1.2, 1.8]}
-        angle={0.55}
-        penumbra={0.85}
-        intensity={16}
+        position={[0, 1.1, 1.9]}
+        angle={0.4}
+        penumbra={0.8}
+        intensity={9}
         distance={5.0}
         decay={2}
         color="#dccab0"
