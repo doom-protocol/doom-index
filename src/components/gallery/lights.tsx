@@ -2,14 +2,7 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef, type FC } from "react";
-import {
-  CircleGeometry,
-  DoubleSide,
-  Float32BufferAttribute,
-  type Mesh,
-  type Object3D,
-  type SpotLight,
-} from "three";
+import { CircleGeometry, DoubleSide, Float32BufferAttribute, type Mesh, type Object3D, type SpotLight } from "three";
 
 interface LightsProps {
   variant?: "simple" | "full";
