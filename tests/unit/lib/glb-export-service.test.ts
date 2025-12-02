@@ -28,6 +28,7 @@ const mockSimplifyModifier = mock((_geometry: BufferGeometry, _count: number) =>
   return _geometry; // Return same geometry for simplicity
 });
 
+// Set up module mock before any imports
 mock.module("three-stdlib", () => ({
   GLTFExporter: class {
     parse = mockParseExporter;
@@ -40,11 +41,30 @@ mock.module("three-stdlib", () => ({
   },
 }));
 
-// Import service after mocking
-import { glbExportService } from "@/lib/glb-export-service";
+// Import service after mocking - use dynamic import to ensure module resolution order
+import type { Result } from "neverthrow";
+import type { AppError } from "@/types/app-error";
+
+type GlbExportServiceType = {
+  exportPaintingModel: (ref: { current: Group | null }) => Promise<Result<globalThis.File, AppError>>;
+  optimizeGlb: (buffer: ArrayBuffer, targetSizeMB: number) => Promise<Result<ArrayBuffer, AppError>>;
+};
+
+let glbExportService: GlbExportServiceType | undefined;
+
+// Initialize module import once
+const initializeGlbExportService = async (): Promise<GlbExportServiceType> => {
+  if (!glbExportService) {
+    const module = await import("@/lib/glb-export-service");
+    glbExportService = module.glbExportService as GlbExportServiceType;
+  }
+  return glbExportService;
+};
 
 describe("glbExportService", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Ensure module is imported after mock is set up
+    await initializeGlbExportService();
     mockParseExporter.mockReset();
     mockParseLoader.mockReset();
     mockSimplifyModifier.mockReset();
@@ -76,7 +96,8 @@ describe("glbExportService", () => {
       });
 
       // Act
-      const result = await glbExportService.exportPaintingModel(mockRef);
+      const service = await initializeGlbExportService();
+      const result = await service.exportPaintingModel(mockRef);
 
       // Assert
       expect(result.isOk()).toBe(true);
@@ -91,7 +112,8 @@ describe("glbExportService", () => {
 
     it("should return an error when the group ref is null", async () => {
       const mockRef = { current: null };
-      const result = await glbExportService.exportPaintingModel(mockRef);
+      const service = await initializeGlbExportService();
+      const result = await service.exportPaintingModel(mockRef);
       expect(result.isErr()).toBe(true);
       if (result.isErr()) {
         expect(result.error.type).toBe("ValidationError");
@@ -102,7 +124,8 @@ describe("glbExportService", () => {
     it("should return an error when the group has no meshes", async () => {
       const mockGroup = new Group();
       const mockRef = { current: mockGroup };
-      const result = await glbExportService.exportPaintingModel(mockRef);
+      const service = await initializeGlbExportService();
+      const result = await service.exportPaintingModel(mockRef);
       expect(result.isErr()).toBe(true);
       if (result.isErr()) {
         expect(result.error.type).toBe("ValidationError");
@@ -124,7 +147,8 @@ describe("glbExportService", () => {
         },
       );
 
-      const result = await glbExportService.exportPaintingModel(mockRef);
+      const service = await initializeGlbExportService();
+      const result = await service.exportPaintingModel(mockRef);
       expect(result.isErr()).toBe(true);
       if (result.isErr()) {
         expect(result.error.type).toBe("InternalError");
@@ -167,7 +191,8 @@ describe("glbExportService", () => {
       });
 
       // Act
-      const result = await glbExportService.optimizeGlb(largeBuffer, targetSizeMB);
+      const service = await initializeGlbExportService();
+      const result = await service.optimizeGlb(largeBuffer, targetSizeMB);
 
       // Assert
       expect(result.isOk()).toBe(true);
@@ -185,7 +210,8 @@ describe("glbExportService", () => {
       const targetSizeMB = 32;
 
       // Act
-      const result = await glbExportService.optimizeGlb(smallBuffer, targetSizeMB);
+      const service = await initializeGlbExportService();
+      const result = await service.optimizeGlb(smallBuffer, targetSizeMB);
 
       // Assert
       expect(result.isOk()).toBe(true);
@@ -212,7 +238,8 @@ describe("glbExportService", () => {
       );
 
       // Act
-      const result = await glbExportService.optimizeGlb(largeBuffer, targetSizeMB);
+      const service = await initializeGlbExportService();
+      const result = await service.optimizeGlb(largeBuffer, targetSizeMB);
 
       // Assert
       expect(result.isErr()).toBe(true);
