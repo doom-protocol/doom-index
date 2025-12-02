@@ -68,7 +68,7 @@ export const LightsWithControls: FC = () => {
     }),
     angle: { value: 0.38, min: 0, max: Math.PI / 2, step: 0.01 },
     penumbra: { value: 0.8, min: 0, max: 1, step: 0.01 },
-    intensity: { value: 5, min: 0, max: 50, step: 0.5 },
+    intensity: { value: 12, min: 0, max: 50, step: 0.5 },
     distance: { value: 5.0, min: 0, max: 20, step: 0.1 },
     decay: { value: 2, min: 0, max: 5, step: 0.1 },
     color: "#e7d2ba",

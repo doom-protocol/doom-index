@@ -107,7 +107,7 @@ const FullLights: FC = () => {
         position={[0.9, 1.6, 2.3]}
         angle={0.38}
         penumbra={0.8}
-        intensity={5}
+        intensity={12}
         distance={5.0}
         decay={2}
         color="#e7d2ba"
