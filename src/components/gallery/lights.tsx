@@ -95,13 +95,13 @@ const FullLights: FC = () => {
         shadow-mapSize={[1024, 1024]}
       />
 
-      {/* Fill spotlight (front-facing readability light) */}
+      {/* Fill spotlight (side kicker light - off camera axis to avoid reflection) */}
       <spotLight
         ref={fillLightRef}
-        position={[0, 1.1, 1.9]}
-        angle={0.4}
+        position={[0.9, 1.6, 2.3]}
+        angle={0.38}
         penumbra={0.8}
-        intensity={7}
+        intensity={5}
         distance={5.0}
         decay={2}
         color="#e7d2ba"
