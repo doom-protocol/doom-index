@@ -7,7 +7,7 @@ import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import type { PropsWithChildren } from "react";
 import { Suspense, useEffect, useMemo, useState, type FC } from "react";
-import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
+import { ACESFilmicToneMapping } from "three";
 import { GalleryRoom } from "../gallery/gallery-room";
 import { Lights } from "../gallery/lights";
 import { FloatingWhitepaper } from "./floating-whitepaper";
@@ -252,8 +252,8 @@ export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPositio
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <Canvas
         frameloop="demand"
-        shadows
-        dpr={[1, 1.5]}
+        shadows={false}
+        dpr={[1, 1]}
         camera={{
           fov: 50,
           position: initialCameraPosition,
@@ -276,8 +276,6 @@ export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPositio
           background: "#000000",
         }}
         onCreated={({ gl }) => {
-          gl.shadowMap.enabled = true;
-          gl.shadowMap.type = PCFSoftShadowMap;
           gl.toneMapping = ACESFilmicToneMapping;
           gl.setClearColor("#050505");
         }}

@@ -9,7 +9,7 @@ import type { Painting } from "@/types/paintings";
 import { Stats } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useCallback, useEffect, useRef, useState, type FC } from "react";
-import { ACESFilmicToneMapping, PCFSoftShadowMap, Vector3 } from "three";
+import { ACESFilmicToneMapping, Vector3 } from "three";
 import { useHaptic } from "use-haptic";
 import { ArchiveFramedPainting } from "./archive-framed-painting";
 
@@ -138,8 +138,8 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
       <div className="relative h-[50vh] w-full lg:h-full lg:w-[60%]">
         <Canvas
           frameloop="always"
-          shadows
-          dpr={[1, 1.5]}
+          shadows={false}
+          dpr={[1, 1]}
           camera={{
             fov: 50,
             position: INITIAL_CAMERA_POSITION,
@@ -152,8 +152,6 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
             powerPreference: "high-performance",
           }}
           onCreated={({ gl }) => {
-            gl.shadowMap.enabled = true;
-            gl.shadowMap.type = PCFSoftShadowMap;
             gl.toneMapping = ACESFilmicToneMapping;
             gl.setClearColor("#050505");
           }}

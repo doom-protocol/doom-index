@@ -39,29 +39,29 @@ export const GalleryRoom: FC = () => {
       <mesh
         position={[0, 1.65, 5]}
         rotation={[0, Math.PI, 0]}
-        receiveShadow
+        receiveShadow={false}
         geometry={wallGeometry}
         material={wallMaterial}
       />
       <mesh
         rotation={[0, -Math.PI / 2, 0]}
         position={[5, 1.65, 0]}
-        receiveShadow
+        receiveShadow={false}
         geometry={wallGeometry}
         material={sideWallMaterial}
       />
       <mesh
         rotation={[0, Math.PI / 2, 0]}
         position={[-5, 1.65, 0]}
-        receiveShadow
+        receiveShadow={false}
         geometry={wallGeometry}
         material={sideWallMaterial}
       />
-      <mesh position={[0, 1.65, -5]} receiveShadow geometry={wallGeometry} material={sideWallMaterial} />
+      <mesh position={[0, 1.65, -5]} receiveShadow={false} geometry={wallGeometry} material={sideWallMaterial} />
       <mesh
         rotation={[Math.PI / 2, 0, 0]}
         position={[0, 3.3, 0]}
-        receiveShadow
+        receiveShadow={false}
         geometry={ceilingGeometry}
         material={ceilingMaterial}
       />

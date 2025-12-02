@@ -9,7 +9,7 @@ import { Grid, OrbitControls, Stats } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useEffect, useRef, useState, type FC } from "react";
 import { toast } from "sonner";
-import { ACESFilmicToneMapping, PCFSoftShadowMap, type Group } from "three";
+import { ACESFilmicToneMapping, type Group } from "three";
 import { MintButton } from "../ui/mint-button";
 import { MintModal } from "../ui/mint-modal";
 import { ThreeErrorBoundary } from "../ui/three-error-boundary";
@@ -116,8 +116,8 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
       <Canvas
         className="r3f-gallery-canvas"
         frameloop="demand"
-        shadows
-        dpr={[1, 1.5]}
+        shadows={false}
+        dpr={[1, 1]}
         camera={{
           fov: 50,
           position: [0, 0.8, 0.8],
@@ -130,8 +130,6 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
           powerPreference: "high-performance",
         }}
         onCreated={({ gl }) => {
-          gl.shadowMap.enabled = true;
-          gl.shadowMap.type = PCFSoftShadowMap;
           gl.toneMapping = ACESFilmicToneMapping;
           gl.setClearColor("#050505");
         }}
