@@ -28,6 +28,9 @@ const mockSimplifyModifier = mock((_geometry: BufferGeometry, _count: number) =>
   return _geometry; // Return same geometry for simplicity
 });
 
+// Restore any existing mocks first to ensure clean state
+mock.restore();
+
 // Set up module mock before any imports
 mock.module("three-stdlib", () => ({
   GLTFExporter: class {
@@ -48,7 +51,10 @@ mock.module("three-stdlib", () => ({
 mock.module("@/lib/glb-export-service", () => {
   // Use Bun's import.meta.require with resolve to get the actual file path
   // This bypasses any existing mocks and loads the actual implementation
+  // We use import.meta.resolve to get the actual file path, then require it
+  // This works even if the module was previously mocked
   const actualPath = import.meta.resolve("@/lib/glb-export-service");
+  // import.meta.resolve returns a file:// URL, use it directly
   const actualModule = import.meta.require(actualPath);
   return actualModule;
 });
