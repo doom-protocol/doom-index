@@ -56,7 +56,7 @@ jobs:
             node_modules
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
         if: steps.bun-cache.outputs.cache-hit != 'true'
@@ -86,7 +86,7 @@ jobs:
             node_modules
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
         if: steps.bun-cache.outputs.cache-hit != 'true'
@@ -116,7 +116,7 @@ jobs:
             node_modules
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
         if: steps.bun-cache.outputs.cache-hit != 'true'
@@ -146,7 +146,7 @@ jobs:
             node_modules
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
         if: steps.bun-cache.outputs.cache-hit != 'true'
@@ -184,7 +184,7 @@ jobs:
             node_modules
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
         if: steps.bun-cache.outputs.cache-hit != 'true'
@@ -203,7 +203,7 @@ jobs:
             .next/static
           key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-${{ hashFiles('**/next.config.ts') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-${{ hashFiles('**/next.config.ts') }}
+            ${{ runner.os }}-nextjs-
 
       - name: Build project
         run: bun run build

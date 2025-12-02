@@ -1,7 +1,7 @@
 ---
 title: DOOM INDEX - プロダクト概要
 includes: always
-updated: 2025-01-15
+updated: 2025-12-02
 ---
 
 ## プロダクト概要
@@ -17,13 +17,14 @@ DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場�
 - ストレージ永続化（Cloudflare R2／公開 URL 読み取り）
 - **データベース統合（Cloudflare D1）** - アーカイブインデックス、トークン情報、市場スナップショット
 - 動的トークン選択（CoinGecko トレンド API + 強制リスト対応）
-- 画像生成プロバイダ切り替え（Runware／OpenAI／モック）
+- 画像生成（Runware／モック）- Runware が本番プロバイダ
 - **動的プロンプト生成（dynamic-prompt）** - Tavily Search + Workers AI によるトークン固有のナラティブコンテキスト生成
 - 市場心理分析（Fear & Greed Index 統合）
 - **型安全な API 通信（tRPC v11）** - エンドツーエンドの型安全性を実現
+- **Solana NFT ミント機能** - Metaplex + Irys によるオンチェーン NFT 発行
 - CLI ツールによるローカル生成・検証（`scripts/generate.ts`）
 - ローカル開発用のスケジュール実行・プレビュー（Workers Preview + Cron）
-- **Cloudflare Cache API 統合（開発中）** - Edge キャッシュによるレイテンシ低減とコスト最適化
+- **Cloudflare Cache API 統合** - Edge キャッシュによるレイテンシ低減とコスト最適化
 
 ## 代表的なユースケース
 
@@ -31,6 +32,7 @@ DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場�
 - ソーシャル共有時の OGP を常に最新状態に維持
 - **過去作品の閲覧・検索** - アーカイブページで日付範囲やパラメータで検索
 - **トークン固有のコンテキスト生成** - dynamic-prompt による各トークンの象徴性・ナラティブの自動生成
+- **NFT ミント** - 生成作品を Solana NFT としてオンチェーン発行
 - 実運用前のローカル検証（モック・固定トークン・特定モデルでの生成）
 - 分析・展示向けのアーカイブ生成（`out/` または R2 への保存）
 
@@ -45,6 +47,7 @@ DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場�
 - 型安全（TypeScript）と結果型（neverthrow）で堅牢なエラーハンドリング
 - **tRPC によるエンドツーエンド型安全性** - 開発時の型補完と実行時エラー削減
 - **Edge キャッシュによる最適化** - 外部 API 呼び出し削減と UX 向上
+- **Solana NFT ミント** - Metaplex による分散型所有権証明
 
 ## 主要制約・前提
 
