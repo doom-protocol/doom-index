@@ -88,7 +88,6 @@ service = "doom-index"
 
 # Production environment (default/top-level - used when deploying without --env flag)
 [vars]
-NODE_VERSION = "24.11.1"
 NODE_ENV = "production"
 LOG_LEVEL = "INFO"
 NEXTJS_ENV = "production"
@@ -162,7 +161,6 @@ service = "doom-index-dev"
 # new_sqlite_classes = ["DOQueueHandler"]
 
 [env.dev.vars]
-NODE_VERSION = "24.11.1"
 NODE_ENV = "development"
 LOG_LEVEL = "DEBUG"
 NEXTJS_ENV = "development"
