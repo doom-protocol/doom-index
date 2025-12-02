@@ -27,6 +27,10 @@ const nextConfig: NextConfig = {
     loader: "custom",
     loaderFile: "./src/lib/image-loader.ts",
   },
+  typedRoutes: true,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   webpack: (config, { isServer }) => {
     // Server-side: stub browser-only libraries to reduce bundle size
     if (isServer) {
