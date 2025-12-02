@@ -179,76 +179,101 @@ describe("cloudflare-image", () => {
   });
 
   describe("getImageUrlWithDpr", () => {
-    it("should scale width by DPR", async () => {
+    it("should add query params for /api/r2/ paths with DPR scaling", async () => {
       mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
       const { getImageUrlWithDpr, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
-      const result = getImageUrlWithDpr("/images/test.jpg", "galleryTexture", 2);
+      const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 2);
 
       const expectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * Math.min(2, 1.5));
-      expect(result).toContain(`width=${expectedWidth}`);
+      expect(result).toContain(`w=${expectedWidth}`);
     });
 
-    it("should clamp DPR to maximum of 1.5", async () => {
+    it("should clamp DPR to maximum of 1.5 for /api/r2/ paths", async () => {
       mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
       const { getImageUrlWithDpr, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
-      const result = getImageUrlWithDpr("/images/test.jpg", "galleryTexture", 3);
+      const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 3);
 
       const expectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * 1.5);
-      expect(result).toContain(`width=${expectedWidth}`);
+      expect(result).toContain(`w=${expectedWidth}`);
     });
 
-    it("should clamp DPR to minimum of 1", async () => {
+    it("should clamp DPR to minimum of 1 for /api/r2/ paths", async () => {
       mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
       const { getImageUrlWithDpr, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
-      const result = getImageUrlWithDpr("/images/test.jpg", "galleryTexture", 0.5);
+      const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 0.5);
 
       const expectedWidth = IMAGE_PRESETS.galleryTexture.width;
-      expect(result).toContain(`width=${expectedWidth}`);
+      expect(result).toContain(`w=${expectedWidth}`);
+    });
+
+    it("should return original URL for public directory images (non-/api/ paths)", async () => {
+      mock.module("@/utils/url", () => ({
+        getBaseUrl: () => "https://doomindex.fun",
+      }));
+
+      const { getImageUrlWithDpr } = await import("@/lib/cloudflare-image");
+
+      // Public directory images should not be transformed
+      expect(getImageUrlWithDpr("/placeholder-painting.webp", "galleryTexture", 1)).toBe("/placeholder-painting.webp");
+      expect(getImageUrlWithDpr("/images/test.jpg", "galleryTexture", 2)).toBe("/images/test.jpg");
+      expect(getImageUrlWithDpr("/frame.glb", "galleryTexture", 1.5)).toBe("/frame.glb");
     });
   });
 
   describe("getTransformedTextureUrl", () => {
-    it("should use galleryTexture preset by default", async () => {
+    it("should add query params for /api/r2/ paths with galleryTexture preset by default", async () => {
       mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
       const { getTransformedTextureUrl, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
-      const result = getTransformedTextureUrl("/images/test.jpg");
+      const result = getTransformedTextureUrl("/api/r2/paintings/test.jpg");
 
-      expect(result).toContain(`width=${IMAGE_PRESETS.galleryTexture.width}`);
+      expect(result).toContain(`w=${IMAGE_PRESETS.galleryTexture.width}`);
     });
 
-    it("should apply DPR scaling", async () => {
+    it("should apply DPR scaling for /api/r2/ paths", async () => {
       mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
       const { getTransformedTextureUrl, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
-      const result = getTransformedTextureUrl("/images/test.jpg", "galleryTexture", 1.5);
+      const result = getTransformedTextureUrl("/api/r2/paintings/test.jpg", "galleryTexture", 1.5);
 
       const expectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * 1.5);
-      expect(result).toContain(`width=${expectedWidth}`);
+      expect(result).toContain(`w=${expectedWidth}`);
     });
 
-    it("should use specified preset", async () => {
+    it("should use specified preset for /api/r2/ paths", async () => {
       mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
       const { getTransformedTextureUrl, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
-      const result = getTransformedTextureUrl("/images/test.jpg", "modalFull", 1);
+      const result = getTransformedTextureUrl("/api/r2/paintings/test.jpg", "modalFull", 1);
 
-      expect(result).toContain(`width=${IMAGE_PRESETS.modalFull.width}`);
+      expect(result).toContain(`w=${IMAGE_PRESETS.modalFull.width}`);
+    });
+
+    it("should return original URL for public directory images", async () => {
+      mock.module("@/utils/url", () => ({
+        getBaseUrl: () => "https://doomindex.fun",
+      }));
+
+      const { getTransformedTextureUrl } = await import("@/lib/cloudflare-image");
+
+      // Public directory images should not be transformed
+      expect(getTransformedTextureUrl("/placeholder-painting.webp")).toBe("/placeholder-painting.webp");
+      expect(getTransformedTextureUrl("/images/test.jpg", "galleryTexture", 1.5)).toBe("/images/test.jpg");
     });
   });
 
@@ -359,10 +384,11 @@ describe("cloudflare-image", () => {
       const { getImageUrlWithDpr, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
 
       // Even with DPR of 3, the effective DPR should be clamped to 1.5
-      const result = getImageUrlWithDpr("/images/test.jpg", "galleryTexture", 3);
+      // Use /api/r2/ path since public directory images are not transformed
+      const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 3);
       const maxExpectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * 1.5);
 
-      expect(result).toContain(`width=${maxExpectedWidth}`);
+      expect(result).toContain(`w=${maxExpectedWidth}`);
       // Ensure we never exceed 1.5x the base width
       expect(maxExpectedWidth).toBeLessThanOrEqual(IMAGE_PRESETS.galleryTexture.width * 1.5);
     });
