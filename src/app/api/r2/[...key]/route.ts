@@ -16,12 +16,14 @@ type CachedResponse = {
 /**
  * Build ImageTransform options from CloudflareImageOptions
  * Maps our internal options to Cloudflare Images binding transform options
+ * Applies DPR scaling to width/height dimensions
  */
 function buildImageTransform(options: CloudflareImageOptions): ImageTransform {
   const transform: ImageTransform = {};
+  const dpr = options.dpr ?? 1;
 
-  if (options.width) transform.width = options.width;
-  if (options.height) transform.height = options.height;
+  if (options.width) transform.width = Math.round(options.width * dpr);
+  if (options.height) transform.height = Math.round(options.height * dpr);
   if (options.fit) transform.fit = options.fit;
   if (options.sharpen) transform.sharpen = options.sharpen;
 
@@ -204,12 +206,21 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
         objectKey,
         error: error instanceof Error ? error.message : String(error),
       });
-      // Re-fetch the object since the stream was consumed during transformation attempt
+      // Re-fetch the object from R2 since the original body stream was consumed
+      // during the transformation attempt (images.input() may consume the stream)
       const freshObject = await bucket.get(objectKey);
       if (!freshObject) {
+        logger.error("[R2 Route] Failed to re-fetch object for fallback", {
+          objectKey,
+          duration: Date.now() - startTime,
+        });
         return NextResponse.json({ error: "Object not found" }, { status: 404 });
       }
-      // Continue with the fresh object for direct R2 access
+      // Use the fresh object's body stream for direct R2 fallback processing
+      logger.debug("[R2 Route] Re-fetched object for fallback", {
+        objectKey,
+        size: freshObject.size,
+      });
       return serveR2Object(freshObject, objectKey, cacheKey, startTime);
     }
   }
