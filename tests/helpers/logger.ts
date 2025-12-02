@@ -51,11 +51,7 @@ export function createLoggerMock(): { logger: LoggerMock; calls: LoggerCall[] } 
 /**
  * Find a specific log call by method and message prefix
  */
-export function findLogCall(
-  calls: LoggerCall[],
-  method: string,
-  messagePrefix: string,
-): LoggerCall | undefined {
+export function findLogCall(calls: LoggerCall[], method: string, messagePrefix: string): LoggerCall | undefined {
   return calls.find(
     call => call.method === method && typeof call.args[0] === "string" && call.args[0].startsWith(messagePrefix),
   );
