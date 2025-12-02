@@ -222,10 +222,29 @@ export interface TextureLoadTimingResult {
 }
 
 /**
+ * Get current timestamp in milliseconds.
+ * Uses performance.now() when available, falls back to Date.now().
+ * This is safe to use in Cloudflare Workers and other edge runtimes
+ * where performance.now() may throw brand check errors.
+ *
+ * @returns Current timestamp in milliseconds
+ */
+export function getTimestampMs(): number {
+  try {
+    if (typeof performance !== "undefined" && typeof performance.now === "function") {
+      return performance.now();
+    }
+  } catch {
+    // Some runtimes (like CF Workers) can throw brand errors; ignore and fall back.
+  }
+  return Date.now();
+}
+
+/**
  * Measure texture load duration from start time to now.
  * Pure function for testable timing measurement.
  *
- * @param startTime - Start time from performance.now()
+ * @param startTime - Start time from getTimestampMs()
  * @param url - Texture URL being loaded
  * @param paintingId - Optional painting ID for logging
  * @param now - Optional function to get current time (for testing)
@@ -235,7 +254,7 @@ export function measureTextureLoadDuration(
   startTime: number,
   url: string,
   paintingId?: string,
-  now: () => number = performance.now,
+  now: () => number = getTimestampMs,
 ): TextureLoadTimingResult {
   const durationMs = now() - startTime;
   return {

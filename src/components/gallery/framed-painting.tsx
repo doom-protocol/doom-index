@@ -11,7 +11,12 @@ import {
 import { openTweetIntent } from "@/utils/twitter";
 import { useGLTF } from "@react-three/drei";
 import { useSafeTexture } from "@/hooks/use-safe-texture";
-import { getDevicePixelRatio, getTransformedTextureUrl, measureTextureLoadDuration } from "@/lib/cloudflare-image";
+import {
+  getDevicePixelRatio,
+  getTimestampMs,
+  getTransformedTextureUrl,
+  measureTextureLoadDuration,
+} from "@/lib/cloudflare-image";
 import { logger } from "@/utils/logger";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, type FC } from "react";
@@ -66,7 +71,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
   const isPulseActiveRef = useRef(false);
 
   // Per-instance texture load timing (not module-scope for accurate measurement)
-  const textureLoadStartRef = useRef<number>(performance.now());
+  const textureLoadStartRef = useRef<number>(getTimestampMs());
 
   const { triggerHaptic } = useHaptic();
 
@@ -75,7 +80,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
 
   // Reset start time when URL changes
   useEffect(() => {
-    textureLoadStartRef.current = performance.now();
+    textureLoadStartRef.current = getTimestampMs();
     logger.debug("framed-painting.texture.request.start", {
       url: transformedTextureUrl,
       paintingId,
