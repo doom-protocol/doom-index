@@ -223,9 +223,7 @@ describe("cloudflare-image", () => {
       const { getImageUrlWithDpr } = await import("@/lib/cloudflare-image");
 
       // Public directory images should not be transformed
-      expect(getImageUrlWithDpr("/placeholder-painting.webp", "galleryTexture", 1)).toBe(
-        "/placeholder-painting.webp",
-      );
+      expect(getImageUrlWithDpr("/placeholder-painting.webp", "galleryTexture", 1)).toBe("/placeholder-painting.webp");
       expect(getImageUrlWithDpr("/images/test.jpg", "galleryTexture", 2)).toBe("/images/test.jpg");
       expect(getImageUrlWithDpr("/frame.glb", "galleryTexture", 1.5)).toBe("/frame.glb");
     });
