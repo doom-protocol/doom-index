@@ -10,7 +10,6 @@ import { Canvas } from "@react-three/fiber";
 import { Suspense, useEffect, useRef, useState, type FC } from "react";
 import { toast } from "sonner";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, type Group } from "three";
-import { WebGPURenderer } from "three/webgpu";
 import { MintButton } from "../ui/mint-button";
 import { MintModal } from "../ui/mint-modal";
 import { ThreeErrorBoundary } from "../ui/three-error-boundary";
@@ -125,18 +124,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
           near: 0.1,
           far: 100,
         }}
-        gl={async props => {
-          const start = performance.now();
-          const renderer = new WebGPURenderer(props as any);
-          await renderer.init();
-          const initMs = performance.now() - start;
-          logger.debug("gallery-scene.renderer", {
-            renderer,
-            backend: (renderer as any).backend?.constructor?.name,
-            initMs,
-          });
-          return renderer as any;
-        }}
+        gl={{ antialias: true }}
         onCreated={({ gl }) => {
           gl.shadowMap.enabled = true;
           gl.shadowMap.type = PCFSoftShadowMap;

@@ -20,7 +20,6 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Suspense, useCallback, useRef, useState, type FC } from "react";
 import { toast } from "sonner";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, type Group } from "three";
-import { WebGPURenderer } from "three/webgpu";
 import { useHaptic } from "use-haptic";
 
 export interface MintModalProps {
@@ -205,18 +204,7 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
                 near: 0.1,
                 far: 100,
               }}
-              gl={async props => {
-                const start = performance.now();
-                const renderer = new WebGPURenderer(props as any);
-                await renderer.init();
-                const initMs = performance.now() - start;
-                logger.debug("mint-modal.renderer", {
-                  renderer,
-                  backend: (renderer as any).backend?.constructor?.name,
-                  initMs,
-                });
-                return renderer as any;
-              }}
+              gl={{ antialias: true }}
               onCreated={({ gl }) => {
                 gl.shadowMap.enabled = true;
                 gl.shadowMap.type = PCFSoftShadowMap;
