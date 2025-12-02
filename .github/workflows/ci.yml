@@ -35,8 +35,8 @@ on:
       - ".example.vars"
 
 jobs:
-  format:
-    name: Format
+  setup:
+    name: Setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -56,17 +56,44 @@ jobs:
             node_modules
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
         if: steps.bun-cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
+
+      - name: Upload node_modules
+        uses: actions/upload-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules
+          retention-days: 1
+
+  format:
+    name: Format
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.3
+
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules
 
       - name: Run formatter
         run: bun run format
 
   lint:
     name: Lint
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -77,26 +104,18 @@ jobs:
         with:
           bun-version: 1.3.3
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        id: bun-cache
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-
-      - name: Install dependencies
-        if: steps.bun-cache.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile
+          name: node_modules
+          path: node_modules
 
       - name: Run ESLint
         run: bun run lint
 
   typecheck:
     name: Type Check
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -107,26 +126,18 @@ jobs:
         with:
           bun-version: 1.3.3
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        id: bun-cache
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-
-      - name: Install dependencies
-        if: steps.bun-cache.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile
+          name: node_modules
+          path: node_modules
 
       - name: Run type check
         run: bun run typecheck
 
   test:
     name: Test
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -137,20 +148,11 @@ jobs:
         with:
           bun-version: 1.3.3
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        id: bun-cache
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-
-      - name: Install dependencies
-        if: steps.bun-cache.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile
+          name: node_modules
+          path: node_modules
 
       - name: Copy .example.vars to .dev.vars
         run: cp .example.vars .dev.vars
@@ -175,20 +177,11 @@ jobs:
         with:
           bun-version: 1.3.3
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        id: bun-cache
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-
-      - name: Install dependencies
-        if: steps.bun-cache.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile
+          name: node_modules
+          path: node_modules
 
       - name: Copy .example.vars to .dev.vars
         run: cp .example.vars .dev.vars
@@ -203,7 +196,7 @@ jobs:
             .next/static
           key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-${{ hashFiles('**/next.config.ts') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package.json') }}-${{ hashFiles('**/next.config.ts') }}
+            ${{ runner.os }}-nextjs-
 
       - name: Build project
         run: bun run build
