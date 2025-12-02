@@ -14,9 +14,34 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     h4: ({ children }: { children?: ReactNode }) => (
       <h4 className="mt-6 mb-2 text-lg font-semibold italic">{children}</h4>
     ),
-    p: ({ children }: { children?: ReactNode }) => (
-      <p className="mb-4 text-justify leading-7 hyphens-auto">{children}</p>
-    ),
+    p: ({ children }: { children?: ReactNode }) => {
+      // Helper function to check if children contain block-level elements (img, figure, div, etc.)
+      const hasBlockElement = (node: ReactNode): boolean => {
+        if (node === null || node === undefined || typeof node === "string" || typeof node === "number") {
+          return false;
+        }
+        if (Array.isArray(node)) {
+          return node.some(hasBlockElement);
+        }
+        if (typeof node === "object" && "type" in node) {
+          const type = node.type;
+          if (typeof type === "string") {
+            return ["figure", "div", "img"].includes(type);
+          }
+          if (typeof type === "function") {
+            return type.name === "img" || type.name === "Image";
+          }
+        }
+        return false;
+      };
+
+      // If paragraph contains block-level elements, render as div instead to avoid nesting issues
+      if (hasBlockElement(children)) {
+        return <div className="mb-4 text-justify leading-7 hyphens-auto">{children}</div>;
+      }
+
+      return <p className="mb-4 text-justify leading-7 hyphens-auto">{children}</p>;
+    },
     ul: ({ children }: { children?: ReactNode }) => (
       <ul className="mb-4 ml-6 list-outside list-disc space-y-1">{children}</ul>
     ),
@@ -45,12 +70,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     table: ({ children }: { children?: ReactNode }) => (
       <div className="overflow-x-auto">
-        <table
-          className="w-fit border-collapse border border-gray-300 bg-white text-xs md:text-sm"
-          style={{ tableLayout: "auto" }}
-        >
-          {children}
-        </table>
+        <table className="w-fit border-collapse border border-gray-300 bg-white text-xs md:text-sm">{children}</table>
       </div>
     ),
     thead: ({ children }: { children?: ReactNode }) => <thead className="bg-gray-50">{children}</thead>,
@@ -65,7 +85,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       <td className="border border-gray-300 px-2 py-2 text-xs text-gray-700 md:px-4 md:py-3 md:text-sm">{children}</td>
     ),
     img: ({ src, alt }: { src?: string; alt?: string }) => (
-      <div className="my-6 flex flex-col items-center">
+      <figure className="my-6 flex flex-col items-center">
         <Image
           src={src || ""}
           alt={alt || ""}
@@ -73,8 +93,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
           height={240}
           className="h-auto max-w-xs border border-[#ddd]"
         />
-        {alt && <p className="mt-2 text-center text-sm text-[#666] italic">{alt}</p>}
-      </div>
+        {alt && <figcaption className="mt-2 text-center text-sm text-[#666] italic">{alt}</figcaption>}
+      </figure>
     ),
     hr: () => <hr className="my-8 border-t border-[#ccc]" />,
     ...components,
