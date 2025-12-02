@@ -4,7 +4,7 @@
   "description": "A decentralized archive of financial emotions. AI generates one painting every minute, translating the collective psychology of 8 pump.fun tokens into visual art.",
   "private": false,
   "engines": {
-    "node": ">=25"
+    "node": ">=24.11.1"
   },
   "scripts": {
     "postinstall": "bun run patch:opennext",
