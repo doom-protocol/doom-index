@@ -46,16 +46,15 @@ mock.module("three-stdlib", () => ({
 
 // Override any existing mock for glb-export-service to ensure we test the real implementation
 // This is necessary because other test files (e.g., gallery-page.integration.test.tsx) may mock this module
-// We use import.meta.require with the actual file path to bypass any existing mocks
+// We use the actual file path directly to bypass any existing mocks
 // This ensures the real implementation is used even if other tests have mocked it
 mock.module("@/lib/glb-export-service", () => {
-  // Use Bun's import.meta.require with resolve to get the actual file path
-  // This bypasses any existing mocks and loads the actual implementation
-  // We use import.meta.resolve to get the actual file path, then require it
-  // This works even if the module was previously mocked
-  const actualPath = import.meta.resolve("@/lib/glb-export-service");
-  // import.meta.resolve returns a file:// URL, use it directly
-  const actualModule = import.meta.require(actualPath);
+  // Use Bun's import.meta.require with the actual file path
+  // We construct the file path relative to the current file to bypass module resolution
+  // This ensures we load the actual implementation, not a mocked version
+  // From tests/unit/lib/ to src/lib/ is ../../../src/lib/
+  const actualFilePath = new URL("../../../src/lib/glb-export-service.ts", import.meta.url).pathname;
+  const actualModule = import.meta.require(actualFilePath);
   return actualModule;
 });
 
