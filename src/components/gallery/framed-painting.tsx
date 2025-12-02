@@ -92,7 +92,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
     loadedTexture => {
       const tex = loadedTexture as Texture;
       tex.colorSpace = SRGBColorSpace;
-      tex.anisotropy = 4;
+      tex.anisotropy = 8;
       tex.needsUpdate = true;
 
       // Use pure function for timing measurement
@@ -358,7 +358,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
       <mesh
         ref={paintingMeshRef}
         position={[0, 0, -0.025]}
-        castShadow={false}
+        castShadow
         receiveShadow={false}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
