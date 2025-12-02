@@ -38,6 +38,9 @@ export function generateMetadata(): Metadata {
     metadataBase,
     title,
     description,
+    icons: {
+      icon: "/icon.png",
+    },
     openGraph: {
       type: "website",
       siteName: "DOOM INDEX",

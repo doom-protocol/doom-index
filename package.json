@@ -34,7 +34,8 @@
     "db:studio:prod": "NODE_ENV=production bun run db:studio",
     "preview": "opennextjs-cloudflare preview --env=dev --test-scheduled",
     "upload": "opennextjs-cloudflare upload",
-    "deploy": "opennextjs-cloudflare deploy"
+    "deploy": "opennextjs-cloudflare deploy",
+    "analyze:bundle": "bun run scripts/analyze-bundle.ts"
   },
   "dependencies": {
     "@coingecko/coingecko-typescript": "^2.3.0",
