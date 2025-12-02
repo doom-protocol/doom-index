@@ -50,7 +50,7 @@ const DEFAULT_FRAME_POSITION: [number, number, number] = [0, 0.8, 4.0];
 const FRAME_ROTATION: [number, number, number] = [0, Math.PI, 0];
 
 // Material properties constants
-const PAINTING_MATERIAL_ROUGHNESS = 0.5;
+const PAINTING_MATERIAL_ROUGHNESS = 0.45;
 const PAINTING_MATERIAL_METALNESS = 0.0;
 
 // Painting content component - handles texture transitions

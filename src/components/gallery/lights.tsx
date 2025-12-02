@@ -72,57 +72,57 @@ const FullLights: FC = () => {
 
   return (
     <>
-      {/* Gentle ambient glow to lift the space */}
-      <ambientLight intensity={0.2} color="#26263a" />
+      {/* Ambient: just enough to avoid total black crush */}
+      <ambientLight intensity={0.04} color="#151520" />
 
-      {/* Ceiling bounce to keep wall details slightly visible */}
-      <hemisphereLight args={["#5a5a7a", "#131320", 0.25]} />
+      {/* Hemisphere: very subtle cool bounce */}
+      <hemisphereLight args={["#3c3c54", "#070711", 0.06]} />
 
-      {/* Subtle overhead wash to outline architecture */}
-      <directionalLight position={[-1.8, 2.8, 3]} intensity={0.18} color="#4a4a64" />
+      {/* Directional: nearly off, only to hint at architecture */}
+      <directionalLight position={[-1.8, 2.8, 3]} intensity={0.06} color="#36364a" />
 
-      {/* Key spotlight directly above the painting */}
+      {/* Key spotlight (hero light) - tight focused beam */}
       <spotLight
         ref={keyLightRef}
-        position={[0, 2.95, 4.0]}
-        angle={0.7}
-        penumbra={0.96}
-        intensity={26}
-        distance={6.5}
+        position={[0, 3.1, 4.0]}
+        angle={0.45}
+        penumbra={0.7}
+        intensity={30}
+        distance={6.0}
         decay={2}
         color="#f6e3c4"
         castShadow
         shadow-mapSize={[1024, 1024]}
       />
 
-      {/* Secondary spill from the front to soften falloff */}
+      {/* Fill spotlight (subtle front fill) */}
       <spotLight
         ref={fillLightRef}
-        position={[0.15, 2.3, 2.6]}
-        angle={0.7}
-        penumbra={0.95}
-        intensity={14}
-        distance={6.5}
+        position={[0.2, 2.5, 2.4]}
+        angle={0.5}
+        penumbra={0.85}
+        intensity={8}
+        distance={5.0}
         decay={2}
         color="#dccab0"
       />
 
-      {/* Subtle floor wash */}
-      <pointLight position={[0, 1.05, 3.45]} intensity={0.4} distance={5.2} decay={2.1} color="#3c3c56" />
+      {/* Floor wash - almost gone */}
+      <pointLight position={[0, 1.05, 3.45]} intensity={0.12} distance={5.2} decay={2.1} color="#26263a" />
 
-      {/* Wall grazers for a very soft ambient glow */}
-      <pointLight position={[-2.4, 1.7, 3.8]} intensity={0.45} distance={7.2} decay={2.05} color="#4a4a66" />
-      <pointLight position={[2.4, 1.7, 3.6]} intensity={0.4} distance={7.2} decay={2.05} color="#4c4c69" />
+      {/* Wall grazers - very faint */}
+      <pointLight position={[-2.4, 1.7, 3.8]} intensity={0.15} distance={7.2} decay={2.05} color="#323248" />
+      <pointLight position={[2.4, 1.7, 3.6]} intensity={0.12} distance={7.2} decay={2.05} color="#343453" />
 
-      {/* Back wall uplight to silhouette the frame */}
-      <pointLight position={[0, 0.78, 4.45]} intensity={0.45} distance={5.8} decay={2.2} color="#323248" />
+      {/* Back wall uplight - just a rim behind the frame */}
+      <pointLight position={[0, 0.78, 4.45]} intensity={0.2} distance={5.8} decay={2.2} color="#26263a" />
 
-      {/* Soft floor glow to hint at the spotlight focus */}
+      {/* Floor glow - very subtle */}
       <mesh ref={floorGlowRef} rotation={[-Math.PI / 2, 0, 0]} geometry={floorGlowGeometry}>
         <meshBasicMaterial
           color="#fef3d4"
           transparent
-          opacity={0.08}
+          opacity={0.04}
           depthWrite={false}
           side={DoubleSide}
           vertexColors
