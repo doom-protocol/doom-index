@@ -80,7 +80,9 @@ console.log("TOP 50 LARGEST FILES");
 console.log("=".repeat(80));
 entries.slice(0, 50).forEach((entry, index) => {
   const percentage = ((entry.bytes / totalSize) * 100).toFixed(2);
-  console.log(`${String(index + 1).padStart(3)}. ${formatBytes(entry.bytes).padEnd(10)} (${percentage.padStart(5)}%) - ${entry.path}`);
+  console.log(
+    `${String(index + 1).padStart(3)}. ${formatBytes(entry.bytes).padEnd(10)} (${percentage.padStart(5)}%) - ${entry.path}`,
+  );
 });
 
 console.log("\n" + "=".repeat(80));
@@ -88,7 +90,9 @@ console.log("TOP 30 LARGEST LIBRARIES/DEPENDENCIES");
 console.log("=".repeat(80));
 libraryEntries.slice(0, 30).forEach((entry, index) => {
   const percentage = ((entry.bytes / totalSize) * 100).toFixed(2);
-  console.log(`${String(index + 1).padStart(3)}. ${formatBytes(entry.bytes).padEnd(10)} (${percentage.padStart(5)}%) - ${entry.library}`);
+  console.log(
+    `${String(index + 1).padStart(3)}. ${formatBytes(entry.bytes).padEnd(10)} (${percentage.padStart(5)}%) - ${entry.library}`,
+  );
 });
 
 console.log("\n" + "=".repeat(80));

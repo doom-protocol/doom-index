@@ -53,7 +53,7 @@ const nextConfig: NextConfig = {
         "use-haptic": stub,
         sonner: stub,
         "js-tiktoken": stub,
-        "leva": stub,
+        leva: stub,
       };
     }
 
