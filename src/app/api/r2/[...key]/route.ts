@@ -15,56 +15,43 @@ type CachedResponse = {
 };
 
 /**
- * Fetch image with Cloudflare Image Resizing applied
- * Uses Workers Image Resizing API via cf.image options on fetch
- *
- * @param originUrl - Full URL to the image origin (R2_IMAGE_ORIGIN + objectKey)
- * @param options - Image transformation options
- * @returns Response with transformed image or null if transformation failed
+ * Build ImageTransform options from CloudflareImageOptions
+ * Maps our internal options to Cloudflare Images binding transform options
  */
-async function fetchWithImageTransform(originUrl: string, options: CloudflareImageOptions): Promise<Response | null> {
-  try {
-    // Build cf.image options for Workers Image Resizing
-    const cfImageOptions: RequestInitCfPropertiesImage = {};
+function buildImageTransform(options: CloudflareImageOptions): ImageTransform {
+  const transform: ImageTransform = {};
 
-    if (options.width) cfImageOptions.width = options.width;
-    if (options.height) cfImageOptions.height = options.height;
-    if (options.quality) cfImageOptions.quality = options.quality;
-    if (options.fit) cfImageOptions.fit = options.fit;
-    // Map "auto" format to undefined (let Cloudflare decide), otherwise use the specified format
-    if (options.format && options.format !== "auto") {
-      cfImageOptions.format = options.format;
-    }
-    if (options.dpr) cfImageOptions.dpr = options.dpr;
+  if (options.width) transform.width = options.width;
+  if (options.height) transform.height = options.height;
+  if (options.fit) transform.fit = options.fit;
+  if (options.sharpen) transform.sharpen = options.sharpen;
 
-    logger.debug("[R2 Route] Fetching with image transform", {
-      originUrl,
-      cfImageOptions,
-    });
+  return transform;
+}
 
-    const response = await fetch(originUrl, {
-      cf: {
-        image: cfImageOptions,
-      },
-    });
+/**
+ * Build ImageOutputOptions from CloudflareImageOptions
+ * Maps our internal options to Cloudflare Images binding output options
+ */
+function buildImageOutputOptions(options: CloudflareImageOptions): ImageOutputOptions {
+  // Map format string to MIME type
+  let format: ImageOutputOptions["format"] = "image/webp"; // default
 
-    if (!response.ok) {
-      logger.warn("[R2 Route] Image transform fetch failed", {
-        originUrl,
-        status: response.status,
-        statusText: response.statusText,
-      });
-      return null;
-    }
-
-    return response;
-  } catch (error) {
-    logger.error("[R2 Route] Image transform error", {
-      originUrl,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return null;
+  if (options.format && options.format !== "auto") {
+    const formatMap: Record<string, ImageOutputOptions["format"]> = {
+      webp: "image/webp",
+      avif: "image/avif",
+      jpeg: "image/jpeg",
+      png: "image/png",
+    };
+    format = formatMap[options.format] ?? "image/webp";
   }
+
+  const output: ImageOutputOptions = { format };
+
+  if (options.quality) output.quality = options.quality;
+
+  return output;
 }
 
 /**
@@ -77,8 +64,8 @@ async function fetchWithImageTransform(originUrl: string, options: CloudflareIma
  *
  * NOTE: This endpoint is available for both development and production environments.
  * - Images are served via R2 binding, regardless of NEXT_PUBLIC_R2_URL configuration.
- * - When R2_IMAGE_ORIGIN is configured and transform params are present,
- *   images are transformed using Cloudflare Workers Image Resizing.
+ * - When transform params are present, images are transformed using IMAGES binding
+ *   (Cloudflare Images API) for type-safe image transformation.
  * - Without transform params, images are served directly from R2 (cached in KV).
  */
 export async function GET(req: Request, { params }: { params: Promise<{ key: string[] }> }): Promise<Response> {
@@ -124,80 +111,29 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const url = new URL(req.url);
   const transformOptions = parseApiR2TransformParams(url);
 
-  // Get R2_IMAGE_ORIGIN from Cloudflare env (server-side only)
-  let r2ImageOrigin: string | undefined;
-  try {
-    const { env: cfEnv } = await getCloudflareContext({ async: true });
-    r2ImageOrigin = (cfEnv as unknown as Record<string, unknown>).R2_IMAGE_ORIGIN as string | undefined;
-  } catch {
-    // Fallback to process.env for local development
-    r2ImageOrigin = process.env.R2_IMAGE_ORIGIN;
-  }
+  // For non-transformed images, use KV cache
+  const cacheKey = `r2:route:${objectKey}`;
 
-  // If transform options are present and R2_IMAGE_ORIGIN is configured,
-  // use Workers Image Resizing instead of direct R2 access
-  if (transformOptions && r2ImageOrigin) {
-    logger.debug("[R2 Route] Using image transformation", {
-      objectKey,
-      transformOptions,
-      r2ImageOrigin,
-    });
+  // Skip cache for transformed images (they're handled by IMAGES binding)
+  if (!transformOptions) {
+    logger.debug("[R2 Route] Checking cache", { cacheKey });
 
-    // Build origin URL for the image
-    const originUrl = new URL(objectKey, r2ImageOrigin).toString();
+    const cached = await get<CachedResponse>(cacheKey);
 
-    // Fetch with image transformation
-    const transformedResponse = await fetchWithImageTransform(originUrl, transformOptions);
-
-    if (transformedResponse) {
-      const duration = Date.now() - startTime;
-      logger.info("[R2 Route] Transform success", {
-        objectKey,
-        transformOptions,
-        duration,
+    if (cached !== null) {
+      logger.debug("[R2 Route] Cache hit", {
+        cacheKey,
+        status: cached.status,
       });
-
-      // Clone headers and add cache control
-      const responseHeaders = new Headers(transformedResponse.headers);
-      responseHeaders.set("Cache-Control", `public, max-age=${R2_IMAGE_CACHE_TTL_SECONDS}, immutable`);
-
-      return new Response(transformedResponse.body, {
-        status: transformedResponse.status,
-        headers: responseHeaders,
+      // Reconstruct Response from cached data
+      const headers = new Headers(cached.headers);
+      const body = Uint8Array.from(atob(cached.body), c => c.charCodeAt(0));
+      return new Response(body, {
+        status: cached.status,
+        statusText: cached.statusText,
+        headers,
       });
     }
-
-    // Fall through to direct R2 access if transformation failed
-    logger.warn("[R2 Route] Transform failed, falling back to direct R2", {
-      objectKey,
-      transformOptions,
-    });
-  } else if (transformOptions && !r2ImageOrigin) {
-    // Log warning if transform params present but no origin configured
-    logger.warn("[R2 Route] Transform params present but R2_IMAGE_ORIGIN not configured", {
-      objectKey,
-      transformOptions,
-    });
-  }
-
-  const cacheKey = `r2:route:${objectKey}`;
-  logger.debug("[R2 Route] Checking cache", { cacheKey });
-
-  const cached = await get<CachedResponse>(cacheKey);
-
-  if (cached !== null) {
-    logger.debug("[R2 Route] Cache hit", {
-      cacheKey,
-      status: cached.status,
-    });
-    // Reconstruct Response from cached data
-    const headers = new Headers(cached.headers);
-    const body = Uint8Array.from(atob(cached.body), c => c.charCodeAt(0));
-    return new Response(body, {
-      status: cached.status,
-      statusText: cached.statusText,
-      headers,
-    });
   }
 
   logger.debug("[R2 Route] Cache miss, resolving bucket", { objectKey });
@@ -228,6 +164,57 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
     size: object.size,
     contentType: object.httpMetadata?.contentType,
   });
+
+  // If transform options are present, use IMAGES binding to transform the image
+  if (transformOptions) {
+    try {
+      const { env: cfEnv } = await getCloudflareContext({ async: true });
+      const images = (cfEnv as CloudflareEnv).IMAGES;
+
+      if (images) {
+        logger.debug("[R2 Route] Using IMAGES binding for transformation", {
+          objectKey,
+          transformOptions,
+        });
+
+        const bodyStream = (object as R2ObjectBody).body;
+        const imageTransform = buildImageTransform(transformOptions);
+        const outputOptions = buildImageOutputOptions(transformOptions);
+
+        // Apply transformation using IMAGES binding
+        const transformer = images.input(bodyStream as ReadableStream<Uint8Array>);
+        const transformedResult = await transformer.transform(imageTransform).output(outputOptions);
+
+        const duration = Date.now() - startTime;
+        logger.info("[R2 Route] Transform success", {
+          objectKey,
+          transformOptions,
+          duration,
+          contentType: transformedResult.contentType(),
+        });
+
+        // Get the response and add cache headers
+        const transformedResponse = transformedResult.response();
+        const responseHeaders = new Headers(transformedResponse.headers);
+        responseHeaders.set("Cache-Control", `public, max-age=${R2_IMAGE_CACHE_TTL_SECONDS}, immutable`);
+
+        return new Response(transformedResponse.body, {
+          status: transformedResponse.status,
+          headers: responseHeaders,
+        });
+      } else {
+        logger.warn("[R2 Route] IMAGES binding not available, falling back to direct R2", {
+          objectKey,
+        });
+      }
+    } catch (error) {
+      logger.error("[R2 Route] Image transform error, falling back to direct R2", {
+        objectKey,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Fall through to direct R2 access
+    }
+  }
 
   const headers = new Headers();
 

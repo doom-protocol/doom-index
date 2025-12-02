@@ -62,6 +62,10 @@ id = "8c588d03a8ab4cd19e0c458dcabf1bec"
 binding = "AI"
 remote = true
 
+# Cloudflare Images Binding (for image transformation)
+[images]
+binding = "IMAGES"
+
 # Next.js on Cloudflare Pages is managed in open-next.config.ts
 [assets]
 directory = "./.open-next/assets"
@@ -91,10 +95,6 @@ NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
 NEXT_PUBLIC_R2_URL = "/api/r2"
 IMAGE_MODEL = "runware:400@1"
 NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000    # 10 minutes
-# R2_IMAGE_ORIGIN is used for Cloudflare Workers Image Resizing
-# Set this to your R2 public bucket URL or custom domain (e.g., "https://storage.doomindex.fun")
-# When configured, /api/r2 will apply image transformations (resize, quality, format) via cf.image
-# R2_IMAGE_ORIGIN = "https://storage.doomindex.fun"
 
 [observability]
 enabled = false
@@ -140,6 +140,10 @@ id = "8c588d03a8ab4cd19e0c458dcabf1bec"
 [env.dev.ai]
 binding = "AI"
 remote = true
+
+# Cloudflare Images Binding (for image transformation)
+[env.dev.images]
+binding = "IMAGES"
 
 # Service Binding
 [[env.dev.services]]
