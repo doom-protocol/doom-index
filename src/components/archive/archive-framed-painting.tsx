@@ -42,8 +42,8 @@ const TRANSITION_DURATION = 0.8;
 const DEFAULT_FRAME_POSITION: [number, number, number] = [0, 0.8, 4.0];
 const FRAME_ROTATION: [number, number, number] = [0, Math.PI, 0];
 
-const PAINTING_MATERIAL_ROUGHNESS = 0.25;
-const PAINTING_MATERIAL_METALNESS = 0.05;
+const PAINTING_MATERIAL_ROUGHNESS = 0.5;
+const PAINTING_MATERIAL_METALNESS = 0.0;
 
 const FRAME_INNER_WIDTH = 0.6;
 const FRAME_INNER_HEIGHT = 0.8;

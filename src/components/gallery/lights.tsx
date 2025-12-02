@@ -73,13 +73,13 @@ const FullLights: FC = () => {
   return (
     <>
       {/* Gentle ambient glow to lift the space */}
-      <ambientLight intensity={0.48} color="#323248" />
+      <ambientLight intensity={0.2} color="#26263a" />
 
-      {/* Ceiling bounce to keep wall details visible */}
-      <hemisphereLight args={["#737395", "#1e1e2c", 0.55]} />
+      {/* Ceiling bounce to keep wall details slightly visible */}
+      <hemisphereLight args={["#5a5a7a", "#131320", 0.25]} />
 
       {/* Subtle overhead wash to outline architecture */}
-      <directionalLight position={[-1.8, 2.8, 3]} intensity={0.45} color="#5c5c74" />
+      <directionalLight position={[-1.8, 2.8, 3]} intensity={0.18} color="#4a4a64" />
 
       {/* Key spotlight directly above the painting */}
       <spotLight
@@ -101,28 +101,28 @@ const FullLights: FC = () => {
         position={[0.15, 2.3, 2.6]}
         angle={0.7}
         penumbra={0.95}
-        intensity={16}
+        intensity={14}
         distance={6.5}
         decay={2}
         color="#dccab0"
       />
 
       {/* Subtle floor wash */}
-      <pointLight position={[0, 1.05, 3.45]} intensity={1.2} distance={5.2} decay={2.1} color="#4a4a66" />
+      <pointLight position={[0, 1.05, 3.45]} intensity={0.4} distance={5.2} decay={2.1} color="#3c3c56" />
 
-      {/* Wall grazers for a luxurious ambient glow */}
-      <pointLight position={[-2.4, 1.7, 3.8]} intensity={1.55} distance={7.2} decay={2.05} color="#5a5a75" />
-      <pointLight position={[2.4, 1.7, 3.6]} intensity={1.45} distance={7.2} decay={2.05} color="#5c5c78" />
+      {/* Wall grazers for a very soft ambient glow */}
+      <pointLight position={[-2.4, 1.7, 3.8]} intensity={0.45} distance={7.2} decay={2.05} color="#4a4a66" />
+      <pointLight position={[2.4, 1.7, 3.6]} intensity={0.4} distance={7.2} decay={2.05} color="#4c4c69" />
 
       {/* Back wall uplight to silhouette the frame */}
-      <pointLight position={[0, 0.78, 4.45]} intensity={1.05} distance={5.8} decay={2.2} color="#3c3c52" />
+      <pointLight position={[0, 0.78, 4.45]} intensity={0.45} distance={5.8} decay={2.2} color="#323248" />
 
       {/* Soft floor glow to hint at the spotlight focus */}
       <mesh ref={floorGlowRef} rotation={[-Math.PI / 2, 0, 0]} geometry={floorGlowGeometry}>
         <meshBasicMaterial
           color="#fef3d4"
           transparent
-          opacity={0.14}
+          opacity={0.08}
           depthWrite={false}
           side={DoubleSide}
           vertexColors
