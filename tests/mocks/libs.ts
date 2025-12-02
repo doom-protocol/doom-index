@@ -36,7 +36,16 @@ export function createAnalyticsMock() {
 export function createGlbExportServiceMock() {
   return () => ({
     glbExportService: {
-      exportGroupToGlb: mock(async () => new File([], "test.glb", { type: "model/gltf-binary" })),
+      exportPaintingModel: mock(async () => ({
+        isOk: () => true,
+        isErr: () => false,
+        value: new File([], "test.glb", { type: "application/octet-stream" }),
+      })),
+      optimizeGlb: mock(async () => ({
+        isOk: () => true,
+        isErr: () => false,
+        value: new ArrayBuffer(1024),
+      })),
     },
   });
 }
