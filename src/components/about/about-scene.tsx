@@ -8,6 +8,7 @@ import { Canvas } from "@react-three/fiber";
 import type { PropsWithChildren } from "react";
 import { Suspense, useEffect, useMemo, useState, type FC } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
+import { WebGPURenderer } from "three/webgpu";
 import { GalleryRoom } from "../gallery/gallery-room";
 import { Lights } from "../gallery/lights";
 import { FloatingWhitepaper } from "./floating-whitepaper";
@@ -260,7 +261,15 @@ export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPositio
           near: 0.1,
           far: 100,
         }}
-        gl={{ antialias: true }}
+        gl={async props => {
+          const renderer = new WebGPURenderer(props as any);
+          await renderer.init();
+          logger.debug("about-scene.renderer", {
+            renderer,
+            backend: (renderer as any).backend?.constructor?.name,
+          });
+          return renderer as any;
+        }}
         style={{
           position: "fixed",
           top: `${HEADER_HEIGHT}px`,

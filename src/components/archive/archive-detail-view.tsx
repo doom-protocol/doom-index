@@ -5,11 +5,13 @@ import { Lights } from "@/components/gallery/lights";
 import { env } from "@/env";
 import { useEscapeKey } from "@/hooks/use-click-outside";
 import { sendGAEvent } from "@/lib/analytics";
+import { logger } from "@/utils/logger";
 import type { Painting } from "@/types/paintings";
 import { Stats } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useCallback, useEffect, useRef, useState, type FC } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap, Vector3 } from "three";
+import { WebGPURenderer } from "three/webgpu";
 import { useHaptic } from "use-haptic";
 import { ArchiveFramedPainting } from "./archive-framed-painting";
 
@@ -146,9 +148,14 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
             near: 0.1,
             far: 100,
           }}
-          gl={{
-            antialias: true,
-            toneMapping: ACESFilmicToneMapping,
+          gl={async props => {
+            const renderer = new WebGPURenderer(props as any);
+            await renderer.init();
+            logger.debug("archive-detail-view.renderer", {
+              renderer,
+              backend: (renderer as any).backend?.constructor?.name,
+            });
+            return renderer as any;
           }}
           onCreated={({ gl }) => {
             gl.shadowMap.enabled = true;
