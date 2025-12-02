@@ -35,8 +35,8 @@ on:
       - ".example.vars"
 
 jobs:
-  setup:
-    name: Setup
+  format:
+    name: Format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -62,41 +62,11 @@ jobs:
         if: steps.bun-cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
-      - name: Upload node_modules
-        uses: actions/upload-artifact@v4
-        with:
-          name: node_modules
-          path: node_modules
-          retention-days: 1
-
-  format:
-    name: Format
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.3
-
-      - name: Download node_modules
-        uses: actions/download-artifact@v4
-        with:
-          name: node_modules
-          path: node_modules
-
-      - name: Restore executable permissions
-        run: chmod +x node_modules/.bin/*
-
       - name: Run formatter
         run: bun run format
 
   lint:
     name: Lint
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -107,21 +77,26 @@ jobs:
         with:
           bun-version: 1.3.3
 
-      - name: Download node_modules
-        uses: actions/download-artifact@v4
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        id: bun-cache
         with:
-          name: node_modules
-          path: node_modules
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
-      - name: Restore executable permissions
-        run: chmod +x node_modules/.bin/*
+      - name: Install dependencies
+        if: steps.bun-cache.outputs.cache-hit != 'true'
+        run: bun install --frozen-lockfile
 
       - name: Run ESLint
         run: bun run lint
 
   typecheck:
     name: Type Check
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -132,21 +107,26 @@ jobs:
         with:
           bun-version: 1.3.3
 
-      - name: Download node_modules
-        uses: actions/download-artifact@v4
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        id: bun-cache
         with:
-          name: node_modules
-          path: node_modules
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
-      - name: Restore executable permissions
-        run: chmod +x node_modules/.bin/*
+      - name: Install dependencies
+        if: steps.bun-cache.outputs.cache-hit != 'true'
+        run: bun install --frozen-lockfile
 
       - name: Run type check
         run: bun run typecheck
 
   test:
     name: Test
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -157,11 +137,20 @@ jobs:
         with:
           bun-version: 1.3.3
 
-      - name: Download node_modules
-        uses: actions/download-artifact@v4
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        id: bun-cache
         with:
-          name: node_modules
-          path: node_modules
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        if: steps.bun-cache.outputs.cache-hit != 'true'
+        run: bun install --frozen-lockfile
 
       - name: Copy .example.vars to .dev.vars
         run: cp .example.vars .dev.vars
@@ -186,14 +175,20 @@ jobs:
         with:
           bun-version: 1.3.3
 
-      - name: Download node_modules
-        uses: actions/download-artifact@v4
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        id: bun-cache
         with:
-          name: node_modules
-          path: node_modules
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
-      - name: Restore executable permissions
-        run: chmod +x node_modules/.bin/*
+      - name: Install dependencies
+        if: steps.bun-cache.outputs.cache-hit != 'true'
+        run: bun install --frozen-lockfile
 
       - name: Copy .example.vars to .dev.vars
         run: cp .example.vars .dev.vars
