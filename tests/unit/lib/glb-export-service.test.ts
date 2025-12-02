@@ -45,6 +45,13 @@ mock.module("three-stdlib", () => ({
 // The mock.module() call above ensures three-stdlib is mocked before this import
 import { glbExportService } from "@/lib/glb-export-service";
 
+// Verify the service is properly loaded
+if (!glbExportService || typeof glbExportService.exportPaintingModel !== "function") {
+  throw new Error(
+    `glbExportService is not properly loaded. Type: ${typeof glbExportService}, Keys: ${glbExportService ? Object.keys(glbExportService).join(", ") : "undefined"}`,
+  );
+}
+
 describe("glbExportService", () => {
   beforeEach(() => {
     mockParseExporter.mockReset();

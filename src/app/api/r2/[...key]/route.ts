@@ -1,4 +1,3 @@
-import { env } from "@/env";
 import { get, set } from "@/lib/cache";
 import { parseApiR2TransformParams, type CloudflareImageOptions } from "@/lib/cloudflare-image";
 import { joinR2Key, resolveR2BucketAsync } from "@/lib/r2";
@@ -76,13 +75,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
     url: requestUrl,
     method: req.method,
   });
-
-  // If R2 public URL is configured, this endpoint should not be used
-  // All images should be served directly from the public bucket
-  // EXCEPT when the public URL points to this endpoint itself (local development)
-  const r2Url = env.NEXT_PUBLIC_R2_URL || process.env.NEXT_PUBLIC_R2_URL;
-  const _isLocalR2Route = r2Url?.includes("/api/r2");
-  const _isDevelopment = env.NODE_ENV === "development" || process.env.NODE_ENV === "development";
 
   // This endpoint is available for both development and production
   // Images are served via R2 binding, regardless of NEXT_PUBLIC_R2_URL configuration
@@ -177,12 +169,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
           transformOptions,
         });
 
-        const bodyStream = (object as R2ObjectBody).body;
+        const bodyStream = object.body;
         const imageTransform = buildImageTransform(transformOptions);
         const outputOptions = buildImageOutputOptions(transformOptions);
 
         // Apply transformation using IMAGES binding
-        const transformer = images.input(bodyStream as ReadableStream<Uint8Array>);
+        const transformer = images.input(bodyStream);
         const transformedResult = await transformer.transform(imageTransform).output(outputOptions);
 
         const duration = Date.now() - startTime;
@@ -230,7 +222,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
  * Extracted to avoid code duplication between normal path and transform fallback
  */
 async function serveR2Object(
-  object: R2Object | R2ObjectBody,
+  object: R2ObjectBody,
   objectKey: string,
   cacheKey: string,
   startTime: number,
@@ -275,7 +267,7 @@ async function serveR2Object(
   }
 
   try {
-    const bodyStream = (object as R2ObjectBody).body;
+    const bodyStream = object.body;
     logger.debug("[R2 Route] Reading object body", { objectKey });
     const bodyArrayBuffer = await new Response(bodyStream).arrayBuffer();
 
