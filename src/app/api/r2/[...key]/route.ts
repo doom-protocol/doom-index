@@ -22,10 +22,7 @@ type CachedResponse = {
  * @param options - Image transformation options
  * @returns Response with transformed image or null if transformation failed
  */
-async function fetchWithImageTransform(
-  originUrl: string,
-  options: CloudflareImageOptions,
-): Promise<Response | null> {
+async function fetchWithImageTransform(originUrl: string, options: CloudflareImageOptions): Promise<Response | null> {
   try {
     // Build cf.image options for Workers Image Resizing
     const cfImageOptions: RequestInitCfPropertiesImage = {};

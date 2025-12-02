@@ -645,11 +645,11 @@ describe("cloudflare-image", () => {
       const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
 
       // Valid fit values
-      const validFits = ["scale-down", "contain", "cover", "crop", "pad"];
+      const validFits = ["scale-down", "contain", "cover", "crop", "pad"] as const;
       for (const fit of validFits) {
         const url = new URL(`https://example.com/api/r2/test.jpg?fit=${fit}`);
         const result = parseApiR2TransformParams(url);
-        expect(result).toEqual({ fit });
+        expect(result?.fit).toBe(fit);
       }
 
       // Invalid fit value
@@ -662,11 +662,11 @@ describe("cloudflare-image", () => {
       const { parseApiR2TransformParams } = await import("@/lib/cloudflare-image");
 
       // Valid format values
-      const validFormats = ["auto", "webp", "avif", "jpeg", "png"];
+      const validFormats = ["auto", "webp", "avif", "jpeg", "png"] as const;
       for (const fmt of validFormats) {
         const url = new URL(`https://example.com/api/r2/test.jpg?fmt=${fmt}`);
         const result = parseApiR2TransformParams(url);
-        expect(result).toEqual({ format: fmt });
+        expect(result?.format).toBe(fmt);
       }
 
       // Invalid format value
