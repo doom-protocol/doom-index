@@ -1,10 +1,20 @@
 import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
+import withRspack from "next-rspack";
 import path from "path";
 
+/**
+ * Compose multiple Next.js plugins
+ */
+type NextPlugin = (config: NextConfig) => NextConfig;
+
+function composePlugins(...plugins: NextPlugin[]) {
+  return (config: NextConfig): NextConfig => plugins.reduceRight((acc, plugin) => plugin(acc), config);
+}
+
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
+  output: "standalone",
   experimental: {
     viewTransition: true,
     scrollRestoration: true,
@@ -18,37 +28,32 @@ const nextConfig: NextConfig = {
     loaderFile: "./src/lib/image-loader.ts",
   },
   webpack: (config, { isServer }) => {
-    // js-tiktoken is used in Edge runtime but not needed for server logic in this case,
-    // or we want to polyfill it. However, to keep it simple and consistent with other mocks,
-    // we can try to use the stub if it's not critically used in a way that breaks the app.
-    // Based on previous context, it seems we wanted to exclude it.
-
+    // Server-side: stub browser-only libraries to reduce bundle size
     if (isServer) {
+      const stub = path.resolve(process.cwd(), "src/mocks/stub.js");
       config.resolve.alias = {
         ...config.resolve.alias,
-        "js-tiktoken": path.resolve(process.cwd(), "src/mocks/stub.js"),
-        three: path.resolve(process.cwd(), "src/mocks/stub.js"),
-        "three-stdlib": path.resolve(process.cwd(), "src/mocks/stub.js"),
-        "@react-three/fiber": path.resolve(process.cwd(), "src/mocks/stub.js"),
-        "@react-three/drei": path.resolve(process.cwd(), "src/mocks/stub.js"),
-        "@solana/web3.js": path.resolve(process.cwd(), "src/mocks/stub.js"),
-        // Solana wallet adapter 関連
-        "@solana/wallet-adapter-base": path.resolve(process.cwd(), "src/mocks/stub.js"),
-        "@solana/wallet-adapter-react": path.resolve(process.cwd(), "src/mocks/stub.js"),
-        "@solana/wallet-adapter-react-ui": path.resolve(process.cwd(), "src/mocks/stub.js"),
-        "@solana/wallet-adapter-wallets": path.resolve(process.cwd(), "src/mocks/stub.js"),
-        // ブラウザ専用ライブラリ
-        "use-sound": path.resolve(process.cwd(), "src/mocks/stub.js"),
-        "use-haptic": path.resolve(process.cwd(), "src/mocks/stub.js"),
-        sonner: path.resolve(process.cwd(), "src/mocks/stub.js"),
-        // CSSファイルはクライアントサイドでのみ使用
-        // "@solana/wallet-adapter-react-ui/styles.css": path.resolve(process.cwd(), "src/mocks/stub.js"),
+        // Three.js / React Three Fiber
+        three: stub,
+        "three-stdlib": stub,
+        "@react-three/fiber": stub,
+        "@react-three/drei": stub,
+        // Solana
+        "@solana/web3.js": stub,
+        "@solana/wallet-adapter-base": stub,
+        "@solana/wallet-adapter-react": stub,
+        "@solana/wallet-adapter-react-ui": stub,
+        "@solana/wallet-adapter-wallets": stub,
+        // Browser-only utilities
+        "use-sound": stub,
+        "use-haptic": stub,
+        sonner: stub,
+        "js-tiktoken": stub,
       };
     }
 
-    // クライアントサイドでのバンドル最適化
+    // Client-side: optimize vendor chunks
     if (!isServer) {
-      // CSSファイルの解決を追加
       config.resolve.alias = {
         ...config.resolve.alias,
         "@solana/wallet-adapter-react-ui/styles.css": path.resolve(
@@ -57,25 +62,21 @@ const nextConfig: NextConfig = {
         ),
       };
 
-      // ベンダーチャンクの分割
       config.optimization = {
         ...config.optimization,
         splitChunks: {
           chunks: "all",
           cacheGroups: {
-            // React関連ライブラリを分離
             react: {
               test: /[\\/]node_modules[\\/](react|react-dom|@react-three\/fiber|@react-three\/drei|three|three-stdlib)[\\/]/,
               name: "react-vendor",
               priority: 10,
             },
-            // Solana関連ライブラリを分離
             solana: {
               test: /[\\/]node_modules[\\/](@solana\/|@metaplex-foundation\/)[\\/]/,
               name: "solana-vendor",
               priority: 10,
             },
-            // その他のベンダーライブラリ
             vendor: {
               test: /[\\/]node_modules[\\/]/,
               name: "vendor",
@@ -90,10 +91,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withMDX = createMDX();
+// Compose plugins: Rspack (fast bundler) + MDX support
+const withPlugins = composePlugins(withRspack, createMDX());
 
-export default withMDX(nextConfig);
+export default withPlugins(nextConfig);
 
+// Initialize OpenNext Cloudflare bindings for local development
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 if (process.env.NODE_ENV === "development") {
   void initOpenNextCloudflareForDev({ remoteBindings: true });

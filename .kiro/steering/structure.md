@@ -1,7 +1,7 @@
 ---
 title: DOOM INDEX - プロジェクト構造と規約
 includes: always
-updated: 2025-01-15
+updated: 2025-12-02
 ---
 
 ## ルート構成（概要）
@@ -35,25 +35,28 @@ updated: 2025-01-15
     - `r2.ts` R2 オブジェクト取得ルーター
 - `components/`
   - `gallery/` 3D シーン（camera-rig, framed-painting, lights, scene）
-  - `ui/` UI コンポーネント（トップバー、リアルタイム表示 等）
+  - `ui/` UI コンポーネント（トップバー、リアルタイム表示、**mint-modal** 等）
   - `about/` About ページコンポーネント（whitepaper-viewer, about-scene 等）
   - `archive/` **アーカイブページコンポーネント**（archive-content, archive-grid, archive-item 等）
+  - `providers/` **Providers**（solana-wallet-provider, query-provider 等）
   - `icons/` アイコン群
 - `constants/` 固定値・プロンプト・トークン定義
-- `hooks/` React hooks（グローバル状態、MC、画像、viewer、tRPC 統合）
+- `hooks/` React hooks（グローバル状態、MC、画像、viewer、tRPC 統合、Solana Wallet）
+  - `use-solana-wallet.ts`, `use-solana-mint.ts` - NFT ミント関連
+  - `use-ipfs-upload.ts` - IPFS アップロード
 - `lib/` **外部統合・腐敗防止層・独自モジュール**
   - 外部 API の wrapper、lib の腐敗防止層、独自モジュールなどを基本的に配置
   - `trpc/` **tRPC クライアント実装**
     - `client.ts` クライアントサイド tRPC クライアント（TanStack Query 統合）
     - `server.ts` サーバーサイド tRPC クライアント（Server Components 用）
-    - `vanilla-client.ts` vanilla tRPC クライアント（Web Workers 用）
-  - `image-generation-providers/` 画像生成 Provider 実装（runware, workers-ai, mock）
-  - `cache.ts` **Cloudflare Cache API ヘルパー（開発中）**
+  - `image-generation-providers/` 画像生成 Provider 実装（runware, mock）
+  - `cache.ts` **Cloudflare Cache API ヘルパー**
   - `r2.ts` R2 クライアント（環境差吸収）
+  - `pinata-client.ts` **Pinata IPFS クライアント**
   - `pure/` **純関数・ドメインロジック計算**
     - domain logic に直結する数値計算や、小さく切り出して testability を高める必要がある複雑な検証・計算ロジックを配置
     - プロンプト合成/正規化/量子化/ハッシュ等の純粋関数
-  - 共通: `hash.ts`, `round.ts`, `time.ts`, `runware-client.ts`, `kv.ts`, `workers-ai-client.ts`, `tavily-client.ts`, `coingecko-client.ts`
+  - 共通: `runware-client.ts`, `kv.ts`, `workers-ai-client.ts`, `tavily-client.ts`, `coingecko-client.ts`, `alternative-me-client.ts`
 - `services/` ビジネスロジック
   - `image-generation.ts` 画像生成サービス
   - `token-analysis-service.ts` トークン分析サービス
