@@ -10,7 +10,7 @@ import "../../preload";
 
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { render, waitFor, cleanup } from "@testing-library/react";
-import { useEffect, useState, type FC, type ReactNode } from "react";
+import { type FC, type ReactNode } from "react";
 import { createLoggerMock, createMockPerformance, resetMockTime, advanceMockTime, getMockTime } from "../../mocks";
 
 // Store captured logger calls for assertions using shared helper
