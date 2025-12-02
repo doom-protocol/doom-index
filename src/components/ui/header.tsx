@@ -124,7 +124,7 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
                     <span>Archive</span>
                   </Link>
                   {NAV_LINKS.map(({ href, label, Icon }) => (
-                    <Link
+                    <a
                       key={href}
                       href={href}
                       target="_blank"
@@ -134,7 +134,7 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
                     >
                       <Icon className="h-4 w-4" />
                       <span>{label}</span>
-                    </Link>
+                    </a>
                   ))}
                 </nav>
               ) : null}
@@ -161,7 +161,7 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
                 Archive
               </Link>
               {NAV_LINKS.map(({ href, label, Icon }) => (
-                <Link
+                <a
                   key={href}
                   href={href}
                   target="_blank"
@@ -170,7 +170,7 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
                   className={DESKTOP_LINK_CLASS}
                 >
                   <Icon className="h-3 w-3" />
-                </Link>
+                </a>
               ))}
             </nav>
           </div>

@@ -19,7 +19,12 @@ function getLocalDb(): string {
   throw new Error("No D1 .sqlite found under .wrangler/state/v3/d1/miniflare-D1DatabaseObject");
 }
 
-export default process.env.NODE_ENV === "production"
+// Use NEXT_PUBLIC_BASE_URL to detect environment instead of NODE_ENV
+// because NODE_ENV can be unreliable in Cloudflare Workers
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+const isProduction = !baseUrl.includes("localhost");
+
+export default isProduction
   ? defineConfig({
       schema: "./src/db/schema/index.ts",
       out: "./migrations",

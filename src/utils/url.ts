@@ -1,3 +1,5 @@
+import { isDevelopment } from "@/env";
+
 /**
  * Get base URL for static asset access
  * In browser/client: uses window.location.origin (current page origin)
@@ -22,6 +24,5 @@ export function getBaseUrl(): string {
   }
 
   // Fallback for server-side rendering
-  const isProduction = process.env.NODE_ENV === "production";
-  return isProduction ? "https://doomindex.fun" : "http://localhost:8787";
+  return isDevelopment() ? "http://localhost:8787" : "https://doomindex.fun";
 }

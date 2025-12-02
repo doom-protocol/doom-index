@@ -101,7 +101,10 @@ const withPlugins = composePlugins(withRspack, createMDX());
 export default withPlugins(nextConfig);
 
 // Initialize OpenNext Cloudflare bindings for local development
+// Use NEXT_PUBLIC_BASE_URL to detect development environment instead of NODE_ENV
+// because NODE_ENV can be unreliable in Cloudflare Workers due to build optimizations
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
-if (process.env.NODE_ENV === "development") {
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+if (baseUrl.includes("localhost")) {
   void initOpenNextCloudflareForDev({ remoteBindings: true });
 }

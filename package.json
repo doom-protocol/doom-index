@@ -8,7 +8,7 @@
   },
   "scripts": {
     "postinstall": "bun run patch:opennext",
-    "dev": "next dev",
+    "dev": "bun run build:cf --env=dev && bun run preview",
     "build": "next build",
     "build:cf": "opennextjs-cloudflare build",
     "patch:opennext": "bun scripts/patch-opennext-webpack-runtime.ts",
@@ -101,6 +101,7 @@
     "eslint-plugin-react-compiler": "^19.1.0-rc.2",
     "eslint-plugin-tailwindcss": "^4.0.0-beta.0",
     "eslint-plugin-unused-imports": "^4.3.0",
+    "leva": "^0.10.1",
     "next-rspack": "^16.0.6",
     "prettier": "^3.7.3",
     "prettier-plugin-organize-imports": "^4.3.0",

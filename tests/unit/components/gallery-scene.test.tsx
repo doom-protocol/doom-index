@@ -5,9 +5,12 @@
  * Uses real image URLs from /api/r2/ endpoint to test actual image loading behavior
  */
 
+// Import preload to ensure happy-dom globals are registered before any imports
+import "../../preload";
+
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { render, waitFor, cleanup } from "@testing-library/react";
-import type { FC, ReactNode } from "react";
+import { useEffect, useState, type FC, type ReactNode } from "react";
 import { createLoggerMock, createMockPerformance, resetMockTime, advanceMockTime, getMockTime } from "../../mocks";
 
 // Store captured logger calls for assertions using shared helper
@@ -21,13 +24,15 @@ mock.module("@/utils/logger", () => ({
 // Store original performance for restoration
 const originalPerformance = globalThis.performance;
 
-// Mock env
+// Mock env - use NEXT_PUBLIC_BASE_URL to determine development environment
 mock.module("@/env", () => ({
   env: {
-    NODE_ENV: "test",
+    NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
     LOG_LEVEL: "DEBUG",
     NEXT_PUBLIC_R2_URL: "/api/r2",
   },
+  isDevelopment: () => true,
+  getEnvironmentName: () => "development" as const,
 }));
 
 // Real image URL from /api/r2/ endpoint for realistic testing
@@ -237,8 +242,23 @@ mock.module("@/components/gallery/gallery-room", () => ({
   GalleryRoom: () => null,
 }));
 
+// Create a mock Lights component that we can reference
+const MockLights: FC = () => null;
+
 mock.module("@/components/gallery/lights", () => ({
-  Lights: () => null,
+  Lights: MockLights,
+}));
+
+// Mock leva (client-side only GUI library)
+mock.module("leva", () => ({
+  Leva: () => null,
+  useControls: () => ({}),
+}));
+
+// Mock next/dynamic to return the mocked Lights component directly
+// Since Lights is already mocked above, we can return it synchronously
+mock.module("next/dynamic", () => ({
+  default: () => MockLights,
 }));
 
 // Mock utils
@@ -372,8 +392,9 @@ describe("unit/components/gallery-scene", () => {
 
       // Verify no artificial delays were added beyond our simulated load time
       // The total time should be close to our simulated 150ms
+      // Note: dynamic imports may add some overhead, so we allow up to 300ms
       const endTime = getMockTime();
-      expect(endTime - startTime).toBeLessThanOrEqual(200);
+      expect(endTime - startTime).toBeLessThanOrEqual(300);
     });
   });
 

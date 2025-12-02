@@ -23,7 +23,7 @@ const PaginationButton: FC<PaginationButtonProps> = ({ href, onClick, disabled, 
   }
 
   return (
-    <Link href={href} onClick={onClick} className={className}>
+    <Link href={href as any} onClick={onClick} className={className}>
       {children}
     </Link>
   );

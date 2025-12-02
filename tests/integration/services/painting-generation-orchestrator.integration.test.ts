@@ -19,9 +19,11 @@ import type { MarketSnapshot, SelectedToken } from "@/types/paintings";
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { err, ok } from "neverthrow";
 
-// Mock env module
+// Mock env module - use NEXT_PUBLIC_BASE_URL to determine development environment
 mock.module("@/env", () => ({
-  env: { NODE_ENV: "development" },
+  env: { NEXT_PUBLIC_BASE_URL: "http://localhost:8787" },
+  isDevelopment: () => true,
+  getEnvironmentName: () => "development" as const,
 }));
 
 const mockSelectedToken: SelectedToken = {
@@ -140,11 +142,13 @@ describe("PaintingGenerationOrchestrator Integration", () => {
   describe("execute", () => {
     it("should skip execution when hourBucket already exists (idempotency)", async () => {
       // Mock env module to return production mode for this test
+      // Use NEXT_PUBLIC_BASE_URL to determine environment
       mock.module("@/env", () => ({
         env: {
-          NODE_ENV: "production",
           NEXT_PUBLIC_BASE_URL: "https://doomindex.fun",
         },
+        isDevelopment: () => false,
+        getEnvironmentName: () => "production" as const,
       }));
 
       // Mock existing snapshot

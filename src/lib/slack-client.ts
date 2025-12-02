@@ -1,4 +1,4 @@
-import { env } from "@/env";
+import { env, getEnvironmentName } from "@/env";
 import { err, ok, type Result } from "neverthrow";
 
 type SlackAttachmentField = {
@@ -200,7 +200,7 @@ export function formatErrorForSlack(error: unknown, context?: string, source: Er
   const fields: SlackAttachmentField[] = [
     {
       title: "Environment",
-      value: env.NODE_ENV,
+      value: getEnvironmentName(),
       short: true,
     },
     {

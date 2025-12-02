@@ -1,11 +1,17 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef, type FC } from "react";
+import { useEffect, useMemo, useRef, useState, type FC } from "react";
 import { CircleGeometry, DoubleSide, Float32BufferAttribute, type Mesh, type Object3D, type SpotLight } from "three";
+
+import { isDevelopment } from "@/env";
+
+import { LightsWithControls } from "./lights-controls";
 
 interface LightsProps {
   variant?: "simple" | "full";
+  /** Force disable dev controls even in development */
+  disableDevControls?: boolean;
 }
 
 // Simple lights for fast initial render (no hooks, no shadows)
@@ -135,10 +141,32 @@ const FullLights: FC = () => {
   );
 };
 
-// Exported component that switches between simple and full lights
-export const Lights: FC<LightsProps> = ({ variant = "full" }) => {
+/**
+ * Custom hook to safely check dev mode after hydration
+ * Returns false during initial render, then true if in dev mode after mount
+ */
+function useDevMode(): boolean {
+  const [isDevMode, setIsDevMode] = useState(false);
+
+  useEffect(() => {
+    setIsDevMode(isDevelopment());
+  }, []);
+
+  return isDevMode;
+}
+
+// Exported component that switches between simple, full, or dev-controlled lights
+export const Lights: FC<LightsProps> = ({ variant = "full", disableDevControls = false }) => {
+  const isDevMode = useDevMode();
+
   if (variant === "simple") {
     return <SimpleLights />;
   }
+
+  // In development mode, use interactive controls unless explicitly disabled
+  if (isDevMode && !disableDevControls) {
+    return <LightsWithControls />;
+  }
+
   return <FullLights />;
 };
