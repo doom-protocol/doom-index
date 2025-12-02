@@ -41,6 +41,15 @@ mock.module("three-stdlib", () => ({
   },
 }));
 
+// Override any existing mock for glb-export-service to ensure we test the real implementation
+// This is necessary because other test files (e.g., gallery-page.integration.test.tsx) may mock this module
+// We use require() to get the actual module and re-export it synchronously
+mock.module("@/lib/glb-export-service", () => {
+  // Clear the module cache to ensure we get the real implementation
+  delete require.cache[require.resolve("@/lib/glb-export-service")];
+  return require("@/lib/glb-export-service");
+});
+
 // Import service after mocking - use static import to work with mock.module
 // The mock.module() call above ensures three-stdlib is mocked before this import
 import { glbExportService } from "@/lib/glb-export-service";
