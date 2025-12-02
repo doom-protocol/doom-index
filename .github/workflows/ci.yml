@@ -88,6 +88,9 @@ jobs:
           name: node_modules
           path: node_modules
 
+      - name: Restore executable permissions
+        run: chmod +x node_modules/.bin/*
+
       - name: Run formatter
         run: bun run format
 
@@ -110,6 +113,9 @@ jobs:
           name: node_modules
           path: node_modules
 
+      - name: Restore executable permissions
+        run: chmod +x node_modules/.bin/*
+
       - name: Run ESLint
         run: bun run lint
 
@@ -131,6 +137,9 @@ jobs:
         with:
           name: node_modules
           path: node_modules
+
+      - name: Restore executable permissions
+        run: chmod +x node_modules/.bin/*
 
       - name: Run type check
         run: bun run typecheck
@@ -182,6 +191,9 @@ jobs:
         with:
           name: node_modules
           path: node_modules
+
+      - name: Restore executable permissions
+        run: chmod +x node_modules/.bin/*
 
       - name: Copy .example.vars to .dev.vars
         run: cp .example.vars .dev.vars
