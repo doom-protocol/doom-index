@@ -9,8 +9,7 @@ import { getBaseUrl } from "@/utils/url";
  * @see ImageOutputOptions - from cloudflare-env.d.ts (IMAGES binding)
  */
 export interface CloudflareImageOptions
-  extends Pick<ImageTransform, "width" | "height" | "fit" | "sharpen">,
-    Pick<ImageOutputOptions, "quality"> {
+  extends Pick<ImageTransform, "width" | "height" | "fit" | "sharpen">, Pick<ImageOutputOptions, "quality"> {
   /** Device pixel ratio for responsive images (client-side only, not sent to IMAGES binding) */
   dpr?: number;
   /** Output format - "auto" is client-side only, mapped to MIME types for IMAGES binding */

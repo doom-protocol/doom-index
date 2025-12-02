@@ -44,35 +44,34 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
   [Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-  interface ProcessEnv
-    extends StringifyValues<
-      Pick<
-        Cloudflare.Env,
-        | "NODE_ENV"
-        | "NEXTJS_ENV"
-        | "NEXT_PUBLIC_BASE_URL"
-        | "LOG_LEVEL"
-        | "IMAGE_MODEL"
-        | "NEXT_PUBLIC_GENERATION_INTERVAL_MS"
-        | "NEXT_PUBLIC_R2_URL"
-        | "NEXT_PRIVATE_DEBUG_CACHE"
-        | "RUNWARE_API_KEY"
-        | "CLOUDFLARE_ACCOUNT_ID"
-        | "R2_ACCESS_KEY_ID"
-        | "R2_SECRET_ACCESS_KEY"
-        | "CLOUDFLARE_DATABASE_ID"
-        | "CLOUDFLARE_D1_TOKEN"
-        | "TAVILY_API_KEY"
-        | "COINGECKO_API_KEY"
-        | "SLACK_WEBHOOK_URL"
-        | "CACHE_PURGE_API_TOKEN"
-        | "CACHE_PURGE_ZONE_ID"
-        | "ADMIN_SECRET"
-        | "PINATA_API_KEY"
-        | "PINATA_API_SECRET"
-        | "PINATA_JWT"
-      >
-    > {}
+  interface ProcessEnv extends StringifyValues<
+    Pick<
+      Cloudflare.Env,
+      | "NODE_ENV"
+      | "NEXTJS_ENV"
+      | "NEXT_PUBLIC_BASE_URL"
+      | "LOG_LEVEL"
+      | "IMAGE_MODEL"
+      | "NEXT_PUBLIC_GENERATION_INTERVAL_MS"
+      | "NEXT_PUBLIC_R2_URL"
+      | "NEXT_PRIVATE_DEBUG_CACHE"
+      | "RUNWARE_API_KEY"
+      | "CLOUDFLARE_ACCOUNT_ID"
+      | "R2_ACCESS_KEY_ID"
+      | "R2_SECRET_ACCESS_KEY"
+      | "CLOUDFLARE_DATABASE_ID"
+      | "CLOUDFLARE_D1_TOKEN"
+      | "TAVILY_API_KEY"
+      | "COINGECKO_API_KEY"
+      | "SLACK_WEBHOOK_URL"
+      | "CACHE_PURGE_API_TOKEN"
+      | "CACHE_PURGE_ZONE_ID"
+      | "ADMIN_SECRET"
+      | "PINATA_API_KEY"
+      | "PINATA_API_SECRET"
+      | "PINATA_JWT"
+    >
+  > {}
 }
 
 // Begin runtime types

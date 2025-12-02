@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeAll, beforeEach, describe, expect, it, mock } from "bun:test";
 import { Group, Mesh, MeshStandardMaterial, PlaneGeometry, type BufferGeometry } from "three";
 
 // Mock GLTFExporter and GLTFLoader
@@ -41,10 +41,29 @@ mock.module("three-stdlib", () => ({
   },
 }));
 
-// Import service after mocking - static import works after mock.module is set up
-import { glbExportService } from "@/lib/glb-export-service";
+// Import service after mocking - use variable to ensure module is resolved
+import type { Result } from "neverthrow";
+import type { AppError } from "@/types/app-error";
+import type { RefObject } from "react";
+
+type GlbExportServiceType = {
+  exportPaintingModel: (paintingRef: RefObject<Group | null>) => Promise<Result<globalThis.File, AppError>>;
+  optimizeGlb: (glbBuffer: ArrayBuffer, targetSizeMB: number) => Promise<Result<ArrayBuffer, AppError>>;
+};
+
+let glbExportService: GlbExportServiceType;
 
 describe("glbExportService", () => {
+  beforeAll(async () => {
+    // Ensure module is imported after mock is set up
+    const module = await import("@/lib/glb-export-service");
+    glbExportService = module.glbExportService;
+    // Verify the service is properly loaded
+    if (!glbExportService || typeof glbExportService.exportPaintingModel !== "function") {
+      throw new Error("glbExportService is not properly loaded");
+    }
+  });
+
   beforeEach(() => {
     mockParseExporter.mockReset();
     mockParseLoader.mockReset();
