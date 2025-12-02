@@ -12,7 +12,20 @@ import {
   Vector3,
 } from "three";
 
-export const Lights: FC = () => {
+interface LightsProps {
+  variant?: "simple" | "full";
+}
+
+// Simple lights for fast initial render (no hooks, no shadows)
+const SimpleLights: FC = () => (
+  <>
+    <ambientLight intensity={0.5} color="#323248" />
+    <directionalLight position={[-1.5, 2.5, 3]} intensity={0.8} color="#f6e3c4" />
+  </>
+);
+
+// Full lights with all effects
+const FullLights: FC = () => {
   const keyLightRef = useRef<SpotLight>(null);
   const fillLightRef = useRef<SpotLight>(null);
   const targetRef = useRef<Object3D>(null);
@@ -86,7 +99,7 @@ export const Lights: FC = () => {
         decay={2}
         color="#f6e3c4"
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1024, 1024]}
       />
 
       {/* Secondary spill from the front to soften falloff */}
@@ -127,4 +140,12 @@ export const Lights: FC = () => {
       <object3D ref={targetRef} position={[0, 0.82, 4.0]} />
     </>
   );
+};
+
+// Exported component that switches between simple and full lights
+export const Lights: FC<LightsProps> = ({ variant = "full" }) => {
+  if (variant === "simple") {
+    return <SimpleLights />;
+  }
+  return <FullLights />;
 };

@@ -260,7 +260,11 @@ export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPositio
           near: 0.1,
           far: 100,
         }}
-        gl={{ antialias: true }}
+        gl={{
+          antialias: false,
+          stencil: false,
+          powerPreference: "high-performance",
+        }}
         style={{
           position: "fixed",
           top: `${HEADER_HEIGHT}px`,

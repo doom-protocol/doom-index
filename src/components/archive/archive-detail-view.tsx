@@ -146,7 +146,11 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
             near: 0.1,
             far: 100,
           }}
-          gl={{ antialias: true }}
+          gl={{
+            antialias: false,
+            stencil: false,
+            powerPreference: "high-performance",
+          }}
           onCreated={({ gl }) => {
             gl.shadowMap.enabled = true;
             gl.shadowMap.type = PCFSoftShadowMap;
