@@ -169,7 +169,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   if (transformOptions) {
     try {
       const { env: cfEnv } = await getCloudflareContext({ async: true });
-      const images = (cfEnv as CloudflareEnv).IMAGES;
+      const images = cfEnv.IMAGES;
 
       if (images) {
         logger.debug("[R2 Route] Using IMAGES binding for transformation", {
