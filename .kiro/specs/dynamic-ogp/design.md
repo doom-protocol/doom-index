@@ -752,27 +752,25 @@ export default async function Image(): Promise<ImageResponse> {
   logger.info("ogp.generated", { useFallback, durationMs });
 
   return new ImageResponse(
-    (
-      <div
+    <div
+      style={{
+        display: "flex",
+        width: "100%",
+        height: "100%",
+        backgroundColor: "#000000",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <img
+        src={imageDataUrl}
         style={{
-          display: "flex",
-          width: "100%",
           height: "100%",
-          backgroundColor: "#000000",
-          alignItems: "center",
-          justifyContent: "center",
+          width: "auto",
+          objectFit: "contain",
         }}
-      >
-        <img
-          src={imageDataUrl}
-          style={{
-            height: "100%",
-            width: "auto",
-            objectFit: "contain",
-          }}
-        />
-      </div>
-    ),
+      />
+    </div>,
     {
       ...size,
       headers: {

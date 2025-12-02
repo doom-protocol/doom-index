@@ -41,9 +41,20 @@ mock.module("three-stdlib", () => ({
   },
 }));
 
-// Import service directly - this test file tests the real implementation
-// Note: We need to ensure no other mocks interfere with this import
-// If other test files mock this module, they should be isolated
+// Override any existing mock for glb-export-service to ensure we test the real implementation
+// This is necessary because other test files (e.g., gallery-page.integration.test.tsx) may mock this module
+// We use import.meta.require with the actual file path to bypass any existing mocks
+// This ensures the real implementation is used even if other tests have mocked it
+mock.module("@/lib/glb-export-service", () => {
+  // Use Bun's import.meta.require with resolve to get the actual file path
+  // This bypasses any existing mocks and loads the actual implementation
+  const actualPath = import.meta.resolve("@/lib/glb-export-service");
+  const actualModule = import.meta.require(actualPath);
+  return actualModule;
+});
+
+// Import service after mocking - use static import to work with mock.module
+// The mock.module() call above ensures we get the real implementation
 import { glbExportService } from "@/lib/glb-export-service";
 
 // Verify the service is properly loaded
