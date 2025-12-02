@@ -31,7 +31,7 @@ interface CameraAnimationProps {
 }
 
 const CameraAnimation: FC<CameraAnimationProps> = ({ isZoomingOut, onZoomOutComplete }) => {
-  const { camera } = useThree();
+  const { camera, invalidate } = useThree();
   const targetPositionRef = useRef(new Vector3(...ZOOMED_CAMERA_POSITION));
   const targetLookAtRef = useRef(new Vector3(...DETAIL_FRAME_POSITION));
   const isAnimatingRef = useRef(true);
@@ -43,8 +43,11 @@ const CameraAnimation: FC<CameraAnimationProps> = ({ isZoomingOut, onZoomOutComp
       targetPositionRef.current = new Vector3(...INITIAL_CAMERA_POSITION);
       isAnimatingRef.current = true;
       hasCompletedZoomOutRef.current = false;
+
+      // Kick the frameloop once so useFrame runs again in demand mode
+      invalidate();
     }
-  }, [isZoomingOut]);
+  }, [isZoomingOut, invalidate]);
 
   useFrame(({ invalidate }) => {
     if (!isAnimatingRef.current) {
