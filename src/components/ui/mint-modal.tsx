@@ -187,7 +187,13 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
 
         <div className="flex flex-col lg:flex-row">
           {/* 3D Preview - Canvas stays mounted, frameloop toggles based on isOpen */}
-          <div className="relative h-[300px] w-full bg-black/40 sm:h-[350px] lg:h-[500px] lg:w-[60%]">
+          <div
+            className="relative h-[300px] w-full bg-black/40 sm:h-[350px] lg:h-[500px] lg:w-[60%]"
+            style={{
+              pointerEvents: isOpen ? "auto" : "none",
+              touchAction: isOpen ? "auto" : "none",
+            }}
+          >
             <Canvas
               className="r3f-gallery-canvas"
               frameloop={isOpen ? "always" : "never"}
@@ -217,7 +223,12 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
                 gl.toneMapping = ACESFilmicToneMapping;
                 gl.setClearColor("#050505");
               }}
-              style={{ width: "100%", height: "100%" }}
+              style={{
+                width: "100%",
+                height: "100%",
+                pointerEvents: isOpen ? "auto" : "none",
+                touchAction: isOpen ? "auto" : "none",
+              }}
             >
               <Lights />
               <OrbitControls
