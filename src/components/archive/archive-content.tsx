@@ -3,7 +3,7 @@
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
 import { formatDateShort } from "@/utils/time";
-import { useMemo, useState, Suspense, lazy, type FC } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense, lazy, type FC } from "react";
 import { ArchiveGrid } from "./archive-grid";
 import { DateFilter } from "./date-filter";
 import { PaginationControls } from "./pagination-controls";
@@ -21,6 +21,8 @@ interface ArchiveContentProps {
 export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, page, from, to }) => {
   const [selectedItem, setSelectedItem] = useState<Painting | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [savedScrollTop, setSavedScrollTop] = useState(0);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
   const itemsPerPage = 24;
   const hasPreviousPage = page > 1;
@@ -40,6 +42,10 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
   }, [items]);
 
   const handleItemClick = (item: Painting) => {
+    // Save scroll position before opening detail view
+    if (listRef.current) {
+      setSavedScrollTop(listRef.current.scrollTop);
+    }
     setIsTransitioning(true);
     sendGAEvent(GA_EVENTS.ARCHIVE_PAINTING_CLICK, { painting_id: item.id });
     // Wait for fade out animation to complete before showing detail view
@@ -53,6 +59,13 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
     setIsTransitioning(false);
   };
 
+  // Restore scroll position when returning from detail view
+  useEffect(() => {
+    if (!selectedItem && listRef.current && savedScrollTop > 0) {
+      listRef.current.scrollTop = savedScrollTop;
+    }
+  }, [selectedItem, savedScrollTop]);
+
   // Show detail view if item is selected (after all hooks)
   if (selectedItem) {
     return (
@@ -65,6 +78,7 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
   return (
     <>
       <div
+        ref={listRef}
         className={`h-screen overflow-y-auto px-8 pb-[200px] pt-28 sm:pt-32 font-sans transition-opacity duration-300 ${
           isTransitioning ? "opacity-0" : "opacity-100"
         }`}

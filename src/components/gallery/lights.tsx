@@ -2,24 +2,27 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef, type FC } from "react";
-import {
-  CircleGeometry,
-  DoubleSide,
-  Float32BufferAttribute,
-  type Mesh,
-  type Object3D,
-  type SpotLight,
-  Vector3,
-} from "three";
+import { CircleGeometry, DoubleSide, Float32BufferAttribute, type Mesh, type Object3D, type SpotLight } from "three";
 
-export const Lights: FC = () => {
+interface LightsProps {
+  variant?: "simple" | "full";
+}
+
+// Simple lights for fast initial render (no hooks, no shadows)
+const SimpleLights: FC = () => (
+  <>
+    <ambientLight intensity={0.5} color="#323248" />
+    <directionalLight position={[-1.5, 2.5, 3]} intensity={0.8} color="#f6e3c4" />
+  </>
+);
+
+// Full lights with all effects
+const FullLights: FC = () => {
   const keyLightRef = useRef<SpotLight>(null);
   const fillLightRef = useRef<SpotLight>(null);
   const targetRef = useRef<Object3D>(null);
   const floorGlowRef = useRef<Mesh>(null);
-
-  const lightPosition = useRef(new Vector3());
-  const targetPosition = useRef(new Vector3());
+  const initializedRef = useRef(false);
 
   const floorGlowGeometry = useMemo(() => {
     const geometry = new CircleGeometry(0.48, 64);
@@ -39,29 +42,32 @@ export const Lights: FC = () => {
     return geometry;
   }, []);
 
-  useFrame(({ invalidate }) => {
-    if (!targetRef.current) {
+  // Initialize light targets once on mount (no continuous updates needed)
+  useFrame(() => {
+    // Skip if already initialized or refs not ready
+    if (initializedRef.current || !targetRef.current) {
       return;
     }
 
-    targetPosition.current.copy(targetRef.current.position);
-
+    // Set up light targets once - they don't change during runtime
     if (keyLightRef.current) {
       keyLightRef.current.target = targetRef.current;
       keyLightRef.current.shadow.bias = -0.0012;
-      lightPosition.current.copy(keyLightRef.current.position);
     }
 
     if (fillLightRef.current) {
       fillLightRef.current.target = targetRef.current;
     }
 
+    // Position floor glow once
     if (floorGlowRef.current) {
-      floorGlowRef.current.position.set(targetPosition.current.x, 0.004, targetPosition.current.z - 0.16);
+      const targetPos = targetRef.current.position;
+      floorGlowRef.current.position.set(targetPos.x, 0.004, targetPos.z - 0.16);
     }
 
-    // Invalidate for demand mode
-    invalidate();
+    // Mark as initialized - no more updates needed
+    initializedRef.current = true;
+    // No invalidate() call - lights are static, no need for continuous rendering
   });
 
   return (
@@ -86,7 +92,7 @@ export const Lights: FC = () => {
         decay={2}
         color="#f6e3c4"
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1024, 1024]}
       />
 
       {/* Secondary spill from the front to soften falloff */}
@@ -127,4 +133,12 @@ export const Lights: FC = () => {
       <object3D ref={targetRef} position={[0, 0.82, 4.0]} />
     </>
   );
+};
+
+// Exported component that switches between simple and full lights
+export const Lights: FC<LightsProps> = ({ variant = "full" }) => {
+  if (variant === "simple") {
+    return <SimpleLights />;
+  }
+  return <FullLights />;
 };

@@ -19,7 +19,7 @@ import { Canvas } from "@react-three/fiber";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Suspense, useCallback, useRef, useState, type FC } from "react";
 import { toast } from "sonner";
-import { ACESFilmicToneMapping, PCFSoftShadowMap, type Group } from "three";
+import { ACESFilmicToneMapping, type Group } from "three";
 import { useHaptic } from "use-haptic";
 
 export interface MintModalProps {
@@ -185,48 +185,56 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
         </button>
 
         <div className="flex flex-col lg:flex-row">
-          {/* 3D Preview */}
-          <div className="relative h-[300px] w-full bg-black/40 sm:h-[350px] lg:h-[500px] lg:w-[60%]">
-            {isOpen && (
-              <Canvas
-                className="r3f-gallery-canvas"
-                frameloop="always"
-                shadows
-                dpr={[1, 1.5]}
-                camera={{
-                  fov: 50,
-                  position: [0, 0.8, 0.8],
-                  near: 0.1,
-                  far: 100,
-                }}
-                gl={{
-                  antialias: true,
-                  toneMapping: ACESFilmicToneMapping,
-                }}
-                onCreated={({ gl }) => {
-                  gl.shadowMap.enabled = true;
-                  gl.shadowMap.type = PCFSoftShadowMap;
-                  gl.toneMapping = ACESFilmicToneMapping;
-                  gl.setClearColor("#050505");
-                }}
-                style={{ width: "100%", height: "100%" }}
-              >
-                <Lights />
-                <OrbitControls
-                  enableDamping
-                  dampingFactor={0.05}
-                  minDistance={2}
-                  maxDistance={6}
-                  target={[0, 0.8, 4.0]}
-                  rotateSpeed={0.5}
-                  zoomSpeed={0.5}
-                  enabled={!isLoading}
-                />
-                <Suspense fallback={null}>
-                  <FramedPainting ref={paintingRef} thumbnailUrl={paintingMetadata.thumbnailUrl} />
-                </Suspense>
-              </Canvas>
-            )}
+          {/* 3D Preview - Canvas stays mounted, frameloop toggles based on isOpen */}
+          <div
+            className="relative h-[300px] w-full bg-black/40 sm:h-[350px] lg:h-[500px] lg:w-[60%]"
+            style={{
+              pointerEvents: isOpen ? "auto" : "none",
+              touchAction: isOpen ? "auto" : "none",
+            }}
+          >
+            <Canvas
+              className="r3f-gallery-canvas"
+              frameloop={isOpen ? "demand" : "never"}
+              shadows={false}
+              dpr={[1, 1.5]}
+              camera={{
+                fov: 50,
+                position: [0, 0.8, 0.8],
+                near: 0.1,
+                far: 100,
+              }}
+              gl={{
+                antialias: true,
+                stencil: false,
+                powerPreference: "high-performance",
+              }}
+              onCreated={({ gl }) => {
+                gl.toneMapping = ACESFilmicToneMapping;
+                gl.setClearColor("#050505");
+              }}
+              style={{
+                width: "100%",
+                height: "100%",
+                pointerEvents: isOpen ? "auto" : "none",
+                touchAction: isOpen ? "auto" : "none",
+              }}
+            >
+              <Lights />
+              <OrbitControls
+                enableDamping
+                dampingFactor={0.05}
+                minDistance={2}
+                maxDistance={6}
+                target={[0, 0.8, 4.0]}
+                rotateSpeed={0.5}
+                zoomSpeed={0.5}
+                enabled={isOpen && !isLoading}
+              />
+              <Suspense fallback={null}>
+                <FramedPainting ref={paintingRef} thumbnailUrl={paintingMetadata.thumbnailUrl} />
+              </Suspense>
+            </Canvas>
           </div>
 
           {/* Content Panel */}

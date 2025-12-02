@@ -117,19 +117,23 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
         className="r3f-gallery-canvas"
         frameloop="demand"
         shadows
-        dpr={[1, 1.5]}
+        dpr={[1, 2]}
         camera={{
           fov: 50,
           position: [0, 0.8, 0.8],
           near: 0.1,
           far: 100,
         }}
-        gl={{ antialias: true }}
+        gl={{
+          antialias: true,
+          stencil: false,
+          powerPreference: "high-performance",
+        }}
         onCreated={({ gl }) => {
-          gl.shadowMap.enabled = true;
-          gl.shadowMap.type = PCFSoftShadowMap;
           gl.toneMapping = ACESFilmicToneMapping;
           gl.setClearColor("#050505");
+          gl.shadowMap.enabled = true;
+          gl.shadowMap.type = PCFSoftShadowMap;
         }}
         style={{
           position: "fixed",
