@@ -41,28 +41,13 @@ mock.module("three-stdlib", () => ({
   },
 }));
 
-// Import service after mocking - use variable to ensure module is resolved
+// Import service after mocking - use static import to work with mock.module
 import type { Result } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 import type { RefObject } from "react";
-
-type GlbExportServiceType = {
-  exportPaintingModel: (paintingRef: RefObject<Group | null>) => Promise<Result<globalThis.File, AppError>>;
-  optimizeGlb: (glbBuffer: ArrayBuffer, targetSizeMB: number) => Promise<Result<ArrayBuffer, AppError>>;
-};
-
-let glbExportService: GlbExportServiceType;
+import { glbExportService } from "@/lib/glb-export-service";
 
 describe("glbExportService", () => {
-  beforeAll(async () => {
-    // Ensure module is imported after mock is set up
-    const module = await import("@/lib/glb-export-service");
-    glbExportService = module.glbExportService;
-    // Verify the service is properly loaded
-    if (!glbExportService || typeof glbExportService.exportPaintingModel !== "function") {
-      throw new Error("glbExportService is not properly loaded");
-    }
-  });
 
   beforeEach(() => {
     mockParseExporter.mockReset();
