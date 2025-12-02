@@ -1,3 +1,4 @@
+import { getTimestampMs } from "@/lib/cloudflare-image";
 import { useTRPCClient } from "@/lib/trpc/client";
 import type { ArchiveListResponse } from "@/services/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
@@ -59,7 +60,7 @@ export interface FetchLatestPaintingResult {
  */
 export async function fetchLatestPainting(
   queryFn: () => Promise<ArchiveListResponse>,
-  now: () => number = performance.now,
+  now: () => number = getTimestampMs,
 ): Promise<FetchLatestPaintingResult> {
   const start = now();
   logger.debug("use-latest-painting.fetch.start");
@@ -94,13 +95,13 @@ export const useLatestPainting = () => {
   const queryResult = useQuery({
     queryKey: ["paintings", "latest"],
     queryFn: async (): Promise<PaintingMetadata | null> => {
-      const start = performance.now();
+      const start = getTimestampMs();
       try {
         logger.debug("use-latest-painting.fetch.start");
         const result = (await client.paintings.list.query({
           limit: 1,
         })) as ArchiveListResponse;
-        const durationMs = performance.now() - start;
+        const durationMs = getTimestampMs() - start;
 
         if (!result.items || result.items.length === 0) {
           logger.debug("use-latest-painting.no-paintings", { durationMs });
