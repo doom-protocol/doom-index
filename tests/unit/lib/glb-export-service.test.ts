@@ -28,10 +28,7 @@ const mockSimplifyModifier = mock((_geometry: BufferGeometry, _count: number) =>
   return _geometry; // Return same geometry for simplicity
 });
 
-// Restore any existing mocks first to ensure clean state
-mock.restore();
-
-// Set up module mock before any imports
+// Set up module mock for three-stdlib (external dependency)
 mock.module("three-stdlib", () => ({
   GLTFExporter: class {
     parse = mockParseExporter;
@@ -44,16 +41,8 @@ mock.module("three-stdlib", () => ({
   },
 }));
 
-// Import service directly - this test file tests the real implementation
-// Use the -core file to bypass any potential mocks on the main export
+// Import service directly - tests the real implementation
 import { glbExportService } from "@/lib/glb-export-service";
-
-// Verify the service is properly loaded
-if (!glbExportService || typeof glbExportService.exportPaintingModel !== "function") {
-  throw new Error(
-    `glbExportService is not properly loaded. Type: ${typeof glbExportService}, Keys: ${glbExportService ? Object.keys(glbExportService).join(", ") : "undefined"}`,
-  );
-}
 
 describe("glbExportService", () => {
   beforeEach(() => {

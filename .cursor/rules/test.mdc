@@ -70,6 +70,30 @@ const request = mockGenerate.mock.calls[0][0];  // Type error!
 
 ### テストの独立性
 
+#### ⚠️ `mock.module()` はテスト間で共有される
+
+Bun の `mock.module()` はプロセス全体に影響し、他のテストファイルにも波及します。  
+**unit テストで実装を直接検証したいモジュールは、integration テストで `mock.module()` しないでください。**
+
+```typescript
+// ❌ 悪い例: integration テストでグローバルにモック
+// tests/integration/app/gallery-page.integration.test.tsx
+mock.module("@/lib/glb-export-service", createGlbExportServiceMock());
+// → tests/unit/lib/glb-export-service.test.ts にも影響し、
+//   実装ではなくモックがテストされてしまう
+
+// ✅ 良い例: テスト内で一時的にメソッドを差し替え、終了後に復元
+import { glbExportService } from "@/lib/glb-export-service";
+
+const originalMethod = glbExportService.exportPaintingModel;
+beforeAll(() => {
+  glbExportService.exportPaintingModel = mock(async () => ok(new File([], "mock.glb")));
+});
+afterAll(() => {
+  glbExportService.exportPaintingModel = originalMethod;
+});
+```
+
 #### ✅ 良い例: 明示的なパラメータ渡し
 
 ```typescript

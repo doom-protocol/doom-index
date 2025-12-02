@@ -33,7 +33,22 @@ export function createAnalyticsMock() {
 
 /**
  * Create mock for @/lib/glb-export-service
- * Returns a function that returns the mock module object
+ *
+ * ⚠️ WARNING: Do NOT use mock.module() with this mock at file level!
+ * mock.module() affects ALL test files in the process.
+ * Instead, use method replacement with beforeAll/afterAll:
+ *
+ * ```typescript
+ * import { glbExportService } from "@/lib/glb-export-service";
+ *
+ * const originalMethod = glbExportService.exportPaintingModel;
+ * beforeAll(() => {
+ *   glbExportService.exportPaintingModel = mock(async () => ok(new File([], "mock.glb")));
+ * });
+ * afterAll(() => {
+ *   glbExportService.exportPaintingModel = originalMethod;
+ * });
+ * ```
  */
 export function createGlbExportServiceMock() {
   return () => ({
