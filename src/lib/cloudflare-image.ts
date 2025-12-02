@@ -140,6 +140,15 @@ export function getImageUrlWithDpr(imageUrl: string, preset: ImagePreset, dpr: n
     return imageUrl;
   }
 
+  // For public directory images (root-relative paths that are not /api/*):
+  // Skip Cloudflare Image transformation as it only works for R2 images
+  // This handles static assets like /placeholder-painting.webp
+  const isRootRelative = imageUrl.startsWith("/");
+  const isApiPath = imageUrl.startsWith("/api/");
+  if (isRootRelative && !isApiPath) {
+    return imageUrl;
+  }
+
   return transformImageUrl(imageUrl, options);
 }
 
