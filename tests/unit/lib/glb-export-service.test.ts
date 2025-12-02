@@ -28,6 +28,7 @@ const mockSimplifyModifier = mock((_geometry: BufferGeometry, _count: number) =>
   return _geometry; // Return same geometry for simplicity
 });
 
+// Set up module mock for three-stdlib (external dependency)
 mock.module("three-stdlib", () => ({
   GLTFExporter: class {
     parse = mockParseExporter;
@@ -40,7 +41,7 @@ mock.module("three-stdlib", () => ({
   },
 }));
 
-// Import service after mocking
+// Import service directly - tests the real implementation
 import { glbExportService } from "@/lib/glb-export-service";
 
 describe("glbExportService", () => {

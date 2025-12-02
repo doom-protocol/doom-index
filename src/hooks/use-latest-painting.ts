@@ -1,3 +1,4 @@
+import { getTimestampMs } from "@/lib/cloudflare-image";
 import { useTRPCClient } from "@/lib/trpc/client";
 import type { ArchiveListResponse } from "@/services/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
@@ -7,13 +8,13 @@ import { useEffect, useRef } from "react";
 
 import { GENERATION_INTERVAL_MS } from "@/constants";
 
-const MIN_REFETCH_INTERVAL_MS = 30_000;
-const STALE_POLL_INTERVAL_MS = 60_000;
-const POST_GENERATION_DELAY_MS = 15_000;
+export const MIN_REFETCH_INTERVAL_MS = 30_000;
+export const STALE_POLL_INTERVAL_MS = 60_000;
+export const POST_GENERATION_DELAY_MS = 15_000;
 
-const clampInterval = (value: number): number => Math.max(MIN_REFETCH_INTERVAL_MS, value);
+export const clampInterval = (value: number): number => Math.max(MIN_REFETCH_INTERVAL_MS, value);
 
-const computeRefetchDelay = (lastTimestamp?: string | null): number => {
+export const computeRefetchDelay = (lastTimestamp?: string | null): number => {
   if (!GENERATION_INTERVAL_MS || GENERATION_INTERVAL_MS <= 0) {
     return STALE_POLL_INTERVAL_MS;
   }
@@ -42,6 +43,45 @@ const computeRefetchDelay = (lastTimestamp?: string | null): number => {
 };
 
 /**
+ * Result of fetching the latest painting
+ */
+export interface FetchLatestPaintingResult {
+  painting: PaintingMetadata | null;
+  durationMs: number;
+}
+
+/**
+ * Pure function to fetch the latest painting from the API.
+ * Extracted for testability - allows measuring fetch duration without React hooks.
+ *
+ * @param queryFn - Function that performs the actual API call
+ * @param now - Optional function to get current time (for testing)
+ * @returns Promise with painting data and duration in milliseconds
+ */
+export async function fetchLatestPainting(
+  queryFn: () => Promise<ArchiveListResponse>,
+  now: () => number = getTimestampMs,
+): Promise<FetchLatestPaintingResult> {
+  const start = now();
+  logger.debug("use-latest-painting.fetch.start");
+
+  const result = await queryFn();
+  const durationMs = now() - start;
+
+  if (!result.items || result.items.length === 0) {
+    logger.debug("use-latest-painting.no-paintings", { durationMs });
+    return { painting: null, durationMs };
+  }
+
+  logger.debug("use-latest-painting.fetch.success", {
+    durationMs,
+    paintingId: result.items[0]?.id,
+  });
+
+  return { painting: result.items[0], durationMs };
+}
+
+/**
  * Hook to fetch the latest painting
  * This replaces the legacy "GlobalState" concept.
  *
@@ -55,17 +95,23 @@ export const useLatestPainting = () => {
   const queryResult = useQuery({
     queryKey: ["paintings", "latest"],
     queryFn: async (): Promise<PaintingMetadata | null> => {
+      const start = getTimestampMs();
       try {
-        // Fetch the latest painting (limit: 1)
+        logger.debug("use-latest-painting.fetch.start");
         const result = (await client.paintings.list.query({
           limit: 1,
         })) as ArchiveListResponse;
+        const durationMs = getTimestampMs() - start;
 
         if (!result.items || result.items.length === 0) {
-          logger.debug("use-latest-painting.no-paintings");
+          logger.debug("use-latest-painting.no-paintings", { durationMs });
           return null;
         }
 
+        logger.debug("use-latest-painting.fetch.success", {
+          durationMs,
+          paintingId: result.items[0]?.id,
+        });
         return result.items[0];
       } catch (error) {
         logger.error("use-latest-painting.fetch-failed", {

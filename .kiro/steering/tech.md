@@ -1,13 +1,13 @@
 ---
 title: DOOM INDEX - 技術スタックと運用
 includes: always
-updated: 2025-11-22
+updated: 2025-01-15
 ---
 
 ## 全体アーキテクチャ
 
-- フロントエンド: Next.js 16（App Router, Edge Runtime）
-- 実行/配信: Cloudflare Pages + Workers（Cron Triggers, R2 Bindings）
+- フロントエンド: Next.js 16（App Router, Edge Runtime, React Compiler）
+- 実行/配信: Cloudflare Pages + Workers（Cron Triggers: 10分ごと, R2 Bindings）
 - ストレージ: Cloudflare R2（S3 互換, 公開ドメイン読み取り）
 - **データベース: Cloudflare D1（SQLite 互換）** - アーカイブインデックスとトークンコンテキストキャッシュ
 - ランタイム: ローカル Bun / 本番 workerd
@@ -18,6 +18,7 @@ updated: 2025-11-22
 - **API 通信: tRPC v11（エンドツーエンド型安全）**
 - データ取得・状態: TanStack Query（クライアント）+ tRPC + サービス層（サーバ）
 - エラー処理: neverthrow（Result 型）
+- **バリデーション: valibot** - 型安全な環境変数とスキーマ検証
 - **キャッシュ: Cloudflare Cache API（開発中）** - Edge キャッシュによる最適化
 
 ## リポジトリ主要構成
@@ -51,21 +52,22 @@ updated: 2025-11-22
 
 ## バックエンド/エッジ
 
-- Cloudflare Workers（Cron: 毎分トリガ）
+- Cloudflare Workers（Cron: 10分ごとトリガ - `*/10 * * * *`）
 - R2 連携（Bindings or 公開ドメイン）
-- OpenNext for Cloudflare によるビルド/デプロイ（`@opennextjs/cloudflare`）
+- OpenNext for Cloudflare によるビルド/デプロイ（`@opennextjs/cloudflare@^1.14.0`）
 
 ## 依存関係（主要）
 
 - ランタイム/フレームワーク: `next@16.0.1`, `react@19.2.0`, `typescript@^5.9.3`, `bun@1.3.3`
-- 描画/3D: `three`, `@react-three/fiber`, `@react-three/drei`
-- **API/型安全: `@trpc/server@^11.7`, `@trpc/client@^11.7`, `@trpc/react-query@^11.7`, `@trpc/next@^11.7`**
-- **データベース: `drizzle-orm@^0.44`** - D1（SQLite）用 ORM
-- 状態/バリデーション: `@tanstack/react-query@^5.90`, `zod@^3.23`, `neverthrow@^7.2`
-- 生成/AI: `ai@^5.0`, `@ai-sdk/openai@^2.0`
-- **環境変数管理: `@t3-oss/env-nextjs@^0.13`** - 型安全な環境変数検証
-- 開発/CF: `wrangler@4.48.0`, `@cloudflare/workers-types@^4.202`, `@opennextjs/cloudflare@1.12.0`
-- 品質: `eslint@9`, `eslint-config-next@16`, `prettier@3`
+- 描画/3D: `three@^0.181`, `@react-three/fiber@^9.4`, `@react-three/drei@^10.7`
+- **API/型安全: `@trpc/server@^11.7.2`, `@trpc/client@^11.7.2`, `@trpc/react-query@^11.7.2`, `@trpc/next@^11.7.2`**
+- **データベース: `drizzle-orm@^0.44.7`** - D1（SQLite）用 ORM
+- **マイグレーション: `drizzle-kit@^0.31.7`** - Drizzle マイグレーション管理
+- 状態/バリデーション: `@tanstack/react-query@^5.90.11`, `valibot@^1.2.0`, `neverthrow@^7.2.0`
+- 生成/AI: `ai@^5.0`, `@ai-sdk/openai@^2.0`（オプション）
+- **環境変数管理: `@t3-oss/env-nextjs@^0.13.8`** - valibot ベースの型安全な環境変数検証
+- 開発/CF: `wrangler@^4.51.0`, `@cloudflare/workers-types@^4.20251202.0`, `@opennextjs/cloudflare@^1.14.0`
+- 品質: `eslint@^9.39.1`, `eslint-config-next@16.0.1`, `prettier@^3.7.3`
 
 ## 環境変数
 
@@ -93,7 +95,8 @@ updated: 2025-11-22
 ## ポート/実行
 
 - Next.js 開発: 既定 3000
-- Workers プレビュー: 既定 8787（README 記載）
+- Workers プレビュー: 既定 8787（`bun run preview`）
+- 生成間隔: 10分ごと（`NEXT_PUBLIC_GENERATION_INTERVAL_MS=600000`）
 
 ## よく使うコマンド（package.json）
 
@@ -147,8 +150,9 @@ bun run wrangler:deploy
 - Edge ファースト（API/OGPはできる限り Edge）
 - **tRPC による型安全 API** - エンドツーエンドの型推論とバリデーション
 - 結果型での合流点管理（neverthrow）
-- Provider 抽象化（`src/lib/providers/*`）
+- Provider 抽象化（`src/lib/image-generation-providers/*`）
 - 純関数分離（`src/lib/pure/*`）でテスト容易性担保
 - **D1 データベース統合** - Drizzle ORM による型安全なスキーマ定義とクエリ
 - **動的プロンプト生成** - Tavily + Workers AI によるトークンコンテキストの自動生成とキャッシュ
+- **環境変数検証: valibot** - `@t3-oss/env-nextjs` による型安全な環境変数管理
 - **Cloudflare Cache API 統合（開発中）** - Edge キャッシュによる最適化

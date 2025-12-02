@@ -1,5 +1,6 @@
 "use client";
 
+import { buildSizesAttr, type ResponsiveSizes } from "@/types/domain";
 import { logger } from "@/utils/logger";
 import Image from "next/image";
 import { useState, type FC, type ReactNode, type SyntheticEvent } from "react";
@@ -11,6 +12,7 @@ interface ProgressiveImageProps {
   fill?: boolean;
   width?: number;
   height?: number;
+  sizes?: ResponsiveSizes;
   priority?: boolean;
   onLoad?: () => void;
   onError?: (error: SyntheticEvent<HTMLImageElement, Event>) => void;
@@ -32,6 +34,7 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
   fill = false,
   width,
   height,
+  sizes,
   priority = false,
   onLoad,
   onError,
@@ -83,6 +86,7 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
         fill={fill}
         width={!fill ? width : undefined}
         height={!fill ? height : undefined}
+        sizes={buildSizesAttr(sizes)}
         priority={priority}
         className={`${className} ${isLoading ? "opacity-0" : "opacity-100"}`}
         onLoad={handleImageLoad}

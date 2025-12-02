@@ -1,22 +1,11 @@
-export const metadata = {
-  title: "DOOM INDEX — A Market-Driven Generative Art Protocol",
-  authors: ["DOOM INDEX Research Team"],
-  date: "November 22, 2025",
-  version: "v2.0",
-};
-
 <div className="paper-header">
   <div className="paper-metadata">
-    <div className="paper-date">{metadata.date}</div>
-    <div className="paper-version">{metadata.version}</div>
+    <div className="paper-date">November 22, 2025</div>
+    <div className="paper-version">v2.0</div>
   </div>
-  <h1 className="paper-title">{metadata.title}</h1>
+  <h1 className="paper-title">DOOM INDEX — A Market-Driven Generative Art Protocol</h1>
   <div className="paper-authors">
-    {metadata.authors.map((author, i) => (
-      <span key={i} className="paper-author">
-        {author}
-      </span>
-    ))}
+    <span className="paper-author">DOOM INDEX Research Team</span>
   </div>
   <div className="paper-epigraph">
     <em>"A decentralized archive of financial emotions."</em>
@@ -172,8 +161,6 @@ In crypto culture, strong context creates art value while strong memes create cr
 
 ---
 
----
-
 ## 6. Credits
 
 - **Developed on**: [Solana](https://solana.com) blockchain
@@ -182,7 +169,7 @@ In crypto culture, strong context creates art value while strong memes create cr
 
 ---
 
-<div style={{ textAlign: "center", marginTop: "4rem", opacity: 0.6, fontSize: "0.9rem" }}>
+<div className="mt-16 text-center text-sm opacity-60">
   <p>DOOM INDEX v2.0 — November 2025</p>
   <p>A decentralized archive of financial emotions.</p>
 </div>

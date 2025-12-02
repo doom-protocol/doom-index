@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 
 // Mock env module before importing dependent modules
 let mockR2Url: string | undefined = undefined;

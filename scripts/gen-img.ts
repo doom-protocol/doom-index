@@ -204,7 +204,7 @@ const main = async () => {
 
   // Setup Local DB (reuse existing file if present)
   const dbPath = "local-test.db";
-  const db = await setupLocalDb(dbPath);
+  const db = setupLocalDb(dbPath);
   logger.info(`Using local DB: ${dbPath}`);
 
   // Output directory for "R2"

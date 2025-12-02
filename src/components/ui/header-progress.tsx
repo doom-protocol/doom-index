@@ -2,6 +2,7 @@
 
 import { GENERATION_INTERVAL_MS } from "@/constants";
 import { useLatestPainting, useLatestPaintingRefetch } from "@/hooks/use-latest-painting";
+import { getTimestampMs } from "@/lib/cloudflare-image";
 import { logger } from "@/utils/logger";
 import { useEffect, useRef, useState, type FC } from "react";
 import { useHaptic } from "use-haptic";
@@ -23,7 +24,7 @@ export const HeaderProgress: FC = () => {
 
   useEffect(() => {
     let animationFrameId: number | undefined;
-    let intervalStartPerf = performance.now() - (Date.now() % INTERVAL_MS);
+    let intervalStartPerf = getTimestampMs() - (Date.now() % INTERVAL_MS);
     let lastDisplayedSecond = -1;
 
     const updateProgressWidth = (ratio: number) => {
@@ -36,7 +37,7 @@ export const HeaderProgress: FC = () => {
     const syncInitialState = () => {
       const now = Date.now();
       const elapsedInInterval = now % INTERVAL_MS;
-      intervalStartPerf = performance.now() - elapsedInInterval;
+      intervalStartPerf = getTimestampMs() - elapsedInInterval;
       const initialProgress = elapsedInInterval / INTERVAL_MS;
       const initialRemainingSeconds = Math.floor((INTERVAL_MS - elapsedInInterval) / 1000);
 

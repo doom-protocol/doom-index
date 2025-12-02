@@ -32,7 +32,7 @@ const createTestQueryClient = () => {
 
 describe("About Page Integration", () => {
   it("should render about page with MDX content", async () => {
-    const page = await renderAboutPage();
+    const page = renderAboutPage();
     const queryClient = createTestQueryClient();
     const { container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);
     // Should render article element (in sr-only section)
@@ -41,7 +41,7 @@ describe("About Page Integration", () => {
   });
 
   it("should render semantic HTML from MDX", async () => {
-    const page = await renderAboutPage();
+    const page = renderAboutPage();
     const queryClient = createTestQueryClient();
     const { container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);
     // Should have article element
@@ -52,7 +52,7 @@ describe("About Page Integration", () => {
   });
 
   it("should render DOOM INDEX content", async () => {
-    const page = await renderAboutPage();
+    const page = renderAboutPage();
     const queryClient = createTestQueryClient();
     const { container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);
     const heading = container.querySelector("h1");

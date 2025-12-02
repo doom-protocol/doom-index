@@ -1,7 +1,6 @@
 import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
 import path from "path";
-import remarkGfm from "remark-gfm";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -9,9 +8,11 @@ const nextConfig: NextConfig = {
   experimental: {
     viewTransition: true,
     scrollRestoration: true,
-    // mdxRs: true,
+    mdxRs: {
+      mdxType: "gfm",
+    },
   },
-  pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
+  pageExtensions: ["ts", "tsx", "mdx"],
   images: {
     loader: "custom",
     loaderFile: "./src/lib/image-loader.ts",
@@ -89,12 +90,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withMDX = createMDX({
-  options: {
-    remarkPlugins: [remarkGfm],
-    rehypePlugins: [],
-  },
-});
+const withMDX = createMDX();
 
 export default withMDX(nextConfig);
 

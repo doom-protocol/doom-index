@@ -1,9 +1,18 @@
 "use client";
 
 import { ProgressiveImage } from "@/components/ui/progressive-image";
+import type { ResponsiveSizes } from "@/types/domain";
 import type { Painting } from "@/types/paintings";
 import { type FC } from "react";
 import { PaintingSkeleton } from "./painting-item-skeleton";
+
+const ARCHIVE_GRID_SIZES: ResponsiveSizes = [
+  { maxWidth: 640, size: "100vw" },
+  { maxWidth: 768, size: "50vw" },
+  { maxWidth: 1024, size: "33vw" },
+  { maxWidth: 1280, size: "25vw" },
+  { size: "16vw" },
+];
 
 interface PaintingProps {
   item: Painting;
@@ -42,6 +51,7 @@ export const PaintingComponent: FC<PaintingProps> = ({ item, onClick }) => {
         src={item.imageUrl}
         alt={`Archive item ${item.id}`}
         fill
+        sizes={ARCHIVE_GRID_SIZES}
         className="object-cover transition-opacity"
         skeleton={<PaintingSkeleton />}
         logContext={{

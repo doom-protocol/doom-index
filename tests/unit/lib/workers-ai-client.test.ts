@@ -78,7 +78,6 @@ describe("WorkersAiClient", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
         expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro");
       }
     });
@@ -116,7 +115,6 @@ describe("WorkersAiClient", () => {
       // Should succeed using hardcoded default model
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
         expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro");
       }
     });
@@ -175,7 +173,6 @@ describe("WorkersAiClient", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.text).toBe("Generated text from OpenAI format");
-        // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
         expect(result.value.modelId).toBe("@cf/ibm-granite/granite-4.0-h-micro");
       }
       expect(openAiMock).toHaveBeenCalledTimes(1);

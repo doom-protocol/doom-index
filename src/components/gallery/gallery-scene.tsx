@@ -28,11 +28,8 @@ const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
 
 export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCameraPreset = "painting" }) => {
-  const { data: latestPainting, isLoading } = useLatestPainting();
+  const { data: latestPainting } = useLatestPainting();
   const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
-
-  // Debug logging
-  console.log("GalleryScene debug:", { latestPainting, isLoading, thumbnailUrl });
 
   // Wallet hooks
   const { connecting: isWalletConnecting } = useSolanaWallet();

@@ -80,7 +80,7 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
       sendGAEvent(GA_EVENTS.MINT_TRANSACTION_START);
 
       // Use placeholder URI for minting if metadata doesn't exist yet
-      const tokenId = parseInt(paintingMetadata.paintingHash.slice(0, 8), 16);
+      const tokenId = 1;
       const mintUri = metadata ? `ipfs://${metadata.cidMetadata}` : `ipfs://${tokenId}/metadata.json`; // Placeholder
 
       const result = await mint({

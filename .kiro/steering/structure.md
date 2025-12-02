@@ -1,7 +1,7 @@
 ---
 title: DOOM INDEX - プロジェクト構造と規約
 includes: always
-updated: 2025-11-22
+updated: 2025-01-15
 ---
 
 ## ルート構成（概要）
@@ -47,13 +47,13 @@ updated: 2025-11-22
     - `client.ts` クライアントサイド tRPC クライアント（TanStack Query 統合）
     - `server.ts` サーバーサイド tRPC クライアント（Server Components 用）
     - `vanilla-client.ts` vanilla tRPC クライアント（Web Workers 用）
-  - `providers/` 画像生成 Provider 実装（ai-sdk, runware, mock, index）
+  - `image-generation-providers/` 画像生成 Provider 実装（runware, workers-ai, mock）
   - `cache.ts` **Cloudflare Cache API ヘルパー（開発中）**
   - `r2.ts` R2 クライアント（環境差吸収）
   - `pure/` **純関数・ドメインロジック計算**
     - domain logic に直結する数値計算や、小さく切り出して testability を高める必要がある複雑な検証・計算ロジックを配置
     - プロンプト合成/正規化/量子化/ハッシュ等の純粋関数
-  - 共通: `hash.ts`, `round.ts`, `time.ts`, `runware-client.ts`, `kv.ts`
+  - 共通: `hash.ts`, `round.ts`, `time.ts`, `runware-client.ts`, `kv.ts`, `workers-ai-client.ts`, `tavily-client.ts`, `coingecko-client.ts`
 - `services/` ビジネスロジック
   - `image-generation.ts` 画像生成サービス
   - `token-analysis-service.ts` トークン分析サービス
@@ -107,7 +107,7 @@ updated: 2025-11-22
 ## アーキテクチャ原則
 
 - Edge ファースト・I/O分離（副作用は境界で実行）
-- **tRPC による型安全 API** - エンドツーエンドの型推論、zod バリデーション、エラーハンドリング
+- **tRPC による型安全 API** - エンドツーエンドの型推論、valibot バリデーション、エラーハンドリング
 - 結果型（neverthrow）で明示的に失敗を伝播（tRPC プロシージャ内で Result 型を tRPCError に変換）
 - **D1 データベース統合** - Drizzle ORM による型安全なスキーマ定義、マイグレーション管理、クエリ構築
 - 純関数と状態/副作用の分離でテスト容易性を担保
@@ -115,6 +115,7 @@ updated: 2025-11-22
 - R2 は Workers では Binding、Next.js では公開 URL を使用
 - **D1 は Workers では Binding、Next.js では HTTP API 経由**（`drizzle-kit` の `d1-http` ドライバ使用）
 - **動的プロンプト生成** - Tavily 検索結果を Workers AI で要約し、D1 にキャッシュして再利用
+- **環境変数検証: valibot** - `@t3-oss/env-nextjs` による型安全な環境変数管理（`src/env.ts`）
 - **Cloudflare Cache API 統合（開発中）** - Edge キャッシュによる外部 API 呼び出し削減とレイテンシ低減
 
 ## 追加の作法
@@ -124,7 +125,8 @@ updated: 2025-11-22
 - **tRPC クライアント使用**: React コンポーネントでは `lib/trpc/client.ts` 経由、Server Components では `lib/trpc/server.ts` 経由
 - **データベーススキーマ追加時**: `src/db/schema/[table].ts` に Drizzle テーブル定義を追加、`src/db/index.ts` のスキーマエクスポートに含める
 - **データベースマイグレーション**: `bun run db:generate` でマイグレーション生成、`bun run db:migrate` でローカル実行、`bun run db:migrate:prod` で本番実行
-- **動的プロンプト生成**: `src/services/dynamic-prompt/` のサービスを使用し、D1 キャッシュを優先的に参照
+- **動的プロンプト生成**: `src/services/world-prompt-service.ts` のサービスを使用し、D1 キャッシュを優先的に参照
+- **環境変数追加時**: `src/env.ts` に valibot スキーマを追加し、`server`/`client`/`shared` の適切なセクションに配置
 - コンポーネント: 近接配置（styles/hooks/utils を隣接）
 - テスト: `tests/unit/..`, `tests/integration/..` に対応配置（tRPC ルーター/コンテキストの統合テスト含む）
 - OGP/公開物: 既定は `public/`、動的は `app/opengraph-image.tsx`
