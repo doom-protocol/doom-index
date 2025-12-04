@@ -159,7 +159,7 @@ async function getCurrentPaintingImageBuffer(
       width: 1200,
       height: 630,
       fit: "pad",
-      background: "000000", // Black background for padding
+      background: "#000000", // Black background for padding (CSS color format required)
     };
 
     // Build output options
@@ -224,7 +224,12 @@ async function getCurrentPaintingImageBuffer(
     if (assetsFetcher) {
       logger.info("ogp.step4-fallback-transform");
       try {
-        const fallbackResponse = await assetsFetcher.fetch("/og-fallback.png");
+        // Use Request object with full URL (same as getFallbackImageDataUrl)
+        const baseUrl = getBaseUrl();
+        const origin = new URL(baseUrl).origin;
+        const fallbackUrl = `${origin}/og-fallback.png`;
+        const fallbackRequest = new Request(fallbackUrl, { method: "GET" });
+        const fallbackResponse = await assetsFetcher.fetch(fallbackRequest);
         if (!fallbackResponse.ok) {
           throw new Error(`Failed to fetch fallback image: ${fallbackResponse.status}`);
         }
@@ -238,7 +243,7 @@ async function getCurrentPaintingImageBuffer(
             width: 1200,
             height: 630,
             fit: "pad",
-            background: "000000", // Black background for padding
+            background: "#000000", // Black background for padding (CSS color format required)
           };
 
           const outputOptions: ImageOutputOptions = {
@@ -417,7 +422,12 @@ export default async function Image(): Promise<Response> {
         logger.info("ogp.fallback-load-image");
         // Use og-fallback.png with IMAGES binding to resize to 1200x630 with black background
         try {
-          const fallbackResponse = await assetsFetcher.fetch("/og-fallback.png");
+          // Use Request object with full URL (same as getFallbackImageDataUrl)
+          const requestUrl = getBaseUrl();
+          const origin = new URL(requestUrl).origin;
+          const fallbackUrl = `${origin}/og-fallback.png`;
+          const fallbackRequest = new Request(fallbackUrl, { method: "GET" });
+          const fallbackResponse = await assetsFetcher.fetch(fallbackRequest);
           if (!fallbackResponse.ok) {
             throw new Error(`Failed to fetch fallback image: ${fallbackResponse.status}`);
           }
@@ -432,7 +442,7 @@ export default async function Image(): Promise<Response> {
               width: 1200,
               height: 630,
               fit: "pad",
-              background: "000000", // Black background for padding
+              background: "#000000", // Black background for padding (CSS color format required)
             };
 
             const outputOptions: ImageOutputOptions = {
