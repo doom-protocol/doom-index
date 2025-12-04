@@ -81,6 +81,38 @@ const reactConfig = {
   rules: {
     // React JSX rules (override Next.js defaults if needed)
     "react/jsx-curly-brace-presence": "error",
+    // Enforce arrow function for function components (prefer React.FC style)
+    // e.g., const Component: React.FC<Props> = (props) => { ... }
+    "react/function-component-definition": [
+      "error",
+      {
+        namedComponents: "arrow-function",
+        unnamedComponents: "arrow-function",
+      },
+    ],
+  },
+};
+
+// Next.js App Router specific files (page.tsx, layout.tsx, etc.)
+// Allow function declarations for NextPage type usage
+const nextAppRouterConfig = {
+  files: [
+    "**/page.tsx",
+    "**/layout.tsx",
+    "**/loading.tsx",
+    "**/error.tsx",
+    "**/not-found.tsx",
+    "**/template.tsx",
+    "**/default.tsx",
+  ],
+  rules: {
+    "react/function-component-definition": [
+      "error",
+      {
+        namedComponents: ["function-declaration", "arrow-function"],
+        unnamedComponents: "arrow-function",
+      },
+    ],
   },
 };
 
@@ -104,6 +136,7 @@ const eslintConfig = defineConfig([
   ...nextTs,
   typescriptConfig,
   reactConfig,
+  nextAppRouterConfig, // Must come after reactConfig to override
   ignoreConfig,
 ]);
 
