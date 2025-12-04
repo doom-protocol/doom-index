@@ -4,7 +4,7 @@ import { reportGlobalError } from "@/lib/actions/report-error";
 import NextError from "next/error";
 import { type FC, useEffect } from "react";
 
-export const GlobalError: FC<{ error: Error & { digest?: string } }> = ({ error }) => {
+const GlobalError: FC<{ error: Error & { digest?: string } }> = ({ error }) => {
   useEffect(() => {
     // Report error to Slack via Server Action
     const report = async () => {
@@ -35,3 +35,5 @@ export const GlobalError: FC<{ error: Error & { digest?: string } }> = ({ error 
     </html>
   );
 };
+
+export default GlobalError;
