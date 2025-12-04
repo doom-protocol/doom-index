@@ -291,7 +291,7 @@ async function serveR2Object(
     const uint8Array = new Uint8Array(bodyArrayBuffer);
     let binaryString = "";
     for (let i = 0; i < uint8Array.length; i++) {
-      binaryString += String.fromCharCode(uint8Array[i]!);
+      binaryString += String.fromCharCode(uint8Array[i]);
     }
     const bodyBase64 = btoa(binaryString);
 

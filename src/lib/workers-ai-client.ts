@@ -148,7 +148,7 @@ export function createWorkersAiClient({
         });
       }
 
-      const data = (await response.json()) as { result: { response: string }; success: boolean; errors: unknown[] };
+      const data = (await response.json());
 
       if (!data.success || !data.result) {
         return err({

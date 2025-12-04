@@ -34,7 +34,7 @@ const easeInOutCubic = (t: number): number => {
 
 export const CameraRig: FC<CameraRigProps> = ({ preset = "painting" }) => {
   const { camera } = useThree();
-  const currentPreset = useRef<CameraPreset>(preset as CameraPreset);
+  const currentPreset = useRef<CameraPreset>(preset);
   const startPosition = useRef(new Vector3());
   const startLookAt = useRef(new Vector3());
   const targetPosition = useRef(new Vector3());
@@ -51,8 +51,8 @@ export const CameraRig: FC<CameraRigProps> = ({ preset = "painting" }) => {
       isTransitioning.current = true;
       startPosition.current.copy(camera.position);
       startLookAt.current.set(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
-      targetPosition.current.set(...PRESETS[preset as CameraPreset].position);
-      targetLookAt.current.set(...PRESETS[preset as CameraPreset].lookAt);
+      targetPosition.current.set(...PRESETS[preset].position);
+      targetLookAt.current.set(...PRESETS[preset].lookAt);
       transitionStart.current = clock.getElapsedTime() * 1000;
       invalidate();
     }

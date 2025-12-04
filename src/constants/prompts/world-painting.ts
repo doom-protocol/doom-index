@@ -284,7 +284,7 @@ export function getNarrativeMomentKey(
 
   // Return matching moment or default to stable-transition
   if (momentKey in NARRATIVE_MOMENTS) {
-    return momentKey as keyof typeof NARRATIVE_MOMENTS;
+    return momentKey;
   }
 
   return "stable-transition";

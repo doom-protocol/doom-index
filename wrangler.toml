@@ -94,7 +94,7 @@ NEXTJS_ENV = "production"
 NEXT_PUBLIC_BASE_URL = "https://doomindex.fun"
 NEXT_PUBLIC_R2_URL = "/api/r2"
 IMAGE_MODEL = "runware:400@1"
-NEXT_PUBLIC_GENERATION_INTERVAL_MS = 600000    # 10 minutes
+NEXT_PUBLIC_GENERATION_INTERVAL_MS = 3600000   # 1 hour
 
 [observability]
 enabled = false

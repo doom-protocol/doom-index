@@ -308,20 +308,9 @@ export default async function Image(): Promise<ImageResponse> {
     logger.info("ogp.step-init-context");
     // Get Cloudflare context
     const { env } = await getCloudflareContext({ async: true });
-    const r2Bucket = env.R2_BUCKET as R2Bucket | undefined;
-    const db = env.DB as D1Database | undefined;
-
-    if (!r2Bucket) {
-      logger.warn("ogp.step-init-no-bucket");
-      throw new Error("R2_BUCKET not available");
-    }
-
-    if (!db) {
-      logger.warn("ogp.step-init-no-db");
-      throw new Error("DB not available");
-    }
-
-    const assetsFetcher = env.ASSETS as Fetcher | undefined;
+    const r2Bucket = env.R2_BUCKET;
+    const db = env.DB;
+    const assetsFetcher = env.ASSETS;
 
     logger.info("ogp.step-init-success", {
       hasBucket: !!r2Bucket,
@@ -372,6 +361,7 @@ export default async function Image(): Promise<ImageResponse> {
     const imageResponse = new ImageResponse(jsxElement, {
       width: size.width,
       height: size.height,
+      fonts: [],
     });
 
     logger.info("ogp.step-render-success");
@@ -388,7 +378,7 @@ export default async function Image(): Promise<ImageResponse> {
         "Content-Type": "image/png",
         "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_MINUTE}, stale-while-revalidate=30`,
       },
-    }) as unknown as ImageResponse;
+    });
 
     logger.info("ogp.completed", {
       durationMs: Date.now() - startTime,
@@ -404,7 +394,7 @@ export default async function Image(): Promise<ImageResponse> {
     try {
       // Get ASSETS fetcher for fallback image
       const { env } = await getCloudflareContext({ async: true });
-      const assetsFetcher = env.ASSETS as Fetcher | undefined;
+      const assetsFetcher = env.ASSETS;
 
       if (assetsFetcher) {
         logger.info("ogp.fallback-load-image");
@@ -441,6 +431,7 @@ export default async function Image(): Promise<ImageResponse> {
         const fallbackResponse = new ImageResponse(fallbackJsx, {
           width: size.width,
           height: size.height,
+          fonts: [],
         });
 
         const fallbackBuffer = await fallbackResponse.arrayBuffer();
@@ -454,7 +445,7 @@ export default async function Image(): Promise<ImageResponse> {
             "Content-Type": "image/png",
             "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_MINUTE}`,
           },
-        }) as unknown as ImageResponse;
+        });
       }
     } catch (fallbackError) {
       logger.warn("ogp.fallback-image-error", {
@@ -484,6 +475,7 @@ export default async function Image(): Promise<ImageResponse> {
     const textFallbackResponse = new ImageResponse(textFallbackJsx, {
       width: size.width,
       height: size.height,
+      fonts: [],
     });
 
     const textFallbackBuffer = await textFallbackResponse.arrayBuffer();
@@ -497,6 +489,6 @@ export default async function Image(): Promise<ImageResponse> {
         "Content-Type": "image/png",
         "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_MINUTE}`,
       },
-    }) as unknown as ImageResponse;
+    });
   }
 }

@@ -64,6 +64,31 @@ const typescriptRules = {
       caughtErrorsIgnorePattern: "^_",
     },
   ],
+  // Prevent unnecessary type assertions
+  // Detect when type assertion is used on a value that already has the same type
+  "@typescript-eslint/no-unnecessary-type-assertion": "error",
+  // Prevent revalidate from using expressions (must be numeric literal for Next.js route config parsing)
+  "no-restricted-syntax": [
+    "error",
+    {
+      message:
+        "revalidate must be a numeric literal, not an expression. Next.js cannot parse expressions in route segment config.",
+      selector:
+        "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator[id.name='revalidate'] > BinaryExpression",
+    },
+    {
+      message:
+        "revalidate must be a numeric literal, not a function call. Next.js cannot parse function calls in route segment config.",
+      selector:
+        "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator[id.name='revalidate'] > CallExpression",
+    },
+    {
+      message:
+        "revalidate must be a numeric literal, not a member expression. Next.js cannot parse member expressions in route segment config.",
+      selector:
+        "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator[id.name='revalidate'] > MemberExpression",
+    },
+  ],
 };
 
 // TypeScript rules for test files (more lenient)

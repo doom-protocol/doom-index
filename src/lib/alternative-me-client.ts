@@ -60,7 +60,7 @@ export class AlternativeMeClient {
         });
       }
 
-      const data = (await response.json()) as AlternativeMeApiResponse;
+      const data = (await response.json());
 
       if (!data.data || data.data.length === 0) {
         logger.error("[AlternativeMeClient] Invalid response from Alternative.me API");
