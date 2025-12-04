@@ -21,11 +21,15 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "DOOM INDEX - A decentralized archive of financial emotions.";
 
-const PAINTING_TARGET_SIZE = 512;
+const PAINTING_TARGET_SIZE = 520;
 const PAINTING_OFFSET = {
   left: Math.round((size.width - PAINTING_TARGET_SIZE) / 2),
   top: Math.round((size.height - PAINTING_TARGET_SIZE) / 2),
 };
+const FRAME_IMAGE_PRIMARY_PATH = "/frame.png";
+
+const BACKGROUND_IMAGE_PATH = "/ogp-bg.png";
+const FALLBACK_BACKGROUND_COLOR = "#000000";
 const BLACK_PIXEL_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 const BLACK_PIXEL_BYTES = Buffer.from(BLACK_PIXEL_BASE64, "base64");
@@ -48,7 +52,30 @@ async function renderPaintingOnCanvas(
   paintingBuffer: ArrayBuffer,
   images: ImagesBinding,
   frameBuffer?: ArrayBuffer | null,
+  backgroundBuffer?: ArrayBuffer | null,
 ): Promise<ArrayBuffer> {
+  const backgroundStream = createReadableStreamFromArrayBuffer((backgroundBuffer ?? BLACK_PIXEL_ARRAY_BUFFER).slice(0));
+  const backgroundTransform: ImageTransform = {
+    width: size.width,
+    height: size.height,
+    fit: "cover",
+  };
+  if (!backgroundBuffer) {
+    backgroundTransform.background = FALLBACK_BACKGROUND_COLOR;
+  }
+  let composedTransformer = images.input(backgroundStream).transform(backgroundTransform);
+
+  if (frameBuffer) {
+    const frameStream = createReadableStreamFromArrayBuffer(frameBuffer.slice(0));
+    const frameTransformer = images.input(frameStream).transform({
+      width: size.width,
+      height: size.height,
+      fit: "cover",
+      gravity: "center",
+    });
+    composedTransformer = composedTransformer.draw(frameTransformer);
+  }
+
   const paintingStream = createReadableStreamFromArrayBuffer(paintingBuffer.slice(0));
   const paintingTransformer = images.input(paintingStream).transform({
     width: PAINTING_TARGET_SIZE,
@@ -57,33 +84,10 @@ async function renderPaintingOnCanvas(
     gravity: "center",
   });
 
-  const backgroundStream = createReadableStreamFromArrayBuffer(BLACK_PIXEL_ARRAY_BUFFER.slice(0));
-  const backgroundTransformer = images.input(backgroundStream).transform({
-    width: size.width,
-    height: size.height,
-    fit: "cover",
-    background: "#000000",
-  });
-
-  let composedTransformer = backgroundTransformer.draw(paintingTransformer, {
+  composedTransformer = composedTransformer.draw(paintingTransformer, {
     left: PAINTING_OFFSET.left,
     top: PAINTING_OFFSET.top,
   });
-
-  if (frameBuffer) {
-    const frameStream = createReadableStreamFromArrayBuffer(frameBuffer.slice(0));
-    const frameTransformer = images.input(frameStream).transform({
-      width: PAINTING_TARGET_SIZE,
-      height: PAINTING_TARGET_SIZE,
-      fit: "cover",
-      gravity: "center",
-    });
-
-    composedTransformer = composedTransformer.draw(frameTransformer, {
-      left: PAINTING_OFFSET.left,
-      top: PAINTING_OFFSET.top,
-    });
-  }
 
   const transformedResult = await composedTransformer.output({
     format: "image/png",
@@ -115,7 +119,7 @@ async function getFallbackImageBuffer(assetsFetcher: Fetcher): Promise<ArrayBuff
 async function getFrameImageBuffer(assetsFetcher: Fetcher): Promise<ArrayBuffer | null> {
   try {
     const baseUrl = getBaseUrl();
-    const frameUrl = new URL("/frame.webp", baseUrl).toString();
+    const frameUrl = new URL(FRAME_IMAGE_PRIMARY_PATH, baseUrl).toString();
     const response = await assetsFetcher.fetch(new Request(frameUrl, { method: "GET" }));
     if (!response.ok) {
       logger.warn("ogp.frame-fetch-failed", {
@@ -125,17 +129,46 @@ async function getFrameImageBuffer(assetsFetcher: Fetcher): Promise<ArrayBuffer 
     }
     const buffer = await response.arrayBuffer();
     logger.info("ogp.frame-fetch-success", {
+      path: FRAME_IMAGE_PRIMARY_PATH,
       sizeBytes: buffer.byteLength,
       sizeKB: (buffer.byteLength / 1024).toFixed(2),
     });
     return buffer;
   } catch (error) {
     logger.warn("ogp.frame-fetch-error", {
+      path: FRAME_IMAGE_PRIMARY_PATH,
       error: error instanceof Error ? error.message : String(error),
     });
     return null;
   }
 }
+
+async function getBackgroundImageBuffer(assetsFetcher?: Fetcher): Promise<ArrayBuffer | null> {
+  if (!assetsFetcher) return null;
+  try {
+    const baseUrl = getBaseUrl();
+    const backgroundUrl = new URL(BACKGROUND_IMAGE_PATH, baseUrl).toString();
+    const response = await assetsFetcher.fetch(new Request(backgroundUrl, { method: "GET" }));
+    if (!response.ok) {
+      logger.warn("ogp.background-fetch-failed", {
+        status: response.status,
+      });
+      return null;
+    }
+    const buffer = await response.arrayBuffer();
+    logger.info("ogp.background-fetch-success", {
+      sizeBytes: buffer.byteLength,
+      sizeKB: (buffer.byteLength / 1024).toFixed(2),
+    });
+    return buffer;
+  } catch (error) {
+    logger.warn("ogp.background-fetch-error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
 /**
  * Fetch fallback image (og-fallback.png) and convert to data URL
  */
@@ -254,12 +287,16 @@ async function getCurrentPaintingImageBuffer(
 
   logger.info("ogp.step4-transform-image");
   let frameBuffer: ArrayBuffer | null = null;
+  let backgroundBuffer: ArrayBuffer | null = null;
   if (assetsFetcher) {
-    frameBuffer = await getFrameImageBuffer(assetsFetcher);
+    [frameBuffer, backgroundBuffer] = await Promise.all([
+      getFrameImageBuffer(assetsFetcher),
+      getBackgroundImageBuffer(assetsFetcher),
+    ]);
   }
 
   try {
-    return await renderPaintingOnCanvas(imageResult.value, imagesBinding, frameBuffer);
+    return await renderPaintingOnCanvas(imageResult.value, imagesBinding, frameBuffer, backgroundBuffer);
   } catch (transformError) {
     const transformErrorMessage = transformError instanceof Error ? transformError.message : String(transformError);
     logger.error("ogp.step4-transform-error", {
@@ -271,8 +308,11 @@ async function getCurrentPaintingImageBuffer(
 
     if (assetsFetcher) {
       const fallbackBuffer = await getFallbackImageBuffer(assetsFetcher);
-      const fallbackFrameBuffer = frameBuffer ?? (await getFrameImageBuffer(assetsFetcher));
-      return await renderPaintingOnCanvas(fallbackBuffer, imagesBinding, fallbackFrameBuffer);
+      const [fallbackFrameBuffer, fallbackBackgroundBuffer] = await Promise.all([
+        frameBuffer ? Promise.resolve(frameBuffer) : getFrameImageBuffer(assetsFetcher),
+        backgroundBuffer ? Promise.resolve(backgroundBuffer) : getBackgroundImageBuffer(assetsFetcher),
+      ]);
+      return await renderPaintingOnCanvas(fallbackBuffer, imagesBinding, fallbackFrameBuffer, fallbackBackgroundBuffer);
     }
 
     const noFallbackReason = "ASSETS fetcher not available for fallback";
@@ -328,10 +368,10 @@ export async function getCurrentPaintingDataUrl(
  */
 export async function getFrameDataUrl(assetsFetcher: Fetcher): Promise<string | null> {
   try {
-    const response = await assetsFetcher.fetch("/frame.webp");
+    const response = await assetsFetcher.fetch("/frame.png");
     if (!response.ok) return null;
     const buffer = await response.arrayBuffer();
-    return arrayBufferToDataUrl(buffer, "image/webp");
+    return arrayBufferToDataUrl(buffer, "image/png");
   } catch {
     return null;
   }
@@ -410,8 +450,16 @@ export default async function Image(): Promise<Response> {
         logger.info("ogp.fallback-load-image");
         try {
           const fallbackBuffer = await getFallbackImageBuffer(fallbackAssetsFetcher);
-          const frameBuffer = await getFrameImageBuffer(fallbackAssetsFetcher);
-          const transformedFallback = await renderPaintingOnCanvas(fallbackBuffer, fallbackImagesBinding, frameBuffer);
+          const [frameBuffer, backgroundBuffer] = await Promise.all([
+            getFrameImageBuffer(fallbackAssetsFetcher),
+            getBackgroundImageBuffer(fallbackAssetsFetcher),
+          ]);
+          const transformedFallback = await renderPaintingOnCanvas(
+            fallbackBuffer,
+            fallbackImagesBinding,
+            frameBuffer,
+            backgroundBuffer,
+          );
 
           logger.info("ogp.fallback-completed", {
             durationMs: Date.now() - startTime,
@@ -435,13 +483,21 @@ export default async function Image(): Promise<Response> {
 
           const fallbackDataUrl = await getFallbackImageDataUrl(fallbackAssetsFetcher);
           const fallbackBuffer = await fetch(fallbackDataUrl).then(r => r.arrayBuffer());
-          const frameBuffer = await getFrameImageBuffer(fallbackAssetsFetcher);
+          const [frameBuffer, backgroundBuffer] = await Promise.all([
+            getFrameImageBuffer(fallbackAssetsFetcher),
+            getBackgroundImageBuffer(fallbackAssetsFetcher),
+          ]);
 
           logger.info("ogp.fallback-completed", {
             durationMs: Date.now() - startTime,
           });
 
-          const transformedFallback = await renderPaintingOnCanvas(fallbackBuffer, fallbackImagesBinding, frameBuffer);
+          const transformedFallback = await renderPaintingOnCanvas(
+            fallbackBuffer,
+            fallbackImagesBinding,
+            frameBuffer,
+            backgroundBuffer,
+          );
 
           return new Response(transformedFallback, {
             status: 200,
