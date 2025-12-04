@@ -12,7 +12,7 @@ describe("unit/lib/pinata-client", () => {
       const mockPinata = {
         upload: {
           public: {
-            createSignedURL: mock(async () => "https://uploads.pinata.cloud/v3/files/signed-url-123"),
+            createSignedURL: mock(() => Promise.resolve("https://uploads.pinata.cloud/v3/files/signed-url-123")),
           },
         },
       };
@@ -56,8 +56,8 @@ describe("unit/lib/pinata-client", () => {
       const mockPinata = {
         upload: {
           public: {
-            createSignedURL: mock(async () => {
-              throw new Error("Pinata API error");
+            createSignedURL: mock(() => {
+              return Promise.reject(new Error("Pinata API error"));
             }),
           },
         },
@@ -100,7 +100,7 @@ describe("unit/lib/pinata-client", () => {
       const mockPinata = {
         gateways: {
           public: {
-            convert: mock(async () => "https://gateway.pinata.cloud/ipfs/QmTest123?signature=xyz"),
+            convert: mock(() => Promise.resolve("https://gateway.pinata.cloud/ipfs/QmTest123?signature=xyz")),
           },
         },
       };
@@ -125,8 +125,8 @@ describe("unit/lib/pinata-client", () => {
       const mockPinata = {
         gateways: {
           public: {
-            convert: mock(async () => {
-              throw new Error("Invalid CID");
+            convert: mock(() => {
+              return Promise.reject(new Error("Invalid CID"));
             }),
           },
         },

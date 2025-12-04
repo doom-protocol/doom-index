@@ -17,7 +17,7 @@ import { createLoggerMock, createMockPerformance, resetMockTime, advanceMockTime
 const { logger: mockLogger, calls: loggerCalls } = createLoggerMock();
 
 // Mock logger to capture timing logs
-mock.module("@/utils/logger", () => ({
+void mock.module("@/utils/logger", () => ({
   logger: mockLogger,
 }));
 
@@ -25,7 +25,7 @@ mock.module("@/utils/logger", () => ({
 const originalPerformance = globalThis.performance;
 
 // Mock env - use NEXT_PUBLIC_BASE_URL to determine development environment
-mock.module("@/env", () => ({
+void mock.module("@/env", () => ({
   env: {
     NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
     LOG_LEVEL: "DEBUG",
@@ -84,9 +84,9 @@ const mockPainting = {
 };
 
 // Import the real module to spread its exports
-const realUseLatestPainting = require("@/hooks/use-latest-painting");
+const realUseLatestPainting = await import("@/hooks/use-latest-painting");
 
-mock.module("@/hooks/use-latest-painting", () => ({
+void mock.module("@/hooks/use-latest-painting", () => ({
   // Spread all real exports (constants, pure functions) to avoid breaking other tests
   ...realUseLatestPainting,
   // Only override the hooks that need mocking for our tests
@@ -95,11 +95,11 @@ mock.module("@/hooks/use-latest-painting", () => ({
     isLoading: false,
     error: null,
   }),
-  useLatestPaintingRefetch: () => async () => undefined,
+  useLatestPaintingRefetch: () => () => Promise.resolve(undefined),
 }));
 
 // Mock Solana wallet hook
-mock.module("@/hooks/use-solana-wallet", () => ({
+void mock.module("@/hooks/use-solana-wallet", () => ({
   useSolanaWallet: () => ({
     connecting: false,
     connected: false,
@@ -112,13 +112,13 @@ mock.module("@/hooks/use-solana-wallet", () => ({
 // glbExportService during render, so we don't need to mock it here.
 
 // Mock analytics
-mock.module("@/lib/analytics", () => ({
+void mock.module("@/lib/analytics", () => ({
   GA_EVENTS: { GALLERY_PAINTING_CLICK: "gallery_painting_click" },
   sendGAEvent: mock(() => {}),
 }));
 
 // Mock toast
-mock.module("sonner", () => ({
+void mock.module("sonner", () => ({
   toast: {
     error: mock(() => {}),
     success: mock(() => {}),
@@ -126,19 +126,19 @@ mock.module("sonner", () => ({
 }));
 
 // Mock use-haptic
-mock.module("use-haptic", () => ({
+void mock.module("use-haptic", () => ({
   useHaptic: () => ({
     triggerHaptic: mock(() => {}),
   }),
 }));
 
 // Mock useTransformedTextureUrl
-mock.module("@/hooks/use-transformed-texture-url", () => ({
+void mock.module("@/hooks/use-transformed-texture-url", () => ({
   useTransformedTextureUrl: (url: string) => url,
 }));
 
 // Mock useSafeTexture to capture onLoad callback and call it synchronously
-mock.module("@/hooks/use-safe-texture", () => {
+void mock.module("@/hooks/use-safe-texture", () => {
   const mockTexture = {
     colorSpace: "",
     anisotropy: 1,
@@ -170,7 +170,7 @@ const MockCanvas: FC<{ children: ReactNode }> = ({ children }) => {
   return <div data-testid="mock-canvas">{children}</div>;
 };
 
-mock.module("@react-three/fiber", () => ({
+void mock.module("@react-three/fiber", () => ({
   Canvas: MockCanvas,
   useFrame: mock(() => {}),
   useThree: () => ({
@@ -185,7 +185,7 @@ mock.module("@react-three/fiber", () => ({
 }));
 
 // Mock @react-three/drei
-mock.module("@react-three/drei", () => ({
+void mock.module("@react-three/drei", () => ({
   Grid: () => null,
   OrbitControls: () => null,
   Stats: () => null,
@@ -204,7 +204,7 @@ const useGLTFMock = () => ({
 });
 useGLTFMock.preload = mock(() => {});
 
-mock.module("@react-three/drei", () => ({
+void mock.module("@react-three/drei", () => ({
   Grid: () => null,
   OrbitControls: () => null,
   Stats: () => null,
@@ -215,13 +215,13 @@ mock.module("@react-three/drei", () => ({
 // (e.g., glb-export-service.test.ts). The R3F mocks above handle WebGL-specific bits.
 
 // Mock framed-painting-base
-mock.module("@/components/ui/framed-painting-base", () => ({
+void mock.module("@/components/ui/framed-painting-base", () => ({
   FrameModel: () => null,
   PaintingGroup: ({ children }: { children: ReactNode }) => <div data-testid="painting-group">{children}</div>,
 }));
 
 // Mock three-error-boundary
-mock.module("@/components/ui/three-error-boundary", () => ({
+void mock.module("@/components/ui/three-error-boundary", () => ({
   ThreeErrorBoundary: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
@@ -229,51 +229,51 @@ mock.module("@/components/ui/three-error-boundary", () => ({
 // mint-button.test.tsx. The MintButton component will use its real implementation
 // but with mocked dependencies (wallet, analytics, etc.)
 
-mock.module("@/components/ui/mint-modal", () => ({
+void mock.module("@/components/ui/mint-modal", () => ({
   MintModal: () => null,
 }));
 
 // Mock gallery sub-components
-mock.module("@/components/gallery/camera-rig", () => ({
+void mock.module("@/components/gallery/camera-rig", () => ({
   CameraRig: () => null,
 }));
 
-mock.module("@/components/gallery/gallery-room", () => ({
+void mock.module("@/components/gallery/gallery-room", () => ({
   GalleryRoom: () => null,
 }));
 
 // Create a mock Lights component that we can reference
 const MockLights: FC = () => null;
 
-mock.module("@/components/gallery/lights", () => ({
+void mock.module("@/components/gallery/lights", () => ({
   Lights: MockLights,
 }));
 
 // Mock leva (client-side only GUI library)
-mock.module("leva", () => ({
+void mock.module("leva", () => ({
   Leva: () => null,
   useControls: () => ({}),
 }));
 
 // Mock next/dynamic to return the mocked Lights component directly
 // Since Lights is already mocked above, we can return it synchronously
-mock.module("next/dynamic", () => ({
+void mock.module("next/dynamic", () => ({
   default: () => MockLights,
 }));
 
 // Mock utils
-mock.module("@/utils/three", () => ({
+void mock.module("@/utils/three", () => ({
   calculatePlaneDimensions: () => [0.7, 0.7],
   handlePointerMoveForDrag: mock(() => {}),
   handlePointerUpForClick: mock(() => false),
   isValidPointerEvent: mock(() => true),
 }));
 
-mock.module("@/utils/twitter", () => ({
+void mock.module("@/utils/twitter", () => ({
   openTweetIntent: mock(() => {}),
 }));
 
-mock.module("@/utils/url", () => ({
+void mock.module("@/utils/url", () => ({
   getBaseUrl: () => "https://doomindex.com",
 }));
 

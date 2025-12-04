@@ -9,7 +9,7 @@ describe("useSafeTexture", () => {
     expect(typeof useSafeTexture.clear).toBe("function");
   });
 
-  it("should handle different input types", async () => {
+  it("should handle different input types", () => {
     // Test that the function accepts different input types (type check only)
     const _singleUrl: string = "/test.jpg";
     const _arrayUrls: string[] = ["/test1.jpg", "/test2.jpg"];

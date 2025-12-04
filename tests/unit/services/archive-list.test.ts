@@ -76,7 +76,7 @@ describe("Archive List Service", () => {
     store = client.store;
 
     // Mock buildPublicR2Path to ensure consistent behavior in tests
-    mock.module("@/utils/paintings", () => ({
+    void mock.module("@/utils/paintings", () => ({
       buildPublicR2Path: mock((key: string) => `/api/r2/${key.replace(/^\/+/, "")}`),
       buildPaintingKey: mock((dateString: string, filename: string) => {
         const dateMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -129,13 +129,13 @@ describe("Archive List Service", () => {
                   })
                 : undefined;
 
-              return {
+              return await Promise.resolve({
                 items: limitedData,
                 cursor,
                 hasMore,
-              };
+              });
             }
-            return { items: [], cursor: undefined, hasMore: false };
+            return await Promise.resolve({ items: [], cursor: undefined, hasMore: false });
           }),
           raw: mock(async () => {
             // Parse the SQL to understand what data is requested
@@ -174,13 +174,13 @@ describe("Archive List Service", () => {
                   })
                 : undefined;
 
-              return {
+              return await Promise.resolve({
                 items: limitedData,
                 cursor,
                 hasMore,
-              };
+              });
             }
-            return { items: [], cursor: undefined, hasMore: false };
+            return await Promise.resolve({ items: [], cursor: undefined, hasMore: false });
           }),
         })),
       })),

@@ -108,7 +108,7 @@ export function useSolanaMint(): UseSolanaMintResult {
           }));
         }
 
-        const tx = await createNft(umi, nftConfig);
+        const tx = createNft(umi, nftConfig);
 
         // Send and confirm transaction
         const result = await tx.sendAndConfirm(umi);

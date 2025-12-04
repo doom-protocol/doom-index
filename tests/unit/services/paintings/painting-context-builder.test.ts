@@ -45,7 +45,7 @@ const snapshot = (overrides: Partial<MarketSnapshot> = {}): MarketSnapshot => ({
 describe("PaintingContextBuilder", () => {
   const createBuilder = (repoResult: Result<Token | null, AppError>) => {
     const tokensRepository: Pick<TokensRepository, "findById"> = {
-      findById: async () => repoResult,
+      findById: () => Promise.resolve(repoResult),
     };
 
     return new PaintingContextBuilder(tokensRepository as TokensRepository);

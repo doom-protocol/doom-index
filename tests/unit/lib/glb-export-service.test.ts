@@ -29,7 +29,7 @@ const mockSimplifyModifier = mock((_geometry: BufferGeometry, _count: number) =>
 });
 
 // Set up module mock for three-stdlib (external dependency)
-mock.module("three-stdlib", () => ({
+void mock.module("three-stdlib", () => ({
   GLTFExporter: class {
     parse = mockParseExporter;
   },
@@ -137,9 +137,9 @@ describe("glbExportService", () => {
   describe("optimizeGlb", () => {
     it("should optimize GLB buffer if it exceeds target size", async () => {
       // Arrange
-      const largeBuffer = new ArrayBuffer(1024 * 1024 * 40); // 40MB
+      const largeBuffer = new ArrayBuffer(41943040); // 40MB
       const targetSizeMB = 32;
-      const optimizedBuffer = new ArrayBuffer(1024 * 1024 * 20); // 20MB
+      const optimizedBuffer = new ArrayBuffer(20971520); // 20MB
 
       // Mock GLTFLoader to return a fake GLTF object with a mesh
       const mockScene = new Group();
@@ -182,7 +182,7 @@ describe("glbExportService", () => {
 
     it("should return original buffer if it is within target size", async () => {
       // Arrange
-      const smallBuffer = new ArrayBuffer(1024 * 1024 * 10); // 10MB
+      const smallBuffer = new ArrayBuffer(10485760); // 10MB
       const targetSizeMB = 32;
 
       // Act
@@ -198,7 +198,7 @@ describe("glbExportService", () => {
 
     it("should handle loader errors during optimization", async () => {
       // Arrange
-      const largeBuffer = new ArrayBuffer(1024 * 1024 * 40);
+      const largeBuffer = new ArrayBuffer(41943040);
       const targetSizeMB = 32;
 
       mockParseLoader.mockImplementation(

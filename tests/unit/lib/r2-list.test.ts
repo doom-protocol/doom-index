@@ -5,13 +5,13 @@ describe("listR2Objects", () => {
   it("forwards options with clamped limit", async () => {
     let receivedOptions: R2ListOptions | undefined;
     const bucket = {
-      async list(options?: R2ListOptions): Promise<R2Objects> {
+      list(options?: R2ListOptions): Promise<R2Objects> {
         receivedOptions = options;
-        return {
+        return Promise.resolve({
           objects: [],
           delimitedPrefixes: [],
           truncated: false,
-        };
+        });
       },
     } as unknown as R2Bucket;
 
@@ -37,8 +37,8 @@ describe("listR2Objects", () => {
 
   it("returns err when bucket.list throws", async () => {
     const bucket = {
-      async list(): Promise<R2Objects> {
-        throw new Error("boom");
+      list(): Promise<R2Objects> {
+        return Promise.reject(new Error("boom"));
       },
     } as unknown as R2Bucket;
 

@@ -10,7 +10,7 @@ type ViewerCountMessage = {
   updatedAt: number;
 };
 
-export function useViewer() {
+export function useViewer(): null {
   const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {

@@ -151,7 +151,7 @@ export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPositio
   const orbitTarget = useMemo<[number, number, number]>(() => [0, 0.8, 4.0], []);
 
   // Fixed aspect ratio (A4 paper ratio: 210:297 ≈ 0.707)
-  const PAPER_ASPECT_RATIO = 210 / 297; // width / height
+  const PAPER_ASPECT_RATIO = 0.7070707071; // width / height (derived from 210 / 297)
 
   // Calculate paper size for iOS fallback maintaining fixed aspect ratio
   const iosPaperSize = useMemo(() => {

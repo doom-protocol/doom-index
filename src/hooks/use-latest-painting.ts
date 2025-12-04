@@ -5,7 +5,7 @@ import { useTRPCClient } from "@/lib/trpc/client";
 import type { ArchiveListResponse } from "@/services/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 export const MIN_REFETCH_INTERVAL_MS = 30_000;
@@ -88,7 +88,7 @@ export async function fetchLatestPainting(
  * It fetches the most recent painting from the archive
  * and refreshes periodically to match the cron generation schedule.
  */
-export const useLatestPainting = () => {
+export const useLatestPainting = (): UseQueryResult<PaintingMetadata | null, unknown> => {
   const previousImageUrlRef = useRef<string | null | undefined>(undefined);
   const client = useTRPCClient();
 
@@ -203,7 +203,7 @@ export const useLatestPainting = () => {
  * Helper function to manually refresh the latest painting
  * Useful for UI components that need to force an update (e.g. after a progress bar completes)
  */
-export const useLatestPaintingRefetch = () => {
+export const useLatestPaintingRefetch = (): (() => Promise<void>) => {
   const queryClient = useQueryClient();
 
   return async () => {

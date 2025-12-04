@@ -57,8 +57,8 @@ describe("Cache Integration - Concurrent Requests and TTL", () => {
       updatedAt: new Date().toISOString(),
     };
 
-    const computeFn = async (): Promise<TokenState> => {
-      return mockTokenState;
+    const computeFn = (): Promise<TokenState> => {
+      return Promise.resolve(mockTokenState);
     };
 
     const result = await getOrSet<TokenState>(testKey, computeFn, { ttlSeconds: 60 });

@@ -108,20 +108,21 @@ describe("TavilyClient", () => {
     it("should truncate combinedText to 6000 characters", async () => {
       const longContent = "A".repeat(4000);
       const fakeSdk = {
-        search: async () => ({
-          results: [
-            {
-              title: "Long Article",
-              content: longContent,
-              url: "https://example.com/long",
-            },
-            {
-              title: "Another Long Article",
-              content: longContent,
-              url: "https://example.com/long2",
-            },
-          ],
-        }),
+        search: () =>
+          Promise.resolve({
+            results: [
+              {
+                title: "Long Article",
+                content: longContent,
+                url: "https://example.com/long",
+              },
+              {
+                title: "Another Long Article",
+                content: longContent,
+                url: "https://example.com/long2",
+              },
+            ],
+          }),
       };
 
       const client = createTavilyClient({ tavilyClient: fakeSdk as unknown as TavilySDK, apiKey: "test-api-key" });

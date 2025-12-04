@@ -1,12 +1,12 @@
 import { Database } from "bun:sqlite";
-import { drizzle } from "drizzle-orm/bun-sqlite";
+import { drizzle, type BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import * as schema from "./schema";
 
 /**
  * Setup local database with schema tables
  * Creates tables if they don't exist
  */
-export const setupLocalDb = (dbPath: string = "local-test.db") => {
+export const setupLocalDb = (dbPath: string = "local-test.db"): BunSQLiteDatabase<typeof schema> => {
   const sqlite = new Database(dbPath);
   const db = drizzle(sqlite, { schema });
 

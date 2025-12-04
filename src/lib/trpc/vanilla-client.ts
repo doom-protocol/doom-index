@@ -1,6 +1,6 @@
 import type { AppRouter } from "@/server/trpc/routers/_app";
 import { getBaseUrl } from "@/utils/url";
-import { createTRPCClient, httpBatchLink, httpSubscriptionLink, splitLink } from "@trpc/client";
+import { createTRPCClient, httpBatchLink, httpSubscriptionLink, splitLink, type TRPCClient } from "@trpc/client";
 
 type CreateVanillaTRPCClientOptions = {
   baseUrl?: string;
@@ -9,7 +9,7 @@ type CreateVanillaTRPCClientOptions = {
 /**
  * Create a vanilla tRPC client for use in Web Workers or other non-React contexts
  */
-export function createVanillaTRPCClient(options: CreateVanillaTRPCClientOptions = {}) {
+export function createVanillaTRPCClient(options: CreateVanillaTRPCClientOptions = {}): TRPCClient<AppRouter> {
   const baseUrl = options.baseUrl ?? getBaseUrl();
 
   return createTRPCClient<AppRouter>({

@@ -8,7 +8,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 // Since Cloudflare Workers run on edge runtime by default, we don't need to explicitly
 // set runtime = "edge" here. The function will be bundled correctly by OpenNext.
 
-const handler = async (req: Request) => {
+const handler = async (req: Request): Promise<Response> => {
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     req,

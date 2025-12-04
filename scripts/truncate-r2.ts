@@ -171,6 +171,16 @@ const parseArgs = (): Args => {
 };
 
 /**
+ * D1 HTTP API response type
+ */
+interface D1ApiResponse {
+  success: boolean;
+  errors?: unknown[];
+  results?: unknown[];
+  result?: unknown[];
+}
+
+/**
  * Execute SQL query on D1 database using D1 HTTP API
  */
 async function executeD1Query(sql: string, params: unknown[] = []): Promise<Result<unknown[], AppError>> {
@@ -210,23 +220,18 @@ async function executeD1Query(sql: string, params: unknown[] = []): Promise<Resu
       });
     }
 
-    const result = (await response.json()) as {
-      success: boolean;
-      results?: unknown[];
-      result?: unknown[];
-      errors?: unknown[];
-    };
+    const result: D1ApiResponse = await response.json();
     if (!result.success) {
       return err({
         type: "StorageError",
         op: "list",
         key: "d1",
-        message: `D1 query failed: ${JSON.stringify(result.errors || result)}`,
+        message: `D1 query failed: ${JSON.stringify(result.errors ?? result)}`,
       });
     }
 
     // D1 HTTP API returns results in different formats
-    const results = result.results || result.result || [];
+    const results = result.results ?? result.result ?? [];
     return ok(results);
   } catch (error) {
     return err({

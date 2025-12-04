@@ -9,16 +9,17 @@ describe("R2 Router", () => {
   beforeEach(() => {
     mock.restore();
     // Mock getCloudflareContext
-    mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: mock(async () => ({
-        env: {
-          R2_PUBLIC_DOMAIN: undefined,
-          R2_BUCKET: {} as R2Bucket,
-        } as unknown as Cloudflare.Env,
-      })),
+    void mock.module("@opennextjs/cloudflare", () => ({
+      getCloudflareContext: mock(() =>
+        Promise.resolve({
+          env: {
+            R2_BUCKET: {} as R2Bucket,
+          } as unknown as Cloudflare.Env,
+        }),
+      ),
     }));
     // Mock env.ts
-    mock.module("@/env", () => ({
+    void mock.module("@/env", () => ({
       env: {
         R2_PUBLIC_DOMAIN: undefined,
         NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
@@ -28,14 +29,15 @@ describe("R2 Router", () => {
 
   it("should return JSON data for getJson", async () => {
     const mockData = { test: "data" };
-    mock.module("@/lib/r2", () => ({
+    void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () =>
         ok({
-          get: async () => ({
-            text: async () => JSON.stringify(mockData),
-          }),
+          get: async () =>
+            await Promise.resolve({
+              text: async () => await Promise.resolve(JSON.stringify(mockData)),
+            }),
         } as unknown as R2Bucket),
-      getJsonR2: async () => ok(mockData),
+      getJsonR2: async () => await Promise.resolve(ok(mockData)),
     }));
 
     const ctx = createMockContext();
@@ -49,14 +51,15 @@ describe("R2 Router", () => {
   });
 
   it("should normalize key path correctly for getJson", async () => {
-    mock.module("@/lib/r2", () => ({
+    void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () =>
         ok({
-          get: async () => ({
-            text: async () => JSON.stringify({}),
-          }),
+          get: () =>
+            Promise.resolve({
+              text: () => Promise.resolve(JSON.stringify({})),
+            }),
         } as unknown as R2Bucket),
-      getJsonR2: async () => ok({}),
+      getJsonR2: async () => await Promise.resolve(ok({})),
     }));
 
     const ctx = createMockContext();
@@ -84,7 +87,7 @@ describe("R2 Router", () => {
   });
 
   it("should reject invalid key (empty after normalization) for getJson", async () => {
-    mock.module("@/lib/r2", () => ({
+    void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () => ok({} as R2Bucket),
     }));
 
@@ -110,7 +113,7 @@ describe("R2 Router", () => {
       message: "R2_BUCKET binding is not configured",
     };
 
-    mock.module("@/lib/r2", () => ({
+    void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () => err(bucketError),
     }));
 
@@ -131,12 +134,12 @@ describe("R2 Router", () => {
   });
 
   it("should return null when object not found for getJson", async () => {
-    mock.module("@/lib/r2", () => ({
+    void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () =>
         ok({
-          get: async () => null,
+          get: () => Promise.resolve(null),
         } as unknown as R2Bucket),
-      getJsonR2: async () => ok(null),
+      getJsonR2: async () => await Promise.resolve(ok(null)),
     }));
 
     const ctx = createMockContext();

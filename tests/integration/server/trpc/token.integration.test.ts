@@ -85,14 +85,15 @@ describe("Token Integration", () => {
 
       // Mock R2 bucket and getJsonR2
       const mockBucket = {
-        get: async () => ({
-          json: async () => mockTokenState,
-        }),
+        get: () =>
+          Promise.resolve({
+            json: () => Promise.resolve(mockTokenState),
+          }),
       } as unknown as R2Bucket;
 
-      mock.module("@/lib/r2", () => ({
+      void mock.module("@/lib/r2", () => ({
         resolveR2Bucket: () => ({ isErr: () => false, value: mockBucket }),
-        getJsonR2: async () => ({ isErr: () => false, value: mockTokenState }),
+        getJsonR2: () => Promise.resolve({ isErr: () => false, value: mockTokenState }),
       }));
 
       const ctx = createMockContext();

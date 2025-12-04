@@ -59,7 +59,11 @@ export function createLoggerMock(): { logger: LoggerMock; calls: LoggerCall[] } 
  * Create mock factory for @/utils/logger
  * Returns both the mock factory function and the logger instance
  */
-export function createLoggerMockFactory() {
+export function createLoggerMockFactory(): {
+  mockFactory: () => { logger: LoggerMock };
+  mockLogger: LoggerMock;
+  calls: LoggerCall[];
+} {
   const { logger: mockLogger, calls } = createLoggerMock();
   return {
     mockFactory: () => ({ logger: mockLogger }),

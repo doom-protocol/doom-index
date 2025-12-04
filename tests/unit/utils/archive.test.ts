@@ -1,9 +1,9 @@
 import { describe, expect, it, mock } from "bun:test";
 
 // Mock env module before importing dependent modules
-let mockR2Url: string | undefined = undefined;
+const mockR2Url: string | undefined = undefined;
 
-mock.module("@/env", () => ({
+void mock.module("@/env", () => ({
   env: {
     get NEXT_PUBLIC_R2_URL() {
       return mockR2Url;

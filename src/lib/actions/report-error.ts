@@ -3,7 +3,12 @@
 import { formatErrorForSlack, sendSlackMessage } from "@/lib/slack-client";
 import { logger } from "@/utils/logger";
 
-export async function reportGlobalError(error: { digest?: string; message: string; stack?: string; name?: string }) {
+export async function reportGlobalError(error: {
+  digest?: string;
+  message: string;
+  stack?: string;
+  name?: string;
+}): Promise<{ success: boolean; error?: string }> {
   try {
     // Add digest to context if available
     const context = error.digest ? `Digest: ${error.digest}` : "Client-side Global Error";

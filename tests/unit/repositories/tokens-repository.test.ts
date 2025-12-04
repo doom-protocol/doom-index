@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from "bun:test";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 
 describe("TokensRepository", () => {
-  let db: ReturnType<typeof drizzle>;
+  let db: ReturnType<typeof drizzle<typeof dbSchema>>;
   let repository: TokensRepository;
 
   beforeEach(() => {
@@ -32,7 +32,7 @@ describe("TokensRepository", () => {
 
     db = drizzle(sqlite, { schema: dbSchema });
 
-    repository = new TokensRepository(db as any);
+    repository = new TokensRepository(db);
   });
 
   describe("findById", () => {
@@ -169,8 +169,8 @@ describe("TokensRepository", () => {
   describe("findRecentlySelected", () => {
     it("should return tokens updated within window", async () => {
       const now = Math.floor(Date.now() / 1000);
-      const oldTimestamp = now - 25 * 60 * 60; // 25 hours ago
-      const recentTimestamp = now - 1 * 60 * 60; // 1 hour ago
+      const oldTimestamp = now - 90000; // 25 hours ago
+      const recentTimestamp = now - 3600; // 1 hour ago
 
       // Insert old token
       await repository.insert({

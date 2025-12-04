@@ -18,9 +18,9 @@ describe("Token Router", () => {
       updatedAt: "2025-01-01T00:00:00Z",
     };
 
-    mock.module("@/lib/r2", () => ({
+    void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () => ok({} as R2Bucket),
-      getJsonR2: async () => ok(mockTokenState),
+      getJsonR2: () => Promise.resolve(ok(mockTokenState)),
     }));
 
     const ctx = createMockContext();
@@ -32,9 +32,9 @@ describe("Token Router", () => {
   });
 
   it("should return null when token state does not exist", async () => {
-    mock.module("@/lib/r2", () => ({
+    void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () => ok({} as R2Bucket),
-      getJsonR2: async () => ok(null),
+      getJsonR2: () => Promise.resolve(ok(null)),
     }));
 
     const ctx = createMockContext();
@@ -63,9 +63,9 @@ describe("Token Router", () => {
       message: "R2_BUCKET binding is not configured",
     };
 
-    mock.module("@/lib/r2", () => ({
+    void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () => err(bucketError),
-      getJsonR2: async () => ok(null),
+      getJsonR2: () => Promise.resolve(ok(null)),
     }));
 
     const ctx = createMockContext();
@@ -90,9 +90,9 @@ describe("Token Router", () => {
       message: "R2 JSON get failed",
     };
 
-    mock.module("@/lib/r2", () => ({
+    void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () => ok({} as R2Bucket),
-      getJsonR2: async () => err(r2Error),
+      getJsonR2: () => Promise.resolve(err(r2Error)),
     }));
 
     const ctx = createMockContext();

@@ -18,15 +18,17 @@ export function createMockCache(): {
 } {
   const cacheMap = new Map<string, CachedResponseData>();
   const mockCache = {
-    match: async (key: string | Request) => {
+    match: (key: string | Request) => {
       const keyStr = typeof key === "string" ? key : key.url;
       const cached = cacheMap.get(keyStr);
-      if (!cached) return undefined;
-      return new Response(cached.body, {
-        status: cached.status,
-        statusText: cached.statusText,
-        headers: new Headers(cached.headers),
-      });
+      if (!cached) return Promise.resolve(undefined);
+      return Promise.resolve(
+        new Response(cached.body, {
+          status: cached.status,
+          statusText: cached.statusText,
+          headers: new Headers(cached.headers),
+        }),
+      );
     },
     put: async (key: string | Request, response: Response) => {
       const keyStr = typeof key === "string" ? key : key.url;
@@ -39,9 +41,9 @@ export function createMockCache(): {
         statusText: response.statusText,
       });
     },
-    delete: async (key: string | Request) => {
+    delete: (key: string | Request) => {
       const keyStr = typeof key === "string" ? key : key.url;
-      return cacheMap.delete(keyStr);
+      return Promise.resolve(cacheMap.delete(keyStr));
     },
   } as unknown as Cache;
 

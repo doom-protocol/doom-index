@@ -11,17 +11,18 @@ describe("Cache Integration - get/set Pattern", () => {
 
     // Mock caches for integration tests
     const mockCache = {
-      match: async (key: string | Request) => {
+      match: (key: string | Request) => {
         const keyStr = typeof key === "string" ? key : key.url;
-        return cacheMap.get(keyStr) || undefined;
+        return Promise.resolve(cacheMap.get(keyStr) || undefined);
       },
-      put: async (key: string | Request, response: Response) => {
+      put: (key: string | Request, response: Response) => {
         const keyStr = typeof key === "string" ? key : key.url;
         cacheMap.set(keyStr, response);
+        return Promise.resolve();
       },
-      delete: async (key: string | Request) => {
+      delete: (key: string | Request) => {
         const keyStr = typeof key === "string" ? key : key.url;
-        return cacheMap.delete(keyStr);
+        return Promise.resolve(cacheMap.delete(keyStr));
       },
     } as unknown as Cache;
 

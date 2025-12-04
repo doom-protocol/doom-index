@@ -136,7 +136,7 @@ export class TokensRepository {
    */
   async findRecentlySelected(windowHours: number): Promise<Result<Token[], AppError>> {
     try {
-      const windowMs = windowHours * 60 * 60 * 1000;
+      const windowMs = windowHours * 3600000;
       const cutoffTimestamp = Math.floor((Date.now() - windowMs) / 1000);
 
       logger.debug(`[TokensRepository] Finding tokens updated after ${new Date(cutoffTimestamp * 1000).toISOString()}`);

@@ -39,15 +39,17 @@ describe("Cache Integration - tRPC Context Graceful Degradation", () => {
     // Make caches available
     const cacheMap = new Map<string, { body: string; headers: Headers; status: number; statusText: string }>();
     const mockCache = {
-      match: async (key: string | Request) => {
+      match: (key: string | Request) => {
         const keyStr = typeof key === "string" ? key : key.url;
         const cached = cacheMap.get(keyStr);
-        if (!cached) return undefined;
-        return new Response(cached.body, {
-          status: cached.status,
-          statusText: cached.statusText,
-          headers: cached.headers,
-        });
+        if (!cached) return Promise.resolve(undefined);
+        return Promise.resolve(
+          new Response(cached.body, {
+            status: cached.status,
+            statusText: cached.statusText,
+            headers: cached.headers,
+          }),
+        );
       },
       put: async (key: string | Request, response: Response) => {
         const keyStr = typeof key === "string" ? key : key.url;
@@ -60,9 +62,9 @@ describe("Cache Integration - tRPC Context Graceful Degradation", () => {
           statusText: response.statusText,
         });
       },
-      delete: async (key: string | Request) => {
+      delete: (key: string | Request) => {
         const keyStr = typeof key === "string" ? key : key.url;
-        return cacheMap.delete(keyStr);
+        return Promise.resolve(cacheMap.delete(keyStr));
       },
     } as unknown as Cache;
 
