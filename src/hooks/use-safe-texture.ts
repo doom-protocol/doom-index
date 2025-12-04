@@ -62,7 +62,7 @@ export function useSafeTexture<Url extends string[] | string | Record<string, st
   onLoad?: (texture: MappedTextureType<Url>) => void,
   options: UseSafeTextureOptions = {},
 ): MappedTextureType<Url> {
-  const { crossOrigin = "", onError } = options;
+  const { crossOrigin = "anonymous", onError } = options;
   const gl = useThree(state => state.gl);
 
   // Enhanced useLoader call with custom extensions for crossOrigin and error handling
@@ -119,7 +119,7 @@ export function useSafeTexture<Url extends string[] | string | Record<string, st
 }
 
 useSafeTexture.preload = (url: string | string[], options: UseSafeTextureOptions = {}) => {
-  const { crossOrigin = "", onError } = options;
+  const { crossOrigin = "anonymous", onError } = options;
   return useLoader.preload(TextureLoader, url, (loader: TextureLoader) => {
     // Always set crossOrigin to override any cached loader settings
     loader.crossOrigin = crossOrigin;
