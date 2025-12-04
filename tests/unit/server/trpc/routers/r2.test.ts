@@ -11,8 +11,8 @@ describe("R2 Router", () => {
     // Mock getCloudflareContext
     void mock.module("@opennextjs/cloudflare", () => ({
       getCloudflareContext: mock(
-        async () =>
-          await Promise.resolve({
+        () =>
+          Promise.resolve({
             env: {
               R2_BUCKET: {} as R2Bucket,
             } as unknown as Cloudflare.Env,
