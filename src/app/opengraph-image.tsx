@@ -78,10 +78,15 @@ async function getCurrentPaintingImageBuffer(
   const listResult = await repo.list({ limit: 1 });
 
   if (listResult.isErr() || listResult.value.items.length === 0) {
-    logger.warn("ogp.step1-state-failed", {
+    const reason = listResult.isErr()
+      ? `repo.list() failed: ${listResult.error.message}`
+      : "No paintings found in database";
+    logger.error("ogp.step1-state-failed", {
+      reason,
       error: listResult.isErr() ? listResult.error.message : "No paintings found",
+      willFallback: true,
     });
-    throw new Error("Failed to fetch state or no paintings found");
+    throw new Error(`Failed to fetch state: ${reason}`);
   }
 
   const latestPainting = listResult.value.items[0];
@@ -116,10 +121,16 @@ async function getCurrentPaintingImageBuffer(
   // Step 3: Fetch image from R2
   const imageResult = await getImageR2(bucket, imageKey);
   if (imageResult.isErr() || !imageResult.value) {
-    logger.warn("ogp.step3-image-failed", {
+    const reason = imageResult.isErr()
+      ? `R2 getImageR2() failed: ${imageResult.error.message}`
+      : "R2 returned null/empty image data";
+    logger.error("ogp.step3-image-failed", {
+      reason,
+      imageKey,
       error: imageResult.isErr() ? imageResult.error.message : "No image data",
+      willFallback: true,
     });
-    throw new Error("Failed to fetch image from R2");
+    throw new Error(`Failed to fetch image from R2: ${reason}`);
   }
 
   logger.info("ogp.step3-image-success", {
@@ -174,10 +185,15 @@ async function getCurrentPaintingImageBuffer(
 
   // Retry logic: if public URL failed to transform (e.g. R2 dev URL without resizing), try internal route
   if ((!imageResponse.ok || !isPng) && !useInternalRoute) {
+    const reason = !imageResponse.ok
+      ? `Public URL returned HTTP ${imageResponse.status}`
+      : `Public URL returned non-PNG content-type: ${contentType}`;
     logger.warn("ogp.step5-public-url-failed-retrying-internal", {
+      reason,
       status: imageResponse.status,
       contentType,
       isPng,
+      baseImageUrl,
       note: "Retrying with internal /api/r2/ route and X-Allow-R2-Route header",
     });
 
@@ -202,18 +218,69 @@ async function getCurrentPaintingImageBuffer(
   }
 
   if (!imageResponse.ok) {
-    logger.warn("ogp.step5-transform-failed", {
+    const transformFailedReason = `Image transformation failed: HTTP ${imageResponse.status} ${imageResponse.statusText}`;
+    logger.error("ogp.step5-transform-failed", {
+      reason: transformFailedReason,
       status: imageResponse.status,
       statusText: imageResponse.statusText,
-      note: "Using fallback PNG image",
+      baseImageUrl,
+      useInternalRoute,
+      willFallback: true,
+      fallbackReason: "Using fallback PNG image with transformation",
     });
-    // Fallback: use fallback PNG image if transformation fails
+    // Fallback: use fallback PNG image with Cloudflare Image Transformations
     if (assetsFetcher) {
+      const origin = new URL(requestUrl).origin;
+      const fallbackUrl = `${origin}/og-fallback.png`;
+
+      logger.info("ogp.step5-fallback-transform", { fallbackUrl });
+      const fallbackResponse = await fetch(fallbackUrl, {
+        cf: {
+          image: {
+            width: 1200,
+            height: 630,
+            fit: "pad",
+            format: "png",
+            background: "000000", // Black background for padding
+          },
+        },
+      } as RequestInit);
+
+      if (fallbackResponse.ok) {
+        const fallbackContentType = fallbackResponse.headers.get("Content-Type") || "";
+        const fallbackIsPng = fallbackContentType.includes("image/png");
+        if (fallbackIsPng) {
+          const fallbackBuffer = await fallbackResponse.arrayBuffer();
+          logger.info("ogp.step5-fallback-transform-success", {
+            contentType: fallbackContentType,
+            pngSizeBytes: fallbackBuffer.byteLength,
+            pngSizeKB: (fallbackBuffer.byteLength / 1024).toFixed(2),
+          });
+          return fallbackBuffer;
+        }
+      }
+
+      // If transformation failed, return original fallback image
+      const fallbackReason = fallbackResponse.ok
+        ? `Fallback image transformation returned non-PNG: ${fallbackResponse.headers.get("Content-Type")}`
+        : `Fallback image transformation failed: HTTP ${fallbackResponse.status}`;
+      logger.error("ogp.step5-fallback-transform-failed", {
+        reason: fallbackReason,
+        status: fallbackResponse.status,
+        contentType: fallbackResponse.headers.get("Content-Type"),
+        fallbackUrl,
+        willUseOriginalFallback: true,
+      });
       const fallbackDataUrl = await getFallbackImageDataUrl(assetsFetcher);
       const fallbackBuffer = await fetch(fallbackDataUrl).then(r => r.arrayBuffer());
       return fallbackBuffer;
     }
-    throw new Error("Cannot use WebP image and ASSETS fetcher not available for fallback");
+    const noFallbackReason = "ASSETS fetcher not available for fallback";
+    logger.error("ogp.step5-no-fallback-available", {
+      reason: noFallbackReason,
+      willThrow: true,
+    });
+    throw new Error(`Cannot use WebP image and ${noFallbackReason}`);
   }
 
   const transformedBuffer = await imageResponse.arrayBuffer();
@@ -224,20 +291,71 @@ async function getCurrentPaintingImageBuffer(
   // Verify that transformation actually worked
   // In local dev, cf.image might not work, so check Content-Type
   if (!isPng) {
-    logger.warn("ogp.step5-transform-not-applied", {
+    const transformNotAppliedReason = `Cloudflare Image Transformations not applied: received ${contentType} instead of image/png. Size unchanged (${imageResult.value.byteLength} -> ${transformedBuffer.byteLength} bytes)`;
+    logger.error("ogp.step5-transform-not-applied", {
+      reason: transformNotAppliedReason,
       contentType,
       isPng,
       originalSize: imageResult.value.byteLength,
       transformedSize: transformedBuffer.byteLength,
-      note: "cf.image may not work in local dev - using fallback PNG image",
+      baseImageUrl,
+      useInternalRoute,
+      willFallback: true,
+      fallbackReason: "cf.image transformation not applied - using fallback PNG image with transformation",
     });
-    // Fallback: use fallback PNG image
+    // Fallback: use fallback PNG image with Cloudflare Image Transformations
     if (assetsFetcher) {
+      const origin = new URL(requestUrl).origin;
+      const fallbackUrl = `${origin}/og-fallback.png`;
+
+      logger.info("ogp.step5-fallback-transform", { fallbackUrl });
+      const fallbackResponse = await fetch(fallbackUrl, {
+        cf: {
+          image: {
+            width: 1200,
+            height: 630,
+            fit: "pad",
+            format: "png",
+            background: "000000", // Black background for padding
+          },
+        },
+      } as RequestInit);
+
+      if (fallbackResponse.ok) {
+        const fallbackContentType = fallbackResponse.headers.get("Content-Type") || "";
+        const fallbackIsPng = fallbackContentType.includes("image/png");
+        if (fallbackIsPng) {
+          const fallbackBuffer = await fallbackResponse.arrayBuffer();
+          logger.info("ogp.step5-fallback-transform-success", {
+            contentType: fallbackContentType,
+            pngSizeBytes: fallbackBuffer.byteLength,
+            pngSizeKB: (fallbackBuffer.byteLength / 1024).toFixed(2),
+          });
+          return fallbackBuffer;
+        }
+      }
+
+      // If transformation failed, return original fallback image
+      const fallbackTransformFailedReason = fallbackResponse.ok
+        ? `Fallback image transformation returned non-PNG: ${fallbackResponse.headers.get("Content-Type")}`
+        : `Fallback image transformation failed: HTTP ${fallbackResponse.status}`;
+      logger.error("ogp.step5-fallback-transform-failed", {
+        reason: fallbackTransformFailedReason,
+        status: fallbackResponse.status,
+        contentType: fallbackResponse.headers.get("Content-Type"),
+        fallbackUrl,
+        willUseOriginalFallback: true,
+      });
       const fallbackDataUrl = await getFallbackImageDataUrl(assetsFetcher);
       const fallbackBuffer = await fetch(fallbackDataUrl).then(r => r.arrayBuffer());
       return fallbackBuffer;
     }
-    throw new Error("Cannot use WebP image and ASSETS fetcher not available for fallback");
+    const noFallbackReason2 = "ASSETS fetcher not available for fallback";
+    logger.error("ogp.step5-no-fallback-available", {
+      reason: noFallbackReason2,
+      willThrow: true,
+    });
+    throw new Error(`Cannot use WebP image and ${noFallbackReason2}`);
   }
 
   logger.info("ogp.step5-transform-success", {
@@ -350,9 +468,14 @@ export default async function Image(): Promise<Response> {
 
     return response;
   } catch (error) {
-    logger.warn("ogp.fallback", {
-      error: error instanceof Error ? error.message : String(error),
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const reason = `getCurrentPaintingImageBuffer() failed: ${errorMessage}`;
+    logger.error("ogp.fallback", {
+      reason,
+      error: errorMessage,
+      errorStack: error instanceof Error ? error.stack : undefined,
       durationMs: Date.now() - startTime,
+      willUseFallbackImage: true,
     });
 
     try {
@@ -362,7 +485,60 @@ export default async function Image(): Promise<Response> {
 
       if (assetsFetcher) {
         logger.info("ogp.fallback-load-image");
-        // Use og-fallback.png (600x600 PNG)
+        // Use og-fallback.png with Cloudflare Image Transformations to resize to 1200x630 with black background
+        const requestUrl = getBaseUrl();
+        const origin = new URL(requestUrl).origin;
+        const fallbackUrl = `${origin}/og-fallback.png`;
+
+        logger.info("ogp.fallback-transform", { fallbackUrl });
+        const fallbackResponse = await fetch(fallbackUrl, {
+          cf: {
+            image: {
+              width: 1200,
+              height: 630,
+              fit: "pad",
+              format: "png",
+              background: "000000", // Black background for padding
+            },
+          },
+        } as RequestInit);
+
+        if (fallbackResponse.ok) {
+          const fallbackContentType = fallbackResponse.headers.get("Content-Type") || "";
+          const fallbackIsPng = fallbackContentType.includes("image/png");
+          if (fallbackIsPng) {
+            const fallbackBuffer = await fallbackResponse.arrayBuffer();
+            logger.info("ogp.fallback-transform-success", {
+              contentType: fallbackContentType,
+              pngSizeBytes: fallbackBuffer.byteLength,
+              pngSizeKB: (fallbackBuffer.byteLength / 1024).toFixed(2),
+            });
+
+            logger.info("ogp.fallback-completed", {
+              durationMs: Date.now() - startTime,
+            });
+
+            return new Response(fallbackBuffer, {
+              status: 200,
+              headers: {
+                "Content-Type": "image/png",
+                "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_MINUTE}`,
+              },
+            });
+          }
+        }
+
+        // If transformation failed, return original fallback image
+        const fallbackReason = fallbackResponse.ok
+          ? `Fallback image transformation returned non-PNG: ${fallbackResponse.headers.get("Content-Type")}`
+          : `Fallback image transformation failed: HTTP ${fallbackResponse.status}`;
+        logger.error("ogp.fallback-transform-failed", {
+          reason: fallbackReason,
+          status: fallbackResponse.status,
+          contentType: fallbackResponse.headers.get("Content-Type"),
+          fallbackUrl,
+          willUseOriginalFallback: true,
+        });
         const fallbackDataUrl = await getFallbackImageDataUrl(assetsFetcher);
         const fallbackBuffer = await fetch(fallbackDataUrl).then(r => r.arrayBuffer());
 
@@ -379,12 +555,21 @@ export default async function Image(): Promise<Response> {
         });
       }
     } catch (fallbackError) {
-      logger.warn("ogp.fallback-image-error", {
-        error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+      const fallbackErrorMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+      const reason = `Fallback image loading failed: ${fallbackErrorMessage}`;
+      logger.error("ogp.fallback-image-error", {
+        reason,
+        error: fallbackErrorMessage,
+        errorStack: fallbackError instanceof Error ? fallbackError.stack : undefined,
+        willUseBlackImage: true,
       });
     }
 
     // Last resort: return simple black image (1200x630)
+    logger.error("ogp.fallback-black-image", {
+      reason: "All fallback attempts failed, using minimal black PNG",
+      durationMs: Date.now() - startTime,
+    });
     // Create a minimal black PNG using data URL
     const blackPngDataUrl =
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
