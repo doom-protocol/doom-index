@@ -77,7 +77,7 @@ async function uploadToPinata(file: File, signedUrl: string): Promise<{ cid: str
     throw new Error(`Upload failed: ${response.statusText}`);
   }
 
-  const data = (await response.json());
+  const data = await response.json();
   return {
     cid: data.data.cid,
     size: data.data.size,
