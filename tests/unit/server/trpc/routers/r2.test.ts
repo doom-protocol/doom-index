@@ -137,7 +137,7 @@ describe("R2 Router", () => {
     void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () =>
         ok({
-          get: async () => await Promise.resolve(null),
+          get: () => Promise.resolve(null),
         } as unknown as R2Bucket),
       getJsonR2: async () => await Promise.resolve(ok(null)),
     }));
