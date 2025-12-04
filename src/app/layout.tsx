@@ -88,7 +88,7 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-export const RootLayout: FC<{ children: ReactNode }> = ({ children }) => {
+const RootLayout: FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <ViewTransition>
       <html lang="en" style={{ margin: 0, padding: 0, width: "100%", height: "100%", backgroundColor: "#000000" }}>
@@ -104,3 +104,5 @@ export const RootLayout: FC<{ children: ReactNode }> = ({ children }) => {
     </ViewTransition>
   );
 };
+
+export default RootLayout;
