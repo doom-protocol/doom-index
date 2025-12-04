@@ -3,16 +3,17 @@
  *
  * Handles IPFS upload flow:
  * 1. Get signed URL from tRPC
- * 2. Upload GLB to Pinata
+ * 2. Upload GLB to Pinata using SDK
  * 3. Build metadata with GLB CID
- * 4. Upload metadata to Pinata
+ * 4. Upload metadata to Pinata using SDK
  * 5. Return both CIDs
  */
 
 import { buildNftMetadata, type BuildMetadataParams } from "@/lib/metadata-builder";
+import { createPinataClient, type PinataClient } from "@/lib/pinata-client";
 import { useTRPCClient } from "@/lib/trpc/client";
 import { logger } from "@/utils/logger";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 /**
  * IPFS upload result
@@ -47,44 +48,6 @@ export interface UseIpfsUploadResult {
 }
 
 /**
- * Pinata upload response
- */
-interface PinataUploadResponse {
-  data: {
-    id: string;
-    name: string;
-    cid: string;
-    size: number;
-    number_of_files: number;
-    mime_type: string;
-    group_id: string | null;
-  };
-}
-
-/**
- * Upload file to Pinata using signed URL
- */
-async function uploadToPinata(file: File, signedUrl: string): Promise<{ cid: string; size: number }> {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const response = await fetch(signedUrl, {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Upload failed: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return {
-    cid: data.data.cid,
-    size: data.data.size,
-  };
-}
-
-/**
  * Hook for uploading GLB and metadata to IPFS via Pinata
  *
  * @returns Upload functions and state
@@ -95,6 +58,7 @@ export function useIpfsUpload(): UseIpfsUploadResult {
   const [error, setError] = useState<IpfsUploadError | null>(null);
 
   const client = useTRPCClient();
+  const pinataClient = useMemo<PinataClient>(() => createPinataClient(), []);
 
   const uploadGlbAndMetadata = useCallback(
     async (glbFile: File, metadataParams: Omit<BuildMetadataParams, "cidGlb">): Promise<IpfsUploadResult> => {
@@ -122,7 +86,11 @@ export function useIpfsUpload(): UseIpfsUploadResult {
 
         // Step 2: Upload GLB to Pinata
         logger.info("ipfs.upload.glb.uploading", { url: glbSignedUrlResult.url });
-        const { cid: cidGlb, size: sizeGlb } = await uploadToPinata(glbFile, glbSignedUrlResult.url);
+        const glbUploadResult = await pinataClient.uploadFile(glbFile, glbSignedUrlResult.url);
+        if (glbUploadResult.isErr()) {
+          throw new Error(glbUploadResult.error.message);
+        }
+        const { cid: cidGlb, size: sizeGlb } = glbUploadResult.value;
         logger.info("ipfs.upload.glb.success", { cid: cidGlb, size: sizeGlb });
         setProgress(60);
 
@@ -156,10 +124,11 @@ export function useIpfsUpload(): UseIpfsUploadResult {
 
         // Step 5: Upload metadata to Pinata
         logger.info("ipfs.upload.metadata.uploading", { url: metadataSignedUrlResult.url });
-        const { cid: cidMetadata, size: sizeMetadata } = await uploadToPinata(
-          metadataFile,
-          metadataSignedUrlResult.url,
-        );
+        const metadataUploadResult = await pinataClient.uploadFile(metadataFile, metadataSignedUrlResult.url);
+        if (metadataUploadResult.isErr()) {
+          throw new Error(metadataUploadResult.error.message);
+        }
+        const { cid: cidMetadata, size: sizeMetadata } = metadataUploadResult.value;
         logger.info("ipfs.upload.metadata.success", { cid: cidMetadata, size: sizeMetadata });
         setProgress(100);
 
@@ -187,7 +156,7 @@ export function useIpfsUpload(): UseIpfsUploadResult {
         throw uploadError;
       }
     },
-    [client],
+    [client, pinataClient],
   );
 
   const reset = useCallback(() => {

@@ -212,7 +212,7 @@ const main = async () => {
   const bucket = createLocalBucket(outputDir);
 
   // Initialize Clients
-  const workersAiClient = createWorkersAiClient(); // Uses REST API fallback via env
+  const workersAiClient = createWorkersAiClient();
   const tavilyClient = createTavilyClient();
   const coingeckoClient = new CoinGeckoClient(env.COINGECKO_API_KEY);
   const alternativeMeClient = new AlternativeMeClient();

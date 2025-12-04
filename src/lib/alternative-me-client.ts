@@ -60,9 +60,10 @@ export class AlternativeMeClient {
         });
       }
 
-      const data = await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      const { data } = (await response.json()) as AlternativeMeApiResponse;
 
-      if (!data.data || data.data.length === 0) {
+      if (!data || data.length === 0) {
         logger.error("[AlternativeMeClient] Invalid response from Alternative.me API");
         return err({
           type: "ExternalApiError" as const,
@@ -71,7 +72,7 @@ export class AlternativeMeClient {
         });
       }
 
-      const latest = data.data[0];
+      const latest = data[0];
       const value = Number.parseInt(latest.value, 10);
       const timestamp = Number.parseInt(latest.timestamp, 10);
 

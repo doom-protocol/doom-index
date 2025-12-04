@@ -2,13 +2,15 @@
  * Pinata Client - Anti-Corruption Layer for Pinata SDK
  *
  * Provides type-safe wrapper around Pinata SDK for IPFS uploads
- * Handles signed URL generation and gateway URL conversion
+ * Handles signed URL generation, gateway URL conversion, and client-side file uploads
+ *
+ * @see https://docs.pinata.cloud/files/uploading-files#client-side-uploads
  */
 
 import { env } from "@/env";
 import type { AppError } from "@/types/app-error";
 import { err, ok, type Result } from "neverthrow";
-import { PinataSDK } from "pinata";
+import { PinataSDK, type UploadResponse } from "pinata";
 
 /**
  * Options for creating signed upload URL
@@ -28,11 +30,27 @@ export interface SignedUrl {
 }
 
 /**
+ * Upload result from Pinata
+ */
+export interface PinataUploadResult {
+  cid: string;
+  size: number;
+}
+
+/**
  * Pinata Client interface
  */
 export interface PinataClient {
   createSignedUploadUrl(options: CreateSignedUrlOptions): Promise<Result<SignedUrl, AppError>>;
   convertToGatewayUrl(cid: string): Promise<Result<string, AppError>>;
+  /**
+   * Upload file using signed URL (client-side)
+   *
+   * @param file - File to upload
+   * @param signedUrl - Pre-signed URL from server
+   * @returns Upload result with CID and size
+   */
+  uploadFile(file: File, signedUrl: string): Promise<Result<PinataUploadResult, AppError>>;
 }
 
 /**
@@ -116,6 +134,30 @@ export function createPinataClient(deps: CreatePinataClientDeps = {}): PinataCli
           provider: "pinata",
           message: `Failed to convert CID to gateway URL: ${error instanceof Error ? error.message : "Unknown error"}`,
           details: { cid, error },
+        });
+      }
+    },
+
+    async uploadFile(file: File, signedUrl: string): Promise<Result<PinataUploadResult, AppError>> {
+      try {
+        // Initialize SDK without JWT (not needed for signed URL uploads)
+        // Use mock client for testing if provided
+        const client = mockClient ?? new PinataSDK();
+
+        // Use SDK's .url() method to upload with signed URL
+        // This handles the upload request and response parsing automatically
+        const uploadResponse: UploadResponse = await client.upload.public.file(file).url(signedUrl);
+
+        return ok({
+          cid: uploadResponse.cid,
+          size: uploadResponse.size,
+        });
+      } catch (error) {
+        return err({
+          type: "ExternalApiError",
+          provider: "pinata",
+          message: `Failed to upload file: ${error instanceof Error ? error.message : "Unknown error"}`,
+          details: error,
         });
       }
     },
