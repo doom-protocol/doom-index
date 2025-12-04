@@ -14,8 +14,6 @@ import { logger } from "@/utils/logger";
 import { getBaseUrl } from "@/utils/url";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-type ImagesBinding = NonNullable<CloudflareEnv["IMAGES"]>;
-
 // Route Segment Config
 export const dynamic = "force-dynamic";
 export const revalidate = 3600; // 1 hour
@@ -46,7 +44,11 @@ function createReadableStreamFromArrayBuffer(buffer: ArrayBuffer): ReadableStrea
   });
 }
 
-async function renderPaintingOnCanvas(paintingBuffer: ArrayBuffer, images: ImagesBinding): Promise<ArrayBuffer> {
+async function renderPaintingOnCanvas(
+  paintingBuffer: ArrayBuffer,
+  images: ImagesBinding,
+  frameBuffer?: ArrayBuffer | null,
+): Promise<ArrayBuffer> {
   const paintingStream = createReadableStreamFromArrayBuffer(paintingBuffer.slice(0));
   const paintingTransformer = images.input(paintingStream).transform({
     width: PAINTING_TARGET_SIZE,
@@ -63,10 +65,25 @@ async function renderPaintingOnCanvas(paintingBuffer: ArrayBuffer, images: Image
     background: "#000000",
   });
 
-  const composedTransformer = backgroundTransformer.draw(paintingTransformer, {
+  let composedTransformer = backgroundTransformer.draw(paintingTransformer, {
     left: PAINTING_OFFSET.left,
     top: PAINTING_OFFSET.top,
   });
+
+  if (frameBuffer) {
+    const frameStream = createReadableStreamFromArrayBuffer(frameBuffer.slice(0));
+    const frameTransformer = images.input(frameStream).transform({
+      width: PAINTING_TARGET_SIZE,
+      height: PAINTING_TARGET_SIZE,
+      fit: "cover",
+      gravity: "center",
+    });
+
+    composedTransformer = composedTransformer.draw(frameTransformer, {
+      left: PAINTING_OFFSET.left,
+      top: PAINTING_OFFSET.top,
+    });
+  }
 
   const transformedResult = await composedTransformer.output({
     format: "image/png",
@@ -93,6 +110,31 @@ async function getFallbackImageBuffer(assetsFetcher: Fetcher): Promise<ArrayBuff
     sizeKB: (buffer.byteLength / 1024).toFixed(2),
   });
   return buffer;
+}
+
+async function getFrameImageBuffer(assetsFetcher: Fetcher): Promise<ArrayBuffer | null> {
+  try {
+    const baseUrl = getBaseUrl();
+    const frameUrl = new URL("/frame.webp", baseUrl).toString();
+    const response = await assetsFetcher.fetch(new Request(frameUrl, { method: "GET" }));
+    if (!response.ok) {
+      logger.warn("ogp.frame-fetch-failed", {
+        status: response.status,
+      });
+      return null;
+    }
+    const buffer = await response.arrayBuffer();
+    logger.info("ogp.frame-fetch-success", {
+      sizeBytes: buffer.byteLength,
+      sizeKB: (buffer.byteLength / 1024).toFixed(2),
+    });
+    return buffer;
+  } catch (error) {
+    logger.warn("ogp.frame-fetch-error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
 }
 /**
  * Fetch fallback image (og-fallback.png) and convert to data URL
@@ -211,8 +253,13 @@ async function getCurrentPaintingImageBuffer(
   });
 
   logger.info("ogp.step4-transform-image");
+  let frameBuffer: ArrayBuffer | null = null;
+  if (assetsFetcher) {
+    frameBuffer = await getFrameImageBuffer(assetsFetcher);
+  }
+
   try {
-    return await renderPaintingOnCanvas(imageResult.value, imagesBinding);
+    return await renderPaintingOnCanvas(imageResult.value, imagesBinding, frameBuffer);
   } catch (transformError) {
     const transformErrorMessage = transformError instanceof Error ? transformError.message : String(transformError);
     logger.error("ogp.step4-transform-error", {
@@ -224,7 +271,8 @@ async function getCurrentPaintingImageBuffer(
 
     if (assetsFetcher) {
       const fallbackBuffer = await getFallbackImageBuffer(assetsFetcher);
-      return await renderPaintingOnCanvas(fallbackBuffer, imagesBinding);
+      const fallbackFrameBuffer = frameBuffer ?? (await getFrameImageBuffer(assetsFetcher));
+      return await renderPaintingOnCanvas(fallbackBuffer, imagesBinding, fallbackFrameBuffer);
     }
 
     const noFallbackReason = "ASSETS fetcher not available for fallback";
@@ -362,7 +410,8 @@ export default async function Image(): Promise<Response> {
         logger.info("ogp.fallback-load-image");
         try {
           const fallbackBuffer = await getFallbackImageBuffer(fallbackAssetsFetcher);
-          const transformedFallback = await renderPaintingOnCanvas(fallbackBuffer, fallbackImagesBinding);
+          const frameBuffer = await getFrameImageBuffer(fallbackAssetsFetcher);
+          const transformedFallback = await renderPaintingOnCanvas(fallbackBuffer, fallbackImagesBinding, frameBuffer);
 
           logger.info("ogp.fallback-completed", {
             durationMs: Date.now() - startTime,
@@ -386,12 +435,15 @@ export default async function Image(): Promise<Response> {
 
           const fallbackDataUrl = await getFallbackImageDataUrl(fallbackAssetsFetcher);
           const fallbackBuffer = await fetch(fallbackDataUrl).then(r => r.arrayBuffer());
+          const frameBuffer = await getFrameImageBuffer(fallbackAssetsFetcher);
 
           logger.info("ogp.fallback-completed", {
             durationMs: Date.now() - startTime,
           });
 
-          return new Response(fallbackBuffer, {
+          const transformedFallback = await renderPaintingOnCanvas(fallbackBuffer, fallbackImagesBinding, frameBuffer);
+
+          return new Response(transformedFallback, {
             status: 200,
             headers: {
               "Content-Type": "image/png",
