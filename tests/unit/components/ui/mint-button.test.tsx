@@ -51,39 +51,39 @@ const createWrapper = () => {
 
 describe("MintButton", () => {
   it("renders correctly", () => {
-    const { getByRole } = render(<MintButton />, { wrapper: createWrapper() });
-    const button = getByRole("button");
+    const { getAllByRole } = render(<MintButton />, { wrapper: createWrapper() });
+    const button = getAllByRole("button", { name: /mint/i })[0]!;
     expect(button).toBeInTheDocument();
     expect(button.textContent).toMatch(/Mint/i);
   });
 
   it("handles click events", () => {
     const handleClick = mock(() => {});
-    const { getByRole } = render(<MintButton onClick={handleClick} />, { wrapper: createWrapper() });
+    const { getAllByRole } = render(<MintButton onClick={handleClick} />, { wrapper: createWrapper() });
 
-    const button = getByRole("button");
+    const button = getAllByRole("button", { name: /mint/i })[0]!;
     fireEvent.click(button);
 
     expect(handleClick).toHaveBeenCalled();
   });
 
   it("shows loading state", () => {
-    const { getByRole } = render(<MintButton isLoading={true} />, { wrapper: createWrapper() });
-    const button = getByRole("button");
+    const { getAllByRole } = render(<MintButton isLoading={true} />, { wrapper: createWrapper() });
+    const button = getAllByRole("button", { name: /mint/i })[0]!;
     expect(button).toBeDisabled();
     expect(button.textContent).toMatch(/Mint/i);
   });
 
   it("shows error state", () => {
-    const { getByRole } = render(<MintButton isError={true} />, { wrapper: createWrapper() });
-    const button = getByRole("button");
+    const { getAllByRole } = render(<MintButton isError={true} />, { wrapper: createWrapper() });
+    const button = getAllByRole("button", { name: /mint/i })[0]!;
     expect(button).toBeDisabled();
     expect(button.textContent).toMatch(/Mint/i);
   });
 
   it("is disabled when disabled prop is true", () => {
-    const { getByRole } = render(<MintButton disabled={true} />, { wrapper: createWrapper() });
-    const button = getByRole("button");
+    const { getAllByRole } = render(<MintButton disabled={true} />, { wrapper: createWrapper() });
+    const button = getAllByRole("button", { name: /mint/i })[0]!;
     expect(button).toBeDisabled();
   });
 });

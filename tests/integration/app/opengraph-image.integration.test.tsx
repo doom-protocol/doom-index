@@ -14,7 +14,7 @@ import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { createTestR2Bucket } from "../../lib/memory-r2";
 
 describe("OGP Image Generation (Integration Tests)", () => {
-  const createMockFetcher = (shouldSucceed: boolean, imageData?: string): Fetcher => {
+  const createMockFetcher = (shouldSucceed: boolean, imageData?: string, contentType = "image/webp"): Fetcher => {
     return {
       fetch: mock(async (input: RequestInfo | URL) => {
         const _url = typeof input === "string" ? input : input instanceof URL ? input.pathname : input.url;
@@ -22,7 +22,7 @@ describe("OGP Image Generation (Integration Tests)", () => {
           const buffer = new TextEncoder().encode(imageData || "mock image data").buffer;
           return new Response(buffer, {
             status: 200,
-            headers: { "Content-Type": "image/webp" },
+            headers: { "Content-Type": contentType },
           });
         }
         return new Response(null, { status: 404 });
@@ -59,12 +59,12 @@ describe("OGP Image Generation (Integration Tests)", () => {
 
   describe("getFrameDataUrl", () => {
     test("should fetch and convert frame image to data URL", async () => {
-      const mockFetcher = createMockFetcher(true, "mock frame image");
+      const mockFetcher = createMockFetcher(true, "mock frame image", "image/png");
 
       const dataUrl = await getFrameDataUrl(mockFetcher);
 
       expect(dataUrl).not.toBeNull();
-      expect(dataUrl).toStartWith("data:image/webp;base64,");
+      expect(dataUrl).toStartWith("data:image/png;base64,");
       expect(dataUrl!.length).toBeGreaterThan(30);
     });
 
