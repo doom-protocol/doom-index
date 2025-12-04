@@ -17,6 +17,7 @@ import { ThreeErrorBoundary } from "../ui/three-error-boundary";
 import { CameraRig } from "./camera-rig";
 import { FramedPainting } from "./framed-painting";
 import { GalleryRoom } from "./gallery-room";
+import { isDevelopment } from "@/env";
 
 // Dynamic import for Lights to avoid hydration issues with dev controls
 const Lights = dynamic(() => import("./lights").then(mod => ({ default: mod.Lights })), {
@@ -38,27 +39,11 @@ interface GallerySceneProps {
   cameraPreset?: "dashboard" | "painting";
 }
 
-import { isDevelopment } from "@/env";
-
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
 
-/**
- * Custom hook to safely check dev mode after hydration
- * Returns false during SSR and initial render, then true if in dev mode after mount
- */
-function useDevMode(): boolean {
-  const [isDevMode, setIsDevMode] = useState(false);
-
-  useEffect(() => {
-    setIsDevMode(isDevelopment());
-  }, []);
-
-  return isDevMode;
-}
-
 export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCameraPreset = "painting" }) => {
-  const isDevMode = useDevMode();
+  const isDevMode = isDevelopment();
   const { data: latestPainting } = useLatestPainting();
   const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 

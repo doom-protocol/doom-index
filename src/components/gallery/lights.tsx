@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState, type FC } from "react";
+import { useMemo, useRef, type FC } from "react";
 import { CircleGeometry, DoubleSide, Float32BufferAttribute, type Mesh, type Object3D, type SpotLight } from "three";
 
 import { isDevelopment } from "@/env";
@@ -141,23 +141,9 @@ const FullLights: FC = () => {
   );
 };
 
-/**
- * Custom hook to safely check dev mode after hydration
- * Returns false during initial render, then true if in dev mode after mount
- */
-function useDevMode(): boolean {
-  const [isDevMode, setIsDevMode] = useState(false);
-
-  useEffect(() => {
-    setIsDevMode(isDevelopment());
-  }, []);
-
-  return isDevMode;
-}
-
 // Exported component that switches between simple, full, or dev-controlled lights
 export const Lights: FC<LightsProps> = ({ variant = "full", disableDevControls = false }) => {
-  const isDevMode = useDevMode();
+  const isDevMode = isDevelopment();
 
   if (variant === "simple") {
     return <SimpleLights />;
