@@ -21,10 +21,20 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "DOOM INDEX - A decentralized archive of financial emotions.";
 
-const PAINTING_TARGET_SIZE = 520;
+const FRAME_SCALE = 0.94;
+const FRAME_SIZE = {
+  width: Math.round(size.width * FRAME_SCALE),
+  height: Math.round(size.height * FRAME_SCALE),
+};
+const FRAME_OFFSET = {
+  left: Math.round((size.width - FRAME_SIZE.width) / 2),
+  top: Math.round((size.height - FRAME_SIZE.height) / 2),
+};
+const PAINTING_SCALE_WITHIN_FRAME = 0.78;
+const PAINTING_TARGET_SIZE = Math.round(Math.min(FRAME_SIZE.width, FRAME_SIZE.height) * PAINTING_SCALE_WITHIN_FRAME);
 const PAINTING_OFFSET = {
-  left: Math.round((size.width - PAINTING_TARGET_SIZE) / 2),
-  top: Math.round((size.height - PAINTING_TARGET_SIZE) / 2),
+  left: FRAME_OFFSET.left + Math.round((FRAME_SIZE.width - PAINTING_TARGET_SIZE) / 2),
+  top: FRAME_OFFSET.top + Math.round((FRAME_SIZE.height - PAINTING_TARGET_SIZE) / 2),
 };
 const FRAME_IMAGE_PRIMARY_PATH = "/frame.png";
 
@@ -68,12 +78,15 @@ async function renderPaintingOnCanvas(
   if (frameBuffer) {
     const frameStream = createReadableStreamFromArrayBuffer(frameBuffer.slice(0));
     const frameTransformer = images.input(frameStream).transform({
-      width: size.width,
-      height: size.height,
+      width: FRAME_SIZE.width,
+      height: FRAME_SIZE.height,
       fit: "cover",
       gravity: "center",
     });
-    composedTransformer = composedTransformer.draw(frameTransformer);
+    composedTransformer = composedTransformer.draw(frameTransformer, {
+      left: FRAME_OFFSET.left,
+      top: FRAME_OFFSET.top,
+    });
   }
 
   const paintingStream = createReadableStreamFromArrayBuffer(paintingBuffer.slice(0));
