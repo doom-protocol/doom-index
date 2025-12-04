@@ -14,7 +14,6 @@ import { arrayBufferToDataUrl } from "@/utils/image";
 import { logger } from "@/utils/logger";
 import { getBaseUrl } from "@/utils/url";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { ImageResponse } from "next/og";
 
 // Route Segment Config
 export const dynamic = "force-dynamic";
@@ -64,16 +63,15 @@ async function getFallbackImageDataUrl(assetsFetcher: Fetcher): Promise<string> 
 }
 
 /**
- * Fetch current painting image from R2 and return an image src usable by <img>.
- * - Prefer Cloudflare Image Transformations to get PNG (Satori-friendly)
- * - If transformation not applied (e.g., local dev), return absolute URL to static fallback PNG
+ * Fetch current painting image from R2 and return PNG ArrayBuffer with black background.
+ * Uses Cloudflare Image Transformations to resize and add black background padding.
  */
-async function getCurrentPaintingImageSrc(
+async function getCurrentPaintingImageBuffer(
   bucket: R2Bucket,
   db: D1Database,
   requestUrl: string,
   assetsFetcher?: Fetcher,
-): Promise<string> {
+): Promise<ArrayBuffer> {
   logger.info("ogp.step1-fetch-state");
   // Step 1: Fetch latest painting from D1
   const repo = createPaintingsRepository({ d1Binding: db });
@@ -158,14 +156,15 @@ async function getCurrentPaintingImageSrc(
   logger.info("ogp.step4-url-built", { baseImageUrl, useInternalRoute });
 
   logger.info("ogp.step5-transform-image");
-  // Step 5: Convert WebP to PNG using Cloudflare Image Transformations
+  // Step 5: Convert WebP to PNG with black background padding using Cloudflare Image Transformations
   let imageResponse = await fetch(baseImageUrl, {
     cf: {
       image: {
         width: 1200,
         height: 630,
-        fit: "contain",
+        fit: "pad",
         format: "png",
+        background: "000000", // Black background for padding
       },
     },
   } as RequestInit);
@@ -191,8 +190,9 @@ async function getCurrentPaintingImageSrc(
         image: {
           width: 1200,
           height: 630,
-          fit: "contain",
+          fit: "pad",
           format: "png",
+          background: "000000", // Black background for padding
         },
       },
     } as RequestInit);
@@ -208,9 +208,10 @@ async function getCurrentPaintingImageSrc(
       note: "Using fallback PNG image",
     });
     // Fallback: use fallback PNG image if transformation fails
-    // Satori doesn't support WebP, so we need PNG
     if (assetsFetcher) {
-      return await getFallbackImageDataUrl(assetsFetcher);
+      const fallbackDataUrl = await getFallbackImageDataUrl(assetsFetcher);
+      const fallbackBuffer = await fetch(fallbackDataUrl).then(r => r.arrayBuffer());
+      return fallbackBuffer;
     }
     throw new Error("Cannot use WebP image and ASSETS fetcher not available for fallback");
   }
@@ -230,9 +231,13 @@ async function getCurrentPaintingImageSrc(
       transformedSize: transformedBuffer.byteLength,
       note: "cf.image may not work in local dev - using fallback PNG image",
     });
-    // Fallback: prefer returning absolute URL to the static PNG to avoid huge data URLs in Satori
-    const origin = new URL(requestUrl).origin;
-    return `${origin}/og-fallback.png`;
+    // Fallback: use fallback PNG image
+    if (assetsFetcher) {
+      const fallbackDataUrl = await getFallbackImageDataUrl(assetsFetcher);
+      const fallbackBuffer = await fetch(fallbackDataUrl).then(r => r.arrayBuffer());
+      return fallbackBuffer;
+    }
+    throw new Error("Cannot use WebP image and ASSETS fetcher not available for fallback");
   }
 
   logger.info("ogp.step5-transform-success", {
@@ -241,7 +246,7 @@ async function getCurrentPaintingImageSrc(
     pngSizeKB: (transformedBuffer.byteLength / 1024).toFixed(2),
   });
 
-  return arrayBufferToDataUrl(transformedBuffer, "image/png");
+  return transformedBuffer;
 }
 
 /**
@@ -298,9 +303,10 @@ export async function getFrameDataUrl(assetsFetcher: Fetcher): Promise<string | 
 }
 
 /**
- * Generate OGP image using ImageResponse
+ * Generate OGP image by directly returning transformed PNG from Cloudflare Image Transformations.
+ * Avoids using ImageResponse which requires fs.readFileSync (not available in Cloudflare Workers).
  */
-export default async function Image(): Promise<ImageResponse> {
+export default async function Image(): Promise<Response> {
   const startTime = Date.now();
   logger.info("ogp.start");
 
@@ -312,67 +318,25 @@ export default async function Image(): Promise<ImageResponse> {
     const db = env.DB;
     const assetsFetcher = env.ASSETS;
 
-    logger.info("ogp.step-init-success", {
-      hasBucket: !!r2Bucket,
-      hasDb: !!db,
-      hasAssets: !!assetsFetcher,
-    });
-
     logger.info("ogp.step-init-url");
     // Get request URL
     const requestUrl = getBaseUrl();
     logger.info("ogp.step-init-url-success", { requestUrl });
 
     logger.info("ogp.step-fetch-current-painting");
-    // Fetch current painting image
-    const dataUrl = await getCurrentPaintingImageSrc(r2Bucket, db, requestUrl, assetsFetcher);
+    // Fetch current painting image (already transformed to PNG with black background)
+    const imageBuffer = await getCurrentPaintingImageBuffer(r2Bucket, db, requestUrl, assetsFetcher);
     logger.info("ogp.step-fetch-current-painting-success", {
-      dataUrlLength: dataUrl.length,
-      dataUrlLengthKB: (dataUrl.length / 1024).toFixed(2),
+      bufferSizeBytes: imageBuffer.byteLength,
+      bufferSizeKB: (imageBuffer.byteLength / 1024).toFixed(2),
     });
-
-    logger.info("ogp.step-render");
-    // Render image with black background
-    const jsxElement = (
-      <div
-        style={{
-          display: "flex",
-          width: "100%",
-          height: "100%",
-          backgroundColor: "#000000",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <img
-          src={dataUrl}
-          alt=""
-          width={size.width}
-          height={size.height}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-          }}
-        />
-      </div>
-    );
-
-    const imageResponse = new ImageResponse(jsxElement, {
-      width: size.width,
-      height: size.height,
-      fonts: [],
-    });
-
-    logger.info("ogp.step-render-success");
-    const arrayBuffer = await imageResponse.arrayBuffer();
 
     logger.info("ogp.step-create-response", {
-      arrayBufferSize: arrayBuffer.byteLength,
-      arrayBufferSizeKB: (arrayBuffer.byteLength / 1024).toFixed(2),
+      arrayBufferSize: imageBuffer.byteLength,
+      arrayBufferSizeKB: (imageBuffer.byteLength / 1024).toFixed(2),
     });
 
-    const response = new Response(arrayBuffer, {
+    const response = new Response(imageBuffer, {
       status: 200,
       headers: {
         "Content-Type": "image/png",
@@ -400,41 +364,8 @@ export default async function Image(): Promise<ImageResponse> {
         logger.info("ogp.fallback-load-image");
         // Use og-fallback.png (600x600 PNG)
         const fallbackDataUrl = await getFallbackImageDataUrl(assetsFetcher);
+        const fallbackBuffer = await fetch(fallbackDataUrl).then(r => r.arrayBuffer());
 
-        logger.info("ogp.fallback-render");
-        // Render fallback image with black background
-        const fallbackJsx = (
-          <div
-            style={{
-              display: "flex",
-              width: "100%",
-              height: "100%",
-              backgroundColor: "#000000",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <img
-              src={fallbackDataUrl}
-              alt=""
-              width={600}
-              height={600}
-              style={{
-                height: "100%",
-                width: "auto",
-                objectFit: "contain",
-              }}
-            />
-          </div>
-        );
-
-        const fallbackResponse = new ImageResponse(fallbackJsx, {
-          width: size.width,
-          height: size.height,
-          fonts: [],
-        });
-
-        const fallbackBuffer = await fallbackResponse.arrayBuffer();
         logger.info("ogp.fallback-completed", {
           durationMs: Date.now() - startTime,
         });
@@ -453,37 +384,17 @@ export default async function Image(): Promise<ImageResponse> {
       });
     }
 
-    // Last resort: return simple black image with text
-    const textFallbackJsx = (
-      <div
-        style={{
-          display: "flex",
-          width: "100%",
-          height: "100%",
-          backgroundColor: "#000000",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#ffffff",
-          fontSize: 40,
-          fontWeight: "bold",
-        }}
-      >
-        DOOM INDEX
-      </div>
-    );
+    // Last resort: return simple black image (1200x630)
+    // Create a minimal black PNG using data URL
+    const blackPngDataUrl =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    const blackBuffer = await fetch(blackPngDataUrl).then(r => r.arrayBuffer());
 
-    const textFallbackResponse = new ImageResponse(textFallbackJsx, {
-      width: size.width,
-      height: size.height,
-      fonts: [],
-    });
-
-    const textFallbackBuffer = await textFallbackResponse.arrayBuffer();
-    logger.info("ogp.fallback-text-completed", {
+    logger.info("ogp.fallback-black-completed", {
       durationMs: Date.now() - startTime,
     });
 
-    return new Response(textFallbackBuffer, {
+    return new Response(blackBuffer, {
       status: 200,
       headers: {
         "Content-Type": "image/png",
