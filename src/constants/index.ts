@@ -5,7 +5,7 @@ export const X_URL = "https://x.com/doom_index";
 export const PUMP_FUN_URL = "https://pump.fun/coin/AJfn5M1bWeSsZDq89TgkKXm7AdtAQCsqzkYRxYGoqdev";
 export const DEV_FUN_URL = "https://dev.fun/p/155bae58a27d2f0905ed";
 
-export const GENERATION_INTERVAL_MS = Number(env.NEXT_PUBLIC_GENERATION_INTERVAL_MS ?? 600000);
+export const GENERATION_INTERVAL_MS = Number(env.NEXT_PUBLIC_GENERATION_INTERVAL_MS ?? 3600000);
 
 // Fallback image path for when painting images fail to load
 export const FALLBACK_PAINTING_IMAGE = "/placeholder-painting.webp";
