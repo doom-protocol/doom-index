@@ -1,8 +1,8 @@
 import { ArchiveLoader } from "@/components/archive/archive-loader";
 import { Header } from "@/components/ui/header";
-import { type NextPage } from "next";
+import { type FC } from "react";
 
-const Loading: NextPage = () => {
+export const Loading: FC = () => {
   return (
     <main className="relative h-screen w-full overflow-hidden">
       <Header showProgress={false} />
@@ -10,5 +10,3 @@ const Loading: NextPage = () => {
     </main>
   );
 };
-
-export default Loading;
