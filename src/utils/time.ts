@@ -36,10 +36,10 @@ export function getHourBucket(date: Date = new Date()): string {
 export function getIntervalBucket(date: Date = new Date(), intervalMs: number = 600000): string {
   const copy = new Date(date.getTime());
   // Calculate which interval this timestamp falls into
-  const intervalMinutes = Math.floor(intervalMs / (1000 * 60));
-  const minutesSinceEpoch = Math.floor(copy.getTime() / (1000 * 60));
+  const intervalMinutes = Math.floor(intervalMs / 60000);
+  const minutesSinceEpoch = Math.floor(copy.getTime() / 60000);
   const intervalStartMinutes = Math.floor(minutesSinceEpoch / intervalMinutes) * intervalMinutes;
-  const intervalStartTime = new Date(intervalStartMinutes * 60 * 1000);
+  const intervalStartTime = new Date(intervalStartMinutes * 60000);
 
   // Return ISO string up to minutes
   return intervalStartTime.toISOString().slice(0, 16);

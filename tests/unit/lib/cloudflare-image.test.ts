@@ -15,7 +15,7 @@ describe("cloudflare-image", () => {
 
   describe("buildLoaderImageUrl", () => {
     it("should return original src when base URL is localhost", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "http://localhost:8787",
       }));
 
@@ -26,7 +26,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should return original src when base URL is 127.0.0.1", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "http://127.0.0.1:3000",
       }));
 
@@ -37,7 +37,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should return original src when base URL is preview (.workers.dev)", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://preview-doom-index.yamadaasuma.workers.dev",
       }));
 
@@ -48,7 +48,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should return original src when src starts with http://", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -59,7 +59,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should return original src when src starts with https://", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -70,7 +70,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should add query params for /api/r2/ paths for server-side transformation", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -85,7 +85,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should transform relative path in production", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -99,7 +99,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should include quality parameter when provided", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -112,7 +112,7 @@ describe("cloudflare-image", () => {
 
   describe("transformImageUrl", () => {
     it("should return original URL when in local environment", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "http://localhost:8787",
       }));
 
@@ -123,7 +123,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should return original URL when in preview environment", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://preview.workers.dev",
       }));
 
@@ -134,7 +134,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should return original URL when options are empty", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -145,7 +145,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should return original URL when already transformed", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -156,7 +156,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should transform relative path with all options", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -180,7 +180,7 @@ describe("cloudflare-image", () => {
 
   describe("getImageUrlWithDpr", () => {
     it("should add query params for /api/r2/ paths with DPR scaling", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -192,7 +192,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should clamp DPR to maximum of 1.5 for /api/r2/ paths", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -204,7 +204,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should clamp DPR to minimum of 1 for /api/r2/ paths", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -216,7 +216,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should return original URL for public directory images (non-/api/ paths)", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -231,7 +231,7 @@ describe("cloudflare-image", () => {
 
   describe("getTransformedTextureUrl", () => {
     it("should add query params for /api/r2/ paths with galleryTexture preset by default", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -242,7 +242,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should apply DPR scaling for /api/r2/ paths", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -254,7 +254,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should use specified preset for /api/r2/ paths", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -265,7 +265,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should return original URL for public directory images", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
@@ -377,7 +377,7 @@ describe("cloudflare-image", () => {
     });
 
     it("should clamp DPR to 1.5 to prevent excessive image sizes", async () => {
-      mock.module("@/utils/url", () => ({
+      void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 

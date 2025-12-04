@@ -110,11 +110,12 @@ describe("Archive Storage Service", () => {
           }
           return bucket.put(key, value as ArrayBuffer | string);
         },
-        delete: async (keys: string | string[]) => {
+        delete: (keys: string | string[]) => {
           const keysArray = Array.isArray(keys) ? keys : [keys];
           for (const key of keysArray) {
             store.delete(key);
           }
+          return Promise.resolve();
         },
       } as unknown as R2Bucket;
 

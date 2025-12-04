@@ -33,20 +33,20 @@ import {
 import { glbExportService } from "@/lib/glb-export-service";
 
 // Setup mocks before importing modules
-mock.module("@/utils/url", createUrlMock());
+void mock.module("@/utils/url", createUrlMock());
 
 const { mockFactory: loggerMockFactory } = createLoggerMockFactory();
-mock.module("@/utils/logger", loggerMockFactory);
+void mock.module("@/utils/logger", loggerMockFactory);
 
-mock.module("@/env", createEnvMock());
-mock.module("use-haptic", createUseHapticMock());
-mock.module("use-sound", createUseSoundMock());
-mock.module("@/lib/analytics", createAnalyticsMock());
-mock.module("sonner", createSonnerMock());
-mock.module("@/hooks/use-viewer", createUseViewerMock());
-mock.module("@/lib/viewer-count-store", createViewerCountStoreMock());
-mock.module("@/hooks/use-transformed-texture-url", createUseTransformedTextureUrlMock());
-mock.module("@/hooks/use-safe-texture", createUseSafeTextureMock());
+void mock.module("@/env", createEnvMock());
+void mock.module("use-haptic", createUseHapticMock());
+void mock.module("use-sound", createUseSoundMock());
+void mock.module("@/lib/analytics", createAnalyticsMock());
+void mock.module("sonner", createSonnerMock());
+void mock.module("@/hooks/use-viewer", createUseViewerMock());
+void mock.module("@/lib/viewer-count-store", createViewerCountStoreMock());
+void mock.module("@/hooks/use-transformed-texture-url", createUseTransformedTextureUrlMock());
+void mock.module("@/hooks/use-safe-texture", createUseSafeTextureMock());
 
 const glbExportServiceMockModule = createGlbExportServiceMock()();
 const originalExportPaintingModel = glbExportService.exportPaintingModel;
@@ -66,8 +66,8 @@ afterAll(() => {
 let mockUseLatestPaintingFn: ReturnType<typeof mock> | null = null;
 
 // Mock use-latest-painting hook at module level
-const realUseLatestPainting = require("@/hooks/use-latest-painting");
-mock.module("@/hooks/use-latest-painting", () => ({
+const realUseLatestPainting = await import("@/hooks/use-latest-painting");
+void mock.module("@/hooks/use-latest-painting", () => ({
   ...realUseLatestPainting,
   useLatestPainting: () => {
     if (mockUseLatestPaintingFn) {
@@ -80,11 +80,11 @@ mock.module("@/hooks/use-latest-painting", () => ({
       dataUpdatedAt: Date.now(),
     };
   },
-  useLatestPaintingRefetch: () => async () => undefined,
+  useLatestPaintingRefetch: () => () => Promise.resolve(undefined),
 }));
 
 // Mock useSolanaWallet at module level
-mock.module("@/hooks/use-solana-wallet", createUseSolanaWalletMock());
+void mock.module("@/hooks/use-solana-wallet", createUseSolanaWalletMock());
 
 import Page from "@/app/page";
 
@@ -226,7 +226,7 @@ describe("Gallery Page Integration", () => {
     mock.restore();
   });
 
-  it("should render gallery page with header", async () => {
+  it("should render gallery page with header", () => {
     mockUseLatestPainting.mockReturnValue({
       data: null,
       isLoading: false,
@@ -251,7 +251,7 @@ describe("Gallery Page Integration", () => {
     expect(container.textContent).toContain("DOOM INDEX");
   });
 
-  it("should render gallery page with painting data", async () => {
+  it("should render gallery page with painting data", () => {
     const testImageUrl = "/api/r2/images/test-painting.webp";
     const mockPainting = createMockPainting({ imageUrl: testImageUrl });
 
@@ -280,7 +280,7 @@ describe("Gallery Page Integration", () => {
     expect(timings.totalTime).toBeLessThan(1000);
   });
 
-  it("should handle loading state", async () => {
+  it("should handle loading state", () => {
     mockUseLatestPainting.mockReturnValue({
       data: null,
       isLoading: true,
@@ -302,7 +302,7 @@ describe("Gallery Page Integration", () => {
     expect(timings.totalTime).toBeLessThan(1000);
   });
 
-  it("should render with different image URLs", async () => {
+  it("should render with different image URLs", () => {
     const testCases = ["/api/r2/images/painting1.webp", "/api/r2/images/painting2.webp", "/placeholder-painting.webp"];
 
     for (const imageUrl of testCases) {
@@ -327,7 +327,7 @@ describe("Gallery Page Integration", () => {
     }
   });
 
-  it("should measure time for multiple renders", async () => {
+  it("should measure time for multiple renders", () => {
     const mockPainting = createMockPainting();
     mockUseLatestPainting.mockReturnValue({
       data: mockPainting,
@@ -370,7 +370,7 @@ describe("Gallery Page Integration", () => {
     expect(maxTotal).toBeLessThan(2000);
   });
 
-  it("should render navigation links in header", async () => {
+  it("should render navigation links in header", () => {
     mockUseLatestPainting.mockReturnValue({
       data: null,
       isLoading: false,
@@ -389,7 +389,7 @@ describe("Gallery Page Integration", () => {
     expect(archiveLink).toBeDefined();
   });
 
-  it("should handle error state gracefully", async () => {
+  it("should handle error state gracefully", () => {
     mockUseLatestPainting.mockReturnValue({
       data: null,
       isLoading: false,

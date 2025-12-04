@@ -150,7 +150,7 @@ const updateCountdown = (
   };
 };
 
-const main = async () => {
+const main = (): Promise<void> => {
   const args = parseArgs();
 
   console.log("🚀 Starting cron watcher...");
@@ -176,16 +176,17 @@ const main = async () => {
     // カウントダウンを開始
     countdownCleanup = updateCountdown(args.interval * 1000, executionStartTime, "Next execution");
 
-    intervalId = setInterval(async () => {
+    intervalId = setInterval(() => {
       // 実行前にカウントダウンを停止
       if (countdownCleanup) {
         countdownCleanup();
         countdownCleanup = null;
       }
-      await callCronEndpoint(args.port, args.cron);
-      // 実行完了後にカウントダウンを再開（実行完了時刻を基準にする）
-      const executionCompleteTime = Date.now();
-      countdownCleanup = updateCountdown(args.interval * 1000, executionCompleteTime, "Next execution");
+      void callCronEndpoint(args.port, args.cron).then(() => {
+        // 実行完了後にカウントダウンを再開（実行完了時刻を基準にする）
+        const executionCompleteTime = Date.now();
+        countdownCleanup = updateCountdown(args.interval * 1000, executionCompleteTime, "Next execution");
+      });
     }, args.interval * 1000);
   };
 
@@ -202,13 +203,14 @@ const main = async () => {
   countdownCleanup = updateCountdown(msUntilNextMinute, initialStartTime, "Initial execution");
 
   // Wait until next minute (0 seconds), then start periodic execution
-  timeoutId = setTimeout(async () => {
+  timeoutId = setTimeout(() => {
     if (countdownCleanup) {
       countdownCleanup();
       countdownCleanup = null;
     }
-    await callCronEndpoint(args.port, args.cron);
-    scheduleNextExecution();
+    void callCronEndpoint(args.port, args.cron).then(() => {
+      scheduleNextExecution();
+    });
   }, msUntilNextMinute);
 
   // Handle graceful shutdown
@@ -223,6 +225,8 @@ const main = async () => {
     cleanup();
     process.exit(0);
   });
+
+  return Promise.resolve();
 };
 
 main().catch(error => {

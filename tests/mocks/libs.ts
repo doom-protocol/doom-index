@@ -13,11 +13,56 @@ import { mock } from "bun:test";
 import { ok } from "neverthrow";
 import type { AppError } from "@/types/app-error";
 
+type BunMock = ReturnType<typeof mock>;
+
+type AnalyticsMock = () => {
+  GA_EVENTS: {
+    GALLERY_PAINTING_CLICK: string;
+    MINT_BUTTON_CLICK: string;
+    MINT_UPLOAD_START: string;
+    MINT_WALLET_CONNECT: string;
+    MINT_TRANSACTION_START: string;
+    MINT_SUCCESS: string;
+  };
+  sendGAEvent: BunMock;
+};
+
+type GlbExportServiceMock = () => {
+  glbExportService: {
+    exportPaintingModel: BunMock;
+    optimizeGlb: BunMock;
+  };
+};
+
+type ViewerCountStoreMock = () => {
+  viewerCountStore: {
+    update: (newCount: number, newUpdatedAt: number) => void;
+    subscribe: (listener: () => void) => () => boolean;
+    getSnapshot: () => { count: number; updatedAt: number };
+  };
+};
+
+type EnvMockOptions = {
+  NEXT_PUBLIC_BASE_URL?: string;
+  LOG_LEVEL?: string;
+  NEXT_PUBLIC_R2_URL?: string;
+};
+
+type EnvMock = () => {
+  env: {
+    NEXT_PUBLIC_BASE_URL: string;
+    LOG_LEVEL: string;
+    NEXT_PUBLIC_R2_URL: string;
+  };
+  isDevelopment: () => boolean;
+  getEnvironmentName: () => string;
+};
+
 /**
  * Create mock for @/lib/analytics
  * Returns a function that returns the mock module object
  */
-export function createAnalyticsMock() {
+export function createAnalyticsMock(): AnalyticsMock {
   return () => ({
     GA_EVENTS: {
       GALLERY_PAINTING_CLICK: "gallery_painting_click",
@@ -50,13 +95,13 @@ export function createAnalyticsMock() {
  * });
  * ```
  */
-export function createGlbExportServiceMock() {
+export function createGlbExportServiceMock(): GlbExportServiceMock {
   return () => ({
     glbExportService: {
-      exportPaintingModel: mock(async () =>
-        ok<File, AppError>(new File([], "test.glb", { type: "application/octet-stream" })),
+      exportPaintingModel: mock(() =>
+        Promise.resolve(ok<File, AppError>(new File([], "test.glb", { type: "application/octet-stream" }))),
       ),
-      optimizeGlb: mock(async () => ok<ArrayBuffer, AppError>(new ArrayBuffer(1024))),
+      optimizeGlb: mock(() => Promise.resolve(ok<ArrayBuffer, AppError>(new ArrayBuffer(1024)))),
     },
   });
 }
@@ -65,7 +110,7 @@ export function createGlbExportServiceMock() {
  * Create mock for @/lib/viewer-count-store
  * Returns a function that returns the mock module object
  */
-export function createViewerCountStoreMock() {
+export function createViewerCountStoreMock(): ViewerCountStoreMock {
   // Use a single state object that gets mutated to maintain reference equality
   const state = {
     count: 1,
@@ -93,11 +138,7 @@ export function createViewerCountStoreMock() {
  * Create mock for @/env
  * Returns a function that returns the mock module object
  */
-export function createEnvMock(options?: {
-  NEXT_PUBLIC_BASE_URL?: string;
-  LOG_LEVEL?: string;
-  NEXT_PUBLIC_R2_URL?: string;
-}) {
+export function createEnvMock(options?: EnvMockOptions): EnvMock {
   const baseUrl = options?.NEXT_PUBLIC_BASE_URL ?? "http://localhost:8787";
   return () => ({
     env: {

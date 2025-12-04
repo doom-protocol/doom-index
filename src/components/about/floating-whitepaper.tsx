@@ -75,7 +75,7 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
   });
 
   // Fixed aspect ratio (A4 paper ratio: 210:297 ≈ 0.707)
-  const PAPER_ASPECT_RATIO = 210 / 297; // width / height
+  const PAPER_ASPECT_RATIO = 0.7070707071; // width / height (derived from 210 / 297)
 
   // Calculate paper size maintaining fixed aspect ratio
   const distanceFactor = useMemo(() => {

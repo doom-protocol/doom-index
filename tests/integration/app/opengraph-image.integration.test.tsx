@@ -16,16 +16,18 @@ import { createTestR2Bucket } from "../../lib/memory-r2";
 describe("OGP Image Generation (Integration Tests)", () => {
   const createMockFetcher = (shouldSucceed: boolean, imageData?: string, contentType = "image/webp"): Fetcher => {
     return {
-      fetch: mock(async (input: RequestInfo | URL) => {
-        const _url = typeof input === "string" ? input : input instanceof URL ? input.pathname : input.url;
+      fetch: mock((input: RequestInfo | URL) => {
+        void (typeof input === "string" ? input : input instanceof URL ? input.pathname : input.url);
         if (shouldSucceed) {
           const buffer = new TextEncoder().encode(imageData || "mock image data").buffer;
-          return new Response(buffer, {
-            status: 200,
-            headers: { "Content-Type": contentType },
-          });
+          return Promise.resolve(
+            new Response(buffer, {
+              status: 200,
+              headers: { "Content-Type": contentType },
+            }),
+          );
         }
-        return new Response(null, { status: 404 });
+        return Promise.resolve(new Response(null, { status: 404 }));
       }) as unknown as typeof fetch,
       connect: mock(() => {
         throw new Error("connect is not implemented in tests");
@@ -101,8 +103,8 @@ describe("OGP Image Generation (Integration Tests)", () => {
       const { bucket } = createTestR2Bucket();
       const failingBucket = {
         ...bucket,
-        get: mock(async () => {
-          throw new Error("R2 failure");
+        get: mock(() => {
+          return Promise.reject(new Error("R2 failure"));
         }),
       } as unknown as R2Bucket;
 
@@ -138,11 +140,13 @@ describe("OGP Image Generation (Integration Tests)", () => {
     test("should handle binary image data correctly", async () => {
       const binaryData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
       const mockFetcher: Fetcher = {
-        fetch: mock(async () => {
-          return new Response(binaryData.buffer, {
-            status: 200,
-            headers: { "Content-Type": "image/webp" },
-          });
+        fetch: mock(() => {
+          return Promise.resolve(
+            new Response(binaryData.buffer, {
+              status: 200,
+              headers: { "Content-Type": "image/webp" },
+            }),
+          );
         }) as unknown as typeof fetch,
         connect: mock(() => {
           throw new Error("connect is not implemented in tests");

@@ -2,5 +2,8 @@ import type matchers from "@testing-library/jest-dom/matchers";
 
 declare module "bun:test" {
   // Extend Bun's Matchers with Testing Library matchers for type safety in tests
-  interface Matchers<T = unknown, R = T> extends matchers.TestingLibraryMatchers<T, R> {}
+  interface Matchers<T = unknown, R = T> extends matchers.TestingLibraryMatchers<T, R> {
+    // Marker property to ensure augmentation is not treated as empty
+    readonly _testingLibraryAugmented?: never;
+  }
 }

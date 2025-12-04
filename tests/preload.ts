@@ -4,12 +4,13 @@ import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, expect, mock } from "bun:test";
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import * as dbSchema from "@/db/schema";
 
 // Note: NEXT_PUBLIC_R2_URL is handled by individual tests that mock @/env
 
 // Create in-memory SQLite database for D1 tests
-let testD1Db: any;
+let testD1Db: BunSQLiteDatabase<typeof dbSchema> & { batch?: (operations: unknown[]) => Promise<unknown[]> };
 
 beforeEach(() => {
   // Create fresh in-memory database for each test
@@ -79,17 +80,22 @@ beforeEach(() => {
   testD1Db = drizzle(sqlite, { schema: dbSchema });
 
   // Add batch method for compatibility with D1 interface
-  testD1Db.batch = async (operations: any[]) => {
+  testD1Db.batch = async (operations: unknown[]) => {
     const results = [];
     for (const op of operations) {
-      if (op.execute) {
-        results.push(await op.execute());
-      } else if (op.all) {
-        results.push(await op.all());
-      } else if (op.values) {
-        results.push(await op.values());
+      const operation = op as {
+        execute?: () => Promise<unknown>;
+        all?: () => Promise<unknown>;
+        values?: () => Promise<unknown>;
+      };
+      if (operation.execute) {
+        results.push(await operation.execute());
+      } else if (operation.all) {
+        results.push(await operation.all());
+      } else if (operation.values) {
+        results.push(await operation.values());
       } else {
-        results.push(await op);
+        results.push(await (op as Promise<unknown>));
       }
     }
     return results;
@@ -97,7 +103,7 @@ beforeEach(() => {
 });
 
 // Mock @opennextjs/cloudflare to provide test D1 binding
-mock.module("@opennextjs/cloudflare", () => ({
+void mock.module("@opennextjs/cloudflare", () => ({
   getCloudflareContext: () => ({
     env: {
       DB: testD1Db,
@@ -118,8 +124,6 @@ expect.extend(matchers);
 // Cleanup after each test
 afterEach(() => {
   cleanup();
-  // Close database connections if needed
-  if (testD1Db?.close) {
-    testD1Db.close();
-  }
+  // Note: In-memory SQLite databases are automatically cleaned up when
+  // they go out of scope. A new database is created in beforeEach.
 });

@@ -1,6 +1,6 @@
-import type { SVGProps } from "react";
+import type { ReactElement, SVGProps } from "react";
 
-export const ArchiveIcon = (props: SVGProps<SVGSVGElement>) => {
+export const ArchiveIcon = (props: SVGProps<SVGSVGElement>): ReactElement => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

@@ -45,22 +45,22 @@ describe("TokenSelectionService", () => {
     tokensRepository?: Partial<TokensRepository>;
   }) => {
     const tokenDataFetchService = {
-      fetchTrendingTokens: async () => okResult<TokenCandidate[]>([]),
-      resolveTickersToIds: async () => okResult<Array<{ ticker: string; id: string }>>([]),
-      fetchTokenDetails: async () => okResult<TokenCandidate[]>([]),
+      fetchTrendingTokens: async () => await Promise.resolve(okResult<TokenCandidate[]>([])),
+      resolveTickersToIds: async () => await Promise.resolve(okResult<Array<{ ticker: string; id: string }>>([])),
+      fetchTokenDetails: async () => await Promise.resolve(okResult<TokenCandidate[]>([])),
       ...deps.tokenDataFetchService,
     } as TokenDataFetchService;
 
     const marketDataService = {
-      fetchGlobalMarketData: async () => okResult(createSnapshot()),
+      fetchGlobalMarketData: async () => await Promise.resolve(okResult(createSnapshot())),
       ...deps.marketDataService,
     } as MarketDataService;
 
     const tokensRepository = {
-      findRecentlySelected: async () => okResult([]),
-      findById: async () => okResult(null),
-      insert: async () => okResult(undefined),
-      update: async () => okResult(undefined),
+      findRecentlySelected: async () => await Promise.resolve(okResult([])),
+      findById: async () => await Promise.resolve(okResult(null)),
+      insert: async () => await Promise.resolve(okResult(undefined)),
+      update: async () => new Promise(resolve => resolve(okResult(undefined))),
       ...deps.tokensRepository,
     } as TokensRepository;
 
@@ -72,31 +72,33 @@ describe("TokenSelectionService", () => {
     const service = createService({
       tokenDataFetchService: {
         fetchTrendingTokens: async () =>
-          okResult([
-            createCandidate({
-              id: "alpha",
-              symbol: "ALP",
-              priceChange24h: 12,
-              volume24hUsd: 50_000_000,
-              marketCapUsd: 500_000_000,
-              categories: ["l1"],
-              trendingRankCgSearch: 1,
-            }),
-            createCandidate({
-              id: "beta",
-              symbol: "BET",
-              priceChange24h: -3,
-              volume24hUsd: 1_000_000,
-              marketCapUsd: 10_000_000,
-              trendingRankCgSearch: 10,
-            }),
-          ]),
+          await Promise.resolve(
+            okResult([
+              createCandidate({
+                id: "alpha",
+                symbol: "ALP",
+                priceChange24h: 12,
+                volume24hUsd: 50_000_000,
+                marketCapUsd: 500_000_000,
+                categories: ["l1"],
+                trendingRankCgSearch: 1,
+              }),
+              createCandidate({
+                id: "beta",
+                symbol: "BET",
+                priceChange24h: -3,
+                volume24hUsd: 1_000_000,
+                marketCapUsd: 10_000_000,
+                trendingRankCgSearch: 10,
+              }),
+            ]),
+          ),
       },
       tokensRepository: {
-        findById: async () => okResult(null),
+        findById: async () => new Promise(resolve => resolve(okResult(null))),
         insert: async token => {
           inserted.push(token);
-          return okResult(undefined);
+          return new Promise(resolve => resolve(okResult(undefined)));
         },
       },
     });
@@ -116,35 +118,39 @@ describe("TokenSelectionService", () => {
     const service = createService({
       tokenDataFetchService: {
         fetchTrendingTokens: async () =>
-          okResult([
-            createCandidate({
-              id: "stable",
-              symbol: "USDT",
-            }),
-            createCandidate({
-              id: "fresh",
-              symbol: "FRC",
-              priceChange24h: 6,
-              volume24hUsd: 10_000_000,
-              trendingRankCgSearch: 2,
-            }),
-          ]),
+          await Promise.resolve(
+            okResult([
+              createCandidate({
+                id: "stable",
+                symbol: "USDT",
+              }),
+              createCandidate({
+                id: "fresh",
+                symbol: "FRC",
+                priceChange24h: 6,
+                volume24hUsd: 10_000_000,
+                trendingRankCgSearch: 2,
+              }),
+            ]),
+          ),
       },
       tokensRepository: {
         findRecentlySelected: async () =>
-          okResult([
-            {
-              id: "fresh",
-              symbol: "FRESH",
-              name: "Fresh Token",
-              shortContext: null,
-              coingeckoId: "fresh",
-              logoUrl: null,
-              categories: "[]",
-              createdAt: 0,
-              updatedAt: Date.now(),
-            },
-          ]),
+          await Promise.resolve(
+            okResult([
+              {
+                id: "fresh",
+                symbol: "FRESH",
+                name: "Fresh Token",
+                shortContext: null,
+                coingeckoId: "fresh",
+                logoUrl: null,
+                categories: "[]",
+                createdAt: 0,
+                updatedAt: Date.now(),
+              },
+            ]),
+          ),
       },
     });
 
@@ -163,57 +169,61 @@ describe("TokenSelectionService", () => {
     const service = createService({
       tokenDataFetchService: {
         fetchTrendingTokens: async () =>
-          okResult([
-            createCandidate({
-              id: "alpha",
-              symbol: "ALP",
-              priceChange24h: 12,
-              volume24hUsd: 50_000_000,
-              marketCapUsd: 500_000_000,
-              categories: ["l1"],
-              trendingRankCgSearch: 1,
-            }),
-            createCandidate({
-              id: "beta",
-              symbol: "BET",
-              priceChange24h: 8,
-              volume24hUsd: 30_000_000,
-              marketCapUsd: 300_000_000,
-              categories: ["defi"],
-              trendingRankCgSearch: 2,
-            }),
-          ]),
+          await Promise.resolve(
+            okResult([
+              createCandidate({
+                id: "alpha",
+                symbol: "ALP",
+                priceChange24h: 12,
+                volume24hUsd: 50_000_000,
+                marketCapUsd: 500_000_000,
+                categories: ["l1"],
+                trendingRankCgSearch: 1,
+              }),
+              createCandidate({
+                id: "beta",
+                symbol: "BET",
+                priceChange24h: 8,
+                volume24hUsd: 30_000_000,
+                marketCapUsd: 300_000_000,
+                categories: ["defi"],
+                trendingRankCgSearch: 2,
+              }),
+            ]),
+          ),
       },
       tokensRepository: {
         findRecentlySelected: async () =>
-          okResult([
-            {
-              id: "alpha",
-              symbol: "ALPHA",
-              name: "Alpha Token",
-              shortContext: null,
-              coingeckoId: "alpha",
-              logoUrl: null,
-              categories: "[]",
-              createdAt: 0,
-              updatedAt: Date.now(),
-            },
-            {
-              id: "beta",
-              symbol: "BETA",
-              name: "Beta Token",
-              shortContext: null,
-              coingeckoId: "beta",
-              logoUrl: null,
-              categories: "[]",
-              createdAt: 0,
-              updatedAt: Date.now(),
-            },
-          ]),
-        findById: async () => okResult(null),
+          await Promise.resolve(
+            okResult([
+              {
+                id: "alpha",
+                symbol: "ALPHA",
+                name: "Alpha Token",
+                shortContext: null,
+                coingeckoId: "alpha",
+                logoUrl: null,
+                categories: "[]",
+                createdAt: 0,
+                updatedAt: Date.now(),
+              },
+              {
+                id: "beta",
+                symbol: "BETA",
+                name: "Beta Token",
+                shortContext: null,
+                coingeckoId: "beta",
+                logoUrl: null,
+                categories: "[]",
+                createdAt: 0,
+                updatedAt: Date.now(),
+              },
+            ]),
+          ),
+        findById: async () => new Promise(resolve => resolve(okResult(null))),
         insert: async token => {
           inserted.push(token);
-          return okResult(undefined);
+          return new Promise(resolve => resolve(okResult(undefined)));
         },
       },
     });
@@ -237,31 +247,35 @@ describe("TokenSelectionService", () => {
       tokenDataFetchService: {
         resolveTickersToIds: async tickers => {
           resolvedTickers = tickers;
-          return okResult(
-            tickers.map(t => ({
-              ticker: t,
-              id: `${t.toLowerCase()}-id`,
-            })),
+          return await Promise.resolve(
+            okResult(
+              tickers.map(t => ({
+                ticker: t,
+                id: `${t.toLowerCase()}-id`,
+              })),
+            ),
           );
         },
         fetchTokenDetails: async (ids, source) => {
           fetchCalls.push({ ids, source });
-          return okResult(
-            ids.map((id, index) =>
-              createCandidate({
-                id,
-                symbol: id.toUpperCase(),
-                priceChange24h: 5 - index,
-                forcePriority: index,
-                source: "force-override",
-              }),
+          return await Promise.resolve(
+            okResult(
+              ids.map((id, index) =>
+                createCandidate({
+                  id,
+                  symbol: id.toUpperCase(),
+                  priceChange24h: 5 - index,
+                  forcePriority: index,
+                  source: "force-override",
+                }),
+              ),
             ),
           );
         },
       },
       tokensRepository: {
-        findById: async () => okResult(null),
-        insert: async () => okResult(undefined),
+        findById: async () => new Promise(resolve => resolve(okResult(null))),
+        insert: async () => new Promise(resolve => resolve(okResult(undefined))),
       },
     });
 
@@ -281,7 +295,7 @@ describe("TokenSelectionService", () => {
   it("rejects FORCE_TOKEN_LIST when no valid entries remain after validation", async () => {
     const service = createService({
       tokenDataFetchService: {
-        resolveTickersToIds: async () => okResult([]),
+        resolveTickersToIds: async () => Promise.resolve(okResult([])),
       },
     });
 

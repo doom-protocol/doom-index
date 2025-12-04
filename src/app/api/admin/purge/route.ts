@@ -2,7 +2,7 @@ import { env } from "@/env";
 import { logger } from "@/utils/logger";
 import { type NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<Response> {
   // check authentication
   const authHeader = req.headers.get("Authorization");
   const apiKey = authHeader?.replace("Bearer ", "");

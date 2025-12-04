@@ -97,10 +97,11 @@ describe("Cache Helper - get", () => {
       delete: mock(() => Promise.resolve(false)),
     } as unknown as Cache;
 
-    mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () => ({
-        env: {},
-      }),
+    void mock.module("@opennextjs/cloudflare", () => ({
+      getCloudflareContext: () =>
+        Promise.resolve({
+          env: {},
+        }),
     }));
 
     // Mock globalThis.caches with default property
@@ -140,9 +141,9 @@ describe("Cache Helper - get", () => {
   });
 
   it("should return null when cache is unavailable", async () => {
-    mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () => {
-        throw new Error("Cache unavailable");
+    void mock.module("@opennextjs/cloudflare", () => ({
+      getCloudflareContext: () => {
+        return Promise.reject(new Error("Cache unavailable"));
       },
     }));
 
@@ -185,10 +186,11 @@ describe("Cache Helper - set", () => {
       delete: mock(() => Promise.resolve(false)),
     } as unknown as Cache;
 
-    mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () => ({
-        env: {},
-      }),
+    void mock.module("@opennextjs/cloudflare", () => ({
+      getCloudflareContext: () =>
+        Promise.resolve({
+          env: {},
+        }),
     }));
 
     // Mock globalThis.caches with default property
@@ -218,7 +220,7 @@ describe("Cache Helper - set", () => {
   });
 
   it("should skip caching when cache is unavailable", async () => {
-    mock.module("@opennextjs/cloudflare", () => ({
+    void mock.module("@opennextjs/cloudflare", () => ({
       getCloudflareContext: () => {
         throw new Error("Cache unavailable");
       },
@@ -351,9 +353,9 @@ describe("Cache Helper - getOrSet", () => {
   });
 
   it("should execute compute function when cache is unavailable", async () => {
-    mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () => {
-        throw new Error("Cache unavailable");
+    void mock.module("@opennextjs/cloudflare", () => ({
+      getCloudflareContext: () => {
+        return Promise.reject(new Error("Cache unavailable"));
       },
     }));
 
@@ -373,7 +375,7 @@ describe("Cache Helper - getOrSet", () => {
     const computeFn = mock(() => Promise.reject(computeError));
 
     const { getOrSet } = await import("@/lib/cache");
-    await expect(getOrSet("test-key", computeFn, { ttlSeconds: 60 })).rejects.toThrow("Compute error");
+    expect(getOrSet("test-key", computeFn, { ttlSeconds: 60 })).rejects.toThrow("Compute error");
     expect(mockPut).not.toHaveBeenCalled();
   });
 
@@ -402,10 +404,11 @@ describe("Cache Helper - remove", () => {
       delete: mockDelete,
     } as unknown as Cache;
 
-    mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () => ({
-        env: {},
-      }),
+    void mock.module("@opennextjs/cloudflare", () => ({
+      getCloudflareContext: () =>
+        Promise.resolve({
+          env: {},
+        }),
     }));
 
     // Mock globalThis.caches with default property
@@ -441,7 +444,7 @@ describe("Cache Helper - remove", () => {
   });
 
   it("should return false when cache is unavailable", async () => {
-    mock.module("@opennextjs/cloudflare", () => ({
+    void mock.module("@opennextjs/cloudflare", () => ({
       getCloudflareContext: () => {
         throw new Error("Cache unavailable");
       },
@@ -488,10 +491,11 @@ describe("Cache Helper - getOrSet deduplication", () => {
       delete: mock(() => Promise.resolve(false)),
     } as unknown as Cache;
 
-    mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () => ({
-        env: {},
-      }),
+    void mock.module("@opennextjs/cloudflare", () => ({
+      getCloudflareContext: () =>
+        Promise.resolve({
+          env: {},
+        }),
     }));
 
     // Mock globalThis.caches with default property

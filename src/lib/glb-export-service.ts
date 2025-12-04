@@ -86,7 +86,7 @@ export class GlbExportServiceImpl implements GlbExportService {
   }
 
   async optimizeGlb(glbBuffer: ArrayBuffer, targetSizeMB: number): Promise<Result<ArrayBuffer, AppError>> {
-    const sizeMB = glbBuffer.byteLength / (1024 * 1024);
+    const sizeMB = glbBuffer.byteLength / 1048576;
 
     // If already smaller than target, return as is
     if (sizeMB <= targetSizeMB) {

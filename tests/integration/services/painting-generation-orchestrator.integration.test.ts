@@ -20,7 +20,7 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { err, ok } from "neverthrow";
 
 // Mock env module - use NEXT_PUBLIC_BASE_URL to determine development environment
-mock.module("@/env", () => ({
+void mock.module("@/env", () => ({
   env: { NEXT_PUBLIC_BASE_URL: "http://localhost:8787" },
   isDevelopment: () => true,
   getEnvironmentName: () => "development" as const,
@@ -143,7 +143,7 @@ describe("PaintingGenerationOrchestrator Integration", () => {
     it("should skip execution when hourBucket already exists (idempotency)", async () => {
       // Mock env module to return production mode for this test
       // Use NEXT_PUBLIC_BASE_URL to determine environment
-      mock.module("@/env", () => ({
+      void mock.module("@/env", () => ({
         env: {
           NEXT_PUBLIC_BASE_URL: "https://doomindex.fun",
         },

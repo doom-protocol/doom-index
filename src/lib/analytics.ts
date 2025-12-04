@@ -23,6 +23,6 @@ export type GAEventName = (typeof GA_EVENTS)[keyof typeof GA_EVENTS];
 type GAParameterValue = string | number | boolean | null | undefined;
 export type GAEventParameters = Record<string, GAParameterValue>;
 
-export const sendGAEvent = (eventName: GAEventName, parameters?: GAEventParameters) => {
+export const sendGAEvent = (eventName: GAEventName, parameters?: GAEventParameters): void => {
   nextSendGAEvent("event", eventName, parameters || {});
 };

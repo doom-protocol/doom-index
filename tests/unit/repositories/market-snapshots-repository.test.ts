@@ -44,13 +44,13 @@ describe("MarketSnapshotsRepository", () => {
     // BunSQLiteDatabase doesn't have batch, but DrizzleD1Database does
     // The batch method receives query builder objects and should execute them sequentially
     db = Object.assign(baseDb, {
-      batch: async <T extends readonly BatchItem<"sqlite">[]>(operations: T): Promise<BatchResponse<T>> => {
+      batch: <T extends readonly BatchItem<"sqlite">[]>(operations: T): Promise<BatchResponse<T>> => {
         // Simple sequential execution for test purposes
         // Each BatchItem is a query builder with methods like .execute(), .all(), etc.
         // For simplicity in tests, we return empty results since the repository
         // doesn't currently use batch operations
         const results = operations.map(() => ({}));
-        return results as BatchResponse<T>;
+        return Promise.resolve(results as BatchResponse<T>);
       },
     }) as TestDb;
 

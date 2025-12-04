@@ -13,9 +13,12 @@ type CoinGeckoClientStub = Pick<CoinGeckoClient, "getCoinsMarkets" | "getTrendin
 
 const createClient = (overrides: Partial<CoinGeckoClientStub> = {}): CoinGeckoClientStub => {
   return {
-    getCoinsMarkets: overrides.getCoinsMarkets ?? (async () => ok<CoinsMarketsResponse, never>([])),
-    getTrendingSearch: overrides.getTrendingSearch ?? (async () => ok<TrendingSearchResponse, never>({ coins: [] })),
-    getCoinsList: overrides.getCoinsList ?? (async () => ok<CoinsListResponse, never>([])),
+    getCoinsMarkets:
+      overrides.getCoinsMarkets ?? (async () => await Promise.resolve(ok<CoinsMarketsResponse, never>([]))),
+    getTrendingSearch:
+      overrides.getTrendingSearch ??
+      (async () => await Promise.resolve(ok<TrendingSearchResponse, never>({ coins: [] }))),
+    getCoinsList: overrides.getCoinsList ?? (async () => await Promise.resolve(ok<CoinsListResponse, never>([]))),
   };
 };
 
@@ -55,7 +58,7 @@ describe("TokenDataFetchService", () => {
       getCoinsMarkets: async (ids: string[], options?: CoinsMarketsOptions) => {
         expect(ids).toEqual(["bitcoin"]);
         expect(options?.vs_currency).toBe("usd");
-        return coinsMarkets;
+        return await Promise.resolve(coinsMarkets);
       },
     });
 
@@ -83,11 +86,13 @@ describe("TokenDataFetchService", () => {
   it("fetchTokenDetails propagates CoinGecko errors", async () => {
     const client = createClient({
       getCoinsMarkets: async () =>
-        err({
-          type: "ExternalApiError" as const,
-          provider: "coingecko",
-          message: "rate limit",
-        }),
+        await Promise.resolve(
+          err({
+            type: "ExternalApiError" as const,
+            provider: "coingecko",
+            message: "rate limit",
+          }),
+        ),
     });
 
     const service = new TokenDataFetchService(client as CoinGeckoClient);
@@ -149,8 +154,8 @@ describe("TokenDataFetchService", () => {
     ]);
 
     const client = createClient({
-      getTrendingSearch: async () => trending,
-      getCoinsMarkets: async () => markets,
+      getTrendingSearch: async () => await Promise.resolve(trending),
+      getCoinsMarkets: async () => await Promise.resolve(markets),
     });
 
     const service = new TokenDataFetchService(client as CoinGeckoClient);
@@ -167,7 +172,7 @@ describe("TokenDataFetchService", () => {
     const coinsList = ok<CoinsListResponse, never>([{ id: "bitcoin", symbol: "btc", name: "Bitcoin" }]);
 
     const client = createClient({
-      getCoinsList: async () => coinsList,
+      getCoinsList: async () => await Promise.resolve(coinsList),
     });
 
     const service = new TokenDataFetchService(client as CoinGeckoClient);

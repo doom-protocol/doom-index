@@ -76,7 +76,7 @@ describe("Archive tRPC Router Integration", () => {
     }
 
     // Mock R2 bucket resolution
-    mock.module("@/lib/r2", () => ({
+    void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () => ({ isErr: () => false, value: client.bucket }),
     }));
   });

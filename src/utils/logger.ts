@@ -64,27 +64,27 @@ const formatHeader = (level: LogLevel): string => {
 };
 
 export const logger = {
-  log: (...args: unknown[]) => {
+  log: (...args: unknown[]): void => {
     if (!shouldLog(LogLevel.LOG)) return;
     const header = formatHeader(LogLevel.LOG);
     console.log(header, ...args);
   },
-  info: (...args: unknown[]) => {
+  info: (...args: unknown[]): void => {
     if (!shouldLog(LogLevel.INFO)) return;
     const header = formatHeader(LogLevel.INFO);
     console.info(header, ...args);
   },
-  debug: (...args: unknown[]) => {
+  debug: (...args: unknown[]): void => {
     if (!shouldLog(LogLevel.DEBUG)) return;
     const header = formatHeader(LogLevel.DEBUG);
     console.log(header, ...args);
   },
-  warn: (...args: unknown[]) => {
+  warn: (...args: unknown[]): void => {
     if (!shouldLog(LogLevel.WARN)) return;
     const header = formatHeader(LogLevel.WARN);
     console.warn(header, ...args);
   },
-  error: (...args: unknown[]) => {
+  error: (...args: unknown[]): void => {
     if (!shouldLog(LogLevel.ERROR)) return;
     const header = formatHeader(LogLevel.ERROR);
     console.error(header, ...args);
@@ -96,5 +96,5 @@ export const logger = {
   /**
    * Get list of available log levels
    */
-  getLevels: () => LOG_LEVELS,
+  getLevels: (): readonly LogLevel[] => LOG_LEVELS,
 };

@@ -13,13 +13,15 @@ describe("unit/server/trpc/routers/ipfs", () => {
     it("should create signed URL for GLB file", async () => {
       const currentTime = Math.floor(Date.now() / 1000);
       const mockPinataClient = {
-        createSignedUploadUrl: mock(async () =>
-          ok({
-            url: "https://uploads.pinata.cloud/v3/files/signed-url-123",
-            expires: currentTime + 30,
-          }),
+        createSignedUploadUrl: mock(() =>
+          Promise.resolve(
+            ok({
+              url: "https://uploads.pinata.cloud/v3/files/signed-url-123",
+              expires: currentTime + 30,
+            }),
+          ),
         ),
-        convertToGatewayUrl: mock(async () => ok("https://gateway.pinata.cloud/ipfs/QmTest")),
+        convertToGatewayUrl: mock(() => Promise.resolve(ok("https://gateway.pinata.cloud/ipfs/QmTest"))),
       };
 
       const ctx = createMockContext({
@@ -58,13 +60,15 @@ describe("unit/server/trpc/routers/ipfs", () => {
     it("should create signed URL for metadata JSON", async () => {
       const currentTime = Math.floor(Date.now() / 1000);
       const mockPinataClient = {
-        createSignedUploadUrl: mock(async () =>
-          ok({
-            url: "https://uploads.pinata.cloud/v3/files/signed-url-456",
-            expires: currentTime + 30,
-          }),
+        createSignedUploadUrl: mock(() =>
+          Promise.resolve(
+            ok({
+              url: "https://uploads.pinata.cloud/v3/files/signed-url-456",
+              expires: currentTime + 30,
+            }),
+          ),
         ),
-        convertToGatewayUrl: mock(async () => ok("https://gateway.pinata.cloud/ipfs/QmTest")),
+        convertToGatewayUrl: mock(() => Promise.resolve(ok("https://gateway.pinata.cloud/ipfs/QmTest"))),
       };
 
       const ctx = createMockContext({
@@ -90,14 +94,16 @@ describe("unit/server/trpc/routers/ipfs", () => {
 
     it("should throw TRPCError when Pinata client fails", async () => {
       const mockPinataClient = {
-        createSignedUploadUrl: mock(async () =>
-          err({
-            type: "ExternalApiError" as const,
-            provider: "pinata" as const,
-            message: "Pinata API error",
-          }),
+        createSignedUploadUrl: mock(() =>
+          Promise.resolve(
+            err({
+              type: "ExternalApiError" as const,
+              provider: "pinata" as const,
+              message: "Pinata API error",
+            }),
+          ),
         ),
-        convertToGatewayUrl: mock(async () => ok("https://gateway.pinata.cloud/ipfs/QmTest")),
+        convertToGatewayUrl: mock(() => Promise.resolve(ok("https://gateway.pinata.cloud/ipfs/QmTest"))),
       };
 
       const ctx = createMockContext({

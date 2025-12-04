@@ -7,7 +7,7 @@ import type { JSX } from "react";
 
 // Mock getBaseUrl before importing page to ensure it returns valid URL
 // This must be done at module level, before importing Page
-mock.module("@/utils/url", () => ({
+void mock.module("@/utils/url", () => ({
   getBaseUrl: () => "http://localhost:8787",
   getPumpFunUrl: (address: string) => `https://pump.fun/${address}`,
 }));
@@ -31,7 +31,7 @@ const createTestQueryClient = () => {
 };
 
 describe("About Page Integration", () => {
-  it("should render about page with MDX content", async () => {
+  it("should render about page with MDX content", () => {
     const page = renderAboutPage();
     const queryClient = createTestQueryClient();
     const { container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);
@@ -40,7 +40,7 @@ describe("About Page Integration", () => {
     expect(article).toBeDefined();
   });
 
-  it("should render semantic HTML from MDX", async () => {
+  it("should render semantic HTML from MDX", () => {
     const page = renderAboutPage();
     const queryClient = createTestQueryClient();
     const { container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);
@@ -51,7 +51,7 @@ describe("About Page Integration", () => {
     expect(container.textContent?.length).toBeGreaterThan(0);
   });
 
-  it("should render DOOM INDEX content", async () => {
+  it("should render DOOM INDEX content", () => {
     const page = renderAboutPage();
     const queryClient = createTestQueryClient();
     const { container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);

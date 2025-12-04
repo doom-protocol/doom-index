@@ -33,7 +33,7 @@ import { logger } from "./utils/logger";
 
 // Generation interval from environment variable (default: 10 minutes = 600000ms)
 // This is used for logging purposes only. The actual execution frequency is controlled by the cron trigger.
-const GENERATION_INTERVAL_MINUTES = Number(runtimeEnv.NEXT_PUBLIC_GENERATION_INTERVAL_MS || 600000) / (1000 * 60);
+const GENERATION_INTERVAL_MINUTES = Number(runtimeEnv.NEXT_PUBLIC_GENERATION_INTERVAL_MS || 600000) / 60000;
 
 // ============================================================================
 // Hourly Generation Pipeline

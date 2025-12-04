@@ -5,7 +5,7 @@ import { describe, expect, it, mock } from "bun:test";
 import type { ReactNode } from "react";
 
 // Mock analytics
-mock.module("@/lib/analytics", () => ({
+void mock.module("@/lib/analytics", () => ({
   GA_EVENTS: {
     MINT_BUTTON_CLICK: "mint_button_click",
     MINT_UPLOAD_START: "mint_upload_start",
@@ -17,7 +17,7 @@ mock.module("@/lib/analytics", () => ({
 }));
 
 // Mock use-haptic
-mock.module("use-haptic", () => ({
+void mock.module("use-haptic", () => ({
   useHaptic: () => ({
     triggerHaptic: mock(() => {}),
   }),
@@ -28,7 +28,7 @@ const MockMintModal: React.FC<{ isOpen: boolean }> = ({ isOpen }) =>
   isOpen ? <div data-testid="mint-modal">Modal</div> : null;
 MockMintModal.displayName = "MockMintModal";
 
-mock.module("@/components/ui/mint-modal", () => ({
+void mock.module("@/components/ui/mint-modal", () => ({
   MintModal: MockMintModal,
 }));
 
@@ -52,7 +52,7 @@ const createWrapper = () => {
 describe("MintButton", () => {
   it("renders correctly", () => {
     const { getAllByRole } = render(<MintButton />, { wrapper: createWrapper() });
-    const button = getAllByRole("button", { name: /mint/i })[0]!;
+    const button = getAllByRole("button", { name: /mint/i })[0];
     expect(button).toBeInTheDocument();
     expect(button.textContent).toMatch(/Mint/i);
   });
@@ -61,7 +61,7 @@ describe("MintButton", () => {
     const handleClick = mock(() => {});
     const { getAllByRole } = render(<MintButton onClick={handleClick} />, { wrapper: createWrapper() });
 
-    const button = getAllByRole("button", { name: /mint/i })[0]!;
+    const button = getAllByRole("button", { name: /mint/i })[0];
     fireEvent.click(button);
 
     expect(handleClick).toHaveBeenCalled();
@@ -69,21 +69,21 @@ describe("MintButton", () => {
 
   it("shows loading state", () => {
     const { getAllByRole } = render(<MintButton isLoading={true} />, { wrapper: createWrapper() });
-    const button = getAllByRole("button", { name: /mint/i })[0]!;
+    const button = getAllByRole("button", { name: /mint/i })[0];
     expect(button).toBeDisabled();
     expect(button.textContent).toMatch(/Mint/i);
   });
 
   it("shows error state", () => {
     const { getAllByRole } = render(<MintButton isError={true} />, { wrapper: createWrapper() });
-    const button = getAllByRole("button", { name: /mint/i })[0]!;
+    const button = getAllByRole("button", { name: /mint/i })[0];
     expect(button).toBeDisabled();
     expect(button.textContent).toMatch(/Mint/i);
   });
 
   it("is disabled when disabled prop is true", () => {
     const { getAllByRole } = render(<MintButton disabled={true} />, { wrapper: createWrapper() });
-    const button = getAllByRole("button", { name: /mint/i })[0]!;
+    const button = getAllByRole("button", { name: /mint/i })[0];
     expect(button).toBeDisabled();
   });
 });

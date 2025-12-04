@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type DependencyList } from "react";
+
+const EMPTY_DEPS: DependencyList = [];
 
 /**
  * Generic hook for browser detection
@@ -9,7 +11,7 @@ import { useEffect, useState } from "react";
  * @param deps - useEffect dependency array (used when listener registration is needed)
  * @returns {boolean} true if detector returns true, false otherwise
  */
-function useBrowserDetection(detector: () => boolean, deps: React.DependencyList = []): boolean {
+function useBrowserDetection(detector: () => boolean, deps: DependencyList = EMPTY_DEPS): boolean {
   const [result, setResult] = useState<boolean | undefined>(undefined);
 
   useEffect(() => {
@@ -29,7 +31,8 @@ function useBrowserDetection(detector: () => boolean, deps: React.DependencyList
         window.removeEventListener("resize", check);
       };
     }
-  }, deps);
+    return undefined;
+  }, [deps, detector, result]);
 
   return result ?? false;
 }

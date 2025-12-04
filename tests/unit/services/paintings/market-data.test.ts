@@ -34,15 +34,16 @@ const createGlobalResponse = (overrides: Partial<GlobalMarketDataResponse["data"
 describe("MarketDataService", () => {
   it("fetchGlobalMarketData returns snapshot with Fear & Greed Index", async () => {
     const coinGeckoClient: CoinGeckoClientStub = {
-      getGlobalMarketData: async () => ok(createGlobalResponse()),
+      getGlobalMarketData: async () => await Promise.resolve(ok(createGlobalResponse())),
     };
 
     const alternativeMeClient: AlternativeMeClientStub = {
-      getFearGreedIndex: async () => ok({ value: 65, valueClassification: "Greed", timestamp: 1_700_000_000 }),
+      getFearGreedIndex: async () =>
+        await Promise.resolve(ok({ value: 65, valueClassification: "Greed", timestamp: 1_700_000_000 })),
     };
 
     const repository: MarketSnapshotsRepositoryStub = {
-      upsert: async () => ok(undefined),
+      upsert: async () => await Promise.resolve(ok(undefined)),
     };
 
     const service = new MarketDataService(
@@ -68,20 +69,22 @@ describe("MarketDataService", () => {
 
   it("fetchGlobalMarketData continues when Fear & Greed Index fails", async () => {
     const coinGeckoClient: CoinGeckoClientStub = {
-      getGlobalMarketData: async () => ok(createGlobalResponse()),
+      getGlobalMarketData: async () => await Promise.resolve(ok(createGlobalResponse())),
     };
 
     const alternativeMeClient: AlternativeMeClientStub = {
       getFearGreedIndex: async () =>
-        err({
-          type: "ExternalApiError",
-          provider: "alternative.me",
-          message: "timeout",
-        } as AppError),
+        await Promise.resolve(
+          err({
+            type: "ExternalApiError",
+            provider: "alternative.me",
+            message: "timeout",
+          } as AppError),
+        ),
     };
 
     const repository: MarketSnapshotsRepositoryStub = {
-      upsert: async () => ok(undefined),
+      upsert: async () => await Promise.resolve(ok(undefined)),
     };
 
     const service = new MarketDataService(
@@ -100,18 +103,19 @@ describe("MarketDataService", () => {
 
   it("storeMarketSnapshot persists via repository", async () => {
     const coinGeckoClient: CoinGeckoClientStub = {
-      getGlobalMarketData: async () => ok(createGlobalResponse()),
+      getGlobalMarketData: async () => await Promise.resolve(ok(createGlobalResponse())),
     };
 
     const alternativeMeClient: AlternativeMeClientStub = {
-      getFearGreedIndex: async () => ok({ value: 50, valueClassification: "Neutral", timestamp: 1_700_000_000 }),
+      getFearGreedIndex: async () =>
+        await Promise.resolve(ok({ value: 50, valueClassification: "Neutral", timestamp: 1_700_000_000 })),
     };
 
     const upsertCalls: Array<{ hourBucket: string; payload: Record<string, unknown> }> = [];
     const repository: MarketSnapshotsRepositoryStub = {
       upsert: async (hourBucket, payload) => {
         upsertCalls.push({ hourBucket, payload });
-        return ok(undefined);
+        return await Promise.resolve(ok(undefined));
       },
     };
 

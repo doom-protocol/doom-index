@@ -92,25 +92,42 @@ export class TokenDataFetchService {
 
       const trending = trendingResult.value;
 
+      const extractTrendingItem = (coin: unknown): { id?: string; symbol?: string; name?: string } => {
+        if (!coin || typeof coin !== "object") {
+          return {};
+        }
+
+        const record = coin as Record<string, unknown>;
+        const nested = record.item as Record<string, unknown> | undefined;
+        const itemSource = nested && typeof nested === "object" ? nested : record;
+
+        const id = typeof itemSource.id === "string" ? itemSource.id : undefined;
+        const symbol = typeof itemSource.symbol === "string" ? itemSource.symbol : undefined;
+        const name = typeof itemSource.name === "string" ? itemSource.name : undefined;
+
+        return { id, symbol, name };
+      };
+
+      const trendingCoins = (trending.coins ?? []).slice(0, 15);
+
       // Log simplified trending data for better visibility
       const trendingSummary = {
-        coins: (trending.coins ?? []).slice(0, 15).map((coin, index) => {
-          const item = (coin as any).item;
+        coins: trendingCoins.map((coin, index) => {
+          const item = extractTrendingItem(coin);
           return {
             rank: index + 1,
-            id: item?.id,
-            symbol: item?.symbol,
-            name: item?.name,
+            id: item.id,
+            symbol: item.symbol,
+            name: item.name,
           };
         }),
       };
       logger.debug("[TokenDataFetchService] Trending search summary", { trending: trendingSummary });
 
       // Extract CoinGecko IDs from trending search (max 15)
-      const ids = (trending.coins ?? []).slice(0, 15).map((coin, index) => {
-        // Handle nested item structure if present (API behavior vs SDK types)
-
-        const id = (coin as any).item?.id ?? (coin as any).id ?? "";
+      const ids = trendingCoins.map((coin, index) => {
+        const item = extractTrendingItem(coin);
+        const id = item.id ?? "";
         return {
           id,
           rank: index + 1,

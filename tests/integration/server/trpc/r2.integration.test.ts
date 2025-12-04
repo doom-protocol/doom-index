@@ -29,14 +29,15 @@ describe("R2 Integration", () => {
     it("should cache r2.getJson result", async () => {
       const mockJsonData = { foo: "bar", count: 42 };
       const mockBucket = {
-        get: async () => ({
-          json: async () => mockJsonData,
-        }),
+        get: () =>
+          Promise.resolve({
+            json: () => Promise.resolve(mockJsonData),
+          }),
       } as unknown as R2Bucket;
 
-      mock.module("@/lib/r2", () => ({
+      void mock.module("@/lib/r2", () => ({
         resolveR2Bucket: () => ({ isErr: () => false, value: mockBucket }),
-        getJsonR2: async () => ({ isErr: () => false, value: mockJsonData }),
+        getJsonR2: () => Promise.resolve({ isErr: () => false, value: mockJsonData }),
       }));
 
       const ctx = createMockContext();

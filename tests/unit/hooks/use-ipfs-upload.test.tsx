@@ -6,7 +6,7 @@
 import { describe, expect, it } from "bun:test";
 
 describe("unit/hooks/use-ipfs-upload", () => {
-  it("should upload GLB and metadata successfully", async () => {
+  it("should upload GLB and metadata successfully", () => {
     // This test will be implemented after creating the hook
     expect(true).toBe(true);
   });

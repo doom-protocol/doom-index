@@ -2,7 +2,7 @@ import MDXArticle from "@/components/about/mdx-article";
 import { Header } from "@/components/ui/header";
 import dynamic from "next/dynamic";
 import { getBaseUrl } from "@/utils/url";
-import type { Metadata } from "next";
+import type { Metadata, NextPage } from "next";
 
 const AboutScene = dynamic(() => import("@/components/about/about-scene").then(mod => ({ default: mod.AboutScene })));
 
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   metadataBase,
 };
 
-export default function AboutPage() {
+const AboutPage: NextPage = () => {
   return (
     <main style={{ width: "100%", height: "100%", margin: 0, padding: 0, overflow: "hidden" }}>
       <Header showProgress={false} />
@@ -28,4 +28,6 @@ export default function AboutPage() {
       </article>
     </main>
   );
-}
+};
+
+export default AboutPage;

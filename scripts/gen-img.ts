@@ -146,14 +146,14 @@ const createLocalBucket = (outputDir: string): R2Bucket => {
       await Bun.write(filePath, buffer);
       return null;
     },
-    get: async () => null,
+    get: () => Promise.resolve(null),
   } as unknown as R2Bucket;
 };
 
 // Create local paintings repository adapter
 const createLocalPaintingsRepository = (db: BunSQLiteDatabase<typeof schema>): PaintingsRepository => {
   return {
-    list: async () => ok({ items: [], hasMore: false }),
+    list: () => Promise.resolve(ok({ items: [], hasMore: false })),
     insert: async (metadata: PaintingMetadata, r2Key: string) => {
       try {
         const ts = Math.floor(new Date(metadata.timestamp).getTime() / 1000);
@@ -182,7 +182,7 @@ const createLocalPaintingsRepository = (db: BunSQLiteDatabase<typeof schema>): P
         return ok(undefined);
       }
     },
-    findById: async () => ok(null),
+    findById: () => Promise.resolve(ok(null)),
   };
 };
 

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
 // Mock must be set up before importing createContext so getCloudflareContext
 // is replaced when the module is evaluated
-mock.module("@opennextjs/cloudflare", () => ({
+void mock.module("@opennextjs/cloudflare", () => ({
   getCloudflareContext: () => {
     throw new Error("Cloudflare context not available");
   },

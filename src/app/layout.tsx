@@ -88,11 +88,7 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }): ReactNode {
   return (
     <ViewTransition>
       <html lang="en" style={{ margin: 0, padding: 0, width: "100%", height: "100%", backgroundColor: "#000000" }}>

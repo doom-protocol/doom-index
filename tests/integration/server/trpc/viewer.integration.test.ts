@@ -5,10 +5,10 @@ import { createMockContext } from "../../../unit/server/trpc/helpers";
 describe("Viewer Integration", () => {
   it("should handle concurrent viewer registrations", async () => {
     const kvNamespace = {
-      get: async () => null,
-      put: async () => {},
-      delete: async () => {},
-      list: async () => ({ keys: [], cursor: "", complete: true }),
+      get: () => Promise.resolve(null),
+      put: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
+      list: () => Promise.resolve({ keys: [], cursor: "", complete: true }),
     } as unknown as KVNamespace;
 
     const headers = new Headers({

@@ -28,24 +28,25 @@ export function createTestR2Bucket(): {
   const store = new Map<string, StoredValue>();
 
   const bucket = {
-    async put(key: string, value: ArrayBuffer | string, options?: R2PutOptions): Promise<void> {
+    put(key: string, value: ArrayBuffer | string, options?: R2PutOptions): Promise<void> {
       const content = value instanceof ArrayBuffer ? cloneBuffer(value) : value;
       const contentType = extractContentType(options?.httpMetadata);
       store.set(key, {
         content,
         contentType,
       });
+      return Promise.resolve();
     },
 
-    async get(key: string): Promise<R2Object | null> {
+    get(key: string): Promise<R2Object | null> {
       const entry = store.get(key);
-      if (!entry) return null;
+      if (!entry) return Promise.resolve(null);
 
       const { content } = entry;
       const arrayBuffer =
         content instanceof ArrayBuffer ? cloneBuffer(content) : new TextEncoder().encode(content).buffer;
 
-      return {
+      return Promise.resolve({
         key,
         version: "1",
         size: arrayBuffer.byteLength,
@@ -60,23 +61,24 @@ export function createTestR2Bucket(): {
             headers.set("Content-Type", entry.contentType);
           }
         },
-        arrayBuffer: async () => arrayBuffer,
-        text: async () => {
+        arrayBuffer: () => Promise.resolve(arrayBuffer),
+        text: () => {
           if (typeof content === "string") {
-            return content;
+            return Promise.resolve(content);
           }
 
           const decoder = new TextDecoder();
-          return decoder.decode(content);
+          return Promise.resolve(decoder.decode(content));
         },
-      } as unknown as R2ObjectBody;
+      } as unknown as R2ObjectBody);
     },
 
-    async delete(key: string): Promise<void> {
+    delete(key: string): Promise<void> {
       store.delete(key);
+      return Promise.resolve();
     },
 
-    async list(options?: R2ListOptions): Promise<R2Objects> {
+    list(options?: R2ListOptions): Promise<R2Objects> {
       const prefix = options?.prefix ?? "";
       const limit = options?.limit ?? 1000;
       const startAfter = options?.startAfter;
@@ -124,19 +126,19 @@ export function createTestR2Bucket(): {
       });
 
       if (truncated && nextCursor) {
-        return {
+        return Promise.resolve({
           objects,
           delimitedPrefixes: [],
           truncated: true,
           cursor: nextCursor,
-        };
+        });
       }
 
-      return {
+      return Promise.resolve({
         objects,
         delimitedPrefixes: [],
         truncated: false,
-      };
+      });
     },
   } as unknown as R2Bucket;
 

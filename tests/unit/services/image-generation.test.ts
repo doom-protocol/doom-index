@@ -110,7 +110,7 @@ describe("ImageGenerationService.generateTokenImage", () => {
     expect(result.isOk()).toBe(true);
     expect(mockGenerate.mock.calls.length).toBe(1);
     const calls = mockGenerate.mock.calls as unknown as Array<[ImageRequest, unknown?]>;
-    const request = calls[0]![0];
+    const request = calls[0][0];
     expect(request).toBeDefined();
     expect(request?.referenceImageUrl).toBe("https://assets.example.com/logo.png?size=large");
   });
@@ -130,7 +130,7 @@ describe("ImageGenerationService.generateTokenImage", () => {
 
     expect(result.isOk()).toBe(true);
     const calls = mockGenerate.mock.calls as unknown as Array<[ImageRequest, unknown?]>;
-    const request = calls[0]![0];
+    const request = calls[0][0];
     expect(request).toBeDefined();
     expect(request?.referenceImageUrl).toBeUndefined();
   });

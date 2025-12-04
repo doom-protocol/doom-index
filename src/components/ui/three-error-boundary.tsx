@@ -23,11 +23,11 @@ export class ThreeErrorBoundary extends Component<Props, State> {
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(_: Error): State {
+  static getDerivedStateFromError(): State {
     return { hasError: true };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     logger.error("three-error-boundary.caught", {
       error: error instanceof Error ? error.message : String(error),
       componentStack: errorInfo.componentStack,
@@ -35,13 +35,13 @@ export class ThreeErrorBoundary extends Component<Props, State> {
   }
 
   // Reset error state when children change (e.g. URL changes)
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props): void {
     if (this.props.children !== prevProps.children && this.state.hasError) {
       this.setState({ hasError: false });
     }
   }
 
-  render() {
+  render(): ReactNode {
     if (this.state.hasError) {
       return this.props.fallback;
     }

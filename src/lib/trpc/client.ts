@@ -1,6 +1,6 @@
 import type { AppRouter } from "@/server/trpc/routers/_app";
 import { getBaseUrl } from "@/utils/url";
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
+import { createTRPCClient, httpBatchLink, type TRPCClient } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 
@@ -11,7 +11,7 @@ export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRou
 export const trpc = createTRPCReact<AppRouter>();
 
 // tRPC client creation function
-export function createTRPCClientInstance() {
+export function createTRPCClientInstance(): TRPCClient<AppRouter> {
   return createTRPCClient<AppRouter>({
     links: [
       httpBatchLink({

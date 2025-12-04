@@ -12,18 +12,20 @@ describe("AlternativeMeClient", () => {
     it("should fetch Fear & Greed Index successfully", async () => {
       // Mock fetch
       global.fetch = Object.assign(
-        async () => {
-          return new Response(
-            JSON.stringify({
-              data: [
-                {
-                  value: "50",
-                  value_classification: "Neutral",
-                  timestamp: "1700000000",
-                },
-              ],
-            }),
-            { status: 200 },
+        () => {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: [
+                  {
+                    value: "50",
+                    value_classification: "Neutral",
+                    timestamp: "1700000000",
+                  },
+                ],
+              }),
+              { status: 200 },
+            ),
           );
         },
         { preconnect: () => {} },
@@ -41,18 +43,20 @@ describe("AlternativeMeClient", () => {
 
     it("should handle Extreme Fear classification", async () => {
       global.fetch = Object.assign(
-        async () => {
-          return new Response(
-            JSON.stringify({
-              data: [
-                {
-                  value: "10",
-                  value_classification: "Extreme Fear",
-                  timestamp: "1700000000",
-                },
-              ],
-            }),
-            { status: 200 },
+        () => {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: [
+                  {
+                    value: "10",
+                    value_classification: "Extreme Fear",
+                    timestamp: "1700000000",
+                  },
+                ],
+              }),
+              { status: 200 },
+            ),
           );
         },
         { preconnect: () => {} },
@@ -69,18 +73,20 @@ describe("AlternativeMeClient", () => {
 
     it("should handle Extreme Greed classification", async () => {
       global.fetch = Object.assign(
-        async () => {
-          return new Response(
-            JSON.stringify({
-              data: [
-                {
-                  value: "90",
-                  value_classification: "Extreme Greed",
-                  timestamp: "1700000000",
-                },
-              ],
-            }),
-            { status: 200 },
+        () => {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: [
+                  {
+                    value: "90",
+                    value_classification: "Extreme Greed",
+                    timestamp: "1700000000",
+                  },
+                ],
+              }),
+              { status: 200 },
+            ),
           );
         },
         { preconnect: () => {} },
@@ -97,8 +103,8 @@ describe("AlternativeMeClient", () => {
 
     it("should return error when API returns non-200 status", async () => {
       global.fetch = Object.assign(
-        async () => {
-          return new Response("Not Found", { status: 404 });
+        () => {
+          return Promise.resolve(new Response("Not Found", { status: 404 }));
         },
         { preconnect: () => {} },
       ) as typeof fetch;
@@ -117,8 +123,8 @@ describe("AlternativeMeClient", () => {
 
     it("should return error when API returns invalid JSON", async () => {
       global.fetch = Object.assign(
-        async () => {
-          return new Response("Invalid JSON", { status: 200 });
+        () => {
+          return Promise.resolve(new Response("Invalid JSON", { status: 200 }));
         },
         { preconnect: () => {} },
       ) as typeof fetch;
@@ -136,12 +142,14 @@ describe("AlternativeMeClient", () => {
 
     it("should return error when API returns empty data array", async () => {
       global.fetch = Object.assign(
-        async () => {
-          return new Response(
-            JSON.stringify({
-              data: [],
-            }),
-            { status: 200 },
+        () => {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: [],
+              }),
+              { status: 200 },
+            ),
           );
         },
         { preconnect: () => {} },
@@ -160,8 +168,8 @@ describe("AlternativeMeClient", () => {
 
     it("should return error when fetch throws", async () => {
       global.fetch = Object.assign(
-        async () => {
-          throw new Error("Network error");
+        () => {
+          return Promise.reject(new Error("Network error"));
         },
         { preconnect: () => {} },
       ) as typeof fetch;
@@ -227,18 +235,20 @@ describe("AlternativeMeClient", () => {
 
       // Mock fast successful response
       global.fetch = Object.assign(
-        async () => {
-          return new Response(
-            JSON.stringify({
-              data: [
-                {
-                  value: "50",
-                  value_classification: "Neutral",
-                  timestamp: "1700000000",
-                },
-              ],
-            }),
-            { status: 200 },
+        () => {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: [
+                  {
+                    value: "50",
+                    value_classification: "Neutral",
+                    timestamp: "1700000000",
+                  },
+                ],
+              }),
+              { status: 200 },
+            ),
           );
         },
         { preconnect: () => {} },
