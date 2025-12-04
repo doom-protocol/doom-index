@@ -129,13 +129,13 @@ describe("Archive List Service", () => {
                   })
                 : undefined;
 
-              return {
+              return await Promise.resolve({
                 items: limitedData,
                 cursor,
                 hasMore,
-              };
+              });
             }
-            return { items: [], cursor: undefined, hasMore: false };
+            return await Promise.resolve({ items: [], cursor: undefined, hasMore: false });
           }),
           raw: mock(async () => {
             // Parse the SQL to understand what data is requested
@@ -174,13 +174,13 @@ describe("Archive List Service", () => {
                   })
                 : undefined;
 
-              return {
+              return await Promise.resolve({
                 items: limitedData,
                 cursor,
                 hasMore,
-              };
+              });
             }
-            return { items: [], cursor: undefined, hasMore: false };
+            return await Promise.resolve({ items: [], cursor: undefined, hasMore: false });
           }),
         })),
       })),
