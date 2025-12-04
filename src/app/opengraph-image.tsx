@@ -21,23 +21,30 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "DOOM INDEX - A decentralized archive of financial emotions.";
 
-const FRAME_SCALE = 0.94;
+const FRAME_ORIGINAL_SIZE = 500; // frame.png dimensions
+const FRAME_INNER_WIDTH = 250;
+const FRAME_INNER_HEIGHT = 257;
+const FRAME_PADDING = 12; // allow painting to bleed slightly under the frame
+const FRAME_MAX_WIDTH = size.width * 0.55;
+const FRAME_MAX_HEIGHT = size.height * 0.85;
+const FRAME_SCALE = Math.min(FRAME_MAX_WIDTH / FRAME_ORIGINAL_SIZE, FRAME_MAX_HEIGHT / FRAME_ORIGINAL_SIZE);
 const FRAME_SIZE = {
-  width: Math.round(size.width * FRAME_SCALE),
-  height: Math.round(size.height * FRAME_SCALE),
+  width: Math.round(FRAME_ORIGINAL_SIZE * FRAME_SCALE),
+  height: Math.round(FRAME_ORIGINAL_SIZE * FRAME_SCALE),
 };
 const FRAME_OFFSET = {
   left: Math.round((size.width - FRAME_SIZE.width) / 2),
   top: Math.round((size.height - FRAME_SIZE.height) / 2),
 };
-const PAINTING_SCALE_WITHIN_FRAME = 0.78;
-const PAINTING_TARGET_SIZE = Math.round(Math.min(FRAME_SIZE.width, FRAME_SIZE.height) * PAINTING_SCALE_WITHIN_FRAME);
+const PAINTING_TARGET_SIZE = {
+  width: Math.round((FRAME_INNER_WIDTH + FRAME_PADDING) * FRAME_SCALE),
+  height: Math.round((FRAME_INNER_HEIGHT + FRAME_PADDING) * FRAME_SCALE),
+};
 const PAINTING_OFFSET = {
-  left: FRAME_OFFSET.left + Math.round((FRAME_SIZE.width - PAINTING_TARGET_SIZE) / 2),
-  top: FRAME_OFFSET.top + Math.round((FRAME_SIZE.height - PAINTING_TARGET_SIZE) / 2),
+  left: FRAME_OFFSET.left + Math.round((FRAME_SIZE.width - PAINTING_TARGET_SIZE.width) / 2),
+  top: FRAME_OFFSET.top + Math.round((FRAME_SIZE.height - PAINTING_TARGET_SIZE.height) / 2),
 };
 const FRAME_IMAGE_PRIMARY_PATH = "/frame.png";
-
 const BACKGROUND_IMAGE_PATH = "/ogp-bg.png";
 const FALLBACK_BACKGROUND_COLOR = "#000000";
 const BLACK_PIXEL_BASE64 =
@@ -75,6 +82,19 @@ async function renderPaintingOnCanvas(
   }
   let composedTransformer = images.input(backgroundStream).transform(backgroundTransform);
 
+  const paintingStream = createReadableStreamFromArrayBuffer(paintingBuffer.slice(0));
+  const paintingTransformer = images.input(paintingStream).transform({
+    width: PAINTING_TARGET_SIZE.width,
+    height: PAINTING_TARGET_SIZE.height,
+    fit: "cover",
+    gravity: "center",
+  });
+
+  composedTransformer = composedTransformer.draw(paintingTransformer, {
+    left: PAINTING_OFFSET.left,
+    top: PAINTING_OFFSET.top,
+  });
+
   if (frameBuffer) {
     const frameStream = createReadableStreamFromArrayBuffer(frameBuffer.slice(0));
     const frameTransformer = images.input(frameStream).transform({
@@ -88,19 +108,6 @@ async function renderPaintingOnCanvas(
       top: FRAME_OFFSET.top,
     });
   }
-
-  const paintingStream = createReadableStreamFromArrayBuffer(paintingBuffer.slice(0));
-  const paintingTransformer = images.input(paintingStream).transform({
-    width: PAINTING_TARGET_SIZE,
-    height: PAINTING_TARGET_SIZE,
-    fit: "cover",
-    gravity: "center",
-  });
-
-  composedTransformer = composedTransformer.draw(paintingTransformer, {
-    left: PAINTING_OFFSET.left,
-    top: PAINTING_OFFSET.top,
-  });
 
   const transformedResult = await composedTransformer.output({
     format: "image/png",
