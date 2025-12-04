@@ -58,7 +58,7 @@ export function createUseLatestPaintingMock(options?: UseLatestPaintingMockOptio
   return (): UseLatestPaintingModuleMock => ({
     ...realUseLatestPainting,
     useLatestPainting: mockUseLatestPainting,
-    useLatestPaintingRefetch: () => () => Promise.resolve(undefined),
+    useLatestPaintingRefetch: () => async () => Promise.resolve(undefined),
   });
 }
 

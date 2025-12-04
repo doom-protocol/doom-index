@@ -80,7 +80,7 @@ void mock.module("@/hooks/use-latest-painting", () => ({
       dataUpdatedAt: Date.now(),
     };
   },
-  useLatestPaintingRefetch: () => () => Promise.resolve(undefined),
+  useLatestPaintingRefetch: () => async () => Promise.resolve(undefined),
 }));
 
 // Mock useSolanaWallet at module level
