@@ -18,7 +18,7 @@ type ImagesBinding = NonNullable<CloudflareEnv["IMAGES"]>;
 
 // Route Segment Config
 export const dynamic = "force-dynamic";
-export const revalidate = 60;
+export const revalidate = 3600; // 1 hour
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "DOOM INDEX - A decentralized archive of financial emotions.";
@@ -60,7 +60,7 @@ async function renderPaintingOnCanvas(paintingBuffer: ArrayBuffer, images: Image
     width: size.width,
     height: size.height,
     fit: "cover",
-    background: "000000",
+    background: "#000000",
   });
 
   const composedTransformer = backgroundTransformer.draw(paintingTransformer, {
@@ -81,7 +81,9 @@ async function getFallbackImageBuffer(assetsFetcher: Fetcher): Promise<ArrayBuff
   if (!assetsFetcher) {
     throw new Error("ASSETS fetcher not available");
   }
-  const response = await assetsFetcher.fetch("/og-fallback.png");
+  const baseUrl = getBaseUrl();
+  const fallbackUrl = new URL("/og-fallback.png", baseUrl).toString();
+  const response = await assetsFetcher.fetch(new Request(fallbackUrl, { method: "GET" }));
   if (!response.ok) {
     throw new Error(`Failed to fetch fallback image: ${response.status}`);
   }
