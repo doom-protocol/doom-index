@@ -2,9 +2,11 @@ import { logger } from "@/utils/logger";
 
 const API_BASE_URL = "https://api.runware.ai/v1";
 
-type RunwareImageInferenceRequest = {
-  taskType: "imageInference";
-  taskUUID: string;
+/**
+ * Parameters for image inference request (convenience interface)
+ * These parameters will be transformed into the actual API request format
+ */
+export type RunwareImageInferenceParams = {
   model: string;
   positivePrompt: string;
   negativePrompt?: string;
@@ -23,6 +25,8 @@ type RunwareImageInferenceRequest = {
    * - Array of public URLs pointing to images
    * - Array of data URI strings (data:image/png;base64,...)
    * - Array of base64 encoded image strings
+   *
+   * Note: This will be mapped to inputs.referenceImages in the actual API request.
    */
   referenceImages?: string[];
   /**
@@ -50,6 +54,39 @@ type RunwareImageInferenceRequest = {
   checkNSFW?: boolean;
 };
 
+/**
+ * Actual API request format sent to Runware
+ * Reference images must be nested inside the inputs object
+ */
+type RunwareImageInferenceRequest = {
+  taskType: "imageInference";
+  taskUUID: string;
+  model: string;
+  positivePrompt: string;
+  negativePrompt?: string;
+  width: number;
+  height: number;
+  steps?: number;
+  CFGScale?: number;
+  scheduler?: string;
+  seed?: number;
+  numberResults?: number;
+  strength?: number;
+  outputFormat?: "JPEG" | "PNG" | "WEBP";
+  outputType?: ("URL" | "base64Data" | "dataURI")[] | "URL" | "base64Data" | "dataURI";
+  outputQuality?: number;
+  includeCost?: boolean;
+  checkNSFW?: boolean;
+  /**
+   * Inputs object containing reference images.
+   * Reference images must be nested inside the inputs object, not at the top level.
+   * Only included when reference images are provided.
+   */
+  inputs?: {
+    referenceImages: string[];
+  };
+};
+
 type RunwareImageInferenceResponse = {
   taskType: "imageInference";
   taskUUID: string;
@@ -68,6 +105,80 @@ type RunwareClientOptions = {
 };
 
 /**
+ * Extracts reference images from various parameter formats.
+ * Priority: referenceImages > seedImage > referenceImageUrl
+ */
+function extractReferenceImages(params: RunwareImageInferenceParams): string[] | undefined {
+  if (params.referenceImages) {
+    return params.referenceImages;
+  }
+  if (params.seedImage) {
+    return [params.seedImage];
+  }
+  if (params.referenceImageUrl) {
+    return [params.referenceImageUrl];
+  }
+  return undefined;
+}
+
+/**
+ * Builds the API request from parameters.
+ * Transforms convenience parameters into the actual API format.
+ * Only includes fields that are defined (excludes undefined values).
+ */
+function buildApiRequest(params: RunwareImageInferenceParams, taskUUID: string): RunwareImageInferenceRequest {
+  const referenceImages = extractReferenceImages(params);
+
+  const request: RunwareImageInferenceRequest = {
+    taskType: "imageInference",
+    taskUUID,
+    model: params.model,
+    positivePrompt: params.positivePrompt,
+    width: params.width,
+    height: params.height,
+    ...(params.negativePrompt !== undefined && { negativePrompt: params.negativePrompt }),
+    ...(params.steps !== undefined && { steps: params.steps }),
+    ...(params.CFGScale !== undefined && { CFGScale: params.CFGScale }),
+    ...(params.scheduler !== undefined && { scheduler: params.scheduler }),
+    ...(params.seed !== undefined && { seed: params.seed }),
+    ...(params.numberResults !== undefined && { numberResults: params.numberResults }),
+    ...(params.strength !== undefined && { strength: params.strength }),
+    ...(params.outputFormat !== undefined && { outputFormat: params.outputFormat }),
+    ...(params.outputType !== undefined && { outputType: params.outputType }),
+    ...(params.outputQuality !== undefined && { outputQuality: params.outputQuality }),
+    ...(params.includeCost !== undefined && { includeCost: params.includeCost }),
+    ...(params.checkNSFW !== undefined && { checkNSFW: params.checkNSFW }),
+    // Reference images must be nested inside inputs object
+    ...(referenceImages && {
+      inputs: {
+        referenceImages,
+      },
+    }),
+  };
+
+  return request;
+}
+
+/**
+ * Parses the API response, handling both array and wrapped formats.
+ */
+function parseApiResponse(responseData: unknown, taskUUID: string): RunwareImageInferenceResponse[] {
+  if (Array.isArray(responseData)) {
+    return responseData;
+  }
+
+  if (responseData && typeof responseData === "object" && "data" in responseData && Array.isArray(responseData.data)) {
+    return responseData.data;
+  }
+
+  logger.error("runware.requestImages.invalidResponse", {
+    taskUUID,
+    responseData,
+  });
+  throw new Error(`Invalid Runware API response format: ${JSON.stringify(responseData)}`);
+}
+
+/**
  * Runware API Client using fetch (compatible with Cloudflare Workers)
  * Supports both text-to-image and image-to-image generation
  */
@@ -83,30 +194,9 @@ export class RunwareClient {
   /**
    * Generate images from text prompt or transform images using image-to-image
    */
-  async requestImages(
-    params: Omit<RunwareImageInferenceRequest, "taskType" | "taskUUID">,
-  ): Promise<RunwareImageInferenceResponse[]> {
+  async requestImages(params: RunwareImageInferenceParams): Promise<RunwareImageInferenceResponse[]> {
     const taskUUID = crypto.randomUUID();
-
-    // Map referenceImageUrl/seedImage to referenceImages array for FLUX Kontext models
-    // Priority: referenceImages > seedImage > referenceImageUrl
-    const referenceImages = params.referenceImages
-      ? params.referenceImages
-      : params.seedImage
-        ? [params.seedImage]
-        : params.referenceImageUrl
-          ? [params.referenceImageUrl]
-          : undefined;
-
-    const request: RunwareImageInferenceRequest = {
-      taskType: "imageInference",
-      taskUUID,
-      ...params,
-      referenceImages,
-      // Remove deprecated parameters from request
-      seedImage: undefined,
-      referenceImageUrl: undefined,
-    };
+    const referenceImages = extractReferenceImages(params);
 
     logger.debug("runware.requestImages.start", {
       taskUUID,
@@ -117,6 +207,7 @@ export class RunwareClient {
       strength: params.strength,
     });
 
+    const request = buildApiRequest(params, taskUUID);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -145,25 +236,7 @@ export class RunwareClient {
       }
 
       const responseData = await response.json();
-
-      // API response can be either array directly or wrapped in { data: [...] }
-      let data: RunwareImageInferenceResponse[];
-      if (Array.isArray(responseData)) {
-        data = responseData;
-      } else if (
-        responseData &&
-        typeof responseData === "object" &&
-        "data" in responseData &&
-        Array.isArray(responseData.data)
-      ) {
-        data = responseData.data;
-      } else {
-        logger.error("runware.requestImages.invalidResponse", {
-          taskUUID,
-          responseData,
-        });
-        throw new Error(`Invalid Runware API response format: ${JSON.stringify(responseData)}`);
-      }
+      const data = parseApiResponse(responseData, taskUUID);
 
       logger.debug("runware.requestImages.complete", {
         taskUUID,
