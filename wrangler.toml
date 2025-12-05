@@ -27,9 +27,7 @@ compatibility_flags = [
 #   - 1 hour (3600000ms):  "0 * * * *"
 #   - 2 hours (7200000ms): "0 */2 * * *"
 [triggers]
-crons = [
- "*/10 * * * *",
-] # Every 10 minutes (NEXT_PUBLIC_GENERATION_INTERVAL_MS=600000)
+crons = ["0 * * * *"] # Every 1 hour (NEXT_PUBLIC_GENERATION_INTERVAL_MS=3600000)
 
 [[routes]]
 pattern = "doomindex.fun"
