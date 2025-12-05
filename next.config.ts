@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
   experimental: {
     viewTransition: true,
     scrollRestoration: true,
+    cssChunking: true,
     mdxRs: {
       mdxType: "gfm",
     },

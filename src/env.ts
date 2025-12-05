@@ -49,8 +49,8 @@ export const env = createEnv({
    */
   shared: {
     // Image Generation Model
-    // The model name to use for image generation (e.g., "runware:106@1", "civitai:38784@44716")
-    // If not specified, defaults to "runware:106@1"
+    // The model name to use for image generation (e.g., "runware:400@1", "civitai:38784@44716")
+    // If not specified, defaults to "runware:400@1"
     // The provider will be automatically resolved based on the model
     IMAGE_MODEL: v.optional(v.string()),
     LOG_LEVEL: v.optional(v.picklist(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]), "DEBUG"),

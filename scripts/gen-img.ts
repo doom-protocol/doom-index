@@ -12,6 +12,7 @@
  *   bun run --env-file=.dev.vars scripts/gen-img.ts
  */
 
+import { DEFAULT_RUNWARE_MODEL } from "@/constants/runware";
 import { setupLocalDb } from "@/db/helper";
 import type * as schema from "@/db/schema";
 import { paintings } from "@/db/schema/paintings";
@@ -191,7 +192,7 @@ const main = async () => {
 
   // Default model if not provided
   if (!args.model) {
-    args.model = "runware:106@1";
+    args.model = DEFAULT_RUNWARE_MODEL;
   }
 
   logger.info("gen-img.start", {
