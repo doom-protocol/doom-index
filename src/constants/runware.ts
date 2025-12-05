@@ -37,12 +37,6 @@ export const RUNWARE_AIR_MODELS = {
     name: "FLUX.1 [schnell]",
     description: "FLUX.1 Schnell model for fast image generation",
   },
-  /** FLUX.1 Kontext [dev] - Previous default model with extended context */
-  FLUX_KONTEXT_DEV: {
-    model: "runware:106@1",
-    name: "FLUX.1 Kontext [dev]",
-    description: "FLUX.1 Kontext development model with extended context understanding",
-  },
 } as const satisfies Record<string, RunwareAirModel>;
 
 /**

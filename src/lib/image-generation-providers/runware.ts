@@ -1,6 +1,6 @@
 import { DEFAULT_IMAGE_SIZE, DEFAULT_RUNWARE_MODEL, DEFAULT_RUNWARE_TIMEOUT } from "@/constants/runware";
 import { env } from "@/env";
-import { FLUX_KONTEXT_DEV_MODEL, RunwareClient } from "@/lib/runware-client";
+import { RunwareClient } from "@/lib/runware-client";
 import type { AppError } from "@/types/app-error";
 import type { ImageGenerationOptions, ImageProvider, ImageRequest } from "@/types/domain";
 import { getErrorMessage } from "@/utils/error";
@@ -38,7 +38,7 @@ export const createRunwareProvider = (): ImageProvider => ({
       // For image-to-image, always use FLUX.1 Kontext [dev] model
       // Otherwise, use the provided model or default
       const isImageToImage = Boolean(input.referenceImageUrl);
-      const model = isImageToImage ? FLUX_KONTEXT_DEV_MODEL : input.model || DEFAULT_RUNWARE_MODEL;
+      const model = input.model || DEFAULT_RUNWARE_MODEL;
 
       const width = DEFAULT_IMAGE_SIZE;
       const height = DEFAULT_IMAGE_SIZE;
