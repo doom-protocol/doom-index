@@ -108,7 +108,10 @@ async function tryGetCached(req: Request, cacheKey: string): Promise<Response | 
   const cached = await get<CachedBinaryResponse>(cacheKey);
   if (!cached) return null;
 
-  const etag = cached.etag ?? generateETag(cacheKey, cached.body.length);
+  // Decode body first to get accurate size for ETag calculation
+  // Note: cached.body.length is base64 string length (~4/3x of actual size)
+  const bodyUint8 = base64ToUint8Array(cached.body);
+  const etag = cached.etag ?? generateETag(cacheKey, bodyUint8.length);
 
   if (shouldReturn304(req, etag)) {
     logger.debug("[R2] Cache hit → 304", { cacheKey });
@@ -116,15 +119,14 @@ async function tryGetCached(req: Request, cacheKey: string): Promise<Response | 
   }
 
   logger.debug("[R2] Cache hit", { cacheKey });
-  return buildResponseFromCache(cached, etag);
+  return buildResponseFromCacheData(cached, bodyUint8, etag);
 }
 
-function buildResponseFromCache(cached: CachedBinaryResponse, etag: string): Response {
+function buildResponseFromCacheData(cached: CachedBinaryResponse, bodyUint8: Uint8Array, etag: string): Response {
   const headers = new Headers(cached.headers);
   headers.set("ETag", etag);
   headers.set("Cache-Control", buildCacheControlHeader());
 
-  const bodyUint8 = base64ToUint8Array(cached.body);
   const bodyBlob = new Blob([bodyUint8 as unknown as BlobPart]);
 
   return new Response(bodyBlob, {
