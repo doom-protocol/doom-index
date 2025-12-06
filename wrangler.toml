@@ -3,7 +3,7 @@
 name = "doom-index"
 main = "./src/worker.ts"
 
-workers_dev = false
+workers_dev = true
 preview_urls = true
 
 compatibility_date = "2025-03-25"

@@ -3,8 +3,7 @@ import { logger } from "@/utils/logger";
 const API_BASE_URL = "https://api.runware.ai/v1";
 
 /**
- * Parameters for image inference request (convenience interface)
- * These parameters will be transformed into the actual API request format
+ * Parameters for image inference request
  */
 export type RunwareImageInferenceParams = {
   model: string;
@@ -18,22 +17,15 @@ export type RunwareImageInferenceParams = {
   seed?: number;
   numberResults?: number;
   /**
-   * Reference images array for FLUX Kontext models.
+   * Reference images array.
    * Used to provide reference images that will be integrated into the generated image.
    * Can be specified as:
    * - Array of UUID v4 strings of previously uploaded images
    * - Array of public URLs pointing to images
    * - Array of data URI strings (data:image/png;base64,...)
    * - Array of base64 encoded image strings
-   *
-   * Note: This will be mapped to inputs.referenceImages in the actual API request.
    */
   referenceImages?: string[];
-  /**
-   * Seed image for image-to-image transformation (legacy parameter).
-   * @deprecated Use referenceImages instead for FLUX Kontext models
-   */
-  seedImage?: string;
   /**
    * Transformation strength for image-to-image (0.0 to 1.0).
    * Controls how much noise is added to the input image in latent space.
@@ -42,11 +34,6 @@ export type RunwareImageInferenceParams = {
    * Default: 0.8
    */
   strength?: number;
-  /**
-   * @deprecated Use referenceImages instead. This parameter is kept for backward compatibility
-   * and will be mapped to referenceImages internally.
-   */
-  referenceImageUrl?: string;
   outputFormat?: "JPEG" | "PNG" | "WEBP";
   outputType?: ("URL" | "base64Data" | "dataURI")[] | "URL" | "base64Data" | "dataURI";
   outputQuality?: number;
@@ -105,31 +92,11 @@ type RunwareClientOptions = {
 };
 
 /**
- * Extracts reference images from various parameter formats.
- * Priority: referenceImages > seedImage > referenceImageUrl
- */
-function extractReferenceImages(params: RunwareImageInferenceParams): string[] | undefined {
-  if (params.referenceImages) {
-    return params.referenceImages;
-  }
-  if (params.seedImage) {
-    return [params.seedImage];
-  }
-  if (params.referenceImageUrl) {
-    return [params.referenceImageUrl];
-  }
-  return undefined;
-}
-
-/**
  * Builds the API request from parameters.
- * Transforms convenience parameters into the actual API format.
  * Only includes fields that are defined (excludes undefined values).
  */
 function buildApiRequest(params: RunwareImageInferenceParams, taskUUID: string): RunwareImageInferenceRequest {
-  const referenceImages = extractReferenceImages(params);
-
-  const request: RunwareImageInferenceRequest = {
+  return {
     taskType: "imageInference",
     taskUUID,
     model: params.model,
@@ -149,14 +116,12 @@ function buildApiRequest(params: RunwareImageInferenceParams, taskUUID: string):
     ...(params.includeCost !== undefined && { includeCost: params.includeCost }),
     ...(params.checkNSFW !== undefined && { checkNSFW: params.checkNSFW }),
     // Reference images must be nested inside inputs object
-    ...(referenceImages && {
+    ...(params.referenceImages && {
       inputs: {
-        referenceImages,
+        referenceImages: params.referenceImages,
       },
     }),
   };
-
-  return request;
 }
 
 /**
@@ -196,14 +161,13 @@ export class RunwareClient {
    */
   async requestImages(params: RunwareImageInferenceParams): Promise<RunwareImageInferenceResponse[]> {
     const taskUUID = crypto.randomUUID();
-    const referenceImages = extractReferenceImages(params);
 
     logger.debug("runware.requestImages.start", {
       taskUUID,
       model: params.model,
       promptSample: params.positivePrompt.substring(0, 80),
-      hasReferenceImages: Boolean(referenceImages),
-      referenceImagesCount: referenceImages?.length ?? 0,
+      hasReferenceImages: Boolean(params.referenceImages),
+      referenceImagesCount: params.referenceImages?.length ?? 0,
       strength: params.strength,
     });
 

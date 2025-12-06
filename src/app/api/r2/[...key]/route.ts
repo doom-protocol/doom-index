@@ -1,341 +1,289 @@
-import { get, set } from "@/lib/cache";
-import { parseApiR2TransformParams, type CloudflareImageOptions } from "@/lib/cloudflare-image";
+/**
+ * R2 Image Serving Endpoint
+ *
+ * Serves images from R2 with optional transformation via IMAGES binding.
+ * Features multi-layer caching (CDN, internal, browser) and conditional requests.
+ *
+ * URL: /api/r2/{...key}[?w=512&q=75&fit=scale-down&fmt=auto]
+ */
+
+import { get, set, type CachedBinaryResponse } from "@/lib/cache";
+import {
+  parseApiR2TransformParams,
+  buildImageTransform,
+  buildImageOutputOptions,
+  buildTransformCacheKeySuffix,
+  type CloudflareImageOptions,
+} from "@/lib/cloudflare-image";
 import { joinR2Key, resolveR2BucketAsync } from "@/lib/r2";
 import { R2_IMAGE_CACHE_TTL_SECONDS } from "@/constants";
 import { logger } from "@/utils/logger";
+import {
+  generateETag,
+  shouldReturn304,
+  create304Response,
+  buildCacheControlHeader,
+  buildBinaryResponseHeaders,
+  arrayBufferToBase64,
+  base64ToUint8Array,
+} from "@/utils/http";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
-type CachedResponse = {
-  body: string; // Base64 encoded for binary data
-  headers: Record<string, string>;
-  status: number;
-  statusText: string;
-};
+// ============================================================================
+// Route Config
+// ============================================================================
+
+export const revalidate = false;
+
+const INTERNAL_CACHE_TTL_SECONDS = R2_IMAGE_CACHE_TTL_SECONDS * 7;
+const TRANSFORM_TIMEOUT_MS = 5000;
+
+// ============================================================================
+// Main Handler - Clear Pipeline Flow
+// ============================================================================
 
 /**
- * Build ImageTransform options from CloudflareImageOptions
- * Maps our internal options to Cloudflare Images binding transform options
- * Applies DPR scaling to width/height dimensions
- */
-function buildImageTransform(options: CloudflareImageOptions): ImageTransform {
-  const transform: ImageTransform = {};
-  const dpr = options.dpr ?? 1;
-
-  if (options.width) transform.width = Math.round(options.width * dpr);
-  if (options.height) transform.height = Math.round(options.height * dpr);
-  if (options.fit) transform.fit = options.fit;
-  if (options.sharpen) transform.sharpen = options.sharpen;
-
-  return transform;
-}
-
-/**
- * Build ImageOutputOptions from CloudflareImageOptions
- * Maps our internal options to Cloudflare Images binding output options
- */
-function buildImageOutputOptions(options: CloudflareImageOptions): ImageOutputOptions {
-  // Map format string to MIME type
-  let format: ImageOutputOptions["format"] = "image/webp"; // default
-
-  if (options.format && options.format !== "auto") {
-    const formatMap: Record<string, ImageOutputOptions["format"]> = {
-      webp: "image/webp",
-      avif: "image/avif",
-      jpeg: "image/jpeg",
-      png: "image/png",
-    };
-    format = formatMap[options.format] ?? "image/webp";
-  }
-
-  const output: ImageOutputOptions = { format };
-
-  if (options.quality) output.quality = options.quality;
-
-  return output;
-}
-
-/**
- * Direct R2 object access endpoint for binary data (images, etc.)
- * This endpoint is used by browsers directly via <img src> tags,
- * so it cannot use tRPC streaming which requires tRPC client.
+ * GET /api/r2/{...key}
  *
- * URL format: /api/r2/key1/key2/file.webp
- * With transforms: /api/r2/key1/key2/file.webp?w=512&q=75&fit=scale-down&fmt=auto
- *
- * NOTE: This endpoint is available for both development and production environments.
- * - Images are served via R2 binding, regardless of NEXT_PUBLIC_R2_URL configuration.
- * - When transform params are present, images are transformed using IMAGES binding
- *   (Cloudflare Images API) for type-safe image transformation.
- * - Without transform params, images are served directly from R2 (cached in KV).
+ * Flow:
+ * 1. Validate key → 2. Check cache → 3. Fetch R2 → 4. Transform (if needed) → 5. Cache & Return
  */
 export async function GET(req: Request, { params }: { params: Promise<{ key: string[] }> }): Promise<Response> {
   const startTime = Date.now();
-  const requestUrl = req.url;
-
-  logger.debug("[R2 Route] Request received", {
-    url: requestUrl,
-    method: req.method,
-  });
-
-  // This endpoint is available for both development and production
-  // Images are served via R2 binding, regardless of NEXT_PUBLIC_R2_URL configuration
-
   const { key } = await params;
 
-  if (!key || key.length === 0) {
-    logger.warn("[R2 Route] Invalid key segments", { key });
-    return NextResponse.json({ error: "Invalid R2 object key" }, { status: 400 });
-  }
-
-  // Join key segments and normalize
-  const objectKey = joinR2Key(key);
-
-  logger.debug("[R2 Route] Parsed object key", {
-    keySegments: key,
-    objectKey,
-  });
-
+  // 1. Validate key
+  const objectKey = validateAndJoinKey(key);
   if (!objectKey) {
-    logger.warn("[R2 Route] Empty object key after normalization", { key });
     return NextResponse.json({ error: "Invalid R2 object key" }, { status: 400 });
   }
 
-  // Parse image transformation options from query params
+  // 2. Build cache key & check cache
   const url = new URL(req.url);
   const transformOptions = parseApiR2TransformParams(url);
+  const cacheKey = buildCacheKey(objectKey, transformOptions);
 
-  // For non-transformed images, use KV cache
-  const cacheKey = `r2:route:${objectKey}`;
+  const cached = await tryGetCached(req, cacheKey);
+  if (cached) return cached;
 
-  // Skip cache for transformed images (they're handled by IMAGES binding)
-  if (!transformOptions) {
-    logger.debug("[R2 Route] Checking cache", { cacheKey });
-
-    const cached = await get<CachedResponse>(cacheKey);
-
-    if (cached !== null) {
-      logger.debug("[R2 Route] Cache hit", {
-        cacheKey,
-        status: cached.status,
-      });
-      // Reconstruct Response from cached data
-      const headers = new Headers(cached.headers);
-      const body = Uint8Array.from(atob(cached.body), c => c.charCodeAt(0));
-      return new Response(body, {
-        status: cached.status,
-        statusText: cached.statusText,
-        headers,
-      });
-    }
-  }
-
-  logger.debug("[R2 Route] Cache miss, resolving bucket", { objectKey });
-  const bucketResult = await resolveR2BucketAsync();
-
-  if (bucketResult.isErr()) {
-    logger.error("[R2 Route] Failed to resolve bucket", {
-      objectKey,
-      error: bucketResult.error.message,
-    });
-    return NextResponse.json({ error: bucketResult.error.message }, { status: 500 });
-  }
-
-  const bucket = bucketResult.value;
-  logger.debug("[R2 Route] Fetching object from R2", { objectKey });
-  const object = await bucket.get(objectKey);
-
-  if (!object) {
-    logger.warn("[R2 Route] Object not found", {
-      objectKey,
-      duration: Date.now() - startTime,
-    });
+  // 3. Fetch from R2
+  const r2Object = await fetchFromR2(objectKey);
+  if (!r2Object) {
     return NextResponse.json({ error: "Object not found" }, { status: 404 });
   }
 
-  logger.debug("[R2 Route] Object found", {
-    objectKey,
-    size: object.size,
-    contentType: object.httpMetadata?.contentType,
-  });
-
-  // If transform options are present, use IMAGES binding to transform the image
-  if (transformOptions) {
-    try {
-      const { env: cfEnv } = await getCloudflareContext({ async: true });
-      const images = cfEnv.IMAGES;
-
-      if (images) {
-        logger.debug("[R2 Route] Using IMAGES binding for transformation", {
-          objectKey,
-          transformOptions,
-        });
-
-        const bodyStream = object.body;
-        const imageTransform = buildImageTransform(transformOptions);
-        const outputOptions = buildImageOutputOptions(transformOptions);
-
-        // Apply transformation using IMAGES binding
-        const transformer = images.input(bodyStream);
-        const transformedResult = await transformer.transform(imageTransform).output(outputOptions);
-
-        const duration = Date.now() - startTime;
-        logger.info("[R2 Route] Transform success", {
-          objectKey,
-          transformOptions,
-          duration,
-          contentType: transformedResult.contentType(),
-        });
-
-        // Get the response and add cache headers
-        const transformedResponse = transformedResult.response();
-        const responseHeaders = new Headers(transformedResponse.headers);
-        responseHeaders.set("Cache-Control", `public, max-age=${R2_IMAGE_CACHE_TTL_SECONDS}, immutable`);
-
-        return new Response(transformedResponse.body, {
-          status: transformedResponse.status,
-          headers: responseHeaders,
-        });
-      } else {
-        logger.warn("[R2 Route] IMAGES binding not available, falling back to direct R2", {
-          objectKey,
-        });
-      }
-    } catch (error) {
-      logger.error("[R2 Route] Image transform error, falling back to direct R2", {
-        objectKey,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      // Re-fetch the object from R2 since the original body stream was consumed
-      // during the transformation attempt (images.input() may consume the stream)
-      const freshObject = await bucket.get(objectKey);
-      if (!freshObject) {
-        logger.error("[R2 Route] Failed to re-fetch object for fallback", {
-          objectKey,
-          duration: Date.now() - startTime,
-        });
-        return NextResponse.json({ error: "Object not found" }, { status: 404 });
-      }
-      // Use the fresh object's body stream for direct R2 fallback processing
-      logger.debug("[R2 Route] Re-fetched object for fallback", {
-        objectKey,
-        size: freshObject.size,
-      });
-      return serveR2Object(freshObject, objectKey, cacheKey, startTime);
-    }
-  }
-
-  return serveR2Object(object, objectKey, cacheKey, startTime);
+  // 4. Process & Return (transform if needed, otherwise serve directly)
+  return processAndServe(req, r2Object, objectKey, cacheKey, transformOptions, startTime);
 }
 
-/**
- * Serve an R2 object directly without transformation
- * Extracted to avoid code duplication between normal path and transform fallback
- */
-async function serveR2Object(
+// ============================================================================
+// Step 1: Validation
+// ============================================================================
+
+function validateAndJoinKey(key: string[] | undefined): string | null {
+  if (!key || key.length === 0) {
+    logger.warn("[R2] Invalid key segments", { key });
+    return null;
+  }
+
+  const objectKey = joinR2Key(key);
+  if (!objectKey) {
+    logger.warn("[R2] Empty key after normalization", { key });
+    return null;
+  }
+
+  return objectKey;
+}
+
+// ============================================================================
+// Step 2: Cache
+// ============================================================================
+
+function buildCacheKey(objectKey: string, transformOptions: CloudflareImageOptions | null): string {
+  return `r2:route:${objectKey}${buildTransformCacheKeySuffix(transformOptions)}`;
+}
+
+async function tryGetCached(req: Request, cacheKey: string): Promise<Response | null> {
+  const cached = await get<CachedBinaryResponse>(cacheKey);
+  if (!cached) return null;
+
+  const etag = cached.etag ?? generateETag(cacheKey, cached.body.length);
+
+  if (shouldReturn304(req, etag)) {
+    logger.debug("[R2] Cache hit → 304", { cacheKey });
+    return create304Response(etag);
+  }
+
+  logger.debug("[R2] Cache hit", { cacheKey });
+  return buildResponseFromCache(cached, etag);
+}
+
+function buildResponseFromCache(cached: CachedBinaryResponse, etag: string): Response {
+  const headers = new Headers(cached.headers);
+  headers.set("ETag", etag);
+  headers.set("Cache-Control", buildCacheControlHeader());
+
+  const bodyUint8 = base64ToUint8Array(cached.body);
+  const bodyBlob = new Blob([bodyUint8 as unknown as BlobPart]);
+
+  return new Response(bodyBlob, {
+    status: cached.status,
+    statusText: cached.statusText,
+    headers,
+  });
+}
+
+// ============================================================================
+// Step 3: Fetch R2
+// ============================================================================
+
+async function fetchFromR2(objectKey: string): Promise<R2ObjectBody | null> {
+  const bucketResult = await resolveR2BucketAsync();
+
+  if (bucketResult.isErr()) {
+    logger.error("[R2] Bucket resolve failed", { error: bucketResult.error.message });
+    return null;
+  }
+
+  const object = await bucketResult.value.get(objectKey);
+  if (!object) {
+    logger.warn("[R2] Object not found", { objectKey });
+    return null;
+  }
+
+  logger.debug("[R2] Object found", { objectKey, size: object.size });
+  return object;
+}
+
+// ============================================================================
+// Step 4: Process & Serve
+// ============================================================================
+
+async function processAndServe(
+  req: Request,
   object: R2ObjectBody,
   objectKey: string,
   cacheKey: string,
+  transformOptions: CloudflareImageOptions | null,
   startTime: number,
 ): Promise<Response> {
-  const headers = new Headers();
+  // Read object into memory (required for both paths)
+  const sourceBuffer = await object.arrayBuffer();
+  const sourceContentType = object.httpMetadata?.contentType ?? "image/webp";
 
-  // Manually set headers from httpMetadata to avoid serialization issues
-  if (object.httpMetadata?.contentType) {
-    headers.set("Content-Type", object.httpMetadata.contentType);
+  // No transform needed → serve directly
+  if (!transformOptions) {
+    return cacheAndServe(sourceBuffer, sourceContentType, cacheKey, objectKey, startTime, object.etag);
   }
 
-  if (object.httpMetadata?.contentEncoding) {
-    headers.set("Content-Encoding", object.httpMetadata.contentEncoding);
-  }
+  // Try transform
+  const transformed = await tryTransform(sourceBuffer, sourceContentType, transformOptions);
 
-  if (object.httpMetadata?.contentLanguage) {
-    headers.set("Content-Language", object.httpMetadata.contentLanguage);
-  }
-
-  if (object.httpMetadata?.contentDisposition) {
-    headers.set("Content-Disposition", object.httpMetadata.contentDisposition);
-  }
-
-  if (object.httpMetadata?.cacheControl) {
-    headers.set("Cache-Control", object.httpMetadata.cacheControl);
-  }
-
-  if (typeof object.size === "number") {
-    headers.set("Content-Length", object.size.toString());
-  }
-
-  // Images are immutable (filename includes timestamp, hash, and seed)
-  // Cache for 1 day with immutable directive
-  headers.set("Cache-Control", `public, max-age=${R2_IMAGE_CACHE_TTL_SECONDS}, immutable`);
-
-  if (object.etag) {
-    headers.set("ETag", object.etag);
-  }
-
-  if (object.uploaded instanceof Date) {
-    headers.set("Last-Modified", object.uploaded.toUTCString());
-  }
-
-  try {
-    const bodyStream = object.body;
-    logger.debug("[R2 Route] Reading object body", { objectKey });
-    const bodyArrayBuffer = await new Response(bodyStream).arrayBuffer();
-
-    logger.debug("[R2 Route] Object body read", {
+  if (transformed) {
+    logger.info("[R2] Transform success", {
       objectKey,
-      bodySize: bodyArrayBuffer.byteLength,
-    });
-
-    // Convert ArrayBuffer to Base64 safely
-    const uint8Array = new Uint8Array(bodyArrayBuffer);
-    let binaryString = "";
-    for (let i = 0; i < uint8Array.length; i++) {
-      binaryString += String.fromCharCode(uint8Array[i]);
-    }
-    const bodyBase64 = btoa(binaryString);
-
-    // Cache the response
-    // Normalize header keys to lowercase for consistent retrieval
-    const normalizedHeaders: Record<string, string> = {};
-    for (const [key, value] of headers.entries()) {
-      normalizedHeaders[key.toLowerCase()] = value;
-    }
-    const cachedResponse: CachedResponse = {
-      body: bodyBase64,
-      headers: normalizedHeaders,
-      status: 200,
-      statusText: "OK",
-    };
-
-    logger.debug("[R2 Route] Caching response", {
-      objectKey,
-      cacheKey,
-    });
-    // Cache for 1 day since images never change
-    await set(cacheKey, cachedResponse, { ttlSeconds: R2_IMAGE_CACHE_TTL_SECONDS });
-
-    const duration = Date.now() - startTime;
-    logger.info("[R2 Route] Success", {
-      objectKey,
-      size: bodyArrayBuffer.byteLength,
-      duration,
-    });
-
-    return new Response(bodyArrayBuffer, {
-      status: 200,
-      headers,
-    });
-  } catch (error) {
-    logger.error("[R2 Route] Error processing object", {
-      objectKey,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
       duration: Date.now() - startTime,
+      size: transformed.body.byteLength,
     });
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
-      { status: 500 },
-    );
+    return cacheAndServe(transformed.body, transformed.contentType, cacheKey, objectKey, startTime);
   }
+
+  // Transform failed → serve original
+  logger.warn("[R2] Transform failed, serving original", { objectKey });
+  return serveWithConditional(req, sourceBuffer, sourceContentType, cacheKey);
+}
+
+// ============================================================================
+// Transform Logic
+// ============================================================================
+
+async function tryTransform(
+  sourceBuffer: ArrayBuffer,
+  contentType: string,
+  options: CloudflareImageOptions,
+): Promise<{ body: ArrayBuffer; contentType: string } | null> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    if (!env.IMAGES) return null;
+
+    return await transformWithTimeout(env.IMAGES, sourceBuffer, contentType, options);
+  } catch (error) {
+    logger.warn("[R2] Transform error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
+async function transformWithTimeout(
+  images: ImagesBinding,
+  sourceBuffer: ArrayBuffer,
+  contentType: string,
+  options: CloudflareImageOptions,
+): Promise<{ body: ArrayBuffer; contentType: string }> {
+  const sourceStream = new Blob([sourceBuffer], { type: contentType }).stream();
+
+  const transformPromise = (async () => {
+    const result = await images
+      .input(sourceStream)
+      .transform(buildImageTransform(options))
+      .output(buildImageOutputOptions(options));
+
+    return {
+      body: await result.response().arrayBuffer(),
+      contentType: result.contentType(),
+    };
+  })();
+
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("Transform timeout")), TRANSFORM_TIMEOUT_MS),
+  );
+
+  return Promise.race([transformPromise, timeoutPromise]);
+}
+
+// ============================================================================
+// Response Building & Caching
+// ============================================================================
+
+function cacheAndServe(
+  body: ArrayBuffer,
+  contentType: string,
+  cacheKey: string,
+  objectKey: string,
+  startTime: number,
+  existingEtag?: string,
+): Response {
+  const etag = existingEtag ?? generateETag(cacheKey, body.byteLength);
+  const headers = buildBinaryResponseHeaders(contentType, body.byteLength, etag);
+
+  // Fire-and-forget cache write
+  const cached: CachedBinaryResponse = {
+    body: arrayBufferToBase64(body),
+    headers: Object.fromEntries([...headers.entries()].map(([k, v]) => [k.toLowerCase(), v])),
+    status: 200,
+    statusText: "OK",
+    etag,
+  };
+
+  set(cacheKey, cached, { ttlSeconds: INTERNAL_CACHE_TTL_SECONDS }).catch(err => {
+    logger.warn("[R2] Cache write failed", { cacheKey, error: String(err) });
+  });
+
+  logger.info("[R2] Served", { objectKey, size: body.byteLength, duration: Date.now() - startTime });
+  return new Response(body, { status: 200, headers });
+}
+
+function serveWithConditional(req: Request, buffer: ArrayBuffer, contentType: string, cacheKey: string): Response {
+  const etag = generateETag(cacheKey + ":fallback", buffer.byteLength);
+
+  if (shouldReturn304(req, etag)) {
+    return create304Response(etag);
+  }
+
+  return new Response(buffer, {
+    status: 200,
+    headers: buildBinaryResponseHeaders(contentType, buffer.byteLength, etag),
+  });
 }

@@ -379,3 +379,69 @@ export function parseApiR2TransformParams(url: URL): CloudflareImageOptions | nu
 
   return options;
 }
+
+// ============================================================================
+// IMAGES Binding Transform Helpers
+// These functions convert CloudflareImageOptions to IMAGES binding types
+// ============================================================================
+
+/**
+ * Build ImageTransform options for IMAGES binding from CloudflareImageOptions
+ * Maps our internal options to Cloudflare Images binding transform options
+ * Applies DPR scaling to width/height dimensions
+ *
+ * @param options - CloudflareImageOptions from query params or presets
+ * @returns ImageTransform for IMAGES binding
+ */
+export function buildImageTransform(options: CloudflareImageOptions): ImageTransform {
+  const transform: ImageTransform = {};
+  const dpr = options.dpr ?? 1;
+
+  if (options.width) transform.width = Math.round(options.width * dpr);
+  if (options.height) transform.height = Math.round(options.height * dpr);
+  if (options.fit) transform.fit = options.fit;
+  if (options.sharpen) transform.sharpen = options.sharpen;
+
+  return transform;
+}
+
+/**
+ * Build ImageOutputOptions for IMAGES binding from CloudflareImageOptions
+ * Maps format strings to MIME types expected by the binding
+ *
+ * @param options - CloudflareImageOptions from query params or presets
+ * @returns ImageOutputOptions for IMAGES binding
+ */
+export function buildImageOutputOptions(options: CloudflareImageOptions): ImageOutputOptions {
+  // Map format string to MIME type
+  let format: ImageOutputOptions["format"] = "image/webp"; // default
+
+  if (options.format && options.format !== "auto") {
+    const formatMap: Record<string, ImageOutputOptions["format"]> = {
+      webp: "image/webp",
+      avif: "image/avif",
+      jpeg: "image/jpeg",
+      png: "image/png",
+    };
+    format = formatMap[options.format] ?? "image/webp";
+  }
+
+  const output: ImageOutputOptions = { format };
+
+  if (options.quality) output.quality = options.quality;
+
+  return output;
+}
+
+/**
+ * Build cache key suffix from transform options
+ * Ensures transformed and non-transformed versions are cached separately
+ *
+ * @param options - CloudflareImageOptions or null
+ * @returns Cache key suffix string
+ */
+export function buildTransformCacheKeySuffix(options: CloudflareImageOptions | null): string {
+  if (!options) return "";
+
+  return `:w${options.width ?? 0}:h${options.height ?? 0}:f${options.fit ?? ""}:q${options.quality ?? 0}:fmt${options.format ?? ""}`;
+}

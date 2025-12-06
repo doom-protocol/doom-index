@@ -28,6 +28,7 @@ describe("R2 Route Handler Integration - Cache", () => {
   });
 
   it("should cache HTTP response using get and set", async () => {
+    const testData = new Uint8Array([1, 2, 3]);
     const mockObject = {
       get: () =>
         Promise.resolve({
@@ -40,10 +41,11 @@ describe("R2 Route Handler Integration - Cache", () => {
           uploaded: new Date(),
           body: new ReadableStream({
             start(controller) {
-              controller.enqueue(new Uint8Array([1, 2, 3]));
+              controller.enqueue(testData);
               controller.close();
             },
           }),
+          arrayBuffer: () => Promise.resolve(testData.buffer),
         }),
     } as unknown as R2Bucket;
 
@@ -85,6 +87,7 @@ describe("R2 Route Handler Integration - Cache", () => {
   });
 
   it("should handle cache miss gracefully", async () => {
+    const testData = new TextEncoder().encode('{"test": "data"}');
     const mockObject = {
       get: () =>
         Promise.resolve({
@@ -95,10 +98,11 @@ describe("R2 Route Handler Integration - Cache", () => {
           size: 100,
           body: new ReadableStream({
             start(controller) {
-              controller.enqueue(new TextEncoder().encode('{"test": "data"}'));
+              controller.enqueue(testData);
               controller.close();
             },
           }),
+          arrayBuffer: () => Promise.resolve(testData.buffer),
         }),
     } as unknown as R2Bucket;
 

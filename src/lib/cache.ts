@@ -29,6 +29,23 @@ export type CacheOptions = {
 };
 
 /**
+ * Cached binary response structure
+ * Used for caching HTTP responses with binary data (images, etc.)
+ */
+export type CachedBinaryResponse = {
+  /** Base64 encoded body */
+  body: string;
+  /** Response headers (lowercase keys) */
+  headers: Record<string, string>;
+  /** HTTP status code */
+  status: number;
+  /** HTTP status text */
+  statusText: string;
+  /** Optional ETag for conditional requests */
+  etag?: string;
+};
+
+/**
  * Resolve Cloudflare Cache API instance
  *
  * @returns Cache instance or null if unavailable
