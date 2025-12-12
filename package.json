@@ -1,7 +1,7 @@
 {
   "name": "doom-index",
   "version": "2.0.0",
-  "description": "A decentralized archive of financial emotions. AI generates one painting every minute, translating the collective psychology of 8 pump.fun tokens into visual art.",
+  "description": "A perpetual engine that turns market history into onchain paintings.",
   "private": false,
   "engines": {
     "node": ">=24.11.1"

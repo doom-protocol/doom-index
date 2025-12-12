@@ -1,6 +1,6 @@
 # DOOM INDEX
 
-A decentralized archive of financial emotions. AI generates one painting every hour, translating the collective psychology of trending tokens into visual art.
+A perpetual engine that turns market history into onchain paintings.
 
 ## Overview
 

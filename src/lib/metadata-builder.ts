@@ -74,7 +74,7 @@ export function buildNftMetadata(params: BuildMetadataParams): NftMetadata {
     name: `DOOM INDEX #${truncatedHash}`,
     symbol: "DOOM",
     description:
-      "A generative artwork from DOOM INDEX - an AI-powered decentralized archive of financial emotions. " +
+      "A generative artwork from DOOM INDEX - a perpetual engine that turns market history into onchain paintings. " +
       "This 3D painting translates the collective psychology of cryptocurrency markets into visual art.",
     image: `ipfs://${cidGlb}`,
     external_url: `https://doomindex.fun`,

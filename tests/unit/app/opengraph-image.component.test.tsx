@@ -205,7 +205,7 @@ describe("OGP Image Generation Components", () => {
     });
 
     test("should have correct alt text", () => {
-      expect(alt).toBe("DOOM INDEX - A decentralized archive of financial emotions.");
+      expect(alt).toBe("DOOM INDEX - A perpetual engine that turns market history into onchain paintings.");
     });
   });
 
