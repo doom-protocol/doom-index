@@ -8,6 +8,8 @@
 
 ### Requirement 1: {{REQUIREMENT_AREA_1}}
 
+<!-- Requirement headings MUST include a leading numeric ID only (for example: "Requirement 1: ...", "1. Overview", "2 Feature: ..."). Alphabetic IDs like "Requirement A" are not allowed. -->
+
 **Objective:** As a {{ROLE}}, I want {{CAPABILITY}}, so that {{BENEFIT}}
 
 #### Acceptance Criteria

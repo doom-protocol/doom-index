@@ -52,8 +52,8 @@ Focus on capabilities and outcomes, not code structure.
 
 **End each task detail section with**:
 
-- `_Requirements: X.X, Y.Y_` listing **only requirement IDs** (comma-separated). Never append descriptive text, parentheses, or translations.
-- For cross-cutting requirements, list every relevant requirement ID. If a requirement lacks an ID, reference its canonical identifier exactly as written in requirements.md (still without extra commentary).
+- `_Requirements: X.X, Y.Y_` listing **only numeric requirement IDs** (comma-separated). Never append descriptive text, parentheses, translations, or free-form labels.
+- For cross-cutting requirements, list every relevant requirement ID. All requirements MUST have numeric IDs in requirements.md. If an ID is missing, stop and correct requirements.md before generating tasks.
 - Reference components/interfaces from design.md when helpful (e.g., `_Contracts: AuthService API`)
 
 ### 5. Code-Only Focus
@@ -138,5 +138,7 @@ Focus on capabilities and outcomes, not code structure.
 - Cross-reference every requirement ID with task mappings
 - If gaps found: Return to requirements or design phase
 - No requirement should be left without corresponding tasks
+
+Use `N.M`-style numeric requirement IDs where `N` is the top-level requirement number from requirements.md (for example, Requirement 1 → 1.1, 1.2; Requirement 2 → 2.1, 2.2), and `M` is a local index within that requirement group.
 
 Document any intentionally deferred requirements with rationale.

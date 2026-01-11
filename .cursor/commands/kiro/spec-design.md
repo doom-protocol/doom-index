@@ -1,544 +1,191 @@
 <meta>
-description: Create comprehensive technical design for a specification  
-argument-hint: [feature-name] [-y]
+description: Create comprehensive technical design for a specification
+argument-hint: <feature-name:$1> [-y:$2]
 </meta>
 
-# Technical Design
+# Technical Design Generator
+
+<background_information>
+
+- **Mission**: Generate comprehensive technical design document that translates requirements (WHAT) into architectural design (HOW)
+- **Success Criteria**:
+  - All requirements mapped to technical components with clear interfaces
+  - Appropriate architecture discovery and research completed
+  - Design aligns with steering context and existing patterns
+  - Visual diagrams included for complex architectures
+    </background_information>
+
+<instructions>
+## Core Task
+Generate technical design document for feature **$1** based on approved requirements.
+
+## Execution Steps
+
+### Step 1: Load Context
+
+**Read all necessary context**:
+
+- `.kiro/specs/$1/spec.json`, `requirements.md`, `design.md` (if exists)
+- **Entire `.kiro/steering/` directory** for complete project memory
+- `.kiro/settings/templates/specs/design.md` for document structure
+- `.kiro/settings/rules/design-principles.md` for design principles
+- `.kiro/settings/templates/specs/research.md` for discovery log structure
+
+**Validate requirements approval**:
+
+- If `-y` flag provided ($2 == "-y"): Auto-approve requirements in spec.json
+- Otherwise: Verify approval status (stop if unapproved, see Safety & Fallback)
+
+### Step 2: Discovery & Analysis
+
+**Critical: This phase ensures design is based on complete, accurate information.**
 
-Generate a **technical design document** for feature **[feature-name]**.
+1. **Classify Feature Type**:
+   - **New Feature** (greenfield) → Full discovery required
+   - **Extension** (existing system) → Integration-focused discovery
+   - **Simple Addition** (CRUD/UI) → Minimal or no discovery
+   - **Complex Integration** → Comprehensive analysis required
 
-**CRITICAL**: Generate COMPLETE content without abbreviations, placeholders ("...", "[details]"), or omissions. Continue until all sections are fully written.
+2. **Execute Appropriate Discovery Process**:
 
-## Task: Create Technical Design Document
+   **For Complex/New Features**:
+   - Read and execute `.kiro/settings/rules/design-discovery-full.md`
+   - Conduct thorough research using WebSearch/WebFetch:
+     - Latest architectural patterns and best practices
+     - External dependency verification (APIs, libraries, versions, compatibility)
+     - Official documentation, migration guides, known issues
+     - Performance benchmarks and security considerations
 
-Tool policy: Use Cursor file tools (read_file/list_dir/glob_file_search/apply_patch/edit_file); no shell.
+   **For Extensions**:
+   - Read and execute `.kiro/settings/rules/design-discovery-light.md`
+   - Focus on integration points, existing patterns, compatibility
+   - Use Grep to analyze existing codebase patterns
 
-Prime: Always perform Discovery & Analysis first, then construct the design document.
-Process Reminder: Reference discovery findings throughout Overview/Architecture/Components/Testing; if unknowns remain, note "Pending discovery: ..." and avoid assumptions.
+   **For Simple Additions**:
+   - Skip formal discovery, quick pattern check only
 
-### 1. Prerequisites & File Handling
+3. **Retain Discovery Findings for Step 3**:
+   - External API contracts and constraints
+   - Technology decisions with rationale
+   - Existing patterns to follow or extend
+   - Integration points and dependencies
+   - Identified risks and mitigation strategies
+   - Potential architecture patterns and boundary options (note details in `research.md`)
+   - Parallelization considerations for future tasks (capture dependencies in `research.md`)
 
-- **Requirements Approval Check**:
-  - If invoked with `-y`, set `requirements.approved=true` in `spec.json`
-  - Otherwise, **stop** with an actionable message if requirements are missing or unapproved
-- **Design File Handling**:
-  - If design.md does not exist: Create new design.md file
-  - If design.md exists: Interactive prompt with options:
-    - **[o] Overwrite**: Generate completely new design document
-    - **[m] Merge**: Generate new design document using existing content as reference context
-    - **[c] Cancel**: Stop execution for manual review
-- **Context Loading**: Read `.kiro/specs/[feature-name]/requirements.md`, core steering documents, and existing design.md (if merge mode)
+4. **Persist Findings to Research Log**:
+   - Create or update `.kiro/specs/$1/research.md` using the shared template
+   - Summarize discovery scope and key findings (Summary section)
+   - Record investigations in Research Log topics with sources and implications
+   - Document architecture pattern evaluation, design decisions, and risks using the template sections
+   - Use the language specified in spec.json when writing or updating `research.md`
 
-### 2. Discovery & Analysis Phase
+### Step 3: Generate Design Document
 
-**CRITICAL**: Before generating the design, conduct thorough research and analysis:
+1. **Load Design Template and Rules**:
+   - Read `.kiro/settings/templates/specs/design.md` for structure
+   - Read `.kiro/settings/rules/design-principles.md` for principles
 
-#### Feature Classification & Process Adaptation
+2. **Generate Design Document**:
+   - **Follow specs/design.md template structure and generation instructions strictly**
+   - **Integrate all discovery findings**: Use researched information (APIs, patterns, technologies) throughout component definitions, architecture decisions, and integration points
+   - If existing design.md found in Step 1, use it as reference context (merge mode)
+   - Apply design rules: Type Safety, Visual Communication, Formal Tone
+   - Use language specified in spec.json
+   - Ensure sections reflect updated headings ("Architecture Pattern & Boundary Map", "Technology Stack & Alignment", "Components & Interface Contracts") and reference supporting details from `research.md`
 
-**Classify feature type to adapt process scope**:
+3. **Update Metadata** in spec.json:
+   - Set `phase: "design-generated"`
+   - Set `approvals.design.generated: true, approved: false`
+   - Set `approvals.requirements.approved: true`
+   - Update `updated_at` timestamp
 
-- **New Feature** (greenfield): Full process including technology selection and architecture decisions
-- **Extension** (existing system): Focus on integration analysis, minimal architectural changes
-- **Simple Addition** (CRUD, UI): Streamlined process, follow established patterns
-- **Complex Integration** (external systems, new domains): Comprehensive analysis and risk assessment
+## Critical Constraints
 
-**Process Adaptation**: Skip or streamline analysis steps based on classification above
+- **Type Safety**:
+  - Enforce strong typing aligned with the project's technology stack.
+  - For statically typed languages, define explicit types/interfaces and avoid unsafe casts.
+  - For TypeScript, never use `any`; prefer precise types and generics.
+  - For dynamically typed languages, provide type hints/annotations where available (e.g., Python type hints) and validate inputs at boundaries.
+  - Document public interfaces and contracts clearly to ensure cross-component type safety.
+- **Latest Information**: Use WebSearch/WebFetch for external dependencies and best practices
+- **Steering Alignment**: Respect existing architecture patterns from steering context
+- **Template Adherence**: Follow specs/design.md template structure and generation instructions strictly
+- **Design Focus**: Architecture and interfaces ONLY, no implementation code
+- **Requirements Traceability IDs**: Use numeric requirement IDs only (e.g. "1.1", "1.2", "3.1", "3.3") exactly as defined in requirements.md. Do not invent new IDs or use alphabetic labels.
 
-#### A. Requirements to Technical Components Mapping
+### Language Reminder
 
-- Map requirements (EARS format) to technical components
-- Extract non-functional requirements (performance, security, scalability)
-- Identify core technical challenges and constraints
+- Markdown prompt content must remain in English, even when spec.json requests another language for design output. The generated design.md and research.md should use the spec language.
+  </instructions>
 
-#### B. Existing Implementation Analysis
+## Tool Guidance
 
-**MANDATORY when modifying or extending existing features**:
+- **Read first**: Load all context before taking action (specs, steering, templates, rules)
+- **Research when uncertain**: Use WebSearch/WebFetch for external dependencies, APIs, and latest best practices
+- **Analyze existing code**: Use Grep to find patterns and integration points in codebase
+- **Write last**: Generate design.md only after all research and analysis complete
 
-- Analyze codebase structure, dependencies, patterns
-- Map reusable modules, services, utilities
-- Understand domain boundaries, layers, data flow
-- Determine extension vs. refactor vs. wrap approach
-- Prioritize minimal changes and file reuse
+## Output Description
 
-**Optional for completely new features**: Review existing patterns for consistency and reuse opportunities
+**Command execution output** (separate from design.md content):
 
-#### C. Steering Alignment Check
+Provide brief summary in the language specified in spec.json:
 
-- Verify alignment with core steering documents (`structure.md`, `tech.md`, `product.md`) and any custom steering files (`*.md`) in `.kiro/steering/`
-  - **Core steering**: @.kiro/steering/structure.md, @.kiro/steering/tech.md, @.kiro/steering/product.md
-  - **Custom steering**: All additional `.md` files in `.kiro/steering/` discovered via list_dir or glob_file_search (excluding `structure.md`, `tech.md`, `product.md`). Do not run shell commands.
-- Document deviations with rationale for steering updates
+1. **Status**: Confirm design document generated at `.kiro/specs/$1/design.md`
+2. **Discovery Type**: Which discovery process was executed (full/light/minimal)
+3. **Key Findings**: 2-3 critical insights from discovery that shaped the design
+4. **Next Action**: Approval workflow guidance (see Safety & Fallback)
 
-#### D. Technology & Alternative Analysis
+**Format**: Concise Markdown (under 200 words) - this is the command output, NOT the design document itself
 
-**For New Features or Unknown Technology Areas**:
+**Note**: The actual design document follows `.kiro/settings/templates/specs/design.md` structure.
 
-- Research latest best practices using WebSearch/WebFetch when needed in parallel
-- Compare relevant architecture patterns (MVC, Clean, Hexagonal) if pattern selection is required
-- Assess technology stack alternatives only when technology choices are being made
-- Document key findings that impact design decisions
+## Safety & Fallback
 
-**Skip this step if**: Using established team technology stack and patterns for straightforward feature additions
+### Error Scenarios
 
-#### E. Implementation-Specific Investigation
+**Requirements Not Approved**:
 
-**When new technology or complex integration is involved**:
+- **Stop Execution**: Cannot proceed without approved requirements
+- **User Message**: "Requirements not yet approved. Approval required before design generation."
+- **Suggested Action**: "Run `/kiro/spec-design $1 -y` to auto-approve requirements and proceed"
 
-- Verify specific API capabilities needed for requirements
-- Check version compatibility with existing dependencies
-- Identify configuration and setup requirements
-- Document any migration or integration challenges
+**Missing Requirements**:
 
-**For ANY external dependencies (libraries, APIs, services)**:
+- **Stop Execution**: Requirements document must exist
+- **User Message**: "No requirements.md found at `.kiro/specs/$1/requirements.md`"
+- **Suggested Action**: "Run `/kiro/spec-requirements $1` to generate requirements first"
 
-- Use WebSearch to find official documentation and community resources
-- Use WebFetch to analyze specific documentation pages
-- Document authentication flows, rate limits, and usage constraints
-- Note any gaps in understanding for implementation phase
+**Template Missing**:
 
-**Skip only if**: Using well-established internal libraries with no external dependencies
+- **User Message**: "Template file missing at `.kiro/settings/templates/specs/design.md`"
+- **Suggested Action**: "Check repository setup or restore template file"
+- **Fallback**: Use inline basic structure with warning
 
-#### F. Technical Risk Assessment
+**Steering Context Missing**:
 
-- Performance/scalability risks: bottlenecks, capacity, growth
-- Security vulnerabilities: attack vectors, compliance gaps
-- Maintainability risks: complexity, knowledge, support
-- Integration complexity: dependencies, coupling, API changes
-- Technical debt: new creation vs. existing resolution
+- **Warning**: "Steering directory empty or missing - design may not align with project standards"
+- **Proceed**: Continue with generation but note limitation in output
 
-## Design Document Structure & Guidelines
+**Discovery Complexity Unclear**:
 
-### Core Principles
+- **Default**: Use full discovery process (`.kiro/settings/rules/design-discovery-full.md`)
+- **Rationale**: Better to over-research than miss critical context
+- **Invalid Requirement IDs**:
+  - **Stop Execution**: If requirements.md is missing numeric IDs or uses non-numeric headings (for example, "Requirement A"), stop and instruct the user to fix requirements.md before continuing.
 
-- **Complete output**: Write all sections fully - never abbreviate or use ellipsis
-- **Review-optimized structure**: Critical technical decisions prominently placed to prevent oversight
-- **Contextual relevance**: Include sections only when applicable to project type and scope
-- **Visual-first design**: Essential Mermaid diagrams for architecture and data flow
-- **Design focus only**: Architecture and interfaces, NO implementation code
-- **Type safety**: Never use `any` type - define explicit types and interfaces
-- **Formal tone**: Use definitive, declarative statements without hedging language
-- **Language**: Use language from `spec.json.language` field, default to English
+### Next Phase: Task Generation
 
-### Document Sections
+**If Design Approved**:
 
-**CORE SECTIONS** (Include when relevant):
+- Review generated design at `.kiro/specs/$1/design.md`
+- **Optional**: Run `/kiro/validate-design $1` for interactive quality review
+- Then `/kiro/spec-tasks $1 -y` to generate implementation tasks
 
-- Overview, Architecture, Components and Interfaces (always)
-- Data Models, Error Handling, Testing Strategy (when applicable)
-- Security Considerations (when security implications exist)
+**If Modifications Needed**:
 
-**CONDITIONAL SECTIONS** (Include only when specifically relevant):
+- Provide feedback and re-run `/kiro/spec-design $1`
+- Existing design used as reference (merge mode)
 
-- Performance & Scalability (for performance-critical features)
-- Migration Strategy (for existing system modifications)
-
-<structured-document>
-## Overview 
-2-3 paragraphs max
-**Purpose**: This feature delivers [specific value] to [target users].
-**Users**: [Target user groups] will utilize this for [specific workflows].
-**Impact** (if applicable): Changes the current [system state] by [specific modifications].
-
-### Goals
-
-- Primary objective 1
-- Primary objective 2
-- Success criteria
-
-### Non-Goals
-
-- Explicitly excluded functionality
-- Future considerations outside current scope
-- Integration points deferred
-
-## Architecture
-
-### Existing Architecture Analysis (if applicable)
-
-When modifying existing systems:
-
-- Current architecture patterns and constraints
-- Existing domain boundaries to be respected
-- Integration points that must be maintained
-- Technical debt addressed or worked around
-
-### High-Level Architecture
-
-**RECOMMENDED**: Include Mermaid diagram showing system architecture (required for complex features, optional for simple additions)
-
-**Architecture Integration**:
-
-- Existing patterns preserved: [list key patterns]
-- New components rationale: [why each is needed]
-- Technology alignment: [how it fits current stack]
-- Steering compliance: [principles maintained]
-
-### Technology Stack and Design Decisions
-
-**Generation Instructions** (DO NOT include this section in design.md):
-Adapt content based on feature classification from Discovery & Analysis Phase:
-
-**For New Features (greenfield)**:
-Generate Technology Stack section with ONLY relevant layers:
-
-- Include only applicable technology layers (e.g., skip Frontend for CLI tools, skip Infrastructure for libraries)
-- For each technology choice, provide: selection, rationale, and alternatives considered
-- Include Architecture Pattern Selection if making architectural decisions
-
-**For Extensions/Additions to Existing Systems**:
-Generate Technology Alignment section instead:
-
-- Document how feature aligns with existing technology stack
-- Note any new dependencies or libraries being introduced
-- Justify deviations from established patterns if necessary
-
-**Key Design Decisions**:
-Generate 1-3 critical technical decisions that significantly impact the implementation.
-Each decision should follow this format:
-
-- **Decision**: [Specific technical choice made]
-- **Context**: [Problem or requirement driving this decision]
-- **Alternatives**: [2-3 other approaches considered]
-- **Selected Approach**: [What was chosen and how it works]
-- **Rationale**: [Why this is optimal for the specific context]
-- **Trade-offs**: [What we gain vs. what we sacrifice]
-
-Skip this entire section for simple CRUD operations or when following established patterns without deviation.
-
-## System Flows
-
-**Flow Design Generation Instructions** (DO NOT include this section in design.md):
-Generate appropriate flow diagrams ONLY when the feature requires flow visualization. Select from:
-
-- **Sequence Diagrams**: For user interactions across multiple components
-- **Process Flow Charts**: For complex algorithms, decision branches, or state machines
-- **Data Flow Diagrams**: For data transformations, ETL processes, or data pipelines
-- **State Diagrams**: For complex state transitions
-- **Event Flow**: For async/event-driven architectures
-
-Skip this section entirely for simple CRUD operations or features without complex flows.
-When included, provide concise Mermaid diagrams specific to the actual feature requirements.
-
-## Requirements Traceability
-
-**Traceability Generation Instructions** (DO NOT include this section in design.md):
-Generate traceability mapping ONLY for complex features with multiple requirements or when explicitly needed for compliance/validation.
-
-When included, create a mapping table showing how each EARS requirement is realized:
-| Requirement | Requirement Summary | Components | Interfaces | Flows |
-|---------------|-------------------|------------|------------|-------|
-| 1.1 | Brief description | Component names | API/Methods | Relevant flow diagrams |
-
-Alternative format for simpler cases:
-
-- **1.1**: Realized by [Component X] through [Interface Y]
-- **1.2**: Implemented in [Component Z] with [Flow diagram reference]
-
-Skip this section for simple features with straightforward 1:1 requirement-to-component mappings.
-
-## Components and Interfaces
-
-**Component Design Generation Instructions** (DO NOT include this section in design.md):
-Structure components by domain boundaries or architectural layers. Generate only relevant subsections based on component type.
-Group related components under domain/layer headings for clarity.
-
-### [Domain/Layer Name]
-
-#### [Component Name]
-
-**Responsibility & Boundaries**
-
-- **Primary Responsibility**: Single, clear statement of what this component does
-- **Domain Boundary**: Which domain/subdomain this belongs to
-- **Data Ownership**: What data this component owns and manages
-- **Transaction Boundary**: Scope of transactional consistency (if applicable)
-
-**Dependencies**
-
-- **Inbound**: Components/services that depend on this component
-- **Outbound**: Components/services this component depends on
-- **External**: Third-party services, libraries, or external systems
-
-**External Dependencies Investigation** (when using external libraries/services):
-
-- Use WebSearch to locate official documentation, GitHub repos, and community resources
-- Use WebFetch to retrieve and analyze documentation pages, API references, and usage examples
-- Verify API signatures, authentication methods, and rate limits
-- Check version compatibility, breaking changes, and migration guides
-- Investigate common issues, best practices, and performance considerations
-- Document any assumptions, unknowns, or risks for implementation phase
-- If critical information is missing, clearly note "Requires investigation during implementation: [specific concern]"
-
-**Contract Definition**
-
-Select and generate ONLY the relevant contract types for each component:
-
-**Service Interface** (for business logic components):
-
-```typescript
-interface [ComponentName]Service {
-  // Method signatures with clear input/output types
-  // Include error types in return signatures
-  methodName(input: InputType): Result<OutputType, ErrorType>;
-}
-```
-
-- **Preconditions**: What must be true before calling
-- **Postconditions**: What is guaranteed after successful execution
-- **Invariants**: What remains true throughout
-
-**API Contract** (for REST/GraphQL endpoints):
-| Method | Endpoint | Request | Response | Errors |
-|--------|----------|---------|----------|--------|
-| POST | /api/resource | CreateRequest | Resource | 400, 409, 500 |
-
-With detailed schemas only for complex payloads
-
-**Event Contract** (for event-driven components):
-
-- **Published Events**: Event name, schema, trigger conditions
-- **Subscribed Events**: Event name, handling strategy, idempotency
-- **Ordering**: Guaranteed order requirements
-- **Delivery**: At-least-once, at-most-once, or exactly-once
-
-**Batch/Job Contract** (for scheduled/triggered processes):
-
-- **Trigger**: Schedule, event, or manual trigger conditions
-- **Input**: Data source and validation rules
-- **Output**: Results destination and format
-- **Idempotency**: How repeat executions are handled
-- **Recovery**: Failure handling and retry strategy
-
-**State Management** (only if component maintains state):
-
-- **State Model**: States and valid transitions
-- **Persistence**: Storage strategy and consistency model
-- **Concurrency**: Locking, optimistic/pessimistic control
-
-**Integration Strategy** (when modifying existing systems):
-
-- **Modification Approach**: Extend, wrap, or refactor existing code
-- **Backward Compatibility**: What must be maintained
-- **Migration Path**: How to transition from current to target state
-
-## Data Models
-
-**Data Model Generation Instructions** (DO NOT include this section in design.md):
-Generate only relevant data model sections based on the system's data requirements and chosen architecture.
-Progress from conceptual to physical as needed for implementation clarity.
-
-### Domain Model
-
-**When to include**: Complex business domains with rich behavior and rules
-
-**Core Concepts**:
-
-- **Aggregates**: Define transactional consistency boundaries
-- **Entities**: Business objects with unique identity and lifecycle
-- **Value Objects**: Immutable descriptive aspects without identity
-- **Domain Events**: Significant state changes in the domain
-
-**Business Rules & Invariants**:
-
-- Constraints that must always be true
-- Validation rules and their enforcement points
-- Cross-aggregate consistency strategies
-
-Include conceptual diagram (Mermaid) only when relationships are complex enough to benefit from visualization
-
-### Logical Data Model
-
-**When to include**: When designing data structures independent of storage technology
-
-**Structure Definition**:
-
-- Entity relationships and cardinality
-- Attributes and their types
-- Natural keys and identifiers
-- Referential integrity rules
-
-**Consistency & Integrity**:
-
-- Transaction boundaries
-- Cascading rules
-- Temporal aspects (versioning, audit)
-
-### Physical Data Model
-
-**When to include**: When implementation requires specific storage design decisions
-
-**For Relational Databases**:
-
-- Table definitions with data types
-- Primary/foreign keys and constraints
-- Indexes and performance optimizations
-- Partitioning strategy for scale
-
-**For Document Stores**:
-
-- Collection structures
-- Embedding vs referencing decisions
-- Sharding key design
-- Index definitions
-
-**For Event Stores**:
-
-- Event schema definitions
-- Stream aggregation strategies
-- Snapshot policies
-- Projection definitions
-
-**For Key-Value/Wide-Column Stores**:
-
-- Key design patterns
-- Column families or value structures
-- TTL and compaction strategies
-
-### Data Contracts & Integration
-
-**When to include**: Systems with service boundaries or external integrations
-
-**API Data Transfer**:
-
-- Request/response schemas
-- Validation rules
-- Serialization format (JSON, Protobuf, etc.)
-
-**Event Schemas**:
-
-- Published event structures
-- Schema versioning strategy
-- Backward/forward compatibility rules
-
-**Cross-Service Data Management**:
-
-- Distributed transaction patterns (Saga, 2PC)
-- Data synchronization strategies
-- Eventual consistency handling
-
-Skip any section not directly relevant to the feature being designed.
-Focus on aspects that influence implementation decisions.
-
-## Error Handling
-
-### Error Strategy
-
-Concrete error handling patterns and recovery mechanisms for each error type.
-
-### Error Categories and Responses
-
-**User Errors** (4xx): Invalid input → field-level validation; Unauthorized → auth guidance; Not found → navigation help
-**System Errors** (5xx): Infrastructure failures → graceful degradation; Timeouts → circuit breakers; Exhaustion → rate limiting  
-**Business Logic Errors** (422): Rule violations → condition explanations; State conflicts → transition guidance
-
-**Process Flow Visualization** (when complex business logic exists):
-Include Mermaid flowchart only for complex error scenarios with business workflows.
-
-### Monitoring
-
-Error tracking, logging, and health monitoring implementation.
-
-## Testing Strategy
-
-### Default sections (adapt names/sections to fit the domain)
-
-- Unit Tests: 3–5 items from core functions/modules (e.g., auth methods, subscription logic)
-- Integration Tests: 3–5 cross-component flows (e.g., webhook handling, notifications)
-- E2E/UI Tests (if applicable): 3–5 critical user paths (e.g., forms, dashboards)
-- Performance/Load (if applicable): 3–4 items (e.g., concurrency, high-volume ops)
-
-## Optional Sections (include when relevant)
-
-### Security Considerations
-
-**Include when**: Features handle authentication, sensitive data, external integrations, or user permissions
-
-- Threat modeling, security controls, compliance requirements
-- Authentication and authorization patterns
-- Data protection and privacy considerations
-
-### Performance & Scalability
-
-**Include when**: Features have specific performance requirements, high load expectations, or scaling concerns
-
-- Target metrics and measurement strategies
-- Scaling approaches (horizontal/vertical)
-- Caching strategies and optimization techniques
-
-### Migration Strategy
-
-**REQUIRED**: Include Mermaid flowchart showing migration phases
-
-**Process**: Phase breakdown, rollback triggers, validation checkpoints
-</structured-document>
-
----
-
-## Process Instructions (NOT included in design.md)
-
-### Visual Design Guidelines
-
-**Include based on complexity**:
-
-- **Simple features**: Basic component diagram or none if trivial
-- **Complex features**: Architecture diagram, data flow diagram, ER diagram (if complex)
-- **When helpful**: State machines, component interactions, decision trees, process flows, auth flows, approval workflows, data pipelines
-
-**Mermaid Diagram Rules**:
-
-- Use only basic graph syntax with nodes and relationships
-- Exclude all styling elements (no style definitions, classDef, fill colors)
-- Avoid visual customization (backgrounds, custom CSS)
-- Example: `graph TB` → `A[Login] --> B[Dashboard]` → `B --> C[Settings]`
-- Use simple alphanumeric labels for nodes/participants; avoid parentheses, commas, slashes, quotes, and other special characters in labels.
-- Prefer short labels without punctuation, e.g., write "Nextjs React TS" instead of "Next.js (React, TypeScript)".
-
-### Quality Checklist
-
-- [ ] Requirements covered with traceability
-- [ ] Existing implementation respected
-- [ ] Steering compliant, deviations documented
-- [ ] Architecture visualized with clear diagrams
-- [ ] Components and Interfaces have Purpose, Key Features, Interface Design
-- [ ] Data models individually documented
-- [ ] Integration with existing system explained
-
-### 3. Design Document Generation & Metadata Update
-
-- Generate complete design document following structure guidelines (no omissions or placeholders)
-- Update `.kiro/specs/[feature-name]/spec.json`:
-
-```json
-{
-  "phase": "design-generated",
-  "approvals": {
-    "requirements": { "generated": true, "approved": true },
-    "design": { "generated": true, "approved": false }
-  },
-  "updated_at": "current_timestamp"
-}
-```
-
-JSON update: update via file tools, set ISO `updated_at`, merge only needed keys; avoid duplicates.
-
-Final Reminder: Do not skip discovery.
-
-### Actionable Messages
-
-If requirements are not approved and no `-y` flag:
-
-- **Error Message**: "Requirements must be approved before generating design. Run `/kiro/spec-requirements [feature-name]` to review requirements, then run `/kiro/spec-design [feature-name] -y` to proceed."
-- **Alternative**: "Or run `/kiro/spec-design [feature-name] -y` to auto-approve requirements and generate design."
-
-### Conversation Guidance
-
-After generation:
-
-- Guide user to review design narrative and visualizations
-- Suggest specific diagram additions if needed
-- Direct to run `/kiro/spec-tasks [feature-name] -y` when approved
-
-Create design document that tells complete story through clear narrative, structured components, and effective visualizations.
-
-**BEFORE FINISHING**: Verify all sections are complete, no placeholders used, and spec.json is updated.
-think deeply
+**Note**: Design approval is mandatory before proceeding to task generation.

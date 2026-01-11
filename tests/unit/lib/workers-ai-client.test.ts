@@ -126,8 +126,8 @@ describe("WorkersAiClient", () => {
           new Promise((resolve) => setTimeout(() => resolve({ response: "Too late" }), 2000)),
       );
       mockAiBinding = createMockAiBinding(timeoutMock);
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
       const client = createWorkersAiClient({
+        // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
         aiBinding: mockAiBinding,
         timeoutMs: 500,
       });

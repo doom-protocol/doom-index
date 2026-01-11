@@ -3,12 +3,13 @@ description:
 globs: *.md,*.mmd
 alwaysApply: false
 ---
+
 Rule Name: mermaid
 Description: Mermaid Diagram Syntax and Best Practices
 
 ## Syntax Pitfalls & Rules
 
-- **Parentheses/Spaces/Special Chars in Labels:** When using parentheses `()`, spaces, or special characters like `:` or `#` inside node labels (`[]`, `""`, `()`, `{}` etc.), always enclose the *entire* label text in double quotes `""`.
+- **Parentheses/Spaces/Special Chars in Labels:** When using parentheses `()`, spaces, or special characters like `:` or `#` inside node labels (`[]`, `""`, `()`, `{}` etc.), always enclose the _entire_ label text in double quotes `""`.
   - Correct (Flowchart): `A["Node text with (parentheses)"] --> B`
   - Correct (Flowchart): `Cron_Twitter["fa:fa-clock Schedule: Twitter Scrape (5m)"]`
   - Incorrect: `A[Node text with (parentheses)] --> B`
@@ -24,7 +25,7 @@ Description: Mermaid Diagram Syntax and Best Practices
 - **Layout (Flowchart):** Experiment with `graph TD/LR/etc.` directions. Use invisible links (`~~~`) sparingly to adjust layout if necessary.
 - **Styling (Flowchart):** `classDef` and `class` are useful for styling in Flowcharts. Ensure color contrast for light/dark themes.
 - **Icons & Images:**
-  - **Font Awesome (`fa:`):** Generally the **most compatible** way to add icons across different environments, *provided* the environment loads the Font Awesome CSS. Syntax: `NodeId["fa:fa-icon Label Text"]`.
+  - **Font Awesome (`fa:`):** Generally the **most compatible** way to add icons across different environments, _provided_ the environment loads the Font Awesome CSS. Syntax: `NodeId["fa:fa-icon Label Text"]`.
   - **Built-in Icons (`architecture-beta`):** This diagram type has a few built-in icons like `cloud`, `database`, `server`, `disk`, `internet`. These are reliable within `architecture-beta`. Syntax: `service myService(iconName)[Label]`.
   - **Image URLs (`@{ img: ... }` in Flowchart):** Embedding external images can work but depends on the renderer's ability to fetch and display them. Syntax: `NodeId@{ img: "URL", ... }`.
   - **Iconify/Prefixed Icons (`logos:`, `simple-icons:`, etc.):** **Use with caution.** These often require specific extensions (like `vscode-markdown-mermaid`) or environment setup (registering icon packs). They are **not guaranteed** to work universally (e.g., in standard GitHub Markdown or the Mermaid Live Editor). The `@icon` syntax (`NodeId@{ icon: "pack:name" }`) in newer Flowchart versions also falls into this category. **For broad compatibility, prefer `fa:` or basic built-in icons.**

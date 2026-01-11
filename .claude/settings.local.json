@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(mermaid-er-diagram)",
+      "Skill(ui-ux-pro-max)",
+      "Bash(python3:*)",
+      "Bash(open:*)",
+      "Bash(bun run lint)",
+      "Bash(bun run format:*)",
+      "Bash(bun run typecheck:*)",
+      "Bash(bun test:*)",
+      "Bash(bun run typecheck:chrome-ext:*)",
+      "Bash(cat:*)",
+      "Bash(bun run:*)"
+    ]
+  }
+}

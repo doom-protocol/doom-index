@@ -1,101 +1,71 @@
 <meta>
-description: Initialize a new specification with detailed project description and requirements
-argument-hint: <project-descriptions>
+description: Initialize a new specification with detailed project description
+argument-hint: <project-description>
 </meta>
 
 # Spec Initialization
 
-Initialize a new specification based on the provided project description:
+<background_information>
 
-**Project Description**: $ARGUMENTS
+- **Mission**: Initialize the first phase of spec-driven development by creating directory structure and metadata for a new specification
+- **Success Criteria**:
+  - Generate appropriate feature name from project description
+  - Create unique spec structure without conflicts
+  - Provide clear path to next phase (requirements generation)
+    </background_information>
 
-## Task: Initialize Specification Structure
+<instructions>
+## Core Task
+Generate a unique feature name from the project description ($ARGUMENTS) and initialize the specification structure.
 
-**SCOPE**: This command initializes the directory structure and metadata based on the detailed project description provided.
+## Execution Steps
 
-Tool policy: Use Cursor file tools (read_file/list_dir/glob_file_search/apply_patch/edit_file); no shell.
+1. **Check Uniqueness**: Verify `.kiro/specs/` for naming conflicts (append number suffix if needed)
+2. **Create Directory**: `.kiro/specs/[feature-name]/`
+3. **Initialize Files Using Templates**:
+   - Read `.kiro/settings/templates/specs/init.json`
+   - Read `.kiro/settings/templates/specs/requirements-init.md`
+   - Replace placeholders:
+     - `{{FEATURE_NAME}}` → generated feature name
+     - `{{TIMESTAMP}}` → current ISO 8601 timestamp
+     - `{{PROJECT_DESCRIPTION}}` → $ARGUMENTS
+   - Write `spec.json` and `requirements.md` to spec directory
 
-### 1. Generate Feature Name
+## Important Constraints
 
-Create a concise, descriptive feature name from the project description ($ARGUMENTS).
-**Check existing `.kiro/specs/` directory to ensure the generated feature name is unique. If a conflict exists, append a number suffix (e.g., feature-name-2).**
+- DO NOT generate requirements/design/tasks at this stage
+- Follow stage-by-stage development principles
+- Maintain strict phase separation
+- Only initialization is performed in this phase
+  </instructions>
 
-### 2. Create Spec Directory
+## Tool Guidance
 
-Create `.kiro/specs/[generated-feature-name]/` directory with:
+- Use **Glob** to check existing spec directories for name uniqueness
+- Use **Read** to fetch templates: `init.json` and `requirements-init.md`
+- Use **Write** to create spec.json and requirements.md after placeholder replacement
+- Perform validation before any file write operation
 
-- `spec.json` - Metadata and approval tracking
-- `requirements.md` - Lightweight template with project description
+## Output Description
 
-**Note**: design.md and tasks.md will be created by their respective commands during the development process.
+Provide output in the language specified in `spec.json` with the following structure:
 
-### 3. Initialize spec.json Metadata
+1. **Generated Feature Name**: `feature-name` format with 1-2 sentence rationale
+2. **Project Summary**: Brief summary (1 sentence)
+3. **Created Files**: Bullet list with full paths
+4. **Next Step**: Command block showing `/kiro/spec-requirements <feature-name>`
+5. **Notes**: Explain why only initialization was performed (2-3 sentences on phase separation)
 
-Write initial metadata with approval tracking:
+**Format Requirements**:
 
-```json
-{
-  "feature_name": "[generated-feature-name]",
-  "created_at": "current_timestamp",
-  "updated_at": "current_timestamp",
-  "language": "ja",
-  "phase": "initialized",
-  "approvals": {
-    "requirements": {
-      "generated": false,
-      "approved": false
-    },
-    "design": {
-      "generated": false,
-      "approved": false
-    },
-    "tasks": {
-      "generated": false,
-      "approved": false
-    }
-  },
-  "ready_for_implementation": false
-}
-```
+- Use Markdown headings (##, ###)
+- Wrap commands in code blocks
+- Keep total output concise (under 250 words)
+- Use clear, professional language per `spec.json.language`
 
-JSON update: set ISO timestamps; merge needed keys only, avoid duplicates.
+## Safety & Fallback
 
-### 4. Create Requirements Template
-
-Write requirements.md with project description:
-
-```markdown
-# Requirements Document
-
-## Project Description (Input)
-
-<what-to-build>
-
-## Requirements
-
-<!-- Will be generated in /kiro/spec-requirements phase -->
-```
-
-### 5. Update AGENTS.md Reference
-
-Add the new spec to the active specifications list with the generated feature name and a brief description.
-
-## Next Steps After Initialization
-
-Follow the strict spec-driven development workflow:
-
-1. **`/kiro/spec-requirements [feature-name]`** - Create and generate requirements.md
-2. **`/kiro/spec-design [feature-name]`** - Create and generate design.md (requires approved requirements)
-3. **`/kiro/spec-tasks [feature-name]`** - Create and generate tasks.md (requires approved design)
-
-**Important**: Each phase creates its respective file and requires approval before proceeding to the next phase.
-
-## Output Format
-
-After initialization, provide:
-
-1. Generated feature name and rationale
-2. Brief project summary
-3. Created spec.json path
-4. **Clear next step**: `/kiro/spec-requirements [feature-name]`
-5. Explanation that only spec.json was created, following stage-by-stage development principles
+- **Ambiguous Feature Name**: If feature name generation is unclear, propose 2-3 options and ask user to select
+- **Template Missing**: If template files don't exist in `.kiro/settings/templates/specs/`, report error with specific missing file path and suggest checking repository setup
+- **Directory Conflict**: If feature name already exists, append numeric suffix (e.g., `feature-name-2`) and notify user of automatic conflict resolution
+- **Write Failure**: Report error with specific path and suggest checking permissions or disk space

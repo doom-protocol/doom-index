@@ -1,207 +1,99 @@
 <meta>
 description: Interactive technical design quality review and validation
-argument-hint: <feature-name>
+argument-hint: <feature-name:$1>
 </meta>
 
 # Technical Design Validation
 
-Interactive design quality review for feature: **[feature-name]**
+<background_information>
 
-## Context Loading
+- **Mission**: Conduct interactive quality review of technical design to ensure readiness for implementation
+- **Success Criteria**:
+  - Critical issues identified (maximum 3 most important concerns)
+  - Balanced assessment with strengths recognized
+  - Clear GO/NO-GO decision with rationale
+  - Actionable feedback for improvements if needed
+    </background_information>
 
-### Prerequisites Validation
+<instructions>
+## Core Task
+Interactive design quality review for feature **$1** based on approved requirements and design document.
 
-- Design document must exist: `.kiro/specs/[feature-name]/design.md`
-- If not exist, stop with message: "Run `/kiro/spec-design [feature-name]` first to generate design document"
+## Execution Steps
 
-### Review Context
+1. **Load Context**:
+   - Read `.kiro/specs/$1/spec.json` for language and metadata
+   - Read `.kiro/specs/$1/requirements.md` for requirements
+   - Read `.kiro/specs/$1/design.md` for design document
+   - **Load ALL steering context**: Read entire `.kiro/steering/` directory including:
+     - Default files: `structure.md`, `tech.md`, `product.md`
+     - All custom steering files (regardless of mode settings)
+     - This provides complete project memory and context
 
-- Spec metadata: `.kiro/specs/[feature-name]/spec.json`
-- Requirements document: `.kiro/specs/[feature-name]/requirements.md`
-- Design document: `.kiro/specs/[feature-name]/design.md`
-- Core steering documents:
-  - Architecture: @.kiro/steering/structure.md
-  - Technology: @.kiro/steering/tech.md
-  - Product context: @.kiro/steering/product.md
-- Custom steering: All additional `.md` files in `.kiro/steering/` directory
+2. **Read Review Guidelines**:
+   - Read `.kiro/settings/rules/design-review.md` for review criteria and process
 
-## Task: Interactive Design Quality Review
+3. **Execute Design Review**:
+   - Follow design-review.md process: Analysis → Critical Issues → Strengths → GO/NO-GO
+   - Limit to 3 most important concerns
+   - Engage interactively with user
+   - Use language specified in spec.json for output
 
-### Review Methodology
+4. **Provide Decision and Next Steps**:
+   - Clear GO/NO-GO decision with rationale
+   - Guide user on proceeding based on decision
 
-**Focus**: Critical issues only - limit to 3 most important concerns
-**Format**: Interactive dialogue with immediate feedback and improvement suggestions
-**Outcome**: GO/NO-GO decision with clear rationale
+## Important Constraints
 
-### Core Review Criteria
+- **Quality assurance, not perfection seeking**: Accept acceptable risk
+- **Critical focus only**: Maximum 3 issues, only those significantly impacting success
+- **Interactive approach**: Engage in dialogue, not one-way evaluation
+- **Balanced assessment**: Recognize both strengths and weaknesses
+- **Actionable feedback**: All suggestions must be implementable
+  </instructions>
 
-#### 1. Existing Architecture Alignment (Critical)
+## Tool Guidance
 
-**Evaluation Points**:
+- **Read first**: Load all context (spec, steering, rules) before review
+- **Grep if needed**: Search codebase for pattern validation or integration checks
+- **Interactive**: Engage with user throughout the review process
 
-- Integration with existing system boundaries and layers
-- Consistency with established architectural patterns
-- Proper dependency direction and coupling management
-- Alignment with current module organization and responsibilities
+## Output Description
 
-**Review Questions**:
+Provide output in the language specified in spec.json with:
 
-- Does this design respect existing architectural boundaries?
-- Are new components properly integrated with existing systems?
-- Does the design follow established patterns and conventions?
+1. **Review Summary**: Brief overview (2-3 sentences) of design quality and readiness
+2. **Critical Issues**: Maximum 3, following design-review.md format
+3. **Design Strengths**: 1-2 positive aspects
+4. **Final Assessment**: GO/NO-GO decision with rationale and next steps
 
-#### 2. Design Consistency & Standards
+**Format Requirements**:
 
-**Evaluation Points**:
+- Use Markdown headings for clarity
+- Follow design-review.md output format
+- Keep summary concise
 
-- Adherence to project naming conventions and code standards
-- Consistent error handling and logging strategies
-- Uniform approach to configuration and dependency management
-- Alignment with established data modeling patterns
+## Safety & Fallback
 
-**Review Questions**:
+### Error Scenarios
 
-- Is the design consistent with existing code standards?
-- Are error handling and configuration approaches unified?
-- Does naming and structure follow project conventions?
+- **Missing Design**: If design.md doesn't exist, stop with message: "Run `/kiro/spec-design $1` first to generate design document"
+- **Design Not Generated**: If design phase not marked as generated in spec.json, warn but proceed with review
+- **Empty Steering Directory**: Warn user that project context is missing and may affect review quality
+- **Language Undefined**: Default to English (`en`) if spec.json doesn't specify language
 
-#### 3. Extensibility & Maintainability
+### Next Phase: Task Generation
 
-**Evaluation Points**:
+**If Design Passes Validation (GO Decision)**:
 
-- Design flexibility for future requirements changes
-- Clear separation of concerns and single responsibility principle
-- Testability and debugging considerations
-- Documentation and code clarity requirements
+- Review feedback and apply changes if needed
+- Run `/kiro/spec-tasks $1` to generate implementation tasks
+- Or `/kiro/spec-tasks $1 -y` to auto-approve and proceed directly
 
-**Review Questions**:
+**If Design Needs Revision (NO-GO Decision)**:
 
-- How well does this design handle future changes?
-- Are responsibilities clearly separated and testable?
-- Is the design complexity appropriate for the requirements?
+- Address critical issues identified
+- Re-run `/kiro/spec-design $1` with improvements
+- Re-validate with `/kiro/validate-design $1`
 
-#### 4. Type Safety & Interface Design
-
-**Evaluation Points** (for TypeScript projects):
-
-- Proper type definitions and interface contracts
-- Avoidance of `any` types and unsafe patterns
-- Clear API boundaries and data structure definitions
-- Input validation and error handling coverage
-
-**Review Questions**:
-
-- Are types properly defined and interfaces clear?
-- Is the API design robust and well-defined?
-- Are edge cases and error conditions handled appropriately?
-
-### Interactive Review Process
-
-#### Step 1: Design Analysis
-
-Thoroughly analyze the design document against all review criteria, identifying the most critical issues that could impact:
-
-- System integration and compatibility
-- Long-term maintainability
-- Implementation complexity and risks
-- Requirements fulfillment accuracy
-
-#### Step 2: Critical Issues Identification
-
-**Limit to 3 most important concerns maximum**. For each critical issue:
-
-**Issue Format**:
-
-```
-🔴 **Critical Issue [1-3]**: [Brief title]
-**Concern**: [Specific problem description]
-**Impact**: [Why this matters for the project]
-**Suggestion**: [Concrete improvement recommendation]
-```
-
-#### Step 3: Design Strengths Recognition
-
-Acknowledge 1-2 strong aspects of the design to maintain balanced feedback.
-
-#### Step 4: GO/NO-GO Decision
-
-**GO Criteria**:
-
-- No critical architectural misalignment
-- Requirements adequately addressed
-- Implementation path is clear and reasonable
-- Risks are acceptable and manageable
-
-**NO-GO Criteria**:
-
-- Fundamental architectural conflicts
-- Critical requirements not addressed
-- Implementation approach has high failure risk
-- Design complexity disproportionate to requirements
-
-### Output Format
-
-Generate review in the language specified in spec.json (check `.kiro/specs/[feature-name]/spec.json` for "language" field):
-
-#### Design Review Summary
-
-Brief overview of the design's overall quality and readiness.
-
-#### Critical Issues (Maximum 3)
-
-For each issue identified:
-
-- **Issue**: Clear problem statement
-- **Impact**: Why it matters
-- **Recommendation**: Specific improvement suggestion
-
-#### Design Strengths
-
-1-2 positive aspects worth highlighting.
-
-#### Final Assessment
-
-**Decision**: GO / NO-GO
-**Rationale**: Clear reasoning for the decision
-**Next Steps**: What should happen next
-
-#### Interactive Discussion
-
-Engage in dialogue about:
-
-- Designer's perspective on identified issues
-- Alternative approaches or trade-offs
-- Clarification of design decisions
-- Agreement on necessary changes (if any)
-
-## Review Guidelines
-
-1. **Critical Focus**: Only flag issues that significantly impact success
-2. **Constructive Tone**: Provide solutions, not just criticism
-3. **Interactive Approach**: Engage in dialogue rather than one-way evaluation
-4. **Balanced Assessment**: Recognize both strengths and weaknesses
-5. **Clear Decision**: Make definitive GO/NO-GO recommendation
-6. **Actionable Feedback**: Ensure all suggestions are implementable
-
-## Instructions
-
-1. **Load all context documents** - Understand full project scope
-2. **Analyze design thoroughly** - Review against all criteria
-3. **Identify critical issues only** - Focus on most important problems
-4. **Engage interactively** - Discuss findings with user
-5. **Make clear decision** - Provide definitive GO/NO-GO
-6. **Guide next steps** - Clear direction for proceeding
-
-**Remember**: This is quality assurance, not perfection seeking. The goal is ensuring the design is solid enough to proceed to implementation with acceptable risk.
-
----
-
-## Next Phase: Task Generation
-
-After design validation:
-
-**If design passes validation (GO decision):**
-Run `/kiro/spec-tasks [feature-name]` to generate implementation tasks
-
-**Auto-approve and proceed:**
-Run `/kiro/spec-tasks [feature-name] -y` to auto-approve requirements and design, then generate tasks directly
+**Note**: Design validation is recommended but optional. Quality review helps catch issues early.

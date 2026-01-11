@@ -29,6 +29,11 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
   const entranceElapsedRef = useRef(0);
   const isEntranceActiveRef = useRef(true);
 
+  const setHover = (nextHovered: boolean) => {
+    setIsHovered(nextHovered);
+    onHoverChange?.(nextHovered);
+  };
+
   useEffect(() => {
     basePositionRef.current = position;
     if (groupRef.current) {
@@ -140,12 +145,6 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
     };
   }, [size, PAPER_ASPECT_RATIO]);
 
-  useEffect(() => {
-    if (onHoverChange) {
-      onHoverChange(isHovered);
-    }
-  }, [isHovered, onHoverChange]);
-
   return (
     <group ref={groupRef} position={position}>
       <Html
@@ -177,8 +176,8 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
               }
             : {}),
           }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
           onWheel={(e) => {
             // Stop event propagation to prioritize mouse wheel scrolling on PC
             if (!isMobile) {
@@ -189,11 +188,11 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
             {
               onTouchStart: () => {
                 // Set hover state on touch start (to enable scrolling)
-                setIsHovered(true);
+                setHover(true);
               },
               onTouchEnd: () => {
                 // Clear hover state with slight delay on touch end
-                setTimeout(() => setIsHovered(false), 100);
+                setTimeout(() => setHover(false), 100);
               },
             }
           : {})}

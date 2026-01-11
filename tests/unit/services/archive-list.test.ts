@@ -229,9 +229,9 @@ describe("Archive List Service", () => {
 
   describe("listImages", () => {
     it("should list images with default limit", async () => {
-      // @ts-expect-error - Mock D1 database for testing
       const service = createPaintingsService({
         r2Bucket: bucket,
+        // @ts-expect-error - Mock D1 database for testing
         d1Binding: mockD1,
       });
       const result = await service.listImages({});

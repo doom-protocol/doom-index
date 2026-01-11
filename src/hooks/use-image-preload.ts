@@ -1,5 +1,5 @@
 import { logger } from "@/utils/logger";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface UseImagePreloadResult {
   loadedCount: number;
@@ -12,41 +12,43 @@ interface UseImagePreloadResult {
  * @returns Object with loadedCount and isComplete status
  */
 export function useImagePreload(imageUrls: string[]): UseImagePreloadResult {
-  const [loadedCount, setLoadedCount] = useState(0);
-  const [isComplete, setIsComplete] = useState(false);
+  const [, forceRender] = useState(0);
   const imageRefsRef = useRef<HTMLImageElement[]>([]);
-  const urlsRef = useRef<string[]>([]);
+  const progressRef = useRef<{ key: string; loadedCount: number; isComplete: boolean } | null>(null);
+
+  const key = useMemo(() => JSON.stringify(imageUrls), [imageUrls]);
+
+  // When URLs change, return the new key's default progress without needing setState.
+  const defaultProgress: UseImagePreloadResult = {
+    loadedCount: 0,
+    isComplete: imageUrls.length === 0,
+  };
+  const currentProgress =
+    progressRef.current && progressRef.current.key === key ? progressRef.current : { key, ...defaultProgress };
 
   useEffect(() => {
-    // Reset state when URLs change
-    if (JSON.stringify(urlsRef.current) !== JSON.stringify(imageUrls)) {
-      setLoadedCount(0);
-      setIsComplete(false);
-      // Clean up previous images
-      imageRefsRef.current.forEach((img) => {
-        img.onload = null;
-        img.onerror = null;
-      });
-      imageRefsRef.current = [];
-    }
-
-    urlsRef.current = imageUrls;
+    // Clean up previous images
+    imageRefsRef.current.forEach((img) => {
+      img.onload = null;
+      img.onerror = null;
+    });
+    imageRefsRef.current = [];
 
     if (imageUrls.length === 0) {
-      setIsComplete(true);
       return;
     }
 
     let completedCount = 0;
     const images: HTMLImageElement[] = [];
+    let isActive = true;
 
     const handleLoad = (url: string) => () => {
       logger.debug("image.preload.loaded", { url });
       completedCount++;
-      setLoadedCount(completedCount);
-      if (completedCount === imageUrls.length) {
-        setIsComplete(true);
-      }
+      if (!isActive) return;
+      const isComplete = completedCount === imageUrls.length;
+      progressRef.current = { key, loadedCount: completedCount, isComplete };
+      forceRender((v) => v + 1);
     };
 
     const handleError = (url: string) => (event: Event | string) => {
@@ -63,10 +65,10 @@ export function useImagePreload(imageUrls: string[]): UseImagePreloadResult {
         : { url, event: String(event) };
       logger.debug("image.preload.failed", errorDetails);
       completedCount++;
-      setLoadedCount(completedCount);
-      if (completedCount === imageUrls.length) {
-        setIsComplete(true);
-      }
+      if (!isActive) return;
+      const isComplete = completedCount === imageUrls.length;
+      progressRef.current = { key, loadedCount: completedCount, isComplete };
+      forceRender((v) => v + 1);
     };
 
     // Preload all images
@@ -86,13 +88,14 @@ export function useImagePreload(imageUrls: string[]): UseImagePreloadResult {
     imageRefsRef.current = images;
 
     return () => {
+      isActive = false;
       // Cleanup: remove event listeners
       images.forEach((img) => {
         img.onload = null;
         img.onerror = null;
       });
     };
-  }, [imageUrls]);
+  }, [imageUrls, key]);
 
-  return { loadedCount, isComplete };
+  return { loadedCount: currentProgress.loadedCount, isComplete: currentProgress.isComplete };
 }
