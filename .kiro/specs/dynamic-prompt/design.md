@@ -432,7 +432,7 @@ export const tokenContexts = sqliteTable(
     shortContext: text("short_context").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
-  table => [index("idx_token_contexts_symbol_chain").on(table.symbol, table.chain)],
+  (table) => [index("idx_token_contexts_symbol_chain").on(table.symbol, table.chain)],
 );
 
 export type TokenContextRow = typeof tokenContexts.$inferSelect;

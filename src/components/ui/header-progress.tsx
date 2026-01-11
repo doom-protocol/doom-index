@@ -59,8 +59,10 @@ export const HeaderProgress: FC = () => {
       const isDataFresh = timeSinceLastUpdate < INTERVAL_MS;
 
       if (!isDataFresh) {
-        refetchLatestPainting().catch(error => {
-          logger.error("header-progress.refetchLatestPainting.failed", { error });
+        refetchLatestPainting().catch((error) => {
+          logger.error("header-progress.refetchLatestPainting.failed", {
+            error,
+          });
         });
       } else {
         logger.debug("header-progress.refetch.skipped", {

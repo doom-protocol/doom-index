@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { FrameModel, PaintingGroup, type PaintingContentProps } from "@/components/ui/framed-painting-base";
 import type { Painting } from "@/types/paintings";
 import {
@@ -13,7 +12,7 @@ import { useSafeTexture } from "@/hooks/use-safe-texture";
 import { getDevicePixelRatio, getTransformedTextureUrl } from "@/lib/cloudflare-image";
 import { logger } from "@/utils/logger";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
+import { useEffect, useMemo, useRef, type FC } from "react";
 import {
   AdditiveBlending,
   EdgesGeometry,
@@ -61,6 +60,8 @@ const PaintingContent: FC<PaintingContentProps> = ({
   const pulseGroupRef = useRef<Group>(null);
   const pulseFillRef = useRef<Mesh>(null);
   const pulseOutlineRef = useRef<LineSegments>(null);
+  const currentMaterialRef = useRef<MeshStandardMaterial>(null);
+  const previousMaterialRef = useRef<MeshStandardMaterial>(null);
   const pulseElapsedRef = useRef(0);
   const isPulseActiveRef = useRef(false);
 
@@ -70,13 +71,13 @@ const PaintingContent: FC<PaintingContentProps> = ({
 
   const texture = useSafeTexture(
     transformedTextureUrl,
-    loadedTexture => {
+    (loadedTexture) => {
       loadedTexture.colorSpace = SRGBColorSpace;
       loadedTexture.anisotropy = 4;
       loadedTexture.needsUpdate = true;
     },
     {
-      onError: error => {
+      onError: (error) => {
         logger.error("Failed to load archive painting texture", {
           url: transformedTextureUrl,
           originalUrl: thumbnailUrl,
@@ -87,136 +88,133 @@ const PaintingContent: FC<PaintingContentProps> = ({
     },
   );
 
-  const [currentTexture, setCurrentTexture] = useState<Texture | null>(texture);
-  const [previousTexture, setPreviousTexture] = useState<Texture | null>(null);
-  const [isTransitionActive, setIsTransitionActive] = useState(false);
-  const previousThumbnailUrlRef = useRef<string | null>(thumbnailUrl);
-  const transitionElapsedRef = useRef(0);
+  const currentTextureRef = useRef<Texture | null>(null);
   const previousTextureRef = useRef<Texture | null>(null);
-  const currentTextureRef = useRef<Texture | null>(texture);
-  const pendingUrlRef = useRef<string | null>(null);
+  const transitionElapsedRef = useRef(0);
+  const isTransitionActiveRef = useRef(false);
+  const currentPlaneRef = useRef<{ width: number; height: number }>({ width: 1, height: 1 });
+  const previousPlaneRef = useRef<{ width: number; height: number }>({ width: 1, height: 1 });
 
-  useLayoutEffect(() => {
-    if (previousThumbnailUrlRef.current !== thumbnailUrl) {
-      pendingUrlRef.current = thumbnailUrl;
-      previousThumbnailUrlRef.current = thumbnailUrl;
-
-      if (texture && currentTextureRef.current && texture !== currentTextureRef.current) {
-        const oldTexture = currentTextureRef.current;
-        previousTextureRef.current = oldTexture;
-        setPreviousTexture(oldTexture);
-        currentTextureRef.current = texture;
-        setCurrentTexture(texture);
-        transitionElapsedRef.current = 0;
-        setIsTransitionActive(true);
-        pendingUrlRef.current = null;
-      }
-    }
-  }, [thumbnailUrl, texture]);
-
-  useEffect(() => {
-    if (!texture?.image) {
-      return;
-    }
-
-    const image = texture.image as HTMLImageElement;
-    const imageSrc = image.src || image.currentSrc || "";
-
-    if (pendingUrlRef.current) {
-      if (imageSrc && imageSrc.includes(pendingUrlRef.current)) {
-        const oldTexture = currentTextureRef.current;
-        if (oldTexture && oldTexture !== texture) {
-          previousTextureRef.current = oldTexture;
-          setPreviousTexture(oldTexture);
-        }
-
-        currentTextureRef.current = texture;
-        setCurrentTexture(texture);
-        transitionElapsedRef.current = 0;
-        setIsTransitionActive(true);
-        pendingUrlRef.current = null;
-        return;
-      }
-    }
-
-    if (currentTextureRef.current !== texture && texture.image) {
-      const currentImage = currentTextureRef.current?.image as HTMLImageElement | undefined;
-      const currentImageSrc = currentImage?.src || currentImage?.currentSrc || "";
-
-      if (imageSrc && imageSrc !== currentImageSrc) {
-        const oldTexture = currentTextureRef.current;
-        if (oldTexture) {
-          previousTextureRef.current = oldTexture;
-          setPreviousTexture(oldTexture);
-        }
-
-        currentTextureRef.current = texture;
-        setCurrentTexture(texture);
-        transitionElapsedRef.current = 0;
-        setIsTransitionActive(true);
-      }
-    }
-  }, [texture]);
-
-  const activeTexture = currentTexture || texture;
-  const [planeWidth, planeHeight] = calculatePlaneDimensions(activeTexture, FRAME_INNER_WIDTH, FRAME_INNER_HEIGHT);
-  const previousPlaneDimensions = previousTexture
-    ? calculatePlaneDimensions(previousTexture, FRAME_INNER_WIDTH, FRAME_INNER_HEIGHT)
-    : [planeWidth, planeHeight];
-  const [previousPlaneWidth, previousPlaneHeight] = previousPlaneDimensions;
-
-  const pulseOutlineGeometry = React.useMemo(() => {
-    const plane = new PlaneGeometry(planeWidth, planeHeight);
+  const pulseOutlineGeometry = useMemo(() => {
+    const plane = new PlaneGeometry(1, 1);
     const edges = new EdgesGeometry(plane, 1);
     plane.dispose();
     return edges;
-  }, [planeWidth, planeHeight]);
+  }, []);
 
   useEffect(() => {
     return () => {
       pulseOutlineGeometry.dispose();
-    };
-  }, [pulseOutlineGeometry]);
-
-  useEffect(() => {
-    return () => {
       if (previousTextureRef.current) {
         previousTextureRef.current.dispose();
-      }
-      if (currentTexture && currentTexture !== texture) {
-        currentTexture.dispose();
+        previousTextureRef.current = null;
       }
     };
-  }, [currentTexture, texture]);
+  }, [pulseOutlineGeometry]);
 
   useFrame(({ invalidate }, delta) => {
     let needsInvalidate = false;
 
-    if (isTransitionActive) {
+    const nextTexture = texture as Texture | null;
+    if (nextTexture?.image) {
+      // Initialize or begin transition when the texture instance changes.
+      if (!currentTextureRef.current) {
+        currentTextureRef.current = nextTexture;
+
+        const [w, h] = calculatePlaneDimensions(nextTexture, FRAME_INNER_WIDTH, FRAME_INNER_HEIGHT);
+        currentPlaneRef.current = { width: w, height: h };
+
+        if (paintingMeshRef.current) {
+          paintingMeshRef.current.scale.set(w, h, 1);
+        }
+
+        const material = currentMaterialRef.current;
+        if (material) {
+          material.map = nextTexture;
+          material.transparent = false;
+          material.opacity = 1;
+          material.needsUpdate = true;
+        }
+
+        if (previousPaintingMeshRef.current) {
+          previousPaintingMeshRef.current.visible = false;
+        }
+      } else if (currentTextureRef.current !== nextTexture && !isTransitionActiveRef.current) {
+        const oldTexture = currentTextureRef.current;
+        previousTextureRef.current = oldTexture;
+        currentTextureRef.current = nextTexture;
+
+        const [currentW, currentH] = calculatePlaneDimensions(nextTexture, FRAME_INNER_WIDTH, FRAME_INNER_HEIGHT);
+        const [previousW, previousH] = calculatePlaneDimensions(oldTexture, FRAME_INNER_WIDTH, FRAME_INNER_HEIGHT);
+        currentPlaneRef.current = { width: currentW, height: currentH };
+        previousPlaneRef.current = { width: previousW, height: previousH };
+
+        if (paintingMeshRef.current) {
+          paintingMeshRef.current.scale.set(currentW, currentH, 1);
+        }
+        if (previousPaintingMeshRef.current) {
+          previousPaintingMeshRef.current.visible = true;
+          previousPaintingMeshRef.current.scale.set(previousW, previousH, 1);
+        }
+
+        const currentMaterial = currentMaterialRef.current;
+        const prevMaterial = previousMaterialRef.current;
+        if (currentMaterial) {
+          currentMaterial.map = nextTexture;
+          currentMaterial.transparent = true;
+          currentMaterial.opacity = 0;
+          currentMaterial.needsUpdate = true;
+        }
+        if (prevMaterial) {
+          prevMaterial.map = oldTexture;
+          prevMaterial.transparent = true;
+          prevMaterial.opacity = 1;
+          prevMaterial.needsUpdate = true;
+        }
+
+        transitionElapsedRef.current = 0;
+        isTransitionActiveRef.current = true;
+        needsInvalidate = true;
+      }
+    }
+
+    if (isTransitionActiveRef.current) {
       transitionElapsedRef.current += delta;
       const progress = Math.min(transitionElapsedRef.current / TRANSITION_DURATION, 1);
       const easedProgress = 1 - Math.pow(1 - progress, 3);
 
-      if (previousPaintingMeshRef.current) {
-        const opacity = 1 - easedProgress;
-        const material = previousPaintingMeshRef.current.material as MeshStandardMaterial;
-        if (material) {
-          material.opacity = opacity;
-        }
+      const currentMaterial = currentMaterialRef.current;
+      const prevMaterial = previousMaterialRef.current;
+      if (currentMaterial) {
+        currentMaterial.opacity = easedProgress;
       }
-
-      if (paintingMeshRef.current) {
-        const opacity = easedProgress;
-        const material = paintingMeshRef.current.material as MeshStandardMaterial;
-        if (material) {
-          material.opacity = opacity;
-        }
+      if (prevMaterial) {
+        prevMaterial.opacity = 1 - easedProgress;
       }
 
       if (progress >= 1) {
-        setIsTransitionActive(false);
-        setPreviousTexture(null);
+        isTransitionActiveRef.current = false;
+        transitionElapsedRef.current = 0;
+
+        const textureToDispose = previousTextureRef.current;
         previousTextureRef.current = null;
+
+        if (previousPaintingMeshRef.current) {
+          previousPaintingMeshRef.current.visible = false;
+        }
+        if (prevMaterial) {
+          prevMaterial.map = null;
+          prevMaterial.opacity = 0;
+        }
+        if (currentMaterial) {
+          currentMaterial.transparent = false;
+          currentMaterial.opacity = 1;
+        }
+
+        // Preserve existing behavior: dispose the outgoing texture after transition completes.
+        if (textureToDispose) {
+          textureToDispose.dispose();
+        }
       }
 
       needsInvalidate = true;
@@ -228,8 +226,9 @@ const PaintingContent: FC<PaintingContentProps> = ({
       const easedProgress = 1 - Math.pow(1 - progress, 2);
 
       if (pulseGroupRef.current) {
-        const scale = 1 + (PULSE_MAX_SCALE - 1) * easedProgress;
-        pulseGroupRef.current.scale.set(scale, scale, scale);
+        const { width, height } = currentPlaneRef.current;
+        const scaleFactor = 1 + (PULSE_MAX_SCALE - 1) * easedProgress;
+        pulseGroupRef.current.scale.set(width * scaleFactor, height * scaleFactor, 1);
       }
 
       if (pulseFillRef.current) {
@@ -254,6 +253,9 @@ const PaintingContent: FC<PaintingContentProps> = ({
       }
 
       needsInvalidate = true;
+    } else if (pulseGroupRef.current) {
+      const { width, height } = currentPlaneRef.current;
+      pulseGroupRef.current.scale.set(width, height, 1);
     }
 
     if (needsInvalidate) {
@@ -267,29 +269,33 @@ const PaintingContent: FC<PaintingContentProps> = ({
       isPulseActiveRef.current = true;
       pulseElapsedRef.current = 0;
       pulseGroupRef.current.visible = true;
-      pulseGroupRef.current.scale.set(1, 1, 1);
+      const { width, height } = currentPlaneRef.current;
+      pulseGroupRef.current.scale.set(width, height, 1);
     }
     return result;
   };
 
-  const displayTexture = currentTexture || texture;
-
   return (
     <>
-      {previousTexture && (
-        <mesh ref={previousPaintingMeshRef} position={[0, 0, -0.026]} castShadow={false} receiveShadow={false}>
-          <planeGeometry args={[previousPlaneWidth, previousPlaneHeight]} />
-          <meshStandardMaterial
-            map={previousTexture}
-            roughness={PAINTING_MATERIAL_ROUGHNESS}
-            metalness={PAINTING_MATERIAL_METALNESS}
-            emissive="#ffffff"
-            emissiveIntensity={0.015}
-            transparent
-            opacity={1}
-          />
-        </mesh>
-      )}
+      <mesh
+        ref={previousPaintingMeshRef}
+        position={[0, 0, -0.026]}
+        castShadow={false}
+        receiveShadow={false}
+        visible={false}
+      >
+        <planeGeometry args={[1, 1]} />
+        <meshStandardMaterial
+          ref={previousMaterialRef}
+          map={null}
+          roughness={PAINTING_MATERIAL_ROUGHNESS}
+          metalness={PAINTING_MATERIAL_METALNESS}
+          emissive="#ffffff"
+          emissiveIntensity={0.015}
+          transparent
+          opacity={0}
+        />
+      </mesh>
 
       <mesh
         ref={paintingMeshRef}
@@ -303,40 +309,33 @@ const PaintingContent: FC<PaintingContentProps> = ({
         onPointerOut={onPointerCancel}
         onPointerCancel={onPointerCancel}
       >
-        <planeGeometry args={[planeWidth, planeHeight]} />
+        <planeGeometry args={[1, 1]} />
         <meshStandardMaterial
-          map={displayTexture}
+          ref={currentMaterialRef}
+          map={texture as Texture}
           roughness={PAINTING_MATERIAL_ROUGHNESS}
           metalness={PAINTING_MATERIAL_METALNESS}
           emissive="#ffffff"
           emissiveIntensity={0.015}
-          transparent={isTransitionActive}
-          opacity={isTransitionActive ? 0 : 1}
+          transparent
+          opacity={1}
         />
       </mesh>
 
       <group ref={pulseGroupRef} position={[0, 0, -0.024]} visible={false}>
-        {pulseOutlineGeometry && (
-          <>
-            <mesh ref={pulseFillRef} geometry={pulseOutlineGeometry}>
-              <meshBasicMaterial
-                color="#ffffff"
-                transparent
-                opacity={INITIAL_PULSE_FILL_OPACITY}
-                blending={AdditiveBlending}
-                depthWrite={false}
-              />
-            </mesh>
-            <lineSegments ref={pulseOutlineRef} geometry={pulseOutlineGeometry}>
-              <lineBasicMaterial
-                color="#ffffff"
-                transparent
-                opacity={INITIAL_PULSE_OUTLINE_OPACITY}
-                depthWrite={false}
-              />
-            </lineSegments>
-          </>
-        )}
+        <mesh ref={pulseFillRef}>
+          <planeGeometry args={[1, 1]} />
+          <meshBasicMaterial
+            color="#ffffff"
+            transparent
+            opacity={INITIAL_PULSE_FILL_OPACITY}
+            blending={AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+        <lineSegments ref={pulseOutlineRef} geometry={pulseOutlineGeometry}>
+          <lineBasicMaterial color="#ffffff" transparent opacity={INITIAL_PULSE_OUTLINE_OPACITY} depthWrite={false} />
+        </lineSegments>
       </group>
     </>
   );
@@ -388,7 +387,7 @@ export const ArchiveFramedPainting: FC<ArchiveFramedPaintingProps> = ({
       hasPointerMovedRef,
       activePointerIdRef,
       resetPointerState,
-      e => {
+      (e) => {
         if (onPointerClick) {
           onPointerClick(item, e);
         }

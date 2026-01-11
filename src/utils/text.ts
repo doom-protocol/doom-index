@@ -23,12 +23,15 @@ import { type Result, err, ok } from "neverthrow";
  * // => { charBased: 3, wordBased: 3 }
  * ```
  */
-export function estimateTokenCount(text: string): { charBased: number; wordBased: number } {
+export function estimateTokenCount(text: string): {
+  charBased: number;
+  wordBased: number;
+} {
   const charCount = text.length;
   const wordCount = text
     .trim()
     .split(/\s+/)
-    .filter(w => w.length > 0).length;
+    .filter((w) => w.length > 0).length;
   // 1 token ≈ 4 characters (English)
   // 1 token ≈ 0.75 words (English)
   return {

@@ -10,7 +10,11 @@ export function stableStringify(value: unknown): string {
   if (Array.isArray(value)) {
     return `[${value.map(stableStringify).join(",")}]`;
   }
-  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+    a < b ? -1
+    : a > b ? 1
+    : 0,
+  );
   return `{${entries.map(([key, val]) => `${JSON.stringify(key)}:${stableStringify(val)}`).join(",")}}`;
 }
 
@@ -18,7 +22,7 @@ async function sha256Hex(input: string): Promise<string> {
   const data = encoder.encode(input);
   const digest = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(digest))
-    .map(byte => byte.toString(16).padStart(2, "0"))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
 }
 
@@ -37,7 +41,11 @@ const quantize = (value: number): number => {
 
 export async function hashVisualParams(params: VisualParams): Promise<string> {
   const serialized = Object.entries(params)
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .sort(([a], [b]) =>
+      a < b ? -1
+      : a > b ? 1
+      : 0,
+    )
     .map(([key, value]) => {
       if (typeof value === "number") {
         return `${key}:${quantize(value).toFixed(QUANTIZE_DECIMALS)}`;

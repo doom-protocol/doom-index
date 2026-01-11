@@ -91,11 +91,15 @@ export function useSolanaWallet(): UseSolanaWalletResult {
       return nt.ok(true);
     }
 
-    logger.info("wallet.connection.starting", { walletName: wallet.wallet.adapter.name });
+    logger.info("wallet.connection.starting", {
+      walletName: wallet.wallet.adapter.name,
+    });
 
     try {
       await wallet.connect();
-      logger.info("wallet.connection.success", { walletName: wallet.wallet.adapter.name });
+      logger.info("wallet.connection.success", {
+        walletName: wallet.wallet.adapter.name,
+      });
       toast.success("Wallet connected successfully");
       return nt.ok(true);
     } catch (error) {

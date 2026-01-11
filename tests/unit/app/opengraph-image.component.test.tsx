@@ -295,7 +295,9 @@ describe("OGP Image Generation Components", () => {
     test("should render different content based on fallback state", () => {
       const ConditionalRender = ({ useFallback }: { useFallback: boolean }) => (
         <div data-testid="conditional-content">
-          {useFallback ? <span>Fallback Image</span> : <span>Actual Image</span>}
+          {useFallback ?
+            <span>Fallback Image</span>
+          : <span>Actual Image</span>}
         </div>
       );
 

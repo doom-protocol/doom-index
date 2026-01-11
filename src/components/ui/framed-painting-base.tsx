@@ -59,11 +59,11 @@ export const PaintingGroup = React.forwardRef<Group, PaintingGroupProps>(({ posi
     const opacity = progress;
 
     // Apply opacity to all children meshes
-    internalRef.current.traverse(child => {
+    internalRef.current.traverse((child) => {
       if (child instanceof Mesh && child.material) {
         const material = child.material;
         if (Array.isArray(material)) {
-          material.forEach(mat => {
+          material.forEach((mat) => {
             if (mat instanceof MeshStandardMaterial || mat instanceof MeshBasicMaterial) {
               mat.transparent = true;
               mat.opacity = opacity;
@@ -79,11 +79,11 @@ export const PaintingGroup = React.forwardRef<Group, PaintingGroupProps>(({ posi
     if (progress >= 1) {
       isEntranceActiveRef.current = false;
       // Reset transparency after animation
-      internalRef.current.traverse(child => {
+      internalRef.current.traverse((child) => {
         if (child instanceof Mesh && child.material) {
           const material = child.material;
           if (Array.isArray(material)) {
-            material.forEach(mat => {
+            material.forEach((mat) => {
               if (mat instanceof MeshStandardMaterial || mat instanceof MeshBasicMaterial) {
                 mat.transparent = false;
                 mat.opacity = 1;

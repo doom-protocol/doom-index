@@ -67,7 +67,7 @@ function updateReactImports(filePath: string): boolean {
   const usedReactTypes = new Set<string>();
   for (const [reactType, imports] of Object.entries(REACT_TYPE_MAPPING)) {
     if (content.includes(reactType)) {
-      imports.forEach(imp => usedReactTypes.add(imp));
+      imports.forEach((imp) => usedReactTypes.add(imp));
     }
   }
 
@@ -83,7 +83,7 @@ function updateReactImports(filePath: string): boolean {
   });
 
   // Update import React from "react" (standalone React import)
-  updatedContent = updatedContent.replace(REACT_ONLY_IMPORT_REGEX, _match => {
+  updatedContent = updatedContent.replace(REACT_ONLY_IMPORT_REGEX, (_match) => {
     if (Array.from(usedReactTypes).length > 0) {
       hasChanges = true;
       return `import { ${Array.from(usedReactTypes).join(", ")} } from "react";`;

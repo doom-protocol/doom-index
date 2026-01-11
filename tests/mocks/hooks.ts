@@ -98,7 +98,9 @@ export function createUseViewerMock(): () => { useViewer: () => void } {
  * Create mock for @/hooks/use-transformed-texture-url
  * Returns a function that returns the mock module object
  */
-export function createUseTransformedTextureUrlMock(): () => { useTransformedTextureUrl: (url: string) => string } {
+export function createUseTransformedTextureUrlMock(): () => {
+  useTransformedTextureUrl: (url: string) => string;
+} {
   return () => ({
     useTransformedTextureUrl: (url: string) => url,
   });

@@ -258,7 +258,12 @@ export async function getJsonFromPublicUrl<T>(url: string): Promise<Result<T | n
       });
     return ok((await res.json()) as T);
   } catch (e) {
-    return err({ type: "StorageError", op: "get", key: url, message: String(e) });
+    return err({
+      type: "StorageError",
+      op: "get",
+      key: url,
+      message: String(e),
+    });
   }
 }
 ```

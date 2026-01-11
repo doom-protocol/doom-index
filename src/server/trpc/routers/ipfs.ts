@@ -25,7 +25,7 @@ export const ipfsRouter = router({
    * to Pinata without exposing the API key
    */
   createSignedUploadUrl: publicProcedure
-    .input(val => v.parse(createSignedUploadUrlSchema, val))
+    .input((val) => v.parse(createSignedUploadUrlSchema, val))
     .mutation(async ({ input, ctx }) => {
       // Get Pinata client from context (for testing) or create new one
       const pinataClient: PinataClient =

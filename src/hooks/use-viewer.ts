@@ -27,7 +27,7 @@ export function useViewer(): null {
       workerRef.current = w;
 
       // Add error handler to catch Worker errors
-      w.addEventListener("error", event => {
+      w.addEventListener("error", (event) => {
         logger.error("viewer.worker.error", {
           message: event.message,
           filename: event.filename,
@@ -38,7 +38,7 @@ export function useViewer(): null {
       });
 
       // Add message handler for viewer count updates from WebSocket via Worker
-      w.addEventListener("message", event => {
+      w.addEventListener("message", (event) => {
         const data = event.data;
 
         // Handle viewer count updates

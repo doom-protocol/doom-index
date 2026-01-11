@@ -85,7 +85,7 @@ function getSourceFromStack(stack?: string): string | undefined {
   if (!stack) return undefined;
   const lines = stack.split("\n");
   // Look for lines starting with "at " (V8/Node) or containing explicit file paths
-  const stackFrame = lines.find(line => {
+  const stackFrame = lines.find((line) => {
     const trimmed = line.trim();
     return trimmed.startsWith("at ") || (trimmed.includes("/") && trimmed.includes(":"));
   });

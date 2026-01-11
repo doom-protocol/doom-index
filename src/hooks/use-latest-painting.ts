@@ -167,7 +167,7 @@ export const useLatestPainting = (): UseQueryResult<PaintingMetadata | null, unk
       }
     },
     staleTime: 0, // Always check for updates when the interval hits
-    refetchInterval: query => {
+    refetchInterval: (query) => {
       const latest = query.state.data;
       return computeRefetchDelay(latest?.timestamp ?? null);
     },

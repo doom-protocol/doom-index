@@ -101,7 +101,7 @@ function createR2ClientFromEnv(): Result<R2Client, AppError> {
         const response = await s3Client.send(command);
 
         const objects: R2Object[] =
-          response.Contents?.map(obj => ({
+          response.Contents?.map((obj) => ({
             key: obj.Key || "",
             size: obj.Size || 0,
             etag: obj.ETag?.replace(/"/g, "") || "",
@@ -135,7 +135,7 @@ function createR2ClientFromEnv(): Result<R2Client, AppError> {
           const command = new DeleteObjectsCommand({
             Bucket: bucketName,
             Delete: {
-              Objects: batch.map(key => ({ Key: key })),
+              Objects: batch.map((key) => ({ Key: key })),
             },
           });
 
@@ -323,9 +323,10 @@ async function deleteD1Records(dryRun: boolean): Promise<Result<number, AppError
 /**
  * Collect all objects to delete
  */
-async function collectObjectsToDelete(
-  client: R2Client,
-): Promise<{ toDelete: string[]; stats: { webp: number; json: number; other: number } }> {
+async function collectObjectsToDelete(client: R2Client): Promise<{
+  toDelete: string[];
+  stats: { webp: number; json: number; other: number };
+}> {
   const toDelete: string[] = [];
   const stats = { webp: 0, json: 0, other: 0 };
   let cursor: string | undefined;
@@ -456,9 +457,9 @@ async function main() {
     }
 
     // Group by type for reporting
-    const webpToDelete = toDelete.filter(k => k.endsWith(".webp"));
-    const jsonToDelete = toDelete.filter(k => k.endsWith(".json"));
-    const otherToDelete = toDelete.filter(k => !k.endsWith(".webp") && !k.endsWith(".json"));
+    const webpToDelete = toDelete.filter((k) => k.endsWith(".webp"));
+    const jsonToDelete = toDelete.filter((k) => k.endsWith(".json"));
+    const otherToDelete = toDelete.filter((k) => !k.endsWith(".webp") && !k.endsWith(".json"));
 
     console.log("\n📊 Objects to delete:");
     console.log(`  R2 Objects:`);
@@ -475,7 +476,7 @@ async function main() {
     if (args.dryRun) {
       console.log("🔍 DRY RUN MODE - No objects or records will be deleted\n");
       console.log("Sample objects to delete (first 10):");
-      toDelete.slice(0, 10).forEach(key => {
+      toDelete.slice(0, 10).forEach((key) => {
         console.log(`  - ${key}`);
       });
       if (toDelete.length > 10) {
@@ -492,7 +493,7 @@ async function main() {
       console.log(`   - ${d1RecordsToDelete} D1 records (ALL records in paintings)`);
     }
     console.log("Press Ctrl+C to cancel, or wait 5 seconds to proceed...");
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     // Delete objects using client
     const deleteResult = await client.delete(toDelete);
@@ -543,7 +544,7 @@ async function main() {
   }
 }
 
-main().catch(error => {
+main().catch((error) => {
   logger.error("truncate.unhandled", {
     error: error instanceof Error ? error.message : String(error),
     stack: error instanceof Error ? error.stack : undefined,

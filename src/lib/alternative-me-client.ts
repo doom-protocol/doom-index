@@ -106,7 +106,9 @@ export class AlternativeMeClient {
         });
       }
 
-      logger.error("[AlternativeMeClient] Failed to fetch Fear & Greed Index", { error });
+      logger.error("[AlternativeMeClient] Failed to fetch Fear & Greed Index", {
+        error,
+      });
       return err({
         type: "ExternalApiError" as const,
         provider: "alternative.me",

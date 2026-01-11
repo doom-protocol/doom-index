@@ -183,7 +183,7 @@ describe("Archive List Service - Metadata Loading", () => {
       if (result.isOk()) {
         // Should include all images with valid metadata
         expect(result.value.items.length).toBe(3);
-        expect(result.value.items.every(item => item.timestamp !== "")).toBe(true);
+        expect(result.value.items.every((item) => item.timestamp !== "")).toBe(true);
       }
     });
   });

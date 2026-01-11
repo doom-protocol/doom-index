@@ -24,23 +24,23 @@ function getLocalDb(): string {
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
 const isProduction = !baseUrl.includes("localhost");
 
-export default isProduction
-  ? defineConfig({
-      schema: "./src/db/schema/index.ts",
-      out: "./migrations",
-      dialect: "sqlite",
-      driver: "d1-http",
-      dbCredentials: {
-        accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
-        databaseId: process.env.CLOUDFLARE_DATABASE_ID,
-        token: process.env.CLOUDFLARE_D1_TOKEN,
-      },
-    })
-  : defineConfig({
-      schema: "./src/db/schema/index.ts",
-      dialect: "sqlite",
-      out: "./migrations",
-      dbCredentials: {
-        url: getLocalDb(),
-      },
-    });
+export default isProduction ?
+  defineConfig({
+    schema: "./src/db/schema/index.ts",
+    out: "./migrations",
+    dialect: "sqlite",
+    driver: "d1-http",
+    dbCredentials: {
+      accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
+      databaseId: process.env.CLOUDFLARE_DATABASE_ID,
+      token: process.env.CLOUDFLARE_D1_TOKEN,
+    },
+  })
+: defineConfig({
+    schema: "./src/db/schema/index.ts",
+    dialect: "sqlite",
+    out: "./migrations",
+    dbCredentials: {
+      url: getLocalDb(),
+    },
+  });

@@ -19,7 +19,7 @@ const R2_FETCH_MULTIPLIER = 2;
  * Filter R2 objects to only include valid .webp archive files
  */
 function filterWebpObjects(objects: R2Object[]): R2Object[] {
-  return objects.filter(obj => {
+  return objects.filter((obj) => {
     const filename = obj.key.split("/").pop() || "";
     return filename.endsWith(".webp") && isValidPaintingFilename(filename);
   });
@@ -37,7 +37,7 @@ async function buildPaintingsWithMetadata(
   bucket: R2Bucket,
   options: BuildMetadataOptions = {},
 ): Promise<Array<{ key: string; item: Painting }>> {
-  const metadataPromises = webpObjects.map(async obj => {
+  const metadataPromises = webpObjects.map(async (obj) => {
     const metadataKey = obj.key.replace(/\.webp$/, ".json");
     const metadataResult = await getJsonR2<PaintingMetadata>(bucket, metadataKey);
 
@@ -255,7 +255,7 @@ export async function listImages(
     if (d1Result.isOk()) {
       const d1Data = d1Result.value;
 
-      const items: Painting[] = d1Data.items.map(item => {
+      const items: Painting[] = d1Data.items.map((item) => {
         // Construct imageUrl dynamically from r2Key to support current origin
         // This ignores the stored imageUrl in DB which might be outdated or absolute URL
 
@@ -323,21 +323,23 @@ export async function listImages(
         });
       }
 
-      const listResults = await Promise.all(datePrefixes.map(prefix => listR2Objects(bucket, { limit, prefix })));
+      const listResults = await Promise.all(datePrefixes.map((prefix) => listR2Objects(bucket, { limit, prefix })));
 
-      const failedResult = listResults.find(result => result.isErr());
+      const failedResult = listResults.find((result) => result.isErr());
       if (failedResult && failedResult.isErr()) {
         return err(failedResult.error);
       }
 
-      const allObjects = listResults.flatMap(result => (result.isOk() ? result.value.objects : []));
+      const allObjects = listResults.flatMap((result) => (result.isOk() ? result.value.objects : []));
       const webpObjects = filterWebpObjects(allObjects);
 
       const toStartAfter = calculateStartAfterForto(options.to);
-      const filteredObjects = webpObjects.filter(obj => obj.key < toStartAfter);
+      const filteredObjects = webpObjects.filter((obj) => obj.key < toStartAfter);
 
-      const items = await buildPaintingsWithMetadata(filteredObjects, bucket, { sortOrder: "desc" });
-      const limitedItems = items.slice(0, limit).map(entry => entry.item);
+      const items = await buildPaintingsWithMetadata(filteredObjects, bucket, {
+        sortOrder: "desc",
+      });
+      const limitedItems = items.slice(0, limit).map((entry) => entry.item);
       // Date-range queries span multiple prefixes and currently do not support pagination.
       const response: ListImagesResponse = {
         items: limitedItems,
@@ -384,7 +386,7 @@ export async function listImages(
     });
 
     return ok({
-      items: pageResult.value.entries.map(entry => entry.item),
+      items: pageResult.value.entries.map((entry) => entry.item),
       cursor: pageResult.value.cursor,
       hasMore: pageResult.value.hasMore,
     });

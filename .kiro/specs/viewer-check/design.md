@@ -328,7 +328,9 @@ export function useViewer() {
     if (typeof window === "undefined") return;
 
     // Web Workerを起動（Worker内でsessionId生成とheartbeat送信を自動的に開始）
-    const w = new Worker(new URL("@/workers/viewer.worker", import.meta.url), { type: "module" });
+    const w = new Worker(new URL("@/workers/viewer.worker", import.meta.url), {
+      type: "module",
+    });
     workerRef.current = w;
 
     // ページ離脱時の処理（Workerを終了）
@@ -380,7 +382,13 @@ export default function RootLayout({
     <html lang="en" style={{ margin: 0, padding: 0, width: "100%", height: "100%" }}>
       <body
         className={`${cinzelDecorative.variable} antialiased`}
-        style={{ margin: 0, padding: 0, width: "100%", height: "100%", overflow: "hidden" }}
+        style={{
+          margin: 0,
+          padding: 0,
+          width: "100%",
+          height: "100%",
+          overflow: "hidden",
+        }}
       >
         <QueryProvider>{children}</QueryProvider>
       </body>
@@ -422,7 +430,13 @@ export default function RootLayout({
     <html lang="en" style={{ margin: 0, padding: 0, width: "100%", height: "100%" }}>
       <body
         className={`${cinzelDecorative.variable} antialiased`}
-        style={{ margin: 0, padding: 0, width: "100%", height: "100%", overflow: "hidden" }}
+        style={{
+          margin: 0,
+          padding: 0,
+          width: "100%",
+          height: "100%",
+          overflow: "hidden",
+        }}
       >
         <ViewerProvider />
         <QueryProvider>{children}</QueryProvider>

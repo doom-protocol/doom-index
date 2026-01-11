@@ -89,15 +89,24 @@ watermark, text, logo, oversaturated colors, low detail hands, extra limbs
   "style": "medieval renaissance allegorical oil painting, Bosch and Bruegel influence, chiaroscuro lighting, thick oil texture, symbolic architecture, detailed human figures, cohesive single landscape",
   "negatives": "watermark, text, logo, oversaturated colors, low detail hands, extra limbs",
   "fragments": [
-    { "text": "colossal dystopian machine towers and metal grids", "weight": 1.45 },
+    {
+      "text": "colossal dystopian machine towers and metal grids",
+      "weight": 1.45
+    },
     { "text": "dense toxic smog in the sky", "weight": 1.3 },
     { "text": "oppressive darkness with many red eyes", "weight": 1.1 },
     { "text": "lush emerald forests and living roots", "weight": 0.9 },
     { "text": "bioluminescent spores and organic clusters", "weight": 0.7 },
-    { "text": "radiant golden divine light breaking the clouds", "weight": 0.4 },
+    {
+      "text": "radiant golden divine light breaking the clouds",
+      "weight": 0.4
+    },
     { "text": "glittering blue glaciers and cold reflections", "weight": 0.2 },
     { "text": "blinding nuclear flash on the horizon", "weight": 0.05 },
-    { "text": "medieval figures praying, trading, recording the scene", "weight": 1.0 }
+    {
+      "text": "medieval figures praying, trading, recording the scene",
+      "weight": 1.0
+    }
   ],
   "width": 1280,
   "height": 720,

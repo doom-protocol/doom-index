@@ -63,9 +63,12 @@ describe("R2 Route Handler Integration - Cache", () => {
 
     // Verify cache was set using get
     const { get } = await import("@/lib/cache");
-    const cached = await get<{ body: string; headers: Record<string, string>; status: number; statusText: string }>(
-      "r2:route:test/image.webp",
-    );
+    const cached = await get<{
+      body: string;
+      headers: Record<string, string>;
+      status: number;
+      statusText: string;
+    }>("r2:route:test/image.webp");
     expect(cached).not.toBeNull();
     expect(cached?.headers["content-type"]).toBe("image/webp");
 

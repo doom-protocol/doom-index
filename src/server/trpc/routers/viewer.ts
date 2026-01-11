@@ -8,7 +8,7 @@ import { publicProcedure, router } from "../trpc";
 
 export const viewerRouter = router({
   register: publicProcedure
-    .input(val => v.parse(viewerRegisterSchema, val))
+    .input((val) => v.parse(viewerRegisterSchema, val))
     .mutation(async ({ input, ctx }) => {
       // Check user agent from request headers
       const requestUserAgent = ctx.headers.get("user-agent");
@@ -74,7 +74,7 @@ export const viewerRouter = router({
     }),
 
   remove: publicProcedure
-    .input(val => v.parse(viewerRemoveSchema, val))
+    .input((val) => v.parse(viewerRemoveSchema, val))
     .mutation(async ({ input, ctx }) => {
       if (!ctx.kvNamespace) {
         ctx.logger.error("trpc.viewer.remove.error", {
@@ -179,7 +179,7 @@ export const viewerRouter = router({
 
     // Send updates every 30 seconds using a loop
     while (!opts.signal?.aborted) {
-      await new Promise(resolve => setTimeout(resolve, 30000));
+      await new Promise((resolve) => setTimeout(resolve, 30000));
 
       if (opts.signal?.aborted) {
         ctx.logger.debug("trpc.viewer.onCountUpdate.signal-aborted", {

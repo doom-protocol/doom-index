@@ -8,12 +8,16 @@ import { publicProcedure, router } from "../trpc";
 
 export const paintingsRouter = router({
   list: publicProcedure
-    .input(val => v.parse(paintingsListSchema, val))
+    .input((val) => v.parse(paintingsListSchema, val))
     .query(async ({ input, ctx }) => {
       const { limit, cursor, from, to } = input;
 
       const cacheKey = `archive:list:v2:${JSON.stringify({ limit, cursor, from, to })}`;
-      const cached = await get<{ items: unknown[]; cursor?: string; hasMore: boolean }>(cacheKey, {
+      const cached = await get<{
+        items: unknown[];
+        cursor?: string;
+        hasMore: boolean;
+      }>(cacheKey, {
         logger: ctx.logger,
       });
 
@@ -43,7 +47,10 @@ export const paintingsRouter = router({
 
       const result = resultOrThrow(listResult, ctx);
 
-      await set(cacheKey, result, { ttlSeconds: CACHE_TTL_SECONDS.ONE_MINUTE, logger: ctx.logger });
+      await set(cacheKey, result, {
+        ttlSeconds: CACHE_TTL_SECONDS.ONE_MINUTE,
+        logger: ctx.logger,
+      });
 
       return result;
     }),

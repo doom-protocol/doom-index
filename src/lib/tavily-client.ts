@@ -87,11 +87,9 @@ export function createTavilyClient({
         const article = item as Record<string, unknown>;
         const title = typeof article.title === "string" ? article.title : "";
         const content =
-          typeof article.content === "string"
-            ? article.content
-            : typeof article.snippet === "string"
-              ? article.snippet
-              : "";
+          typeof article.content === "string" ? article.content
+          : typeof article.snippet === "string" ? article.snippet
+          : "";
         const url = typeof article.url === "string" ? article.url : "";
 
         if (!title && !content && !url) {
@@ -109,7 +107,7 @@ export function createTavilyClient({
 
   // Combine articles into text
   const combineArticles = (articles: TavilyArticle[], maxLength: number = 6000): string => {
-    const blocks = articles.map(article => {
+    const blocks = articles.map((article) => {
       const parts = [article.title, article.content, article.url].filter(Boolean);
       return parts.join("\n");
     });
@@ -136,7 +134,7 @@ export function createTavilyClient({
 
   // Create timeout promise
   const createTimeout = (ms: number): Promise<TimeoutError> => {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
           type: "TimeoutError",

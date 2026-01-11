@@ -36,7 +36,7 @@ export const PaintingComponent: FC<PaintingProps> = ({ item, onClick }) => {
       onClick={onClick}
       role="button"
       tabIndex={0}
-      onKeyDown={e => {
+      onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onClick?.();

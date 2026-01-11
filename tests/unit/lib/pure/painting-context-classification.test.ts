@@ -58,11 +58,29 @@ const token = (overrides: Partial<SelectedToken> = {}): SelectedToken => ({
 describe("painting-context-classification", () => {
   it("classifies market climate based on change and FGI", () => {
     const cases: Array<{ input: MarketSnapshot; expected: MarketClimate }> = [
-      { input: snapshot({ marketCapChangePercentage24hUsd: 4, fearGreedIndex: 80 }), expected: "euphoria" },
-      { input: snapshot({ marketCapChangePercentage24hUsd: 2 }), expected: "cooling" },
-      { input: snapshot({ marketCapChangePercentage24hUsd: -6 }), expected: "despair" },
-      { input: snapshot({ marketCapChangePercentage24hUsd: -2 }), expected: "panic" },
-      { input: snapshot({ marketCapChangePercentage24hUsd: 0 }), expected: "transition" },
+      {
+        input: snapshot({
+          marketCapChangePercentage24hUsd: 4,
+          fearGreedIndex: 80,
+        }),
+        expected: "euphoria",
+      },
+      {
+        input: snapshot({ marketCapChangePercentage24hUsd: 2 }),
+        expected: "cooling",
+      },
+      {
+        input: snapshot({ marketCapChangePercentage24hUsd: -6 }),
+        expected: "despair",
+      },
+      {
+        input: snapshot({ marketCapChangePercentage24hUsd: -2 }),
+        expected: "panic",
+      },
+      {
+        input: snapshot({ marketCapChangePercentage24hUsd: 0 }),
+        expected: "transition",
+      },
     ];
 
     for (const { input, expected } of cases) {
@@ -88,10 +106,22 @@ describe("painting-context-classification", () => {
   });
 
   it("classifies event pressure by price change", () => {
-    expect(classifyEventPressure(tokenSnapshot({ p: 12 }))).toEqual({ k: "rally", i: 3 });
-    expect(classifyEventPressure(tokenSnapshot({ p: 7 }))).toEqual({ k: "rally", i: 2 });
-    expect(classifyEventPressure(tokenSnapshot({ p: -8 }))).toEqual({ k: "collapse", i: 2 });
-    expect(classifyEventPressure(tokenSnapshot({ p: 1 }))).toEqual({ k: "ritual", i: 1 });
+    expect(classifyEventPressure(tokenSnapshot({ p: 12 }))).toEqual({
+      k: "rally",
+      i: 3,
+    });
+    expect(classifyEventPressure(tokenSnapshot({ p: 7 }))).toEqual({
+      k: "rally",
+      i: 2,
+    });
+    expect(classifyEventPressure(tokenSnapshot({ p: -8 }))).toEqual({
+      k: "collapse",
+      i: 2,
+    });
+    expect(classifyEventPressure(tokenSnapshot({ p: 1 }))).toEqual({
+      k: "ritual",
+      i: 1,
+    });
   });
 
   it("selects composition and palette based on climate/archetype/event", () => {
@@ -110,9 +140,18 @@ describe("painting-context-classification", () => {
   });
 
   it("classifies dynamics using thresholds", () => {
-    expect(classifyDynamics(tokenSnapshot({ p: 4, vol: 0.8 }))).toEqual({ dir: "up", vol: "high" });
-    expect(classifyDynamics(tokenSnapshot({ p: -4, vol: 0.5 }))).toEqual({ dir: "down", vol: "medium" });
-    expect(classifyDynamics(tokenSnapshot({ p: 1, vol: 0.1 }))).toEqual({ dir: "flat", vol: "low" });
+    expect(classifyDynamics(tokenSnapshot({ p: 4, vol: 0.8 }))).toEqual({
+      dir: "up",
+      vol: "high",
+    });
+    expect(classifyDynamics(tokenSnapshot({ p: -4, vol: 0.5 }))).toEqual({
+      dir: "down",
+      vol: "medium",
+    });
+    expect(classifyDynamics(tokenSnapshot({ p: 1, vol: 0.1 }))).toEqual({
+      dir: "flat",
+      vol: "low",
+    });
   });
 
   it("derives motifs and narrative hints deterministically", () => {

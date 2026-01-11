@@ -229,7 +229,7 @@ const main = (): Promise<void> => {
   return Promise.resolve();
 };
 
-main().catch(error => {
+main().catch((error) => {
   console.error("❌ Fatal error:", error);
   process.exit(1);
 });

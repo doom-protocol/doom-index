@@ -106,14 +106,14 @@ export class CoinGeckoClient {
     ids: string[],
     options: CoinsMarketsOptions = {},
   ): Promise<Result<CoinsMarketsResponse, AppError>> {
-    const dummyMarkets: CoinsMarketsResponse = ids.map(id => ({
+    const dummyMarkets: CoinsMarketsResponse = ids.map((id) => ({
       id,
       symbol: id === "solana" ? "sol" : "btc",
       name: id === "solana" ? "Solana" : "Bitcoin",
       image:
-        id === "solana"
-          ? "https://coin-images.coingecko.com/coins/images/4128/large/solana.png"
-          : "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png",
+        id === "solana" ?
+          "https://coin-images.coingecko.com/coins/images/4128/large/solana.png"
+        : "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png",
       current_price: 200,
       market_cap: 80000000000,
       market_cap_rank: 5,

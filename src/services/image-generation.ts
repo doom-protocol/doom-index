@@ -146,7 +146,9 @@ export function createImageGenerationService({
 
     if (promptResult.isErr()) return err(promptResult.error);
 
-    return requestImage(promptResult.value, { referenceImageUrl: input.referenceImageUrl });
+    return requestImage(promptResult.value, {
+      referenceImageUrl: input.referenceImageUrl,
+    });
   }
 
   return { generateTokenImage };

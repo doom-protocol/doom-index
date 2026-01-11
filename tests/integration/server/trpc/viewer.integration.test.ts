@@ -26,7 +26,7 @@ describe("Viewer Integration", () => {
 
     // 並行リクエストのシミュレーション
     const results = await Promise.allSettled(
-      sessionIds.map(sessionId =>
+      sessionIds.map((sessionId) =>
         caller.viewer.register({
           sessionId,
           userAgent: "Mozilla/5.0",

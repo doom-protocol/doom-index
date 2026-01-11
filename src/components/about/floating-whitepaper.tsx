@@ -29,6 +29,11 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
   const entranceElapsedRef = useRef(0);
   const isEntranceActiveRef = useRef(true);
 
+  const setHover = (nextHovered: boolean) => {
+    setIsHovered(nextHovered);
+    onHoverChange?.(nextHovered);
+  };
+
   useEffect(() => {
     basePositionRef.current = position;
     if (groupRef.current) {
@@ -140,12 +145,6 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
     };
   }, [size, PAPER_ASPECT_RATIO]);
 
-  useEffect(() => {
-    if (onHoverChange) {
-      onHoverChange(isHovered);
-    }
-  }, [isHovered, onHoverChange]);
-
   return (
     <group ref={groupRef} position={position}>
       <Html
@@ -170,33 +169,33 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
               0 8px 24px rgba(0, 0, 0, 0.15),
               0 16px 48px rgba(0, 0, 0, 0.2)
             `,
-            ...(isMobile
-              ? {
-                  WebkitOverflowScrolling: "touch",
-                  touchAction: "pan-y",
-                }
-              : {}),
+            ...(isMobile ?
+              {
+                WebkitOverflowScrolling: "touch",
+                touchAction: "pan-y",
+              }
+            : {}),
           }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          onWheel={e => {
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          onWheel={(e) => {
             // Stop event propagation to prioritize mouse wheel scrolling on PC
             if (!isMobile) {
               e.stopPropagation();
             }
           }}
-          {...(isMobile
-            ? {
-                onTouchStart: () => {
-                  // Set hover state on touch start (to enable scrolling)
-                  setIsHovered(true);
-                },
-                onTouchEnd: () => {
-                  // Clear hover state with slight delay on touch end
-                  setTimeout(() => setIsHovered(false), 100);
-                },
-              }
-            : {})}
+          {...(isMobile ?
+            {
+              onTouchStart: () => {
+                // Set hover state on touch start (to enable scrolling)
+                setHover(true);
+              },
+              onTouchEnd: () => {
+                // Clear hover state with slight delay on touch end
+                setTimeout(() => setHover(false), 100);
+              },
+            }
+          : {})}
         >
           <WhitepaperViewer>{children}</WhitepaperViewer>
         </div>

@@ -312,7 +312,7 @@ describe("unit/components/gallery-scene", () => {
 
       await waitFor(() => {
         const textureLoadedLog = loggerCalls.find(
-          call => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
+          (call) => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
         );
         expect(textureLoadedLog).toBeDefined();
       });
@@ -325,12 +325,16 @@ describe("unit/components/gallery-scene", () => {
 
       await waitFor(() => {
         const textureLoadedLog = loggerCalls.find(
-          call => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
+          (call) => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
         );
 
         expect(textureLoadedLog).toBeDefined();
         if (textureLoadedLog) {
-          const payload = textureLoadedLog.args[1] as { durationMs: number; url: string; paintingId?: string };
+          const payload = textureLoadedLog.args[1] as {
+            durationMs: number;
+            url: string;
+            paintingId?: string;
+          };
           // Duration should be the difference between start and end time
           // Our mock advances time by 150ms when texture loads
           expect(typeof payload.durationMs).toBe("number");
@@ -346,12 +350,16 @@ describe("unit/components/gallery-scene", () => {
 
       await waitFor(() => {
         const textureLoadedLog = loggerCalls.find(
-          call => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
+          (call) => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
         );
 
         expect(textureLoadedLog).toBeDefined();
         if (textureLoadedLog) {
-          const payload = textureLoadedLog.args[1] as { durationMs: number; url: string; paintingId?: string };
+          const payload = textureLoadedLog.args[1] as {
+            durationMs: number;
+            url: string;
+            paintingId?: string;
+          };
           expect(payload.paintingId).toBe("DOOM_202512020110_03309aff_5779632aeaa9");
         }
       });
@@ -364,12 +372,16 @@ describe("unit/components/gallery-scene", () => {
 
       await waitFor(() => {
         const textureLoadedLog = loggerCalls.find(
-          call => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
+          (call) => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
         );
 
         expect(textureLoadedLog).toBeDefined();
         if (textureLoadedLog) {
-          const payload = textureLoadedLog.args[1] as { durationMs: number; url: string; paintingId?: string };
+          const payload = textureLoadedLog.args[1] as {
+            durationMs: number;
+            url: string;
+            paintingId?: string;
+          };
           // URL should contain the real image path with transformation params
           expect(payload.url).toContain("/api/r2/images/2025/12/02/DOOM_202512020110_03309aff_5779632aeaa9.webp");
         }
@@ -385,7 +397,7 @@ describe("unit/components/gallery-scene", () => {
       // The texture onLoad should have been called during render
       await waitFor(() => {
         const textureLoadedLog = loggerCalls.find(
-          call => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
+          (call) => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
         );
         expect(textureLoadedLog).toBeDefined();
       });
@@ -407,7 +419,7 @@ describe("unit/components/gallery-scene", () => {
 
       await waitFor(() => {
         const textureLoadedLog = loggerCalls.find(
-          call => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
+          (call) => call.method === "debug" && call.args[0] === "framed-painting.texture.loaded",
         );
         expect(textureLoadedLog).toBeDefined();
       });
@@ -428,14 +440,14 @@ describe("unit/components/gallery-scene", () => {
       await waitFor(() => {
         // Find all texture-related logs
         const textureLogs = loggerCalls.filter(
-          call => call.method === "debug" && typeof call.args[0] === "string" && call.args[0].includes("texture"),
+          (call) => call.method === "debug" && typeof call.args[0] === "string" && call.args[0].includes("texture"),
         );
 
         // Should have at least the texture.loaded log
         expect(textureLogs.length).toBeGreaterThanOrEqual(1);
 
         // The loaded log should exist
-        const loadedLog = textureLogs.find(log => (log.args[0] as string).includes("loaded"));
+        const loadedLog = textureLogs.find((log) => (log.args[0] as string).includes("loaded"));
         expect(loadedLog).toBeDefined();
       });
     });

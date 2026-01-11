@@ -61,7 +61,7 @@ export type ResponsiveSizes = ViewportSize[];
 export function buildSizesAttr(sizes?: ResponsiveSizes): string | undefined {
   if (!sizes || sizes.length === 0) return undefined;
   return sizes
-    .map(s => {
+    .map((s) => {
       if ("maxWidth" in s) return `(max-width: ${s.maxWidth}px) ${s.size}`;
       if ("minWidth" in s) return `(min-width: ${s.minWidth}px) ${s.size}`;
       return s.size;

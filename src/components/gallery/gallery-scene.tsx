@@ -20,7 +20,7 @@ import { GalleryRoom } from "./gallery-room";
 import { isDevelopment } from "@/env";
 
 // Dynamic import for Lights to avoid hydration issues with dev controls
-const Lights = dynamic(() => import("./lights").then(mod => ({ default: mod.Lights })), {
+const Lights = dynamic(() => import("./lights").then((mod) => ({ default: mod.Lights })), {
   ssr: false,
   loading: () => (
     <>
@@ -31,7 +31,7 @@ const Lights = dynamic(() => import("./lights").then(mod => ({ default: mod.Ligh
 });
 
 // Dynamic import for Leva to avoid SSR/document issues in test environment
-const Leva = dynamic(() => import("leva").then(mod => ({ default: mod.Leva })), {
+const Leva = dynamic(() => import("leva").then((mod) => ({ default: mod.Leva })), {
   ssr: false,
 });
 
@@ -84,17 +84,26 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
           const arrayBuffer = await file.arrayBuffer();
           const optimizedResult = await glbExportService.optimizeGlb(arrayBuffer, MAX_SIZE_MB);
           if (optimizedResult.isOk()) {
-            finalFile = new File([optimizedResult.value], file.name, { type: "application/octet-stream" });
+            finalFile = new File([optimizedResult.value], file.name, {
+              type: "application/octet-stream",
+            });
           } else {
-            logger.warn("gallery-scene.optimizeFailed", { error: optimizedResult.error });
+            logger.warn("gallery-scene.optimizeFailed", {
+              error: optimizedResult.error,
+            });
             // Continue with original file if optimization fails
           }
         }
 
         setExportedGlbFile(finalFile);
-        logger.info("gallery-scene.glb-export.success", { fileName: finalFile.name, size: finalFile.size });
+        logger.info("gallery-scene.glb-export.success", {
+          fileName: finalFile.name,
+          size: finalFile.size,
+        });
       } else {
-        logger.error("gallery-scene.glb-export.failed", { error: result.error });
+        logger.error("gallery-scene.glb-export.failed", {
+          error: result.error,
+        });
         toast.error(`Export failed: ${result.error.message}`);
       }
     } catch (e) {

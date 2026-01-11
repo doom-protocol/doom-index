@@ -12,7 +12,7 @@ import { Texture as _Texture, TextureLoader } from "three";
 
 import { useLoader, useThree } from "@react-three/fiber";
 
-import { useLayoutEffect, useEffect, useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 export const IsObject = (url: unknown): url is Record<string, string> =>
   url === Object(url) && !Array.isArray(url) && typeof url !== "function";
@@ -63,7 +63,7 @@ export function useSafeTexture<Url extends string[] | string | Record<string, st
   options: UseSafeTextureOptions = {},
 ): MappedTextureType<Url> {
   const { crossOrigin = "anonymous", onError } = options;
-  const gl = useThree(state => state.gl);
+  const gl = useThree((state) => state.gl);
 
   // Enhanced useLoader call with custom extensions for crossOrigin and error handling
   // This differs from drei's implementation by adding crossOrigin and onError support
@@ -78,14 +78,21 @@ export function useSafeTexture<Url extends string[] | string | Record<string, st
     }
   }) as MappedTextureType<Url>;
 
-  useLayoutEffect(() => {
-    onLoad?.(textures);
-  }, [onLoad, textures]);
+  // Call onLoad synchronously when textures change.
+  // NOTE: onLoad should not set React state; it is intended for texture mutation/logging.
+  const lastOnLoadKeyRef = useRef<{ onLoad: typeof onLoad; textures: unknown } | null>(null);
+  if (onLoad) {
+    const prev = lastOnLoadKeyRef.current;
+    if (!prev || prev.onLoad !== onLoad || prev.textures !== textures) {
+      onLoad(textures);
+      lastOnLoadKeyRef.current = { onLoad, textures };
+    }
+  }
 
   // https://github.com/mrdoob/three.js/issues/22696
   // Upload the texture to the GPU immediately instead of waiting for the first render
   // NOTE: only available for WebGLRenderer
-  useEffect(() => {
+  useMemo(() => {
     if ("initTexture" in gl) {
       let textureArray: _Texture[] = [];
       if (Array.isArray(textures)) {
@@ -96,12 +103,13 @@ export function useSafeTexture<Url extends string[] | string | Record<string, st
         textureArray = Object.values(textures);
       }
 
-      textureArray.forEach(texture => {
+      textureArray.forEach((texture) => {
         if (texture instanceof _Texture) {
           gl.initTexture(texture);
         }
       });
     }
+    return null;
   }, [gl, textures]);
 
   const mappedTextures = useMemo(() => {

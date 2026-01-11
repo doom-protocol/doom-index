@@ -517,7 +517,7 @@ describe("Cache Helper - getOrSet deduplication", () => {
     let computeCallCount = 0;
     const computeFn = mock(() => {
       computeCallCount++;
-      return new Promise<typeof computedValue>(resolve => {
+      return new Promise<typeof computedValue>((resolve) => {
         setTimeout(() => resolve(computedValue), 10);
       });
     });
@@ -530,7 +530,7 @@ describe("Cache Helper - getOrSet deduplication", () => {
     const results = await Promise.all(promises);
 
     // All should return the same value
-    results.forEach(result => {
+    results.forEach((result) => {
       expect(result).toEqual(computedValue);
     });
 
@@ -668,7 +668,10 @@ describe("Cache Helper - Text Helpers", () => {
 
     it("should use namespace in cache key when provided", async () => {
       const { updateText } = await import("@/lib/cache");
-      await updateText("test-key", "Hello", { ttlSeconds: 60, namespace: "ns" });
+      await updateText("test-key", "Hello", {
+        ttlSeconds: 60,
+        namespace: "ns",
+      });
 
       const [cacheKey] = mockPut.mock.calls[0] as [string];
       expect(cacheKey).toContain("ns:test-key");
@@ -784,7 +787,10 @@ describe("Cache Helper - Binary Helpers", () => {
 
     it("should use namespace in cache key when provided", async () => {
       const { setBinary } = await import("@/lib/cache");
-      await setBinary("test-key", new ArrayBuffer(10), { ttlSeconds: 60, namespace: "ns" });
+      await setBinary("test-key", new ArrayBuffer(10), {
+        ttlSeconds: 60,
+        namespace: "ns",
+      });
 
       const [cacheKey] = mockPut.mock.calls[0] as [string];
       expect(cacheKey).toContain("ns:test-key");
@@ -806,7 +812,10 @@ describe("Cache Helper - Binary Helpers", () => {
 
     it("should use namespace in cache key when provided", async () => {
       const { updateBinary } = await import("@/lib/cache");
-      await updateBinary("test-key", new ArrayBuffer(10), { ttlSeconds: 60, namespace: "ns" });
+      await updateBinary("test-key", new ArrayBuffer(10), {
+        ttlSeconds: 60,
+        namespace: "ns",
+      });
 
       const [cacheKey] = mockPut.mock.calls[0] as [string];
       expect(cacheKey).toContain("ns:test-key");

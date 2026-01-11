@@ -17,7 +17,9 @@ describe("OGP Image Generation (Integration Tests)", () => {
   const createMockFetcher = (shouldSucceed: boolean, imageData?: string, contentType = "image/webp"): Fetcher => {
     return {
       fetch: mock((input: RequestInfo | URL) => {
-        void (typeof input === "string" ? input : input instanceof URL ? input.pathname : input.url);
+        void (typeof input === "string" ? input
+        : input instanceof URL ? input.pathname
+        : input.url);
         if (shouldSucceed) {
           const buffer = new TextEncoder().encode(imageData || "mock image data").buffer;
           return Promise.resolve(

@@ -65,9 +65,8 @@ describe("Archive List Service - Date Filtering", () => {
       const metadataKey = imageKey.replace(/\.webp$/, ".json");
       // Extract date from path for timestamp
       const dateMatch = imageKey.match(/\/(\d{4})\/(\d{2})\/(\d{2})\//);
-      const timestamp = dateMatch
-        ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}T12:00:00Z`
-        : "2025-11-14T12:00:00Z";
+      const timestamp =
+        dateMatch ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}T12:00:00Z` : "2025-11-14T12:00:00Z";
 
       store.set(imageKey, {
         content: new TextEncoder().encode("fake image").buffer,
@@ -91,7 +90,7 @@ describe("Archive List Service - Date Filtering", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.items.length).toBe(2);
-        expect(result.value.items.every(item => item.imageUrl.includes("2025/11/14"))).toBe(true);
+        expect(result.value.items.every((item) => item.imageUrl.includes("2025/11/14"))).toBe(true);
       }
     });
 
@@ -105,7 +104,7 @@ describe("Archive List Service - Date Filtering", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         // Should include images from both dates
-        const dates = result.value.items.map(item => {
+        const dates = result.value.items.map((item) => {
           const match = item.imageUrl.match(/images\/(\d{4}\/\d{2}\/\d{2})/);
           return match ? match[1] : "";
         });
@@ -125,8 +124,8 @@ describe("Archive List Service - Date Filtering", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         // Should only include items after the startAfter key
-        expect(result.value.items.every(item => !item.imageUrl.includes("2025/11/14"))).toBe(true);
-        expect(result.value.items.every(item => !item.imageUrl.includes("2025/11/15"))).toBe(true);
+        expect(result.value.items.every((item) => !item.imageUrl.includes("2025/11/14"))).toBe(true);
+        expect(result.value.items.every((item) => !item.imageUrl.includes("2025/11/15"))).toBe(true);
       }
     });
 
@@ -140,7 +139,7 @@ describe("Archive List Service - Date Filtering", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         // Should include all dates in range
-        const dates = result.value.items.map(item => {
+        const dates = result.value.items.map((item) => {
           const match = item.imageUrl.match(/images\/(\d{4}\/\d{2}\/\d{2})/);
           return match ? match[1] : "";
         });

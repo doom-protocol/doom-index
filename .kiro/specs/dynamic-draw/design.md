@@ -831,7 +831,10 @@ function classifyMarketClimate(snapshot: MarketSnapshot): MarketClimate;
 function classifyTokenArchetype(token: SelectedToken, categories: string[]): TokenArchetype;
 
 // Event Pressure classification (Requirement 5)
-function classifyEventPressure(token: SelectedToken): { k: EventKind; i: EventIntensity };
+function classifyEventPressure(token: SelectedToken): {
+  k: EventKind;
+  i: EventIntensity;
+};
 
 // Composition selection (Requirement 5)
 function pickComposition(
@@ -848,7 +851,10 @@ function pickPalette(
 ): Palette;
 
 // Dynamics classification (Requirement 5)
-function classifyDynamics(token: SelectedToken): { dir: TrendDirection; vol: VolatilityLevel };
+function classifyDynamics(token: SelectedToken): {
+  dir: TrendDirection;
+  vol: VolatilityLevel;
+};
 
 // Motifs derivation (Requirement 5)
 function deriveMotifs(archetype: TokenArchetype): MotifTag[];
@@ -1148,7 +1154,7 @@ export const tokens = sqliteTable(
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
-  table => [index("idx_tokens_symbol").on(table.symbol), index("idx_tokens_coingecko_id").on(table.coingeckoId)],
+  (table) => [index("idx_tokens_symbol").on(table.symbol), index("idx_tokens_coingecko_id").on(table.coingeckoId)],
 );
 
 export type Token = typeof tokens.$inferSelect;
@@ -1206,7 +1212,7 @@ export const marketSnapshots = sqliteTable(
     updatedAt: integer("updated_at").notNull(),
     createdAt: integer("created_at").notNull(),
   },
-  table => [index("idx_market_snapshots_created_at").on(table.createdAt)],
+  (table) => [index("idx_market_snapshots_created_at").on(table.createdAt)],
 );
 
 export type MarketSnapshot = typeof marketSnapshots.$inferSelect;
@@ -1263,10 +1269,21 @@ export const paintingsRouter = router({
 
 ```typescript
 type AppError =
-  | { type: "ExternalApiError"; provider: string; status?: number; message: string; ticker?: string }
+  | {
+      type: "ExternalApiError";
+      provider: string;
+      status?: number;
+      message: string;
+      ticker?: string;
+    }
   | { type: "ValidationError"; message: string; field?: string }
   | { type: "ConfigurationError"; message: string; missingVar?: string }
-  | { type: "StorageError"; op: "get" | "put" | "list"; key: string; message: string }
+  | {
+      type: "StorageError";
+      op: "get" | "put" | "list";
+      key: string;
+      message: string;
+    }
   | { type: "InternalError"; message: string; cause?: unknown };
 ```
 

@@ -9,7 +9,7 @@ import { publicProcedure, router } from "../trpc";
 
 export const tokenRouter = router({
   getState: publicProcedure
-    .input(val => v.parse(tokenGetStateSchema, val))
+    .input((val) => v.parse(tokenGetStateSchema, val))
     .query(async ({ input, ctx }) => {
       const cacheKey = `token:getState:${input.ticker}`;
       const cached = await get<TokenState>(cacheKey, { logger: ctx.logger });
@@ -26,7 +26,10 @@ export const tokenRouter = router({
         return null;
       }
 
-      await set(cacheKey, value, { ttlSeconds: CACHE_TTL_SECONDS.ONE_MINUTE, logger: ctx.logger });
+      await set(cacheKey, value, {
+        ttlSeconds: CACHE_TTL_SECONDS.ONE_MINUTE,
+        logger: ctx.logger,
+      });
 
       return value;
     }),

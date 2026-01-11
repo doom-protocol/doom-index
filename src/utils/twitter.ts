@@ -37,7 +37,7 @@ const buildTweetIntentUrl = ({ shareUrl, lines = DEFAULT_TWEET_LINES }: TweetInt
       return acc;
     }
 
-    const alreadyExists = acc.some(existing => existing.trim() === normalized);
+    const alreadyExists = acc.some((existing) => existing.trim() === normalized);
     if (alreadyExists) {
       return acc;
     }

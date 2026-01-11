@@ -468,7 +468,7 @@ describe("cloudflare-image", () => {
       const url = "/test.webp";
 
       // Small delay to ensure measurable duration
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       const result = measureTextureLoadDuration(startTime, url);
 

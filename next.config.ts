@@ -12,6 +12,31 @@ function composePlugins(...plugins: NextPlugin[]) {
   return (config: NextConfig): NextConfig => plugins.reduceRight((acc, plugin) => plugin(acc), config);
 }
 
+const serverBundleStubbedModules = [
+  // Three.js / React Three Fiber
+  "three",
+  "three-stdlib",
+  "@react-three/fiber",
+  "@react-three/drei",
+  // Solana
+  "@solana/web3.js",
+  "@solana/wallet-adapter-base",
+  "@solana/wallet-adapter-react",
+  "@solana/wallet-adapter-react-ui",
+  "@solana/wallet-adapter-wallets",
+  // Browser-only utilities
+  "use-sound",
+  "use-haptic",
+  "sonner",
+  "js-tiktoken",
+  "leva",
+] as const;
+
+function shouldStubServerBundle(): boolean {
+  const v = process.env.DOOM_ENABLE_SERVER_BUNDLE_STUBS;
+  return v === "1" || v === "true";
+}
+
 const nextConfig: NextConfig = {
   reactCompiler: true,
   output: "standalone",
@@ -34,27 +59,12 @@ const nextConfig: NextConfig = {
   },
   webpack: (config, { isServer }) => {
     // Server-side: stub browser-only libraries to reduce bundle size
-    if (isServer) {
-      const stub = path.resolve(process.cwd(), "src/mocks/stub.js");
+    if (isServer && shouldStubServerBundle()) {
+      const stub = path.resolve(process.cwd(), "scripts/webpack/stub.cjs");
+      const stubAliases = Object.fromEntries(serverBundleStubbedModules.map((name) => [name, stub]));
       config.resolve.alias = {
         ...config.resolve.alias,
-        // Three.js / React Three Fiber
-        three: stub,
-        "three-stdlib": stub,
-        "@react-three/fiber": stub,
-        "@react-three/drei": stub,
-        // Solana
-        "@solana/web3.js": stub,
-        "@solana/wallet-adapter-base": stub,
-        "@solana/wallet-adapter-react": stub,
-        "@solana/wallet-adapter-react-ui": stub,
-        "@solana/wallet-adapter-wallets": stub,
-        // Browser-only utilities
-        "use-sound": stub,
-        "use-haptic": stub,
-        sonner: stub,
-        "js-tiktoken": stub,
-        leva: stub,
+        ...stubAliases,
       };
     }
 

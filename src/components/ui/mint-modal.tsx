@@ -249,51 +249,52 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
             </div>
 
             {/* Action Button */}
-            {!connected ? (
-              // Connect Wallet Button (always enabled)
-              <button
-                onClick={handleConnectWallet}
-                disabled={isLoading}
-                tabIndex={isOpen ? 0 : -1}
-                className={`relative flex h-[52px] w-full transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[26px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none sm:h-[56px] sm:rounded-[28px] ${
-                  isLoading
-                    ? "cursor-not-allowed border-white/25 bg-white/15 opacity-60 shadow-white/15"
+            {
+              !connected ?
+                // Connect Wallet Button (always enabled)
+                <button
+                  onClick={handleConnectWallet}
+                  disabled={isLoading}
+                  tabIndex={isOpen ? 0 : -1}
+                  className={`relative flex h-[52px] w-full transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[26px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none sm:h-[56px] sm:rounded-[28px] ${
+                    isLoading ?
+                      "cursor-not-allowed border-white/25 bg-white/15 opacity-60 shadow-white/15"
                     : "cursor-pointer border-white/35 bg-white/25 opacity-100 shadow-white/20 active:scale-[0.97] active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 sm:hover:scale-[1.02] sm:hover:bg-white/30 sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25"
-                } `}
-              >
-                <span className="relative z-10 text-sm font-bold tracking-[0.5px] text-white uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-base">
-                  {isLoading ? "Processing..." : "Connect Wallet"}
-                </span>
-              </button>
-            ) : (
-              // Mint Button
-              <button
-                onClick={handleMint}
-                disabled={isLoading || !glbFile || !isMintCompleted}
-                tabIndex={isOpen ? 0 : -1}
-                className={`relative flex h-[52px] w-full transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[26px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none sm:h-[56px] sm:rounded-[28px] ${
-                  isLoading || !glbFile || !isMintCompleted
-                    ? "cursor-not-allowed border-white/20 bg-white/10 opacity-40 shadow-white/10"
-                    : "cursor-pointer border-white/35 bg-white/25 opacity-100 shadow-white/20 active:scale-[0.97] active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 sm:hover:scale-[1.02] sm:hover:bg-white/30 sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25"
-                } `}
-              >
-                <span
-                  className={`relative z-10 text-sm font-bold tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-base ${
-                    isLoading || !glbFile || !isMintCompleted ? "text-white/50" : "text-white"
-                  }`}
+                  } `}
                 >
-                  {isMintCompleted
-                    ? "Minted!"
-                    : isIpfsUploading
-                      ? "Uploading..."
-                      : isMinting
-                        ? "Minting..."
-                        : isProcessing
-                          ? "Processing..."
-                          : "Coming Soon"}
-                </span>
-              </button>
-            )}
+                  <span className="relative z-10 text-sm font-bold tracking-[0.5px] text-white uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-base">
+                    {isLoading ? "Processing..." : "Connect Wallet"}
+                  </span>
+                </button>
+                // Mint Button
+              : <button
+                  onClick={handleMint}
+                  disabled={isLoading || !glbFile || !isMintCompleted}
+                  tabIndex={isOpen ? 0 : -1}
+                  className={`relative flex h-[52px] w-full transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[26px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none sm:h-[56px] sm:rounded-[28px] ${
+                    isLoading || !glbFile || !isMintCompleted ?
+                      "cursor-not-allowed border-white/20 bg-white/10 opacity-40 shadow-white/10"
+                    : "cursor-pointer border-white/35 bg-white/25 opacity-100 shadow-white/20 active:scale-[0.97] active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 sm:hover:scale-[1.02] sm:hover:bg-white/30 sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25"
+                  } `}
+                >
+                  <span
+                    className={`relative z-10 text-sm font-bold tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-base ${
+                      isLoading || !glbFile || !isMintCompleted ? "text-white/50" : "text-white"
+                    }`}
+                  >
+                    {isMintCompleted ?
+                      "Minted!"
+                    : isIpfsUploading ?
+                      "Uploading..."
+                    : isMinting ?
+                      "Minting..."
+                    : isProcessing ?
+                      "Processing..."
+                    : "Coming Soon"}
+                  </span>
+                </button>
+
+            }
           </div>
         </div>
       </div>

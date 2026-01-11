@@ -29,7 +29,10 @@ export interface LoggerMock {
  * Create a logger mock that captures all calls for assertions
  * @returns Object containing the mock logger and captured calls array
  */
-export function createLoggerMock(): { logger: LoggerMock; calls: LoggerCall[] } {
+export function createLoggerMock(): {
+  logger: LoggerMock;
+  calls: LoggerCall[];
+} {
   const calls: LoggerCall[] = [];
 
   const logger: LoggerMock = {
@@ -77,7 +80,7 @@ export function createLoggerMockFactory(): {
  */
 export function findLogCall(calls: LoggerCall[], method: string, messagePrefix: string): LoggerCall | undefined {
   return calls.find(
-    call => call.method === method && typeof call.args[0] === "string" && call.args[0].startsWith(messagePrefix),
+    (call) => call.method === method && typeof call.args[0] === "string" && call.args[0].startsWith(messagePrefix),
   );
 }
 
@@ -85,7 +88,7 @@ export function findLogCall(calls: LoggerCall[], method: string, messagePrefix: 
  * Filter log calls by method
  */
 export function filterLogsByMethod(calls: LoggerCall[], method: string): LoggerCall[] {
-  return calls.filter(call => call.method === method);
+  return calls.filter((call) => call.method === method);
 }
 
 /**

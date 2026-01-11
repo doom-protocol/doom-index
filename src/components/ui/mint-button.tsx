@@ -49,11 +49,10 @@ export const MintButton: FC<MintButtonProps> = ({
       disabled={disabled || isLoading || isErrorState}
       aria-disabled={disabled || isLoading || isErrorState}
       className={`pointer-events-auto relative flex h-[36px] w-[120px] transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[18px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none ${
-        isErrorState
-          ? "cursor-not-allowed border-red-500/50 bg-red-500/20 shadow-red-500/20"
-          : !isInteractive
-            ? "active:animate-shake liquid-glass-effect cursor-not-allowed border-white/15 bg-white/5 opacity-60 shadow-white/5"
-            : "liquid-glass-effect cursor-pointer border-white/15 bg-white/8 opacity-100 shadow-white/5 hover:scale-105 hover:bg-white/12 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:shadow-white/10 active:scale-90 active:bg-white/20 active:shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:shadow-white/15"
+        isErrorState ? "cursor-not-allowed border-red-500/50 bg-red-500/20 shadow-red-500/20"
+        : !isInteractive ?
+          "active:animate-shake liquid-glass-effect cursor-not-allowed border-white/15 bg-white/5 opacity-60 shadow-white/5"
+        : "liquid-glass-effect cursor-pointer border-white/15 bg-white/8 opacity-100 shadow-white/5 hover:scale-105 hover:bg-white/12 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] hover:shadow-white/10 active:scale-90 active:bg-white/20 active:shadow-[0_8px_24px_rgba(0,0,0,0.4)] active:shadow-white/15"
       } `}
       onClick={handleClick}
     >

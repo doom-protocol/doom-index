@@ -35,7 +35,7 @@ describe("unit/lib/metadata-builder", () => {
         timestamp: "2025-01-01T00:00:00Z",
       });
 
-      const hashAttr = metadata.attributes.find(attr => attr.trait_type === "Painting Hash");
+      const hashAttr = metadata.attributes.find((attr) => attr.trait_type === "Painting Hash");
       expect(hashAttr).toBeDefined();
       expect(hashAttr?.value).toBe("abc123");
     });
@@ -47,7 +47,7 @@ describe("unit/lib/metadata-builder", () => {
         timestamp: "2025-01-01T00:00:00Z",
       });
 
-      const timestampAttr = metadata.attributes.find(attr => attr.trait_type === "Created At");
+      const timestampAttr = metadata.attributes.find((attr) => attr.trait_type === "Created At");
       expect(timestampAttr).toBeDefined();
       expect(timestampAttr?.value).toBe("2025-01-01T00:00:00Z");
     });
@@ -60,7 +60,7 @@ describe("unit/lib/metadata-builder", () => {
         walletAddress: "0x123",
       });
 
-      const walletAttr = metadata.attributes.find(attr => attr.trait_type === "Minted By");
+      const walletAttr = metadata.attributes.find((attr) => attr.trait_type === "Minted By");
       expect(walletAttr).toBeDefined();
       expect(walletAttr?.value).toBe("0x123");
     });
@@ -72,7 +72,7 @@ describe("unit/lib/metadata-builder", () => {
         timestamp: "2025-01-01T00:00:00Z",
       });
 
-      const walletAttr = metadata.attributes.find(attr => attr.trait_type === "Minted By");
+      const walletAttr = metadata.attributes.find((attr) => attr.trait_type === "Minted By");
       expect(walletAttr).toBeUndefined();
     });
 

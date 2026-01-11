@@ -127,7 +127,10 @@ export const mcRouter = router({
     }
 
     const payload = { tokens: { ...ZERO_MAP } };
-    await set("mc:getMarketCaps", payload, { ttlSeconds: 60, logger: ctx.logger });
+    await set("mc:getMarketCaps", payload, {
+      ttlSeconds: 60,
+      logger: ctx.logger,
+    });
 
     return {
       ...payload,

@@ -51,8 +51,16 @@ describe("Archive List Service", () => {
   let mockD1: {
     prepare: (sql: string) => {
       bind: (...params: unknown[]) => {
-        all: () => Promise<{ items: unknown[]; cursor?: string; hasMore: boolean }>;
-        raw: () => Promise<{ items: unknown[]; cursor?: string; hasMore: boolean }>;
+        all: () => Promise<{
+          items: unknown[];
+          cursor?: string;
+          hasMore: boolean;
+        }>;
+        raw: () => Promise<{
+          items: unknown[];
+          cursor?: string;
+          hasMore: boolean;
+        }>;
       };
     };
     batch: () => Promise<unknown[]>;
@@ -90,7 +98,7 @@ describe("Archive List Service", () => {
     // Mock D1 database using Drizzle ORM's expected API
     // @ts-expect-error - Mock D1 database for testing
     mockD1 = {
-      prepare: mock(sql => ({
+      prepare: mock((sql) => ({
         bind: mock((...params) => ({
           all: mock(async () => {
             // Parse the SQL to understand what data is requested
@@ -122,8 +130,9 @@ describe("Archive List Service", () => {
 
               const limitedData = testData.slice(0, limit);
               const hasMore = testData.length > limit;
-              const cursor = hasMore
-                ? encodeCursor({
+              const cursor =
+                hasMore ?
+                  encodeCursor({
                     ts: limitedData[limitedData.length - 1].ts,
                     id: limitedData[limitedData.length - 1].id,
                   })
@@ -135,7 +144,11 @@ describe("Archive List Service", () => {
                 hasMore,
               });
             }
-            return await Promise.resolve({ items: [], cursor: undefined, hasMore: false });
+            return await Promise.resolve({
+              items: [],
+              cursor: undefined,
+              hasMore: false,
+            });
           }),
           raw: mock(async () => {
             // Parse the SQL to understand what data is requested
@@ -167,8 +180,9 @@ describe("Archive List Service", () => {
 
               const limitedData = testData.slice(0, limit);
               const hasMore = testData.length > limit;
-              const cursor = hasMore
-                ? encodeCursor({
+              const cursor =
+                hasMore ?
+                  encodeCursor({
                     ts: limitedData[limitedData.length - 1].ts,
                     id: limitedData[limitedData.length - 1].id,
                   })
@@ -180,7 +194,11 @@ describe("Archive List Service", () => {
                 hasMore,
               });
             }
-            return await Promise.resolve({ items: [], cursor: undefined, hasMore: false });
+            return await Promise.resolve({
+              items: [],
+              cursor: undefined,
+              hasMore: false,
+            });
           }),
         })),
       })),
@@ -211,15 +229,18 @@ describe("Archive List Service", () => {
 
   describe("listImages", () => {
     it("should list images with default limit", async () => {
-      // @ts-expect-error - Mock D1 database for testing
-      const service = createPaintingsService({ r2Bucket: bucket, d1Binding: mockD1 });
+      const service = createPaintingsService({
+        r2Bucket: bucket,
+        // @ts-expect-error - Mock D1 database for testing
+        d1Binding: mockD1,
+      });
       const result = await service.listImages({});
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.items.length).toBeGreaterThan(0);
         expect(result.value.items.length).toBeLessThanOrEqual(20); // default limit
-        expect(result.value.items.every(item => item.imageUrl.includes(".webp"))).toBe(true);
+        expect(result.value.items.every((item) => item.imageUrl.includes(".webp"))).toBe(true);
       }
     });
 
@@ -258,8 +279,8 @@ describe("Archive List Service", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.items.every(item => item.imageUrl.includes(".webp"))).toBe(true);
-        expect(result.value.items.some(item => item.imageUrl.includes("test.png"))).toBe(false);
+        expect(result.value.items.every((item) => item.imageUrl.includes(".webp"))).toBe(true);
+        expect(result.value.items.some((item) => item.imageUrl.includes("test.png"))).toBe(false);
       }
     });
 
@@ -306,8 +327,8 @@ describe("Archive List Service", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.items.every(item => item.imageUrl.includes("/api/r2/images/"))).toBe(true);
-        expect(result.value.items.some(item => item.imageUrl.includes("other/file"))).toBe(false);
+        expect(result.value.items.every((item) => item.imageUrl.includes("/api/r2/images/"))).toBe(true);
+        expect(result.value.items.some((item) => item.imageUrl.includes("other/file"))).toBe(false);
       }
     });
   });

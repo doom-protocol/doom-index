@@ -67,7 +67,7 @@ export function formatDateShort(date: Date): string {
  * @returns Promise that resolves to TimeoutError after timeout
  */
 export function createTimeoutPromise(ms: number, message?: string): Promise<TimeoutError> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
         type: "TimeoutError",

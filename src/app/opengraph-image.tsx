@@ -245,9 +245,8 @@ async function getCurrentPaintingImageBuffer(
   const listResult = await repo.list({ limit: 1 });
 
   if (listResult.isErr() || listResult.value.items.length === 0) {
-    const reason = listResult.isErr()
-      ? `repo.list() failed: ${listResult.error.message}`
-      : "No paintings found in database";
+    const reason =
+      listResult.isErr() ? `repo.list() failed: ${listResult.error.message}` : "No paintings found in database";
     logger.error("ogp.step1-state-failed", {
       reason,
       error: listResult.isErr() ? listResult.error.message : "No paintings found",
@@ -288,8 +287,9 @@ async function getCurrentPaintingImageBuffer(
   // Step 3: Fetch image from R2
   const imageResult = await getImageR2(bucket, imageKey);
   if (imageResult.isErr() || !imageResult.value) {
-    const reason = imageResult.isErr()
-      ? `R2 getImageR2() failed: ${imageResult.error.message}`
+    const reason =
+      imageResult.isErr() ?
+        `R2 getImageR2() failed: ${imageResult.error.message}`
       : "R2 returned null/empty image data";
     logger.error("ogp.step3-image-failed", {
       reason,
@@ -502,7 +502,7 @@ export default async function Image(): Promise<Response> {
           });
 
           const fallbackDataUrl = await getFallbackImageDataUrl(fallbackAssetsFetcher);
-          const fallbackBuffer = await fetch(fallbackDataUrl).then(r => r.arrayBuffer());
+          const fallbackBuffer = await fetch(fallbackDataUrl).then((r) => r.arrayBuffer());
           const [frameBuffer, backgroundBuffer] = await Promise.all([
             getFrameImageBuffer(fallbackAssetsFetcher),
             getBackgroundImageBuffer(fallbackAssetsFetcher),
@@ -547,7 +547,7 @@ export default async function Image(): Promise<Response> {
     // Create a minimal black PNG using data URL
     const blackPngDataUrl =
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
-    const blackBuffer = await fetch(blackPngDataUrl).then(r => r.arrayBuffer());
+    const blackBuffer = await fetch(blackPngDataUrl).then((r) => r.arrayBuffer());
 
     logger.info("ogp.fallback-black-completed", {
       durationMs: Date.now() - startTime,

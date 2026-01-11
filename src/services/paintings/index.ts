@@ -86,10 +86,10 @@ export function createPaintingsService({
     storeImageWithMetadata: (minuteBucket, filename, imageBuffer, metadata) =>
       storage.storeImageWithMetadata(bucket, minuteBucket, filename, imageBuffer, metadata),
 
-    listImages: options => list.listImages(bucket, d1Binding, options, repo),
+    listImages: (options) => list.listImages(bucket, d1Binding, options, repo),
 
     insertPainting: (metadata, r2Key) => repo.insert(metadata, r2Key),
 
-    getPaintingById: id => repo.findById(id),
+    getPaintingById: (id) => repo.findById(id),
   };
 }

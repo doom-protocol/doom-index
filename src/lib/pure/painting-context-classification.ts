@@ -61,7 +61,10 @@ export function classifyTokenArchetype(token: SelectedToken, categories: string[
 /**
  * Classify Event Pressure (Requirement 5)
  */
-export function classifyEventPressure(tokenSnapshot: TokenSnapshot): { k: EventKind; i: EventIntensity } {
+export function classifyEventPressure(tokenSnapshot: TokenSnapshot): {
+  k: EventKind;
+  i: EventIntensity;
+} {
   const priceChange24h = tokenSnapshot.p;
 
   if (priceChange24h > 10) {
@@ -120,7 +123,10 @@ export function pickPalette(
 /**
  * Classify Dynamics (Requirement 5)
  */
-export function classifyDynamics(tokenSnapshot: TokenSnapshot): { dir: TrendDirection; vol: VolatilityLevel } {
+export function classifyDynamics(tokenSnapshot: TokenSnapshot): {
+  dir: TrendDirection;
+  vol: VolatilityLevel;
+} {
   const priceChange24h = tokenSnapshot.p;
   const volatilityScore = tokenSnapshot.vol;
 

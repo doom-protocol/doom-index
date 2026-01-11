@@ -91,7 +91,7 @@ export function shouldReturn304(req: Request, etag: string): boolean {
   if (!ifNoneMatch) return false;
 
   // Handle multiple ETags separated by comma
-  const clientETags = ifNoneMatch.split(",").map(e => e.trim());
+  const clientETags = ifNoneMatch.split(",").map((e) => e.trim());
   return clientETags.includes(etag) || clientETags.includes("*");
 }
 
@@ -138,7 +138,7 @@ export function arrayBufferToBase64(buffer: ArrayBuffer): string {
  * @returns Uint8Array
  */
 export function base64ToUint8Array(base64: string): Uint8Array {
-  return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 }
 
 /**

@@ -60,7 +60,7 @@ describe("TokenSelectionService", () => {
       findRecentlySelected: async () => await Promise.resolve(okResult([])),
       findById: async () => await Promise.resolve(okResult(null)),
       insert: async () => await Promise.resolve(okResult(undefined)),
-      update: async () => new Promise(resolve => resolve(okResult(undefined))),
+      update: async () => new Promise((resolve) => resolve(okResult(undefined))),
       ...deps.tokensRepository,
     } as TokensRepository;
 
@@ -95,10 +95,10 @@ describe("TokenSelectionService", () => {
           ),
       },
       tokensRepository: {
-        findById: async () => new Promise(resolve => resolve(okResult(null))),
-        insert: async token => {
+        findById: async () => new Promise((resolve) => resolve(okResult(null))),
+        insert: async (token) => {
           inserted.push(token);
-          return new Promise(resolve => resolve(okResult(undefined)));
+          return new Promise((resolve) => resolve(okResult(undefined)));
         },
       },
     });
@@ -111,7 +111,10 @@ describe("TokenSelectionService", () => {
       expect(result.value.scores.final).toBeGreaterThan(0);
     }
     expect(inserted).toHaveLength(1);
-    expect(inserted[0]).toMatchObject({ id: "alpha", categories: JSON.stringify(["l1"]) });
+    expect(inserted[0]).toMatchObject({
+      id: "alpha",
+      categories: JSON.stringify(["l1"]),
+    });
   });
 
   it("filters out stablecoins and recently selected tokens", async () => {
@@ -220,10 +223,10 @@ describe("TokenSelectionService", () => {
               },
             ]),
           ),
-        findById: async () => new Promise(resolve => resolve(okResult(null))),
-        insert: async token => {
+        findById: async () => new Promise((resolve) => resolve(okResult(null))),
+        insert: async (token) => {
           inserted.push(token);
-          return new Promise(resolve => resolve(okResult(undefined)));
+          return new Promise((resolve) => resolve(okResult(undefined)));
         },
       },
     });
@@ -237,7 +240,10 @@ describe("TokenSelectionService", () => {
       expect(result.value.scores.final).toBeGreaterThan(0);
     }
     expect(inserted).toHaveLength(1);
-    expect(inserted[0]).toMatchObject({ id: "alpha", categories: JSON.stringify(["l1"]) });
+    expect(inserted[0]).toMatchObject({
+      id: "alpha",
+      categories: JSON.stringify(["l1"]),
+    });
   });
 
   it("respects FORCE_TOKEN_LIST priority ordering", async () => {
@@ -245,11 +251,11 @@ describe("TokenSelectionService", () => {
     let resolvedTickers: string[] = [];
     const service = createService({
       tokenDataFetchService: {
-        resolveTickersToIds: async tickers => {
+        resolveTickersToIds: async (tickers) => {
           resolvedTickers = tickers;
           return await Promise.resolve(
             okResult(
-              tickers.map(t => ({
+              tickers.map((t) => ({
                 ticker: t,
                 id: `${t.toLowerCase()}-id`,
               })),
@@ -274,8 +280,8 @@ describe("TokenSelectionService", () => {
         },
       },
       tokensRepository: {
-        findById: async () => new Promise(resolve => resolve(okResult(null))),
-        insert: async () => new Promise(resolve => resolve(okResult(undefined))),
+        findById: async () => new Promise((resolve) => resolve(okResult(null))),
+        insert: async () => new Promise((resolve) => resolve(okResult(undefined))),
       },
     });
 
@@ -299,7 +305,9 @@ describe("TokenSelectionService", () => {
       },
     });
 
-    const result = await service.selectToken({ forceTokenList: "DROP TABLE users; , !!!" });
+    const result = await service.selectToken({
+      forceTokenList: "DROP TABLE users; , !!!",
+    });
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {
       expect(result.error.type).toBe("ValidationError");

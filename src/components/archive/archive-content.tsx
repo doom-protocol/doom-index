@@ -3,12 +3,16 @@
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
 import { formatDateShort } from "@/utils/time";
-import { useEffect, useMemo, useRef, useState, Suspense, lazy, type FC } from "react";
+import { useMemo, useRef, useState, Suspense, lazy, type FC } from "react";
 import { ArchiveGrid } from "./archive-grid";
 import { DateFilter } from "./date-filter";
 import { PaginationControls } from "./pagination-controls";
 
-const ArchiveDetailView = lazy(() => import("./archive-detail-view").then(mod => ({ default: mod.ArchiveDetailView })));
+const ArchiveDetailView = lazy(() =>
+  import("./archive-detail-view").then((mod) => ({
+    default: mod.ArchiveDetailView,
+  })),
+);
 
 interface ArchiveContentProps {
   items: Painting[];
@@ -30,9 +34,9 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
   const dateRange = useMemo(() => {
     if (items.length === 0) return null;
 
-    const dates = items.map(item => new Date(item.timestamp));
-    const earliest = new Date(Math.min(...dates.map(d => d.getTime())));
-    const latest = new Date(Math.max(...dates.map(d => d.getTime())));
+    const dates = items.map((item) => new Date(item.timestamp));
+    const earliest = new Date(Math.min(...dates.map((d) => d.getTime())));
+    const latest = new Date(Math.max(...dates.map((d) => d.getTime())));
 
     return {
       start: formatDateShort(earliest),
@@ -55,25 +59,13 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
   };
 
   const handleClose = () => {
+    // Restore scroll position immediately (list stays mounted)
+    if (listRef.current) {
+      listRef.current.scrollTop = savedScrollTop;
+    }
     setSelectedItem(null);
     setIsTransitioning(false);
   };
-
-  // Restore scroll position when returning from detail view
-  useEffect(() => {
-    if (!selectedItem && listRef.current && savedScrollTop > 0) {
-      listRef.current.scrollTop = savedScrollTop;
-    }
-  }, [selectedItem, savedScrollTop]);
-
-  // Show detail view if item is selected (after all hooks)
-  if (selectedItem) {
-    return (
-      <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
-        <ArchiveDetailView item={selectedItem} onClose={handleClose} />
-      </Suspense>
-    );
-  }
 
   return (
     <>
@@ -116,6 +108,14 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
       <div className={`transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
         <DateFilter from={from} to={to} />
       </div>
+
+      {selectedItem && (
+        <div className="fixed inset-0 z-50">
+          <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
+            <ArchiveDetailView item={selectedItem} onClose={handleClose} />
+          </Suspense>
+        </div>
+      )}
     </>
   );
 };

@@ -39,7 +39,13 @@ describe("MarketDataService", () => {
 
     const alternativeMeClient: AlternativeMeClientStub = {
       getFearGreedIndex: async () =>
-        await Promise.resolve(ok({ value: 65, valueClassification: "Greed", timestamp: 1_700_000_000 })),
+        await Promise.resolve(
+          ok({
+            value: 65,
+            valueClassification: "Greed",
+            timestamp: 1_700_000_000,
+          }),
+        ),
     };
 
     const repository: MarketSnapshotsRepositoryStub = {
@@ -108,10 +114,19 @@ describe("MarketDataService", () => {
 
     const alternativeMeClient: AlternativeMeClientStub = {
       getFearGreedIndex: async () =>
-        await Promise.resolve(ok({ value: 50, valueClassification: "Neutral", timestamp: 1_700_000_000 })),
+        await Promise.resolve(
+          ok({
+            value: 50,
+            valueClassification: "Neutral",
+            timestamp: 1_700_000_000,
+          }),
+        ),
     };
 
-    const upsertCalls: Array<{ hourBucket: string; payload: Record<string, unknown> }> = [];
+    const upsertCalls: Array<{
+      hourBucket: string;
+      payload: Record<string, unknown>;
+    }> = [];
     const repository: MarketSnapshotsRepositoryStub = {
       upsert: async (hourBucket, payload) => {
         upsertCalls.push({ hourBucket, payload });

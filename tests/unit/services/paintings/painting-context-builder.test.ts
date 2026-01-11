@@ -102,7 +102,10 @@ describe("PaintingContextBuilder", () => {
 
     const result = await builder.buildContext({
       selectedToken: token({ categories: ["meme"] }),
-      marketSnapshot: snapshot({ marketCapChangePercentage24hUsd: -6, fearGreedIndex: 20 }),
+      marketSnapshot: snapshot({
+        marketCapChangePercentage24hUsd: -6,
+        fearGreedIndex: 20,
+      }),
     });
 
     expect(result.isOk()).toBe(true);

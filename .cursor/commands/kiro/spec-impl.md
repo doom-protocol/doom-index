@@ -1,133 +1,117 @@
 <meta>
 description: Execute spec tasks using TDD methodology
-argument-hint: [feature-name] <task-numbers>
+argument-hint: <feature-name:$1> [task-numbers:$2]
 </meta>
 
-# Execute Spec Tasks with TDD
+# Implementation Task Executor
 
-Execute implementation tasks from spec using Kent Beck's Test-Driven Development methodology.
+<background_information>
 
-## Arguments: [feature-name]
+- **Mission**: Execute implementation tasks using Test-Driven Development methodology based on approved specifications
+- **Success Criteria**:
+  - All tests written before implementation code
+  - Code passes all tests with no regressions
+  - Tasks marked as completed in tasks.md
+  - Implementation aligns with design and requirements
+    </background_information>
 
-Tool policy: Use Cursor file tools (read_file/list_dir/glob_file_search/apply_patch/edit_file); no shell.
+<instructions>
+## Core Task
+Execute implementation tasks for feature **$1** using Test-Driven Development.
 
-## Current Specs
+## Execution Steps
 
-Available specs: Discover via list_dir/glob_file_search under `.kiro/specs/`
+### Step 1: Load Context
 
-## Instructions
+**Read all necessary context**:
 
-### Help Mode (--help)
+- `.kiro/specs/$1/spec.json`, `requirements.md`, `design.md`, `tasks.md`
+- **Entire `.kiro/steering/` directory** for complete project memory
 
-If arguments contain "--help", show usage:
+**Validate approvals**:
 
-```
-/kiro/spec-impl [feature-name] <task-numbers>
+- Verify tasks are approved in spec.json (stop if not, see Safety & Fallback)
 
-Examples:
-  /kiro/spec-impl auth-system 1.1            # Execute task 1.1
-  /kiro/spec-impl auth-system 1,2,3          # Execute tasks 1, 2, 3
-  /kiro/spec-impl auth-system --all          # Execute all pending tasks
-```
+### Step 2: Select Tasks
 
-### Pre-Execution Validation
+**Determine which tasks to execute**:
 
-Feature name: Parse first token of `[feature-name]` argument
+- If `$2` provided: Execute specified task numbers (e.g., "1.1" or "1,2,3")
+- Otherwise: Execute all pending tasks (unchecked `- [ ]` in tasks.md)
 
-Validate required files exist:
+### Step 3: Execute with TDD
 
-- Requirements: Check `.kiro/specs/[feature-name]/requirements.md` via read_file
-- Design: Check `.kiro/specs/[feature-name]/design.md` via read_file
-- Tasks: Check `.kiro/specs/[feature-name]/tasks.md` via read_file
-- Metadata: Check `.kiro/specs/[feature-name]/spec.json` via read_file
+For each selected task, follow Kent Beck's TDD cycle:
 
-### Context Loading
+1. **RED - Write Failing Test**:
+   - Write test for the next small piece of functionality
+   - Test should fail (code doesn't exist yet)
+   - Use descriptive test names
 
-**Load all required content before execution:**
+2. **GREEN - Write Minimal Code**:
+   - Implement simplest solution to make test pass
+   - Focus only on making THIS test pass
+   - Avoid over-engineering
 
-**Core Steering:**
+3. **REFACTOR - Clean Up**:
+   - Improve code structure and readability
+   - Remove duplication
+   - Apply design patterns where appropriate
+   - Ensure all tests still pass after refactoring
 
-- Structure: `.kiro/steering/structure.md`
-- Tech Stack: `.kiro/steering/tech.md`
-- Product: `.kiro/steering/product.md`
+4. **VERIFY - Validate Quality**:
+   - All tests pass (new and existing)
+   - No regressions in existing functionality
+   - Code coverage maintained or improved
 
-**Custom Steering:**
-Additional files: Discover via list_dir/glob_file_search in `.kiro/steering` excluding `structure.md`, `tech.md`, `product.md`
+5. **MARK COMPLETE**:
+   - Update checkbox from `- [ ]` to `- [x]` in tasks.md
 
-**Spec Documents:**
-Feature directory: Parse from `[feature-name]` argument
+## Critical Constraints
 
-- Requirements: `.kiro/specs/[feature-name]/requirements.md`
-- Design: `.kiro/specs/[feature-name]/design.md`
-- Tasks: `.kiro/specs/[feature-name]/tasks.md`
+- **TDD Mandatory**: Tests MUST be written before implementation code
+- **Task Scope**: Implement only what the specific task requires
+- **Test Coverage**: All new code must have tests
+- **No Regressions**: Existing tests must continue to pass
+- **Design Alignment**: Implementation must follow design.md specifications
+  </instructions>
 
-**Note**: [feature-name] will be replaced with actual feature name during execution
+## Tool Guidance
+
+- **Read first**: Load all context before implementation
+- **Test first**: Write tests before code
+- Use **WebSearch/WebFetch** for library documentation when needed
+
+## Output Description
+
+Provide brief summary in the language specified in spec.json:
+
+1. **Tasks Executed**: Task numbers and test results
+2. **Status**: Completed tasks marked in tasks.md, remaining tasks count
+
+**Format**: Concise (under 150 words)
+
+## Safety & Fallback
+
+### Error Scenarios
+
+**Tasks Not Approved or Missing Spec Files**:
+
+- **Stop Execution**: All spec files must exist and tasks must be approved
+- **Suggested Action**: "Complete previous phases: `/kiro/spec-requirements`, `/kiro/spec-design`, `/kiro/spec-tasks`"
+
+**Test Failures**:
+
+- **Stop Implementation**: Fix failing tests before continuing
+- **Action**: Debug and fix, then re-run
 
 ### Task Execution
 
-1. **Parse feature name and task numbers** from arguments
-2. **Load all context** (steering + spec documents)
-3. **Extract checkboxes** from tasks.md: Read file and parse `- [ ]` / `- [x]` lines programmatically (no shell)
-4. **Execute each checkbox** using TDD methodology directly
+**Execute specific task(s)**:
 
-### For Each Task Checkbox
+- `/kiro/spec-impl $1 1.1` - Single task
+- `/kiro/spec-impl $1 1,2,3` - Multiple tasks
 
-Execute using TDD methodology directly:
+**Execute all pending**:
 
-**Implementation Steps:**
-
-1. **Load Project Context** (read these files first):
-   - Structure: `.kiro/steering/structure.md`
-   - Tech Stack: `.kiro/steering/tech.md`
-   - Product: `.kiro/steering/product.md`
-   - Custom steering files: Discover via list_dir/glob_file_search in `.kiro/steering` excluding `structure.md`, `tech.md`, `product.md`
-   - Spec Metadata: `.kiro/specs/[feature-name]/spec.json`
-   - Requirements: `.kiro/specs/[feature-name]/requirements.md`
-   - Design: `.kiro/specs/[feature-name]/design.md`
-   - All Tasks: `.kiro/specs/[feature-name]/tasks.md`
-
-2. **TDD Implementation** for each specific task:
-   - **RED**: Write failing tests first
-   - **GREEN**: Write minimal code to pass tests
-   - **REFACTOR**: Clean up and improve code structure
-
-3. **Task Completion**:
-   - Verify all tests pass
-   - Update checkbox from `- [ ]` to `- [x]` in `.kiro/specs/[feature-name]/tasks.md`
-   - Ensure no regressions in existing tests
-
-**For each task:**
-
-- Extract exact checkbox content from tasks.md
-- Follow Kent Beck's TDD methodology strictly
-- Implement only the specific task requirements
-- Maintain code quality and test coverage
-
-## Implementation Logic
-
-1. **Parse Arguments**:
-   - Feature name: First argument
-   - Task numbers: Second argument (support: "1", "1,2,3", "--all")
-
-2. **Validate**:
-   - Spec directory exists
-   - Required files (requirements.md, design.md, tasks.md, spec.json) exist
-   - Spec is approved for implementation
-
-3. **Execute**:
-   - **Load all file contents** into memory first
-   - **Build complete context** for implementation
-   - **Execute each task sequentially** using TDD methodology
-   - Each task implementation receives complete project knowledge
-
-## Error Handling
-
-- Spec not found: Run /kiro/spec-init first
-- Not approved: Complete spec workflow first
-- Task failure: Keep checkbox unchecked, show error
-
-## Success Metrics
-
-- All selected checkboxes marked [x] in tasks.md
-- Tests pass
-- No regressions
+- `/kiro/spec-impl $1` - All unchecked tasks

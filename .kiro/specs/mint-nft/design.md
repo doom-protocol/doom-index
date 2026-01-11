@@ -302,7 +302,11 @@ interface MintModalState {
   progress: number;
   glbFile: File | null;
   ipfsData: { cid: string; gatewayUrl: string } | null;
-  pricingData: { lamports: number; usdPrice: number; networkFee: number } | null;
+  pricingData: {
+    lamports: number;
+    usdPrice: number;
+    networkFee: number;
+  } | null;
   error: string | null;
 }
 ```

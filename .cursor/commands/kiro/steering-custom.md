@@ -1,162 +1,129 @@
 <meta>
-description: Create custom Kiro steering documents for specialized project contexts
+description: Create custom steering documents for specialized project contexts
 </meta>
 
 # Kiro Custom Steering Creation
 
-Create custom steering documents in `.kiro/steering/` for specialized contexts beyond the three foundational files (`product.md`, `tech.md`, `structure.md`).
+<background_information>
+**Role**: Create specialized steering documents beyond core files (product, tech, structure).
 
-Tool policy: Use Cursor file tools (read_file/list_dir/glob_file_search/apply_patch/edit_file); no shell.
+**Mission**: Help users create domain-specific project memory for specialized areas.
 
-## Current Steering Status
+**Success Criteria**:
 
-### Existing Steering Documents
+- Custom steering captures specialized patterns
+- Follows same granularity principles as core steering
+- Provides clear value for specific domain
+  </background_information>
 
-- Foundational steering files: Discover via list_dir/glob_file_search under `.kiro/steering/`
-- Custom steering count: Count non-core `.md` files in `.kiro/steering` via list_dir/glob_file_search
+<instructions>
+## Workflow
 
-### Project Analysis
+1. **Ask user** for custom steering needs:
+   - Domain/topic (e.g., "API standards", "testing approach")
+   - Specific requirements or patterns to document
 
-- Specialized areas: Discover notable directories via glob_file_search (e.g., `**/api/**`, `**/auth/**`, `**/security/**`, `**/test*/**`, `**/spec*/**`)
-- Config patterns: Discover common config files via glob_file_search (e.g., `*.config.*`, `*rc.*`, `.*rc`)
+2. **Check if template exists**:
+   - Load from `.kiro/settings/templates/steering-custom/{name}.md` if available
+   - Use as starting point, customize based on project
 
-## Task: Create Custom Steering Document
+3. **Analyze codebase** (JIT) for relevant patterns:
+   - **Glob** for related files
+   - **Read** for existing implementations
+   - **Grep** for specific patterns
 
-You will create a new custom steering document based on user requirements. Common use cases include:
+4. **Generate custom steering**:
+   - Follow template structure if available
+   - Apply principles from `.kiro/settings/rules/steering-principles.md`
+   - Focus on patterns, not exhaustive lists
+   - Keep to 100-200 lines (2-3 minute read)
 
-### Common Custom Steering Types
+5. **Create file** in `.kiro/steering/{name}.md`
 
-1. **API Standards** (`api-standards.md`)
-   - REST/GraphQL conventions
-   - Error handling patterns
-   - Authentication/authorization approaches
-   - API versioning strategy
+## Available Templates
 
-2. **Testing Approach** (`testing.md`)
-   - Test file organization
-   - Naming conventions for tests
-   - Mocking strategies
-   - Coverage requirements
-   - E2E vs unit vs integration testing
+Templates available in `.kiro/settings/templates/steering-custom/`:
 
-3. **Code Style Guidelines** (`code-style.md`)
-   - Language-specific conventions
-   - Formatting rules beyond linters
-   - Comment standards
-   - Function/variable naming patterns
-   - Code organization principles
+1. **api-standards.md** - REST/GraphQL conventions, error handling
+2. **testing.md** - Test organization, mocking, coverage
+3. **security.md** - Auth patterns, input validation, secrets
+4. **database.md** - Schema design, migrations, query patterns
+5. **error-handling.md** - Error types, logging, retry strategies
+6. **authentication.md** - Auth flows, permissions, session management
+7. **deployment.md** - CI/CD, environments, rollback procedures
 
-4. **Security Policies** (`security.md`)
-   - Input validation requirements
-   - Authentication patterns
-   - Secrets management
-   - OWASP compliance guidelines
-   - Security review checklist
+Load template when needed, customize for project.
 
-5. **Database Conventions** (`database.md`)
-   - Schema design patterns
-   - Migration strategies
-   - Query optimization guidelines
-   - Connection pooling settings
-   - Backup and recovery procedures
+## Steering Principles
 
-6. **Performance Standards** (`performance.md`)
-   - Load time requirements
-   - Memory usage limits
-   - Optimization techniques
-   - Caching strategies
-   - Monitoring and profiling
+From `.kiro/settings/rules/steering-principles.md`:
 
-7. **Deployment Workflow** (`deployment.md`)
-   - CI/CD pipeline stages
-   - Environment configurations
-   - Release procedures
-   - Rollback strategies
-   - Health check requirements
+- **Patterns over lists**: Document patterns, not every file/component
+- **Single domain**: One topic per file
+- **Concrete examples**: Show patterns with code
+- **Maintainable size**: 100-200 lines typical
+- **Security first**: Never include secrets or sensitive data
 
-## Inclusion Mode Selection
+</instructions>
 
-Choose the inclusion mode based on how frequently and in what context this steering document should be referenced:
+## Tool guidance
 
-### 1. Always Included (Use sparingly for custom files)
+- **Read**: Load template, analyze existing code
+- **Glob**: Find related files for pattern analysis
+- **Grep**: Search for specific patterns
+- **LS**: Understand relevant structure
 
-- **When to use**: Universal standards that apply to ALL code (security policies, core conventions)
-- **Impact**: Increases context size for every interaction
-- **Example**: `security-standards.md` for critical security requirements
-- **Recommendation**: Only use for truly universal guidelines
+**JIT Strategy**: Load template only when creating that type of steering.
 
-### 2. Conditional Inclusion (Recommended for most custom files)
+## Output description
 
-- **When to use**: Domain-specific guidelines for particular file types or directories
-- **File patterns**: `"*.test.js"`, `"src/api/**/*"`, `"**/auth/*"`, `"*.config.*"`
-- **Example**: `testing-approach.md` only loads when editing test files
-- **Benefits**: Relevant context without overwhelming general interactions
+Chat summary with file location (file created directly).
 
-### 3. Manual Inclusion (Best for specialized contexts)
+```
+✅ Custom Steering Created
 
-- **When to use**: Specialized knowledge needed occasionally
-- **Usage**: Reference with `@filename.md` during specific conversations
-- **Example**: `deployment-runbook.md` for deployment-specific tasks
-- **Benefits**: Available when needed, doesn't clutter routine interactions
+## Created:
+- .kiro/steering/api-standards.md
 
-## Document Structure Guidelines
+## Based On:
+- Template: api-standards.md
+- Analyzed: src/api/ directory patterns
+- Extracted: REST conventions, error format
 
-Create the custom steering document with:
+## Content:
+- Endpoint naming patterns
+- Request/response format
+- Error handling conventions
+- Authentication approach
 
-1. **Clear Title and Purpose**
-   - What aspect of the project this document covers
-   - When this guidance should be applied
+Review and customize as needed.
+```
 
-2. **Specific Guidelines**
-   - Concrete rules and patterns to follow
-   - Rationale for important decisions
+## Examples
 
-3. **Code Examples**
-   - Show correct implementation patterns
-   - Include counter-examples if helpful
+### Success: API Standards
 
-4. **Integration Points**
-   - How this relates to other steering documents
-   - Dependencies or prerequisites
+**Input**: "Create API standards steering"  
+**Action**: Load template, analyze src/api/, extract patterns  
+**Output**: api-standards.md with project-specific REST conventions
 
-## Security and Quality Guidelines
+### Success: Testing Strategy
 
-### Security Requirements
+**Input**: "Document our testing approach"  
+**Action**: Load template, analyze test files, extract patterns  
+**Output**: testing.md with test organization and mocking strategies
 
-- **Never include sensitive data**: No API keys, passwords, database URLs, secrets
-- **Review sensitive context**: Avoid internal server names, private API endpoints
-- **Team access awareness**: All steering content is shared with team members
+## Safety & Fallback
 
-### Content Quality Standards
+- **No template**: Generate from scratch based on domain knowledge
+- **Security**: Never include secrets (load principles)
+- **Validation**: Ensure doesn't duplicate core steering content
 
-- **Single responsibility**: One steering file = one domain (don't mix API + database guidelines)
-- **Concrete examples**: Include code snippets and real project examples
-- **Clear rationale**: Explain WHY certain approaches are preferred
-- **Maintainable size**: Target 2-3 minute read time per file
+## Notes
 
-## Instructions
-
-1. **Ask the user** for:
-   - Document name (descriptive filename ending in .md)
-   - Topic/purpose of the custom steering
-   - Inclusion mode preference
-   - Specific patterns for conditional inclusion (if applicable)
-
-2. **Create the document** in `.kiro/steering/` with:
-   - Clear, focused content (2-3 minute read)
-   - Practical examples
-   - Consistent formatting with other steering files
-
-3. **Document the inclusion mode** by adding a comment at the top:
-
-   ```markdown
-   <!-- Inclusion Mode: Always | Conditional: "pattern" | Manual -->
-   ```
-
-4. **Validate** that the document:
-   - Doesn't duplicate existing steering content
-   - Provides unique value for the specified context
-   - Follows markdown best practices
-
-Remember: Custom steering documents should supplement, not replace, the foundational three files. They provide specialized context for specific aspects of your project.
-ultrathink
+- Templates are starting points, customize for project
+- Follow same granularity principles as core steering
+- All steering files loaded as project memory
+- Custom files equally important as core files
+- Avoid documenting agent-specific tooling directories (e.g. `.cursor/`, `.gemini/`, `.claude/`)
+- Light references to `.kiro/specs/` and `.kiro/steering/` are acceptable; avoid other `.kiro/` directories

@@ -121,9 +121,12 @@ export function createTokenAnalysisService({
         chainId: input.chainId,
         errorType: tavilyResult.error.type,
         message: tavilyResult.error.message,
-        ...(tavilyResult.error.type === "ExternalApiError" && tavilyResult.error.provider === "Tavily"
-          ? { provider: tavilyResult.error.provider, status: tavilyResult.error.status }
-          : {}),
+        ...(tavilyResult.error.type === "ExternalApiError" && tavilyResult.error.provider === "Tavily" ?
+          {
+            provider: tavilyResult.error.provider,
+            status: tavilyResult.error.status,
+          }
+        : {}),
       });
       return err(tavilyResult.error);
     }
@@ -174,9 +177,9 @@ Generate a concise context JSON for this token.`;
         chainId: input.chainId,
         errorType: aiResult.error.type,
         message: aiResult.error.message,
-        ...(aiResult.error.type === "ExternalApiError" && aiResult.error.provider === "WorkersAI"
-          ? { provider: aiResult.error.provider }
-          : {}),
+        ...(aiResult.error.type === "ExternalApiError" && aiResult.error.provider === "WorkersAI" ?
+          { provider: aiResult.error.provider }
+        : {}),
       });
       return err(aiResult.error);
     }
