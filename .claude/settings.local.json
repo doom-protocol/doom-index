@@ -11,7 +11,9 @@
       "Bash(bun test:*)",
       "Bash(bun run typecheck:chrome-ext:*)",
       "Bash(cat:*)",
-      "Bash(bun run:*)"
+      "Bash(bun run:*)",
+      "Bash(bun tsc:*)",
+      "Bash(bunx tsc:*)"
     ]
   }
 }

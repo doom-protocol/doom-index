@@ -30,7 +30,7 @@
     "test": "bun test --env-file=.dev.vars --preload=./tests/preload.ts",
     "test:unit": "bun test --env-file=.dev.vars --grep 'unit' --preload=./tests/preload.ts",
     "test:integration": "bun test --env-file=.dev.vars --grep 'integration' --preload=./tests/preload.ts",
-    "typecheck": "tsgo --noEmit --project tsconfig.json",
+    "typecheck": "tsgo --noEmit",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "generate": "bun --env-file=.dev.vars scripts/generate.ts",
     "watch-cron": "bun scripts/watch-cron.ts",
