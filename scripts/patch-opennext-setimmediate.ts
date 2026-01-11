@@ -82,11 +82,7 @@ for (const [pattern, replacement] of replacements) {
 if (patchesApplied === 0) {
   console.warn("[patch-setimmediate] No patches applied; source may have different structure or already patched");
   // Show what patterns exist in the file for debugging
-  const debugPatterns = [
-    /globalThis\.setImmediate/,
-    /nodeTimers\.setImmediate/,
-    /patchedSetImmediate/,
-  ];
+  const debugPatterns = [/globalThis\.setImmediate/, /nodeTimers\.setImmediate/, /patchedSetImmediate/];
   for (const p of debugPatterns) {
     const match = original.match(p);
     console.warn(`  Pattern ${p.source}: ${match ? "found" : "not found"}`);
