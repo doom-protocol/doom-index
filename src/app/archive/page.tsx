@@ -52,7 +52,9 @@ const ArchivePage: NextPage<ArchivePageProps> = async ({ searchParams }) => {
         items = result.value.items;
         hasMore = result.value.hasMore;
       } else {
-        logger.error("ArchivePage: Failed to fetch images", { error: result.error });
+        logger.error("ArchivePage: Failed to fetch images", {
+          error: result.error,
+        });
       }
     } else {
       logger.warn("ArchivePage: Missing R2 or DB binding");

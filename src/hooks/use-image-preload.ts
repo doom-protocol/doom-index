@@ -23,7 +23,7 @@ export function useImagePreload(imageUrls: string[]): UseImagePreloadResult {
       setLoadedCount(0);
       setIsComplete(false);
       // Clean up previous images
-      imageRefsRef.current.forEach(img => {
+      imageRefsRef.current.forEach((img) => {
         img.onload = null;
         img.onerror = null;
       });
@@ -51,16 +51,16 @@ export function useImagePreload(imageUrls: string[]): UseImagePreloadResult {
 
     const handleError = (url: string) => (event: Event | string) => {
       const errorDetails =
-        event instanceof Event && event.target instanceof HTMLImageElement
-          ? {
-              url,
-              naturalWidth: event.target.naturalWidth,
-              naturalHeight: event.target.naturalHeight,
-              currentSrc: event.target.currentSrc,
-              src: event.target.src,
-              complete: event.target.complete,
-            }
-          : { url, event: String(event) };
+        event instanceof Event && event.target instanceof HTMLImageElement ?
+          {
+            url,
+            naturalWidth: event.target.naturalWidth,
+            naturalHeight: event.target.naturalHeight,
+            currentSrc: event.target.currentSrc,
+            src: event.target.src,
+            complete: event.target.complete,
+          }
+        : { url, event: String(event) };
       logger.debug("image.preload.failed", errorDetails);
       completedCount++;
       setLoadedCount(completedCount);
@@ -75,7 +75,7 @@ export function useImagePreload(imageUrls: string[]): UseImagePreloadResult {
       urls: imageUrls,
     });
 
-    imageUrls.forEach(url => {
+    imageUrls.forEach((url) => {
       const img = new Image();
       img.onload = handleLoad(url);
       img.onerror = handleError(url);
@@ -87,7 +87,7 @@ export function useImagePreload(imageUrls: string[]): UseImagePreloadResult {
 
     return () => {
       // Cleanup: remove event listeners
-      images.forEach(img => {
+      images.forEach((img) => {
         img.onload = null;
         img.onerror = null;
       });

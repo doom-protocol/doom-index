@@ -65,7 +65,9 @@ export class MarketDataService {
       logger.debug("[MarketDataService] Fetched global market data successfully");
       return ok(snapshot);
     } catch (error) {
-      logger.error("[MarketDataService] Failed to fetch global market data", { error });
+      logger.error("[MarketDataService] Failed to fetch global market data", {
+        error,
+      });
       return err({
         type: "InternalError" as const,
         message: error instanceof Error ? error.message : "Unknown error",

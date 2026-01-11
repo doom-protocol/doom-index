@@ -43,7 +43,7 @@ export class TokenDataFetchService {
       const markets = marketsResult.value;
 
       // Convert to TokenCandidate array
-      const candidates: TokenCandidate[] = markets.map(market => {
+      const candidates: TokenCandidate[] = markets.map((market) => {
         // Find categories from market data if available
         // Note: CoinGecko markets API doesn't return categories, so we'll use empty array
         // Categories will be fetched separately if needed
@@ -69,7 +69,9 @@ export class TokenDataFetchService {
       logger.debug(`[TokenDataFetchService] Fetched details for ${candidates.length} tokens`);
       return ok(candidates);
     } catch (error) {
-      logger.error("[TokenDataFetchService] Failed to fetch token details", { error });
+      logger.error("[TokenDataFetchService] Failed to fetch token details", {
+        error,
+      });
       return err({
         type: "InternalError" as const,
         message: error instanceof Error ? error.message : "Unknown error",
@@ -122,7 +124,9 @@ export class TokenDataFetchService {
           };
         }),
       };
-      logger.debug("[TokenDataFetchService] Trending search summary", { trending: trendingSummary });
+      logger.debug("[TokenDataFetchService] Trending search summary", {
+        trending: trendingSummary,
+      });
 
       // Extract CoinGecko IDs from trending search (max 15)
       const ids = trendingCoins.map((coin, index) => {
@@ -134,7 +138,7 @@ export class TokenDataFetchService {
         };
       });
 
-      const validIds = ids.filter(item => item.id.length > 0);
+      const validIds = ids.filter((item) => item.id.length > 0);
       if (validIds.length === 0) {
         logger.warn("[TokenDataFetchService] No valid trending token IDs found");
         return ok([]);
@@ -142,16 +146,18 @@ export class TokenDataFetchService {
 
       // Log trending tokens list (Requirement: All trending token list)
       // Format as structured object for better readability in logs
-      const trendingTokensList = trendingSummary.coins.map(c => ({
+      const trendingTokensList = trendingSummary.coins.map((c) => ({
         rank: c.rank,
         symbol: c.symbol,
         name: c.name,
       }));
-      logger.info(`[TokenDataFetchService] Trending Tokens:`, { tokens: trendingTokensList });
+      logger.info(`[TokenDataFetchService] Trending Tokens:`, {
+        tokens: trendingTokensList,
+      });
 
       // Fetch details for trending tokens
       const candidatesResult = await this.fetchTokenDetails(
-        validIds.map(item => item.id),
+        validIds.map((item) => item.id),
         "coingecko-trending-search",
         undefined,
       );
@@ -161,8 +167,8 @@ export class TokenDataFetchService {
       }
 
       // Add trending rank to candidates
-      const candidates = candidatesResult.value.map(candidate => {
-        const idData = validIds.find(item => item.id === candidate.id);
+      const candidates = candidatesResult.value.map((candidate) => {
+        const idData = validIds.find((item) => item.id === candidate.id);
         return {
           ...candidate,
           trendingRankCgSearch: idData?.rank,
@@ -171,7 +177,9 @@ export class TokenDataFetchService {
 
       return ok(candidates);
     } catch (error) {
-      logger.error("[TokenDataFetchService] Failed to fetch trending tokens", { error });
+      logger.error("[TokenDataFetchService] Failed to fetch trending tokens", {
+        error,
+      });
       return err({
         type: "InternalError" as const,
         message: error instanceof Error ? error.message : "Unknown error",
@@ -199,7 +207,7 @@ export class TokenDataFetchService {
         const normalizedTicker = ticker.trim().toLowerCase();
 
         // Try to find by symbol first
-        const coin = coinsList.find(c => {
+        const coin = coinsList.find((c) => {
           const symbol = c.symbol?.toLowerCase();
           const coinId = c.id?.toLowerCase();
           return symbol === normalizedTicker || coinId === normalizedTicker;
@@ -217,7 +225,9 @@ export class TokenDataFetchService {
       logger.info(`[TokenDataFetchService] Resolved ${resolved.length} tickers to CoinGecko IDs`);
       return ok(resolved);
     } catch (error) {
-      logger.error("[TokenDataFetchService] Failed to resolve tickers", { error });
+      logger.error("[TokenDataFetchService] Failed to resolve tickers", {
+        error,
+      });
       return err({
         type: "InternalError" as const,
         message: error instanceof Error ? error.message : "Unknown error",

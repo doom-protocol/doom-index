@@ -11,19 +11,43 @@ export const GalleryRoom: FC = () => {
 
   // Shared materials
   const floorMaterial = useMemo(
-    () => new MeshStandardMaterial({ color: "#4b4d68", roughness: 0.48, metalness: 0.26, side: DoubleSide }),
+    () =>
+      new MeshStandardMaterial({
+        color: "#4b4d68",
+        roughness: 0.48,
+        metalness: 0.26,
+        side: DoubleSide,
+      }),
     [],
   );
   const wallMaterial = useMemo(
-    () => new MeshStandardMaterial({ color: "#6c6d89", roughness: 0.84, metalness: 0.11, side: DoubleSide }),
+    () =>
+      new MeshStandardMaterial({
+        color: "#6c6d89",
+        roughness: 0.84,
+        metalness: 0.11,
+        side: DoubleSide,
+      }),
     [],
   );
   const sideWallMaterial = useMemo(
-    () => new MeshStandardMaterial({ color: "#686a86", roughness: 0.84, metalness: 0.11, side: DoubleSide }),
+    () =>
+      new MeshStandardMaterial({
+        color: "#686a86",
+        roughness: 0.84,
+        metalness: 0.11,
+        side: DoubleSide,
+      }),
     [],
   );
   const ceilingMaterial = useMemo(
-    () => new MeshStandardMaterial({ color: "#2d2d40", roughness: 0.72, metalness: 0.14, side: DoubleSide }),
+    () =>
+      new MeshStandardMaterial({
+        color: "#2d2d40",
+        roughness: 0.72,
+        metalness: 0.14,
+        side: DoubleSide,
+      }),
     [],
   );
 

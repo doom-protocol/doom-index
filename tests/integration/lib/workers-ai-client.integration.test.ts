@@ -30,7 +30,7 @@ async function isAiBindingAvailable(): Promise<boolean> {
 describe("WorkersAiClient Integration (External API)", () => {
   beforeEach(() => {
     // Rate limit: Wait 1 second between tests to avoid hitting rate limits
-    return new Promise(resolve => setTimeout(resolve, 1000));
+    return new Promise((resolve) => setTimeout(resolve, 1000));
   });
 
   describe("generateText", () => {
@@ -122,7 +122,11 @@ describe("WorkersAiClient Integration (External API)", () => {
           expect(result.value.value).toHaveProperty("category");
           expect(result.value.value).toHaveProperty("tags");
           // Verify types with type assertion
-          const value = result.value.value as { short_context: string; category: string; tags: string[] };
+          const value = result.value.value as {
+            short_context: string;
+            category: string;
+            tags: string[];
+          };
           expect(typeof value.short_context).toBe("string");
           expect(typeof value.category).toBe("string");
           expect(Array.isArray(value.tags)).toBe(true);
@@ -133,7 +137,7 @@ describe("WorkersAiClient Integration (External API)", () => {
           expect(value.tags.length).toBeGreaterThan(0);
           expect(value.tags.length).toBeLessThanOrEqual(5);
           // Verify all tags are strings
-          value.tags.forEach(tag => {
+          value.tags.forEach((tag) => {
             expect(typeof tag).toBe("string");
           });
           // Model ID should be set

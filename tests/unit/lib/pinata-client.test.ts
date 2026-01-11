@@ -82,7 +82,9 @@ describe("unit/lib/pinata-client", () => {
     });
 
     it("should return error when JWT is missing", async () => {
-      const result = await createPinataClient({ apiKey: undefined }).createSignedUploadUrl({
+      const result = await createPinataClient({
+        apiKey: undefined,
+      }).createSignedUploadUrl({
         expires: 30,
         name: "test-file.glb",
       });

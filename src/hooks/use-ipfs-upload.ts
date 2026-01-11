@@ -68,7 +68,10 @@ export function useIpfsUpload(): UseIpfsUploadResult {
 
       try {
         // Step 1: Get signed URL for GLB
-        logger.info("ipfs.upload.glb.start", { filename: glbFile.name, size: glbFile.size });
+        logger.info("ipfs.upload.glb.start", {
+          filename: glbFile.name,
+          size: glbFile.size,
+        });
         setProgress(10);
 
         const glbSignedUrlResult = await client.ipfs.createSignedUploadUrl.mutate({
@@ -85,7 +88,9 @@ export function useIpfsUpload(): UseIpfsUploadResult {
         setProgress(20);
 
         // Step 2: Upload GLB to Pinata
-        logger.info("ipfs.upload.glb.uploading", { url: glbSignedUrlResult.url });
+        logger.info("ipfs.upload.glb.uploading", {
+          url: glbSignedUrlResult.url,
+        });
         const glbUploadResult = await pinataClient.uploadFile(glbFile, glbSignedUrlResult.url);
         if (glbUploadResult.isErr()) {
           throw new Error(glbUploadResult.error.message);
@@ -102,7 +107,9 @@ export function useIpfsUpload(): UseIpfsUploadResult {
 
         // Step 4: Get signed URL for metadata
         const metadataJson = JSON.stringify(metadata);
-        const metadataBlob = new Blob([metadataJson], { type: "application/json" });
+        const metadataBlob = new Blob([metadataJson], {
+          type: "application/json",
+        });
         const metadataFile = new File([metadataBlob], `metadata_${metadataParams.paintingHash}.json`, {
           type: "application/json",
         });
@@ -123,13 +130,18 @@ export function useIpfsUpload(): UseIpfsUploadResult {
         setProgress(80);
 
         // Step 5: Upload metadata to Pinata
-        logger.info("ipfs.upload.metadata.uploading", { url: metadataSignedUrlResult.url });
+        logger.info("ipfs.upload.metadata.uploading", {
+          url: metadataSignedUrlResult.url,
+        });
         const metadataUploadResult = await pinataClient.uploadFile(metadataFile, metadataSignedUrlResult.url);
         if (metadataUploadResult.isErr()) {
           throw new Error(metadataUploadResult.error.message);
         }
         const { cid: cidMetadata, size: sizeMetadata } = metadataUploadResult.value;
-        logger.info("ipfs.upload.metadata.success", { cid: cidMetadata, size: sizeMetadata });
+        logger.info("ipfs.upload.metadata.success", {
+          cid: cidMetadata,
+          size: sizeMetadata,
+        });
         setProgress(100);
 
         setIsUploading(false);
@@ -142,7 +154,10 @@ export function useIpfsUpload(): UseIpfsUploadResult {
         };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
-        logger.error("ipfs.upload.error", { error: errorMessage, details: err });
+        logger.error("ipfs.upload.error", {
+          error: errorMessage,
+          details: err,
+        });
 
         const uploadError: IpfsUploadError = {
           message: errorMessage,

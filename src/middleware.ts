@@ -36,7 +36,7 @@ const SUSPICIOUS_PATH_PATTERNS = [
  * Check if a path matches any suspicious pattern
  */
 function isSuspiciousPath(pathname: string): boolean {
-  return SUSPICIOUS_PATH_PATTERNS.some(pattern => pattern.test(pathname));
+  return SUSPICIOUS_PATH_PATTERNS.some((pattern) => pattern.test(pathname));
 }
 
 /**

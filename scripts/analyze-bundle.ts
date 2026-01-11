@@ -57,7 +57,7 @@ entries.sort((a, b) => b.bytes - a.bytes);
 
 // Group by library
 const libraryMap = new Map<string, number>();
-entries.forEach(entry => {
+entries.forEach((entry) => {
   if (entry.library) {
     const current = libraryMap.get(entry.library) || 0;
     libraryMap.set(entry.library, current + entry.bytes);

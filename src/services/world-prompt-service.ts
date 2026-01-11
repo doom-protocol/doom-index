@@ -211,8 +211,9 @@ export function createWorldPromptService({
   };
 
   const buildTokenSystemPrompt = (hasReferenceImage: boolean): string => {
-    const referenceImageInstruction = hasReferenceImage
-      ? `\n\n5. IMAGE-TO-IMAGE (i2i) REQUIREMENTS:
+    const referenceImageInstruction =
+      hasReferenceImage ?
+        `\n\n5. IMAGE-TO-IMAGE (i2i) REQUIREMENTS:
    - A reference image (token logo) is provided. You MUST incorporate this image into the painting.
    - CRITICAL: Explicitly state style preservation: "maintaining classical oil painting technique with visible brushwork and impasto texture"
    - Include explicit integration instructions like: "(token logo integrated into the scene as divine royal seal:1.20)"
@@ -448,7 +449,7 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
       `- "${primaryElement}" (weight: ${primaryWeight})`,
       ``,
       `Secondary Symbolic Elements (based on visual params):`,
-      ...selectedElements.map(el => `- "${el.text}" (weight: ${el.weight.toFixed(2)})`),
+      ...selectedElements.map((el) => `- "${el.text}" (weight: ${el.weight.toFixed(2)})`),
       ``,
       `PROMPT COMPOSITION INSTRUCTIONS:`,
       `1. Start with: "${MEDIEVAL_ALLEGORICAL_OPENING}"`,
@@ -461,16 +462,20 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
       `   - Always include: ${MEDIEVAL_FIGURES_ELEMENT}`,
       `4. Add ATMOSPHERIC LAYER: "${narrativeMoment.atmosphere}"`,
       `5. Add SYMBOLIC ELEMENTS: "${narrativeMoment.symbols}" (weight: 1.05)`,
-      ...(referenceImageUrl
-        ? [
-            ``,
-            `6. IMAGE-TO-IMAGE (i2i) REQUIREMENTS:`,
-            `   - A reference image (token logo) is provided and MUST be integrated.`,
-            `   - Include: "(token logo integrated into the scene as ${ctx.a === "l1-sovereign" ? "divine royal seal" : ctx.a === "meme-ascendant" ? "worshipped idol symbol" : "divine sacred logo"}, maintaining classical oil painting technique:1.10)"`,
-            `   - ALWAYS include style preservation: "(maintaining classical oil painting technique with visible brushwork and impasto texture:1.5)" and "(preserving traditional renaissance master style throughout entire composition:1.4)"`,
-            `   - Be comprehensive: Specify what to change (logo integration) and what to maintain (oil painting style, composition, atmosphere).`,
-          ]
-        : []),
+      ...(referenceImageUrl ?
+        [
+          ``,
+          `6. IMAGE-TO-IMAGE (i2i) REQUIREMENTS:`,
+          `   - A reference image (token logo) is provided and MUST be integrated.`,
+          `   - Include: "(token logo integrated into the scene as ${
+            ctx.a === "l1-sovereign" ? "divine royal seal"
+            : ctx.a === "meme-ascendant" ? "worshipped idol symbol"
+            : "divine sacred logo"
+          }, maintaining classical oil painting technique:1.10)"`,
+          `   - ALWAYS include style preservation: "(maintaining classical oil painting technique with visible brushwork and impasto texture:1.5)" and "(preserving traditional renaissance master style throughout entire composition:1.4)"`,
+          `   - Be comprehensive: Specify what to change (logo integration) and what to maintain (oil painting style, composition, atmosphere).`,
+        ]
+      : []),
       `7. End with: "${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}"`,
       ``,
       `CRITICAL REMINDERS:`,
@@ -572,8 +577,9 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
 
       // For image-to-image with reference image, remove "logo" from negative prompt
       // to allow the token logo to be integrated into the scene
-      const negativePrompt = hasReferenceImage
-        ? WORLD_PAINTING_NEGATIVE_PROMPT.replace(/\s*,\s*\blogo\b\s*,?/gi, ",")
+      const negativePrompt =
+        hasReferenceImage ?
+          WORLD_PAINTING_NEGATIVE_PROMPT.replace(/\s*,\s*\blogo\b\s*,?/gi, ",")
             .replace(/\s*,\s*,\s*/g, ",")
             .replace(/^,\s*|\s*,$/g, "")
             .replace(/\s+/g, " ")

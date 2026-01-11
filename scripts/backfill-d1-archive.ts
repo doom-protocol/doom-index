@@ -18,7 +18,9 @@ import { isValidPaintingFilename } from "@/utils/paintings";
  */
 
 async function backfillArchive() {
-  logger.info("backfill.start", { message: "Starting D1 archive backfill from R2" });
+  logger.info("backfill.start", {
+    message: "Starting D1 archive backfill from R2",
+  });
 
   const bucket = resolveBucketOrThrow({});
   const archiveService = createPaintingsService({});
@@ -48,7 +50,7 @@ async function backfillArchive() {
     const result = listResult.value;
     const { objects, truncated } = result;
 
-    const webpObjects = objects.filter(obj => {
+    const webpObjects = objects.filter((obj) => {
       const filename = obj.key.split("/").pop() || "";
       return filename.endsWith(".webp") && isValidPaintingFilename(filename);
     });
@@ -126,7 +128,7 @@ async function backfillArchive() {
   console.log(`Total Errors: ${totalErrors}`);
 }
 
-backfillArchive().catch(error => {
+backfillArchive().catch((error) => {
   logger.error("backfill.fatal", { error });
   console.error("Fatal error during backfill:", error);
   process.exit(1);

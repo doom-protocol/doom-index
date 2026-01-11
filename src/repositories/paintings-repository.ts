@@ -28,9 +28,8 @@ export const decodeCursor = (s: string): PaintingCursor => {
  */
 function toRangeTs(from?: string, to?: string) {
   const startTs = from ? Math.floor(new Date(`${from}T00:00:00Z`).getTime() / 1000) : undefined;
-  const endExclusiveTs = to
-    ? Math.floor(new Date(new Date(`${to}T00:00:00Z`).getTime() + 86400_000).getTime() / 1000)
-    : undefined;
+  const endExclusiveTs =
+    to ? Math.floor(new Date(new Date(`${to}T00:00:00Z`).getTime() + 86400_000).getTime() / 1000) : undefined;
   return { startTs, endExclusiveTs };
 }
 
@@ -196,12 +195,18 @@ export function createPaintingsRepository({
       if (items.length > 0) {
         if (direction === "desc") {
           // For DESC: next cursor is the last item (older items)
-          nextCursor = encodeCursor({ ts: items[items.length - 1].ts, id: items[items.length - 1].id });
+          nextCursor = encodeCursor({
+            ts: items[items.length - 1].ts,
+            id: items[items.length - 1].id,
+          });
           // prev cursor is the first item (newer items) - for backward navigation
           prevCursor = encodeCursor({ ts: items[0].ts, id: items[0].id });
         } else {
           // For ASC: next cursor is the last item (newer items)
-          nextCursor = encodeCursor({ ts: items[items.length - 1].ts, id: items[items.length - 1].id });
+          nextCursor = encodeCursor({
+            ts: items[items.length - 1].ts,
+            id: items[items.length - 1].id,
+          });
           // prev cursor is the first item (older items) - for backward navigation
           prevCursor = encodeCursor({ ts: items[0].ts, id: items[0].id });
         }

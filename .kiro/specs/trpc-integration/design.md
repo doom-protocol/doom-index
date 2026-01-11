@@ -986,7 +986,7 @@ const r2GetObjectSchema = z.object({
 
 const joinKey = (segments: string[]): string =>
   segments
-    .map(segment => segment.replace(/^\/*|\/*$/g, ""))
+    .map((segment) => segment.replace(/^\/*|\/*$/g, ""))
     .filter(Boolean)
     .join("/");
 

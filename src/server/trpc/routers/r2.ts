@@ -9,7 +9,7 @@ import { publicProcedure, router } from "../trpc";
 
 export const r2Router = router({
   getJson: publicProcedure
-    .input(val => v.parse(r2GetObjectSchema, val))
+    .input((val) => v.parse(r2GetObjectSchema, val))
     .query(async ({ input, ctx }) => {
       const objectKey = joinR2Key(input.key);
 
@@ -30,7 +30,10 @@ export const r2Router = router({
       const bucket = resolveR2BucketOrThrow(ctx, { objectKey });
       const result = await getJsonR2<unknown>(bucket, objectKey);
       const value = resultOrThrow(result, ctx, { objectKey });
-      await set(cacheKey, value, { ttlSeconds: CACHE_TTL_SECONDS.ONE_MINUTE, logger: ctx.logger });
+      await set(cacheKey, value, {
+        ttlSeconds: CACHE_TTL_SECONDS.ONE_MINUTE,
+        logger: ctx.logger,
+      });
 
       return value;
     }),

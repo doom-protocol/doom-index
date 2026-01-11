@@ -170,33 +170,33 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
               0 8px 24px rgba(0, 0, 0, 0.15),
               0 16px 48px rgba(0, 0, 0, 0.2)
             `,
-            ...(isMobile
-              ? {
-                  WebkitOverflowScrolling: "touch",
-                  touchAction: "pan-y",
-                }
-              : {}),
+            ...(isMobile ?
+              {
+                WebkitOverflowScrolling: "touch",
+                touchAction: "pan-y",
+              }
+            : {}),
           }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          onWheel={e => {
+          onWheel={(e) => {
             // Stop event propagation to prioritize mouse wheel scrolling on PC
             if (!isMobile) {
               e.stopPropagation();
             }
           }}
-          {...(isMobile
-            ? {
-                onTouchStart: () => {
-                  // Set hover state on touch start (to enable scrolling)
-                  setIsHovered(true);
-                },
-                onTouchEnd: () => {
-                  // Clear hover state with slight delay on touch end
-                  setTimeout(() => setIsHovered(false), 100);
-                },
-              }
-            : {})}
+          {...(isMobile ?
+            {
+              onTouchStart: () => {
+                // Set hover state on touch start (to enable scrolling)
+                setIsHovered(true);
+              },
+              onTouchEnd: () => {
+                // Clear hover state with slight delay on touch end
+                setTimeout(() => setIsHovered(false), 100);
+              },
+            }
+          : {})}
         >
           <WhitepaperViewer>{children}</WhitepaperViewer>
         </div>

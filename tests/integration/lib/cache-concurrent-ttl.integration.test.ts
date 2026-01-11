@@ -24,7 +24,7 @@ describe("Cache Integration - Concurrent Requests and TTL", () => {
     const computeFn = async () => {
       computeCallCount++;
       // Simulate async computation
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       return { value: `computed-${computeCallCount}` };
     };
 
@@ -35,7 +35,7 @@ describe("Cache Integration - Concurrent Requests and TTL", () => {
 
     // All should return the same value
     const firstValue = results[0].value;
-    results.forEach(result => {
+    results.forEach((result) => {
       expect(result.value).toBe(firstValue);
     });
 
@@ -61,7 +61,9 @@ describe("Cache Integration - Concurrent Requests and TTL", () => {
       return Promise.resolve(mockTokenState);
     };
 
-    const result = await getOrSet<TokenState>(testKey, computeFn, { ttlSeconds: 60 });
+    const result = await getOrSet<TokenState>(testKey, computeFn, {
+      ttlSeconds: 60,
+    });
 
     // Type should be preserved
     expect(result).toHaveProperty("ticker");

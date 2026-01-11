@@ -258,7 +258,7 @@ WebGL / Three.js で画像をテクスチャとして使用する場合、**cros
 
 ```typescript
 // @react-three/drei の useTexture 内部
-const texture = useLoader(TextureLoader, url, loader => {
+const texture = useLoader(TextureLoader, url, (loader) => {
   loader.crossOrigin = "anonymous";
 });
 ```

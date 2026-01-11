@@ -81,11 +81,15 @@ describe("Cache Integration - get/set Pattern", () => {
     await set(testKey, testValue, { ttlSeconds: 60, namespace: "ns1" });
 
     // Get with same namespace should work
-    const retrieved1 = await get<typeof testValue>(testKey, { namespace: "ns1" });
+    const retrieved1 = await get<typeof testValue>(testKey, {
+      namespace: "ns1",
+    });
     expect(retrieved1).toEqual(testValue);
 
     // Get with different namespace should return null
-    const retrieved2 = await get<typeof testValue>(testKey, { namespace: "ns2" });
+    const retrieved2 = await get<typeof testValue>(testKey, {
+      namespace: "ns2",
+    });
     expect(retrieved2).toBeNull();
   });
 });

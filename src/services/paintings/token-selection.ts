@@ -115,7 +115,7 @@ export class TokenSelectionService {
       // Filter candidates
       if (!forceTokenList) {
         // Exclude stablecoins (Requirement 1D)
-        candidates = candidates.filter(c => !this.stablecoinSymbols.has(c.symbol));
+        candidates = candidates.filter((c) => !this.stablecoinSymbols.has(c.symbol));
       }
 
       // Store candidates before recently selected filter for fallback
@@ -125,9 +125,9 @@ export class TokenSelectionService {
       if (excludeRecentlySelected && !forceTokenList) {
         const recentTokensResult = await this.tokensRepository.findRecentlySelected(recentSelectionWindowHours);
         if (recentTokensResult.isOk()) {
-          const recentIds = new Set(recentTokensResult.value.map(t => t.id));
+          const recentIds = new Set(recentTokensResult.value.map((t) => t.id));
           const beforeFilter = candidates.length;
-          candidates = candidates.filter(c => !recentIds.has(c.id));
+          candidates = candidates.filter((c) => !recentIds.has(c.id));
           if (candidates.length < beforeFilter) {
             logger.debug(
               `[TokenSelectionService] Excluded ${beforeFilter - candidates.length} recently selected tokens`,
@@ -163,7 +163,7 @@ export class TokenSelectionService {
         );
       } else {
         // Normal flow: score and select (Requirement 1D)
-        const scoredCandidates = candidates.map(candidate => {
+        const scoredCandidates = candidates.map((candidate) => {
           const trendScore = this.scoringEngine.calculateTrendScore(candidate);
           const impactScore = this.scoringEngine.calculateImpactScore(candidate);
           const moodScore = this.scoringEngine.calculateMoodScore(candidate, marketClimate);
@@ -202,7 +202,7 @@ export class TokenSelectionService {
         logger.info(
           `[TokenSelectionService] Selection Process (Top 5 Candidates): ${JSON.stringify(
             {
-              candidates: topCandidates.map(c => ({
+              candidates: topCandidates.map((c) => ({
                 rank: c.rank,
                 symbol: c.symbol,
                 scores: {
@@ -292,7 +292,7 @@ export class TokenSelectionService {
     }
 
     const resolved = resolveResult.value;
-    const ids = resolved.map(r => r.id);
+    const ids = resolved.map((r) => r.id);
 
     // Fetch token details
     const candidatesResult = await this.tokenDataFetchService.fetchTokenDetails(ids, "force-override", undefined);
@@ -403,8 +403,8 @@ export class TokenSelectionService {
   } {
     const rawTickers = forceTokenList
       .split(",")
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
 
     const seen = new Set<string>();
     const tickers: string[] = [];

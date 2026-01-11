@@ -17,7 +17,7 @@ export const tokens = sqliteTable(
     createdAt: integer("created_at").notNull(), // Unix epoch seconds
     updatedAt: integer("updated_at").notNull(), // Unix epoch seconds
   },
-  table => [index("idx_tokens_symbol").on(table.symbol), index("idx_tokens_coingecko_id").on(table.coingeckoId)],
+  (table) => [index("idx_tokens_symbol").on(table.symbol), index("idx_tokens_coingecko_id").on(table.coingeckoId)],
 );
 
 export type Token = typeof tokens.$inferSelect;

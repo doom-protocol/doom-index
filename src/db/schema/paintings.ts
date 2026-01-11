@@ -25,7 +25,7 @@ export const paintings = sqliteTable(
     prompt: text("prompt").notNull(), // Positive prompt text
     negative: text("negative").notNull(), // Negative prompt text
   },
-  table => [
+  (table) => [
     index("idx_paintings_ts_id").on(table.ts, table.id),
     index("idx_paintings_ts").on(table.ts),
     index("idx_paintings_params_hash").on(table.paramsHash),

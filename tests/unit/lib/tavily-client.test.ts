@@ -125,7 +125,10 @@ describe("TavilyClient", () => {
           }),
       };
 
-      const client = createTavilyClient({ tavilyClient: fakeSdk as unknown as TavilySDK, apiKey: "test-api-key" });
+      const client = createTavilyClient({
+        tavilyClient: fakeSdk as unknown as TavilySDK,
+        apiKey: "test-api-key",
+      });
       const input: TavilyQueryInput = {
         id: "test-token",
         name: "Test Token",

@@ -89,7 +89,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
 
   const texture = useSafeTexture(
     transformedTextureUrl,
-    loadedTexture => {
+    (loadedTexture) => {
       const tex = loadedTexture as Texture;
       tex.colorSpace = SRGBColorSpace;
       tex.anisotropy = 8;
@@ -102,7 +102,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
       return tex;
     },
     {
-      onError: error => {
+      onError: (error) => {
         logger.error("framed-painting.texture.failed", {
           url: transformedTextureUrl,
           originalUrl: thumbnailUrl,
@@ -329,7 +329,10 @@ const PaintingContent: FC<PaintingContentProps> = ({
     if (shouldTrigger) {
       triggerPulse();
       triggerHaptic();
-      if (paintingId) sendGAEvent(GA_EVENTS.GALLERY_PAINTING_CLICK, { painting_id: paintingId });
+      if (paintingId)
+        sendGAEvent(GA_EVENTS.GALLERY_PAINTING_CLICK, {
+          painting_id: paintingId,
+        });
     }
   };
 

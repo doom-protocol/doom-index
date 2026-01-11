@@ -44,7 +44,9 @@ describe("R2 Integration", () => {
       const caller = appRouter.createCaller(ctx);
 
       // First call
-      const result1 = await caller.r2.getJson({ key: ["state", "global.json"] });
+      const result1 = await caller.r2.getJson({
+        key: ["state", "global.json"],
+      });
       expect(result1).toEqual(mockJsonData);
 
       // Verify cache was set with object key in cache key
@@ -55,7 +57,9 @@ describe("R2 Integration", () => {
       expect(cached).toEqual(mockJsonData);
 
       // Second call - should return cached value
-      const result2 = await caller.r2.getJson({ key: ["state", "global.json"] });
+      const result2 = await caller.r2.getJson({
+        key: ["state", "global.json"],
+      });
       expect(result2).toEqual(mockJsonData);
     });
   });

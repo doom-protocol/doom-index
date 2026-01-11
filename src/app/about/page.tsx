@@ -4,7 +4,11 @@ import dynamic from "next/dynamic";
 import { getBaseUrl } from "@/utils/url";
 import type { Metadata, NextPage } from "next";
 
-const AboutScene = dynamic(() => import("@/components/about/about-scene").then(mod => ({ default: mod.AboutScene })));
+const AboutScene = dynamic(() =>
+  import("@/components/about/about-scene").then((mod) => ({
+    default: mod.AboutScene,
+  })),
+);
 
 const metadataBase = new URL(getBaseUrl());
 
@@ -17,7 +21,15 @@ export const metadata: Metadata = {
 
 const AboutPage: NextPage = () => {
   return (
-    <main style={{ width: "100%", height: "100%", margin: 0, padding: 0, overflow: "hidden" }}>
+    <main
+      style={{
+        width: "100%",
+        height: "100%",
+        margin: 0,
+        padding: 0,
+        overflow: "hidden",
+      }}
+    >
       <Header showProgress={false} />
       <AboutScene>
         <MDXArticle />

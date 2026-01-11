@@ -23,7 +23,10 @@ export const DateFilter: FC<DateFilterProps> = ({ from = "", to = "" }) => {
     // page is reset implicitly by not including it
 
     const filterValue = newFrom || newTo ? `${newFrom || ""}-${newTo || ""}` : "cleared";
-    sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, { filter_type: "date", filter_value: filterValue });
+    sendGAEvent(GA_EVENTS.ARCHIVE_FILTER_CHANGE, {
+      filter_type: "date",
+      filter_value: filterValue,
+    });
     router.push(`/archive?${params.toString()}`);
   };
 

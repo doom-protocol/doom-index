@@ -15,7 +15,7 @@ export function createVanillaTRPCClient(options: CreateVanillaTRPCClientOptions 
   return createTRPCClient<AppRouter>({
     links: [
       splitLink({
-        condition: op => op.type === "subscription",
+        condition: (op) => op.type === "subscription",
         true: httpSubscriptionLink({
           url: `${baseUrl}/api/trpc`,
         }),

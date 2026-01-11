@@ -70,13 +70,13 @@ const PaintingContent: FC<PaintingContentProps> = ({
 
   const texture = useSafeTexture(
     transformedTextureUrl,
-    loadedTexture => {
+    (loadedTexture) => {
       loadedTexture.colorSpace = SRGBColorSpace;
       loadedTexture.anisotropy = 4;
       loadedTexture.needsUpdate = true;
     },
     {
-      onError: error => {
+      onError: (error) => {
         logger.error("Failed to load archive painting texture", {
           url: transformedTextureUrl,
           originalUrl: thumbnailUrl,
@@ -160,8 +160,9 @@ const PaintingContent: FC<PaintingContentProps> = ({
 
   const activeTexture = currentTexture || texture;
   const [planeWidth, planeHeight] = calculatePlaneDimensions(activeTexture, FRAME_INNER_WIDTH, FRAME_INNER_HEIGHT);
-  const previousPlaneDimensions = previousTexture
-    ? calculatePlaneDimensions(previousTexture, FRAME_INNER_WIDTH, FRAME_INNER_HEIGHT)
+  const previousPlaneDimensions =
+    previousTexture ?
+      calculatePlaneDimensions(previousTexture, FRAME_INNER_WIDTH, FRAME_INNER_HEIGHT)
     : [planeWidth, planeHeight];
   const [previousPlaneWidth, previousPlaneHeight] = previousPlaneDimensions;
 
@@ -388,7 +389,7 @@ export const ArchiveFramedPainting: FC<ArchiveFramedPaintingProps> = ({
       hasPointerMovedRef,
       activePointerIdRef,
       resetPointerState,
-      e => {
+      (e) => {
         if (onPointerClick) {
           onPointerClick(item, e);
         }

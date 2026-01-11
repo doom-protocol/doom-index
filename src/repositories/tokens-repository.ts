@@ -73,7 +73,9 @@ export class TokensRepository {
       logger.info(`[TokensRepository] Inserted token: ${token.id}`);
       return ok(undefined);
     } catch (error) {
-      logger.error(`[TokensRepository] Failed to insert token: ${token.id}`, { error });
+      logger.error(`[TokensRepository] Failed to insert token: ${token.id}`, {
+        error,
+      });
       return err({
         type: "StorageError" as const,
         op: "put" as const,
@@ -95,7 +97,9 @@ export class TokensRepository {
       logger.info(`[TokensRepository] Updated token: ${id}`);
       return ok(undefined);
     } catch (error) {
-      logger.error(`[TokensRepository] Failed to update token: ${id}`, { error });
+      logger.error(`[TokensRepository] Failed to update token: ${id}`, {
+        error,
+      });
       return err({
         type: "StorageError" as const,
         op: "put" as const,

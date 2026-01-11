@@ -8,7 +8,11 @@ import { ArchiveGrid } from "./archive-grid";
 import { DateFilter } from "./date-filter";
 import { PaginationControls } from "./pagination-controls";
 
-const ArchiveDetailView = lazy(() => import("./archive-detail-view").then(mod => ({ default: mod.ArchiveDetailView })));
+const ArchiveDetailView = lazy(() =>
+  import("./archive-detail-view").then((mod) => ({
+    default: mod.ArchiveDetailView,
+  })),
+);
 
 interface ArchiveContentProps {
   items: Painting[];
@@ -30,9 +34,9 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
   const dateRange = useMemo(() => {
     if (items.length === 0) return null;
 
-    const dates = items.map(item => new Date(item.timestamp));
-    const earliest = new Date(Math.min(...dates.map(d => d.getTime())));
-    const latest = new Date(Math.max(...dates.map(d => d.getTime())));
+    const dates = items.map((item) => new Date(item.timestamp));
+    const earliest = new Date(Math.min(...dates.map((d) => d.getTime())));
+    const latest = new Date(Math.max(...dates.map((d) => d.getTime())));
 
     return {
       start: formatDateShort(earliest),

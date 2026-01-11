@@ -10,7 +10,9 @@ import * as dbSchema from "@/db/schema";
 // Note: NEXT_PUBLIC_R2_URL is handled by individual tests that mock @/env
 
 // Create in-memory SQLite database for D1 tests
-let testD1Db: BunSQLiteDatabase<typeof dbSchema> & { batch?: (operations: unknown[]) => Promise<unknown[]> };
+let testD1Db: BunSQLiteDatabase<typeof dbSchema> & {
+  batch?: (operations: unknown[]) => Promise<unknown[]>;
+};
 
 beforeEach(() => {
   // Create fresh in-memory database for each test

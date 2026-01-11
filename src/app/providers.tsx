@@ -9,7 +9,10 @@ import { Toaster } from "sonner";
 import dynamic from "next/dynamic";
 
 const WalletAdapterProvider = dynamic(
-  () => import("@/components/providers/wallet-adapter-provider").then(mod => ({ default: mod.WalletAdapterProvider })),
+  () =>
+    import("@/components/providers/wallet-adapter-provider").then((mod) => ({
+      default: mod.WalletAdapterProvider,
+    })),
   { ssr: false },
 );
 

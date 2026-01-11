@@ -391,10 +391,21 @@ export async function getJsonFromPublicUrl<T>(url: string): Promise<Result<T | n
   try {
     const res = await fetch(url, { cache: "no-store" });
     if (res.status === 404) return ok(null);
-    if (!res.ok) return err({ type: "StorageError", op: "get", key: url, message: `HTTP ${res.status}` });
+    if (!res.ok)
+      return err({
+        type: "StorageError",
+        op: "get",
+        key: url,
+        message: `HTTP ${res.status}`,
+      });
     return ok((await res.json()) as T);
   } catch (e) {
-    return err({ type: "StorageError", op: "get", key: url, message: String(e) });
+    return err({
+      type: "StorageError",
+      op: "get",
+      key: url,
+      message: String(e),
+    });
   }
 }
 ```

@@ -40,5 +40,5 @@ export function isBotUserAgent(userAgent: string | null | undefined): boolean {
   }
 
   const ua = userAgent.toLowerCase();
-  return BOT_PATTERNS.some(pattern => ua.includes(pattern));
+  return BOT_PATTERNS.some((pattern) => ua.includes(pattern));
 }

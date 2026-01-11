@@ -153,7 +153,10 @@ describe("glbExportService", () => {
       });
       const mockMesh = new Mesh(mockGeometry, new MeshStandardMaterial());
       // Ensure isMesh property is set
-      Object.defineProperty(mockMesh, "isMesh", { value: true, writable: true });
+      Object.defineProperty(mockMesh, "isMesh", {
+        value: true,
+        writable: true,
+      });
       mockScene.add(mockMesh);
 
       mockParseLoader.mockImplementation(

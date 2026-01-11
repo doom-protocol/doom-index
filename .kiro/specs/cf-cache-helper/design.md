@@ -574,7 +574,9 @@ logger.debug("cache.miss", { key, ttlSeconds });
 logger.debug("cache.put", { key, ttlSeconds });
 
 // Cache unavailable (uses ctx.logger if provided)
-logger.warn("cache.unavailable", { reason: "Cloudflare context not available" });
+logger.warn("cache.unavailable", {
+  reason: "Cloudflare context not available",
+});
 
 // Cache operation error (uses ctx.logger if provided)
 logger.error("cache.operation.error", { key, ttlSeconds, error });

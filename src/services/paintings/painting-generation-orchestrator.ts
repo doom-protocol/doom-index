@@ -175,11 +175,15 @@ export class PaintingGenerationOrchestrator {
       });
 
       // Step 6: Initialize services for image generation
-      const bucket = resolveBucketOrThrow({ r2Bucket: this.deps.r2Bucket ?? cloudflareEnv.R2_BUCKET });
+      const bucket = resolveBucketOrThrow({
+        r2Bucket: this.deps.r2Bucket ?? cloudflareEnv.R2_BUCKET,
+      });
       const d1Binding = this.deps.d1Binding ?? cloudflareEnv.DB;
 
       // Initialize Workers AI client and token context service
-      const workersAiClient = createWorkersAiClient({ aiBinding: cloudflareEnv.AI });
+      const workersAiClient = createWorkersAiClient({
+        aiBinding: cloudflareEnv.AI,
+      });
       const tavilyClient = createTavilyClient();
       const tokenAnalysisService = createTokenAnalysisService({
         tavilyClient,

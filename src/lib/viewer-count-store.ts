@@ -41,7 +41,7 @@ class ViewerCountStore {
     console.log(`[ViewerCountStore] Updated: ${previousCount} -> ${count} (listeners: ${this.listeners.size})`);
 
     // Notify all listeners
-    this.listeners.forEach(listener => {
+    this.listeners.forEach((listener) => {
       listener();
     });
   }

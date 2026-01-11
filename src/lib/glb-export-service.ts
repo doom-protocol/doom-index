@@ -30,7 +30,7 @@ export class GlbExportServiceImpl implements GlbExportService {
 
     // Validate that the group contains meshes
     let hasMeshes = false;
-    paintingGroup.traverse(child => {
+    paintingGroup.traverse((child) => {
       if (child.type === "Mesh") {
         hasMeshes = true;
       }
@@ -52,7 +52,7 @@ export class GlbExportServiceImpl implements GlbExportService {
     // Create GLTFExporter instance
     const exporter = new GLTFExporter();
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       exporter.parse(
         clonedGroup,
         (result: ArrayBuffer | object) => {
@@ -100,8 +100,8 @@ export class GlbExportServiceImpl implements GlbExportService {
         loader.parse(
           glbBuffer,
           "",
-          gltf => resolve(gltf),
-          err => reject(err),
+          (gltf) => resolve(gltf),
+          (err) => reject(err),
         );
       });
 
@@ -124,7 +124,7 @@ export class GlbExportServiceImpl implements GlbExportService {
 
       // Re-export
       const exporter = new GLTFExporter();
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         exporter.parse(
           gltf.scene,
           (result: ArrayBuffer | object) => {

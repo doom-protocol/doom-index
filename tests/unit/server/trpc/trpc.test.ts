@@ -41,7 +41,7 @@ describe("tRPC Init", () => {
 
     const testRouter = router({
       test: publicProcedure
-        .input(val => v.parse(v.object({ name: v.pipe(v.string(), v.minLength(1)) }), val))
+        .input((val) => v.parse(v.object({ name: v.pipe(v.string(), v.minLength(1)) }), val))
         .query(() => {
           return { message: "test" };
         }),

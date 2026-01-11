@@ -70,11 +70,12 @@ const WebGLErrorFallback: FC<PropsWithChildren & { paperSize: { width: string; h
 };
 
 // iOS fallback component with entrance animation
-const IOSFallback: FC<PropsWithChildren & { paperSize: { width: string; height: string }; headerHeight: number }> = ({
-  children,
-  paperSize,
-  headerHeight,
-}) => {
+const IOSFallback: FC<
+  PropsWithChildren & {
+    paperSize: { width: string; height: string };
+    headerHeight: number;
+  }
+> = ({ children, paperSize, headerHeight }) => {
   const [opacity, setOpacity] = useState(0);
 
   useEffect(() => {

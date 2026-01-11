@@ -123,11 +123,14 @@ describe("WorkersAiClient", () => {
       // Create a promise that resolves after timeout
       const timeoutMock = mock(
         (): Promise<AiTextGenerationOutput> =>
-          new Promise(resolve => setTimeout(() => resolve({ response: "Too late" }), 2000)),
+          new Promise((resolve) => setTimeout(() => resolve({ response: "Too late" }), 2000)),
       );
       mockAiBinding = createMockAiBinding(timeoutMock);
       // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
-      const client = createWorkersAiClient({ aiBinding: mockAiBinding, timeoutMs: 500 });
+      const client = createWorkersAiClient({
+        aiBinding: mockAiBinding,
+        timeoutMs: 500,
+      });
       const request: TextGenerationRequest = {
         systemPrompt: "You are a helpful assistant.",
         userPrompt: "Say hello",
@@ -181,12 +184,20 @@ describe("WorkersAiClient", () => {
 
   describe("generateJson", () => {
     it("should generate and parse JSON successfully", async () => {
-      const jsonResponse = { short_context: "Test context", category: "test", tags: ["tag1", "tag2"] };
+      const jsonResponse = {
+        short_context: "Test context",
+        category: "test",
+        tags: ["tag1", "tag2"],
+      };
       const jsonMock = mock(() => Promise.resolve({ response: JSON.stringify(jsonResponse) }));
       mockAiBinding = createMockAiBinding(jsonMock);
       // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
-      const request: JsonGenerationRequest<{ short_context: string; category: string; tags: string[] }> = {
+      const request: JsonGenerationRequest<{
+        short_context: string;
+        category: string;
+        tags: string[];
+      }> = {
         systemPrompt: "Return JSON only.",
         userPrompt: "Generate token context",
       };
@@ -218,7 +229,11 @@ describe("WorkersAiClient", () => {
     });
 
     it("should handle JSON wrapped in markdown code blocks", async () => {
-      const jsonResponse = { short_context: "Test", category: "test", tags: [] };
+      const jsonResponse = {
+        short_context: "Test",
+        category: "test",
+        tags: [],
+      };
       const wrappedResponse = "```json\n" + JSON.stringify(jsonResponse) + "\n```";
       const markdownMock = mock(() => Promise.resolve({ response: wrappedResponse }));
       mockAiBinding = createMockAiBinding(markdownMock);
@@ -238,7 +253,11 @@ describe("WorkersAiClient", () => {
     });
 
     it("should handle JSON with additional text before/after", async () => {
-      const jsonResponse = { short_context: "Test", category: "test", tags: [] };
+      const jsonResponse = {
+        short_context: "Test",
+        category: "test",
+        tags: [],
+      };
       const wrappedResponse = "Here is the JSON:\n" + JSON.stringify(jsonResponse) + "\nThat's it.";
       const textWrappedMock = mock(() => Promise.resolve({ response: wrappedResponse }));
       mockAiBinding = createMockAiBinding(textWrappedMock);

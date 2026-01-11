@@ -15,7 +15,7 @@ const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
 describe("TavilyClient Integration (External API)", () => {
   beforeEach(() => {
     // Rate limit: Wait 1 second between tests to avoid hitting rate limits
-    return new Promise(resolve => setTimeout(resolve, 1000));
+    return new Promise((resolve) => setTimeout(resolve, 1000));
   });
 
   describe("searchToken", () => {

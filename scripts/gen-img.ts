@@ -321,7 +321,7 @@ const main = async () => {
 
 main()
   .then(() => safeExit(0))
-  .catch(error => {
+  .catch((error) => {
     console.error("\n❌ Unexpected error:", error);
     safeExit(1);
   });

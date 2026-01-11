@@ -21,7 +21,7 @@ import { cache } from "react";
  */
 export function joinR2Key(segments: string[]): string {
   return segments
-    .map(segment => segment.replace(/^\/*|\/*$/g, ""))
+    .map((segment) => segment.replace(/^\/*|\/*$/g, ""))
     .filter(Boolean)
     .join("/");
 }

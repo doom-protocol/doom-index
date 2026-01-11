@@ -109,7 +109,9 @@ export class PaintingContextBuilder {
       );
       return ok(context);
     } catch (error) {
-      logger.error("[PaintingContextBuilder] Failed to build context", { error });
+      logger.error("[PaintingContextBuilder] Failed to build context", {
+        error,
+      });
       return err({
         type: "InternalError" as const,
         message: error instanceof Error ? error.message : "Unknown error",

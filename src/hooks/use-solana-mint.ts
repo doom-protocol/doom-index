@@ -69,12 +69,17 @@ export function useSolanaMint(): UseSolanaMintResult {
       setError(null);
 
       try {
-        logger.info("solana.mint.start", { name: params.name, uri: params.uri });
+        logger.info("solana.mint.start", {
+          name: params.name,
+          uri: params.uri,
+        });
 
         // Generate a new mint address
         const mint = generateSigner(umi);
 
-        logger.info("solana.mint.address-generated", { mintAddress: mint.publicKey });
+        logger.info("solana.mint.address-generated", {
+          mintAddress: mint.publicKey,
+        });
 
         // Create NFT using Metaplex Token Metadata
         const nftConfig: CreateNftInput = {
@@ -101,7 +106,7 @@ export function useSolanaMint(): UseSolanaMintResult {
 
         // Optional: Add creators if configured and valid
         if (CREATORS.length > 0 && CREATORS[0].address) {
-          nftConfig.creators = CREATORS.map(creator => ({
+          nftConfig.creators = CREATORS.map((creator) => ({
             address: publicKey(creator.address),
             verified: creator.verified,
             share: creator.share,

@@ -103,17 +103,27 @@ function buildApiRequest(params: RunwareImageInferenceParams, taskUUID: string):
     positivePrompt: params.positivePrompt,
     width: params.width,
     height: params.height,
-    ...(params.negativePrompt !== undefined && { negativePrompt: params.negativePrompt }),
+    ...(params.negativePrompt !== undefined && {
+      negativePrompt: params.negativePrompt,
+    }),
     ...(params.steps !== undefined && { steps: params.steps }),
     ...(params.CFGScale !== undefined && { CFGScale: params.CFGScale }),
     ...(params.scheduler !== undefined && { scheduler: params.scheduler }),
     ...(params.seed !== undefined && { seed: params.seed }),
-    ...(params.numberResults !== undefined && { numberResults: params.numberResults }),
+    ...(params.numberResults !== undefined && {
+      numberResults: params.numberResults,
+    }),
     ...(params.strength !== undefined && { strength: params.strength }),
-    ...(params.outputFormat !== undefined && { outputFormat: params.outputFormat }),
+    ...(params.outputFormat !== undefined && {
+      outputFormat: params.outputFormat,
+    }),
     ...(params.outputType !== undefined && { outputType: params.outputType }),
-    ...(params.outputQuality !== undefined && { outputQuality: params.outputQuality }),
-    ...(params.includeCost !== undefined && { includeCost: params.includeCost }),
+    ...(params.outputQuality !== undefined && {
+      outputQuality: params.outputQuality,
+    }),
+    ...(params.includeCost !== undefined && {
+      includeCost: params.includeCost,
+    }),
     ...(params.checkNSFW !== undefined && { checkNSFW: params.checkNSFW }),
     // Reference images must be nested inside inputs object
     ...(params.referenceImages && {

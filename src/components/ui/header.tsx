@@ -53,7 +53,7 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
 
   const toggleMenu = useCallback(() => {
     triggerHaptic();
-    setIsMenuOpen(prev => !prev);
+    setIsMenuOpen((prev) => !prev);
   }, [triggerHaptic]);
 
   const closeMenu = useCallback(() => {
@@ -101,7 +101,7 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
                   />
                 </span>
               </button>
-              {isMenuOpen ? (
+              {isMenuOpen ?
                 <nav
                   id="header-mobile-menu"
                   aria-label="Navigation Links"
@@ -137,11 +137,13 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
                     </a>
                   ))}
                 </nav>
-              ) : null}
+              : null}
             </div>
           </div>
           <div className="flex flex-col items-center md:justify-self-center">
-            {showProgress ? <HeaderProgress /> : <div className="h-0 md:h-[68px]" aria-hidden="true" />}
+            {showProgress ?
+              <HeaderProgress />
+            : <div className="h-0 md:h-[68px]" aria-hidden="true" />}
           </div>
           <div className="hidden justify-end md:flex">
             <nav className="flex items-center justify-end gap-3" aria-label="Navigation Links">

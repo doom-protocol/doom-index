@@ -66,7 +66,7 @@ export function createViewerService({ kvNamespace, log = logger }: ViewerService
     // Check expiration field from list() response
     // expiration is in absolute Unix timestamp format (even if set with TTL)
     const nowSeconds = Math.floor(Date.now() / 1000);
-    const hasActiveViewer = keys.some(keyInfo => {
+    const hasActiveViewer = keys.some((keyInfo) => {
       // If expiration is not set, consider it as active (shouldn't happen with our TTL)
       if (keyInfo.expiration === undefined) {
         return true;
@@ -99,7 +99,7 @@ export function createViewerService({ kvNamespace, log = logger }: ViewerService
       const keys = result.keys;
 
       // Count active viewers (not expired)
-      const activeCount = keys.filter(keyInfo => {
+      const activeCount = keys.filter((keyInfo) => {
         // If expiration is not set, consider it as active (shouldn't happen with our TTL)
         if (keyInfo.expiration === undefined) {
           return true;

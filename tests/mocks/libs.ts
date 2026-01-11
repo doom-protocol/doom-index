@@ -123,7 +123,7 @@ export function createViewerCountStoreMock(): ViewerCountStoreMock {
       update: (newCount: number, newUpdatedAt: number) => {
         state.count = newCount;
         state.updatedAt = newUpdatedAt;
-        listeners.forEach(listener => listener());
+        listeners.forEach((listener) => listener());
       },
       subscribe: (listener: () => void) => {
         listeners.add(listener);

@@ -1983,17 +1983,16 @@ type Service<
     | Rpc.WorkerEntrypointBranded
     | ExportedHandler<any, any, any>
     | undefined = undefined,
-> = T extends new (...args: any[]) => Rpc.WorkerEntrypointBranded
-  ? Fetcher<InstanceType<T>>
-  : T extends Rpc.WorkerEntrypointBranded
-    ? Fetcher<T>
-    : T extends Exclude<Rpc.EntrypointBranded, Rpc.WorkerEntrypointBranded>
-      ? never
-      : Fetcher<undefined>;
-type Fetcher<
-  T extends Rpc.EntrypointBranded | undefined = undefined,
-  Reserved extends string = never,
-> = (T extends Rpc.EntrypointBranded ? Rpc.Provider<T, Reserved | "fetch" | "connect"> : unknown) & {
+> =
+  T extends new (...args: any[]) => Rpc.WorkerEntrypointBranded ? Fetcher<InstanceType<T>>
+  : T extends Rpc.WorkerEntrypointBranded ? Fetcher<T>
+  : T extends Exclude<Rpc.EntrypointBranded, Rpc.WorkerEntrypointBranded> ? never
+  : Fetcher<undefined>;
+type Fetcher<T extends Rpc.EntrypointBranded | undefined = undefined, Reserved extends string = never> = (T extends (
+  Rpc.EntrypointBranded
+) ?
+  Rpc.Provider<T, Reserved | "fetch" | "connect">
+: unknown) & {
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
   connect(address: SocketAddress | string, options?: SocketOptions): Socket;
 };
@@ -3522,21 +3521,18 @@ interface MessagePortPostMessageOptions {
 }
 type LoopbackForExport<
   T extends (new (...args: any[]) => Rpc.EntrypointBranded) | ExportedHandler<any, any, any> | undefined = undefined,
-> = T extends new (...args: any[]) => Rpc.WorkerEntrypointBranded
-  ? LoopbackServiceStub<InstanceType<T>>
-  : T extends new (...args: any[]) => Rpc.DurableObjectBranded
-    ? LoopbackDurableObjectClass<InstanceType<T>>
-    : T extends ExportedHandler<any, any, any>
-      ? LoopbackServiceStub<undefined>
-      : undefined;
+> =
+  T extends new (...args: any[]) => Rpc.WorkerEntrypointBranded ? LoopbackServiceStub<InstanceType<T>>
+  : T extends new (...args: any[]) => Rpc.DurableObjectBranded ? LoopbackDurableObjectClass<InstanceType<T>>
+  : T extends ExportedHandler<any, any, any> ? LoopbackServiceStub<undefined>
+  : undefined;
 type LoopbackServiceStub<T extends Rpc.WorkerEntrypointBranded | undefined = undefined> = Fetcher<T> &
-  (T extends CloudflareWorkersModule.WorkerEntrypoint<any, infer Props>
-    ? (opts: { props?: Props }) => Fetcher<T>
-    : (opts: { props?: any }) => Fetcher<T>);
+  (T extends CloudflareWorkersModule.WorkerEntrypoint<any, infer Props> ? (opts: { props?: Props }) => Fetcher<T>
+  : (opts: { props?: any }) => Fetcher<T>);
 type LoopbackDurableObjectClass<T extends Rpc.DurableObjectBranded | undefined = undefined> = DurableObjectClass<T> &
-  (T extends CloudflareWorkersModule.DurableObject<any, infer Props>
-    ? (opts: { props?: Props }) => DurableObjectClass<T>
-    : (opts: { props?: any }) => DurableObjectClass<T>);
+  (T extends CloudflareWorkersModule.DurableObject<any, infer Props> ?
+    (opts: { props?: Props }) => DurableObjectClass<T>
+  : (opts: { props?: any }) => DurableObjectClass<T>);
 interface SyncKvStorage {
   get<T = unknown>(key: string): T | undefined;
   list<T = unknown>(options?: SyncKvListOptions): Iterable<[string, T]>;
@@ -9050,19 +9046,22 @@ declare abstract class Ai<AiModelList extends AiModelListType = AiModels> {
     inputs: InputOptions,
     options?: Options,
   ): Promise<
-    Options extends
+    Options extends (
       | {
           returnRawResponse: true;
         }
       | {
           websocket: true;
         }
-      ? Response
-      : InputOptions extends {
-            stream: true;
-          }
-        ? ReadableStream
-        : AiModelList[Name]["postProcessedOutputs"]
+    ) ?
+      Response
+    : InputOptions extends (
+      {
+        stream: true;
+      }
+    ) ?
+      ReadableStream
+    : AiModelList[Name]["postProcessedOutputs"]
   >;
   models(params?: AiModelsSearchParams): Promise<AiModelsSearchObject[]>;
   toMarkdown(): ToMarkdownService;
@@ -10993,9 +10992,8 @@ declare namespace Rpc {
   // Unwrapping `Stub`s allows calling with `Stubable` arguments.
   // For properties, rewrite types to be `Result`s.
   // In each case, unwrap `Promise`s.
-  type MethodOrProperty<V> = V extends (...args: infer P) => infer R
-    ? (...args: UnstubifyAll<P>) => Result<Awaited<R>>
-    : Result<Awaited<V>>;
+  type MethodOrProperty<V> =
+    V extends (...args: infer P) => infer R ? (...args: UnstubifyAll<P>) => Result<Awaited<R>> : Result<Awaited<V>>;
   // Type for the callable part of an `Provider` if `T` is callable.
   // This is intersected with methods/properties.
   type MaybeCallableProvider<T> = T extends (...args: any[]) => any ? MethodOrProperty<T> : unknown;
@@ -11048,13 +11046,13 @@ declare namespace Cloudflare {
     [K in keyof MainModule]: LoopbackForExport<MainModule[K]> &
       // If the export is listed in `durableNamespaces`, then it is also a
       // DurableObjectNamespace.
-      (K extends GlobalProp<"durableNamespaces", never>
-        ? MainModule[K] extends new (...args: any[]) => infer DoInstance
-          ? DoInstance extends Rpc.DurableObjectBranded
-            ? DurableObjectNamespace<DoInstance>
-            : DurableObjectNamespace<undefined>
+      (K extends GlobalProp<"durableNamespaces", never> ?
+        MainModule[K] extends new (...args: any[]) => infer DoInstance ?
+          DoInstance extends Rpc.DurableObjectBranded ?
+            DurableObjectNamespace<DoInstance>
           : DurableObjectNamespace<undefined>
-        : {});
+        : DurableObjectNamespace<undefined>
+      : {});
   };
 }
 declare namespace CloudflareWorkersModule {

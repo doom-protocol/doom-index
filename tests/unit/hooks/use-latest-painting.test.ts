@@ -113,7 +113,7 @@ describe("unit/hooks/use-latest-painting", () => {
       // Simulate network delay of 100ms
       const networkDelayMs = 100;
       const mockQueryFn = mock(async () => {
-        await new Promise(resolve => setTimeout(resolve, networkDelayMs));
+        await new Promise((resolve) => setTimeout(resolve, networkDelayMs));
         return mockResponse;
       });
 
@@ -265,7 +265,7 @@ describe("unit/hooks/use-latest-painting/performance-guarantees", () => {
     // All 3 should complete quickly (< 20ms total for parallel execution)
     expect(totalTime).toBeLessThan(20);
     expect(results).toHaveLength(3);
-    results.forEach(result => {
+    results.forEach((result) => {
       expect(result.painting).toEqual(mockPainting);
     });
   });

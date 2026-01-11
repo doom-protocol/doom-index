@@ -19,7 +19,7 @@ export const marketSnapshots = sqliteTable(
     updatedAt: integer("updated_at").notNull(), // CoinGecko data updated_at (Unix epoch seconds)
     createdAt: integer("created_at").notNull(), // Record created_at (Unix epoch seconds)
   },
-  table => [index("idx_market_snapshots_created_at").on(table.createdAt)],
+  (table) => [index("idx_market_snapshots_created_at").on(table.createdAt)],
 );
 
 export type MarketSnapshot = typeof marketSnapshots.$inferSelect;

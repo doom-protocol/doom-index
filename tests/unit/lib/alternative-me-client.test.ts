@@ -194,7 +194,7 @@ describe("AlternativeMeClient", () => {
       global.fetch = Object.assign(
         async (_url: string, options?: RequestInit) => {
           // Simulate a slow response
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise((resolve) => setTimeout(resolve, 200));
 
           // Check if request was aborted
           if (options?.signal?.aborted) {

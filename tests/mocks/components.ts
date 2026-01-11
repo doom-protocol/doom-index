@@ -23,7 +23,9 @@ type UIComponentMocks = {
     FrameModel: () => ReactElement | null;
     PaintingGroup: ({ children }: { children: ReactNode }) => ReactElement;
   };
-  threeErrorBoundary: () => { ThreeErrorBoundary: ({ children }: { children: ReactNode }) => ReactElement };
+  threeErrorBoundary: () => {
+    ThreeErrorBoundary: ({ children }: { children: ReactNode }) => ReactElement;
+  };
   mintModal: () => { MintModal: React.FC<{ isOpen: boolean }> };
 };
 

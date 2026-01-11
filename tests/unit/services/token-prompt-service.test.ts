@@ -52,7 +52,13 @@ describe("WorldPromptService (token mode)", () => {
         ),
       ) as unknown as WorkersAiClient["generateText"],
       generateJson: mock(() =>
-        Promise.resolve(err({ type: "ExternalApiError", provider: "WorkersAI", message: "unused" })),
+        Promise.resolve(
+          err({
+            type: "ExternalApiError",
+            provider: "WorkersAI",
+            message: "unused",
+          }),
+        ),
       ) as unknown as WorkersAiClient["generateJson"],
     };
   });

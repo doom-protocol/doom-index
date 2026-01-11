@@ -13,7 +13,7 @@ function generateSessionId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
@@ -26,7 +26,7 @@ debugLog("Worker session ID generated", { sessionId });
 // Simple bot detection
 function isBotUserAgent(userAgent: string): boolean {
   const botPatterns = ["bot", "spider", "crawler", "scraper", "headless", "chrome-headless", "phantomjs", "selenium"];
-  return botPatterns.some(pattern => userAgent.toLowerCase().includes(pattern));
+  return botPatterns.some((pattern) => userAgent.toLowerCase().includes(pattern));
 }
 
 // Initialize tRPC client (use self.location in Worker context)
@@ -99,7 +99,7 @@ function setupViewerCountSubscription(retryCount = 0) {
 
   try {
     const subscription = trpc.viewer.onCountUpdate.subscribe(undefined, {
-      onData: data => {
+      onData: (data) => {
         debugLog("Received count update from tRPC", data.count);
         // Reset retry count on successful data reception
         retryCount = 0;
@@ -110,7 +110,7 @@ function setupViewerCountSubscription(retryCount = 0) {
           updatedAt: data.timestamp,
         });
       },
-      onError: error => {
+      onError: (error) => {
         debugLog("tRPC subscription error", {
           error: error instanceof Error ? error.message : String(error),
           retryCount,
@@ -124,7 +124,9 @@ function setupViewerCountSubscription(retryCount = 0) {
         }
       },
       onComplete: () => {
-        debugLog("tRPC subscription completed, reconnecting...", { retryCount });
+        debugLog("tRPC subscription completed, reconnecting...", {
+          retryCount,
+        });
         if (retryCount < maxRetries) {
           setTimeout(() => setupViewerCountSubscription(retryCount + 1), delay);
         } else {

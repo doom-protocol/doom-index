@@ -85,11 +85,11 @@ export function createTestR2Bucket(): {
       const cursor = options?.cursor;
 
       let matchingKeys = Array.from(store.keys())
-        .filter(key => key.startsWith(prefix))
+        .filter((key) => key.startsWith(prefix))
         .sort();
 
       if (startAfter) {
-        matchingKeys = matchingKeys.filter(key => key > startAfter);
+        matchingKeys = matchingKeys.filter((key) => key > startAfter);
       }
 
       if (cursor) {
@@ -103,7 +103,7 @@ export function createTestR2Bucket(): {
       const resultKeys = matchingKeys.slice(0, limit);
       const nextCursor = truncated && resultKeys.length > 0 ? resultKeys[resultKeys.length - 1] : undefined;
 
-      const objects: R2Object[] = resultKeys.map(key => {
+      const objects: R2Object[] = resultKeys.map((key) => {
         const entry = store.get(key);
         const size = entry?.content instanceof ArrayBuffer ? entry.content.byteLength : (entry?.content?.length ?? 0);
         const etag = `"${key}"`;

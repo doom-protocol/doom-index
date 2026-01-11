@@ -63,7 +63,7 @@ export function useSafeTexture<Url extends string[] | string | Record<string, st
   options: UseSafeTextureOptions = {},
 ): MappedTextureType<Url> {
   const { crossOrigin = "anonymous", onError } = options;
-  const gl = useThree(state => state.gl);
+  const gl = useThree((state) => state.gl);
 
   // Enhanced useLoader call with custom extensions for crossOrigin and error handling
   // This differs from drei's implementation by adding crossOrigin and onError support
@@ -96,7 +96,7 @@ export function useSafeTexture<Url extends string[] | string | Record<string, st
         textureArray = Object.values(textures);
       }
 
-      textureArray.forEach(texture => {
+      textureArray.forEach((texture) => {
         if (texture instanceof _Texture) {
           gl.initTexture(texture);
         }

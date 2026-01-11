@@ -144,7 +144,9 @@ async function fetchFromR2(objectKey: string): Promise<R2ObjectBody | null> {
   const bucketResult = await resolveR2BucketAsync();
 
   if (bucketResult.isErr()) {
-    logger.error("[R2] Bucket resolve failed", { error: bucketResult.error.message });
+    logger.error("[R2] Bucket resolve failed", {
+      error: bucketResult.error.message,
+    });
     return null;
   }
 
@@ -269,11 +271,15 @@ function cacheAndServe(
     etag,
   };
 
-  set(cacheKey, cached, { ttlSeconds: INTERNAL_CACHE_TTL_SECONDS }).catch(err => {
+  set(cacheKey, cached, { ttlSeconds: INTERNAL_CACHE_TTL_SECONDS }).catch((err) => {
     logger.warn("[R2] Cache write failed", { cacheKey, error: String(err) });
   });
 
-  logger.info("[R2] Served", { objectKey, size: body.byteLength, duration: Date.now() - startTime });
+  logger.info("[R2] Served", {
+    objectKey,
+    size: body.byteLength,
+    duration: Date.now() - startTime,
+  });
   return new Response(body, { status: 200, headers });
 }
 

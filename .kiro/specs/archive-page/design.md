@@ -704,8 +704,19 @@ const ArchivePaginationControls: React.FC<ArchivePaginationControlsProps> = ({
       >
         ←
       </button>
-      <span style={{ color: "white", fontSize: "14px", minWidth: "160px", textAlign: "center" }}>
-        {isLoading ? "Loading..." : totalCount ? `${currentRange} of ${totalCount}` : currentRange}
+      <span
+        style={{
+          color: "white",
+          fontSize: "14px",
+          minWidth: "160px",
+          textAlign: "center",
+        }}
+      >
+        {isLoading ?
+          "Loading..."
+        : totalCount ?
+          `${currentRange} of ${totalCount}`
+        : currentRange}
       </span>
       <button
         type="button"
@@ -1266,7 +1277,7 @@ const ArchiveDetailModal: React.FC<ArchiveDetailModalProps> = ({ item, isOpen, o
         alignItems: "center",
         justifyContent: "center",
       }}
-      onClick={e => {
+      onClick={(e) => {
         if (e.target === e.currentTarget && !isMobile) onClose();
       }}
     >
@@ -1314,7 +1325,7 @@ const ArchiveDetailModal: React.FC<ArchiveDetailModalProps> = ({ item, isOpen, o
             transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
             cursor: zoom > 1 ? "grab" : "default",
           }}
-          onWheel={e => {
+          onWheel={(e) => {
             e.preventDefault();
             const delta = e.deltaY > 0 ? -0.1 : 0.1;
             setZoom(Math.max(1, Math.min(2, zoom + delta)));
@@ -1349,7 +1360,13 @@ const ArchiveDetailModal: React.FC<ArchiveDetailModalProps> = ({ item, isOpen, o
         {/* Market Cap値 */}
         <section style={{ marginBottom: "24px" }}>
           <h3 style={{ color: "white", fontSize: "18px", marginBottom: "12px" }}>Market Cap</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "8px",
+            }}
+          >
             {Object.entries(item.mcRounded).map(([ticker, mc]) => (
               <div
                 key={ticker}
@@ -1364,7 +1381,13 @@ const ArchiveDetailModal: React.FC<ArchiveDetailModalProps> = ({ item, isOpen, o
               >
                 <img src={`/token-images/${ticker}.webp`} alt={ticker} width={24} height={24} />
                 <span style={{ color: "white", fontSize: "12px" }}>{ticker.toUpperCase()}</span>
-                <span style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "12px", marginLeft: "auto" }}>
+                <span
+                  style={{
+                    color: "rgba(255, 255, 255, 0.7)",
+                    fontSize: "12px",
+                    marginLeft: "auto",
+                  }}
+                >
                   ${mc.toLocaleString()}
                 </span>
               </div>
@@ -1387,7 +1410,13 @@ const ArchiveDetailModal: React.FC<ArchiveDetailModalProps> = ({ item, isOpen, o
         {/* プロンプト */}
         <section>
           <h3 style={{ color: "white", fontSize: "18px", marginBottom: "12px" }}>プロンプト</h3>
-          <div style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "14px", whiteSpace: "pre-wrap" }}>
+          <div
+            style={{
+              color: "rgba(255, 255, 255, 0.7)",
+              fontSize: "14px",
+              whiteSpace: "pre-wrap",
+            }}
+          >
             <p style={{ marginBottom: "12px" }}>{item.prompt}</p>
             <h4 style={{ color: "white", fontSize: "16px", marginBottom: "8px" }}>ネガティブプロンプト</h4>
             <p>{item.negative}</p>

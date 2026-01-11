@@ -40,7 +40,7 @@ export const paintingsListSchema = v.pipe(
     to: v.optional(v.pipe(v.string(), v.regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD"))),
   }),
   v.forward(
-    v.check(data => {
+    v.check((data) => {
       if (data.from && data.to) {
         const start = new Date(data.from);
         const end = new Date(data.to);

@@ -353,8 +353,8 @@ describe("Gallery Page Integration", () => {
     const avgDomQuery = allTimings.reduce((sum, t) => sum + t.domQueryTime, 0) / allTimings.length;
     const avgTotal = allTimings.reduce((sum, t) => sum + t.totalTime, 0) / allTimings.length;
 
-    const maxTotal = Math.max(...allTimings.map(t => t.totalTime));
-    const minTotal = Math.min(...allTimings.map(t => t.totalTime));
+    const maxTotal = Math.max(...allTimings.map((t) => t.totalTime));
+    const minTotal = Math.min(...allTimings.map((t) => t.totalTime));
 
     console.log(`\n[Multiple Renders Summary] Average Metrics:`);
     console.log(`  Mock Setup:           ${avgMockSetup.toFixed(2)}ms`);
