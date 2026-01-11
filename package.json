@@ -90,7 +90,8 @@
     "use-haptic": "^1.1.13",
     "use-sound": "^5.0.0",
     "valibot": "^1.2.0",
-    "wrangler": "^4.58.0"
+    "wrangler": "^4.58.0",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260111.0",
