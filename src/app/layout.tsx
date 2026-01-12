@@ -26,13 +26,12 @@ const cinzelDecorative = Cinzel_Decorative({
  * Fallback to production URL if NEXT_PUBLIC_BASE_URL is not set.
  */
 export function generateMetadata(): Metadata {
-  const description =
-    "A decentralized archive of financial emotions. AI generates one painting every hour, translating the collective psychology of trending tokens into visual art.";
+  const description = "A perpetual engine that turns market history into onchain paintings.";
   const title = "DOOM INDEX";
   // Use environment-based URL
   const metadataBase = new URL(getBaseUrl());
   const ogImageUrl = new URL("/opengraph-image", metadataBase).toString();
-  const ogImageAlt = "DOOM INDEX - A decentralized archive of financial emotions.";
+  const ogImageAlt = "DOOM INDEX - A perpetual engine that turns market history into onchain paintings.";
 
   return {
     metadataBase,

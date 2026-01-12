@@ -8,7 +8,7 @@
     <span className="paper-author">DOOM INDEX Research Team</span>
   </div>
   <div className="paper-epigraph">
-    <em>"A decentralized archive of financial emotions."</em>
+    <em>"A perpetual engine that turns market history into onchain paintings."</em>
   </div>
 </div>
 
@@ -30,24 +30,30 @@ DOOM INDEX was born to **archive these emotions**—transforming raw market data
 
 ## 2. What DOOM INDEX Is
 
-**DOOM INDEX is a decentralized archive of financial emotions—an onchain system where AI generates paintings every hour, translating the collective psychology of trending memecoins into visual art.**
+**DOOM INDEX is a perpetual engine that turns market history into onchain paintings.**
 
-The system dynamically selects the most culturally dominant memecoin each hour. When a token captures the zeitgeist—through viral marketing, celebrity endorsements, or genuine innovation—it becomes the protagonist of that hour's painting.
+Every hour, the protocol captures a snapshot of the internet capital market—price movement, volatility, and trading volume—then translates it into a single painting and publishes it as an onchain artifact on Solana.
+
+The system selects a culturally dominant token (and broader market context) as the protagonist of that hour. When a token captures the zeitgeist—through memes, narratives, launches, or liquidity—it becomes the subject of the next painting.
 
 **Market emotion becomes visual emotion.** Every painting is a timestamp of collective psychology—a permanent record of how thousands of traders felt at that exact moment in time.
+
+Each hour becomes a DOOM Painting entry that can be collected, indexed, and minted as an NFT.
+
+The system already runs in production and has generated thousands of hourly entries—evidence that traders and collectors resonate with preserving market time as a cultural object.
 
 ---
 
 ## 3. How the Painting Is Generated
 
-Every hour, the system captures trending token data and translates it into a painting through a weighted composition algorithm:
+Every hour, the system captures trending token data and global market context, then translates it into a painting through a weighted composition algorithm:
 
 ![Painting generation pipeline](/diagrams/generation-process.svg)
 
 ### The Algorithm
 
 **1. Market Observation & Token Selection**
-The system monitors CoinGecko trending data and selects the most culturally dominant memecoin through a weighted scoring algorithm:
+The system monitors CoinGecko trending data and selects the most culturally dominant token through a weighted scoring algorithm:
 
 ```
 finalScore = 0.50*trend + 0.35*impact + 0.15*mood
@@ -100,8 +106,41 @@ Charts display numbers. Prices show transactions. These are valuable, but they'r
 
 When AI interprets market data through symbolic mapping, you experience the market from a different angle—not as data, but as **atmosphere**.
 
-**Deterministic Output**
-Same market state = same painting. The system uses a hash of the rounded market caps to skip regeneration when nothing significant has changed, ensuring consistency.
+---
+
+## 4. Protocol Design: The Hourly Archive
+
+DOOM INDEX is designed as an **archive-first protocol**: every hour produces a verifiable entry that can be stored, indexed, and reused by anyone building on Solana.
+
+### The Hourly Entry (Open Format)
+
+Each hour produces a structured record (in addition to the image) so the moment can be reproduced and analyzed:
+
+- **Timestamp and slot/time anchors** (when generated)
+- **Selected token** and **candidate set** (what the system considered)
+- **Market snapshot** (price change, market cap, volume, volatility proxies, and global context like risk sentiment)
+- **Scoring breakdown** (trend / impact / mood / final)
+- **Prompt context** (the 10 components and their weights)
+- **Model + parameters** (model ID/version, seed/hash, any style adapters)
+- **Content addressing** (hashes for the image and metadata)
+
+This format is intentionally open so wallets, explorers, dashboards, and artists can treat each hour as a composable building block.
+
+### Storage and Availability
+
+The archive is built to be durable:
+
+- **Fast access layer** for browsing and apps (object storage + indexed metadata)
+- **Permanent layer (planned)** via IPFS / Arweave for long-term preservation
+- **Integrity checks** so external builders can verify that a painting matches its recorded inputs
+
+### Access: SDK and API
+
+DOOM INDEX is not only a gallery—it is an interface. A public API/SDK enables:
+
+- Listing hourly entries by time range, token, or market regime
+- Fetching the full entry (image + metadata + provenance)
+- Building derivatives: moment cards, analytics overlays, curated collections, and research datasets
 
 ---
 
@@ -111,7 +150,13 @@ Same market state = same painting. The system uses a hash of the rounded market 
 
 DOOM INDEX proves that markets can be art. But there's room to evolve. Right now, every painting is archived but the community has no voice in what matters most.
 
-**Future versions will introduce DOOM DAO and Season NFTs** to address this.
+Future versions will focus on durability and composability:
+
+- **Decentralized GPU compute** (e.g., Render Network) for resilient hourly generation
+- **Permanent storage** (IPFS / Arweave) so the archive outlives any single provider
+- **Market-adaptive models** (LoRA/style adapters) and a prompt engine that responds to volatility regimes
+- **Open hourly NFT format + SDK** so integrations become first-class
+- **DOOM DAO and Season NFTs** for community governance and historical curation
 
 ### DOOM DAO: Community Governance (Coming Soon)
 
@@ -171,5 +216,5 @@ In crypto culture, strong context creates art value while strong memes create cr
 
 <div className="mt-16 text-center text-sm opacity-60">
   <p>DOOM INDEX v2.0 — November 2025</p>
-  <p>A decentralized archive of financial emotions.</p>
+  <p>A perpetual engine that turns market history into onchain paintings.</p>
 </div>

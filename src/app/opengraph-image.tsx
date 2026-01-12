@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 3600; // 1 hour
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "DOOM INDEX - A decentralized archive of financial emotions.";
+export const alt = "DOOM INDEX - A perpetual engine that turns market history into onchain paintings.";
 
 const FRAME_ORIGINAL_SIZE = 500; // frame.png dimensions
 const FRAME_INNER_WIDTH = 250;
