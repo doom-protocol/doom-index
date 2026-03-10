@@ -102,22 +102,25 @@ describe("Archive Storage Service", () => {
 
     it("should rollback image if metadata save fails after image save", async () => {
       // Create a mock bucket that fails on metadata save
-      const failingBucket = {
-        ...bucket,
-        put: async (key: string, value: unknown) => {
-          if (key.endsWith(".json")) {
-            throw new Error("Metadata save failed");
-          }
-          return bucket.put(key, value as ArrayBuffer | string);
-        },
-        delete: (keys: string | string[]) => {
-          const keysArray = Array.isArray(keys) ? keys : [keys];
-          for (const key of keysArray) {
-            store.delete(key);
-          }
-          return Promise.resolve();
-        },
-      } as unknown as R2Bucket;
+      const failingBucket = Object.create(null) as R2Bucket;
+      Object.assign(failingBucket, bucket);
+      failingBucket.put = async (key: string, value: unknown) => {
+        if (key.endsWith(".json")) {
+          throw new Error("Metadata save failed");
+        }
+        const result = await bucket.put(key, value as ArrayBuffer | string);
+        if (result === null) {
+          throw new Error("Image save failed");
+        }
+        return result;
+      };
+      failingBucket.delete = async (keys: string | string[]) => {
+        const keysArray = Array.isArray(keys) ? keys : [keys];
+        for (const key of keysArray) {
+          store.delete(key);
+        }
+        return Promise.resolve();
+      };
 
       const service = createPaintingsService({ r2Bucket: failingBucket });
       const imageBuffer = new TextEncoder().encode("fake image data").buffer;

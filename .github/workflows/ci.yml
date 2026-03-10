@@ -9,11 +9,13 @@ on:
       - "package.json"
       - "bun.lock"
       - "tsconfig.json"
-      - "eslint.config.mjs"
+      - "eslint.config.ts"
       - "next.config.ts"
       - "open-next.config.ts"
       - "wrangler.toml"
       - "drizzle.config.ts"
+      - ".oxfmtrc.json"
+      - "lefthook.yml"
       - "migrations/**"
       - ".github/workflows/ci.yml"
       - ".example.vars"
@@ -25,11 +27,13 @@ on:
       - "package.json"
       - "bun.lock"
       - "tsconfig.json"
-      - "eslint.config.mjs"
+      - "eslint.config.ts"
       - "next.config.ts"
       - "open-next.config.ts"
       - "wrangler.toml"
       - "drizzle.config.ts"
+      - ".oxfmtrc.json"
+      - "lefthook.yml"
       - "migrations/**"
       - ".github/workflows/ci.yml"
       - ".example.vars"
@@ -37,7 +41,7 @@ on:
 jobs:
   format:
     name: Format
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,7 +49,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.3
+          bun-version: 1.3.10
 
       - name: Cache Bun dependencies
         uses: actions/cache@v4
@@ -62,12 +66,12 @@ jobs:
         if: steps.bun-cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
-      - name: Run formatter
+      - name: Run oxfmt
         run: bun run format
 
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -75,7 +79,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.3
+          bun-version: 1.3.10
 
       - name: Cache Bun dependencies
         uses: actions/cache@v4
@@ -91,13 +95,21 @@ jobs:
       - name: Install dependencies
         if: steps.bun-cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
+
+      - name: Cache ESLint results
+        uses: actions/cache@v4
+        with:
+          path: .cache/eslint
+          key: ${{ runner.os }}-eslint-${{ hashFiles('bun.lock', 'package.json', 'eslint.config.ts', 'tsconfig.json') }}
+          restore-keys: |
+            ${{ runner.os }}-eslint-
 
       - name: Run ESLint
         run: bun run lint
 
   typecheck:
     name: Type Check
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -105,7 +117,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.3
+          bun-version: 1.3.10
 
       - name: Cache Bun dependencies
         uses: actions/cache@v4
@@ -122,12 +134,20 @@ jobs:
         if: steps.bun-cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
+      - name: Cache TypeScript incremental state
+        uses: actions/cache@v4
+        with:
+          path: .cache/tsgo
+          key: ${{ runner.os }}-tsgo-${{ hashFiles('bun.lock', 'package.json', 'tsconfig.json') }}
+          restore-keys: |
+            ${{ runner.os }}-tsgo-
+
       - name: Run type check
         run: bun run typecheck
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -135,7 +155,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.3
+          bun-version: 1.3.10
 
       - name: Cache Bun dependencies
         uses: actions/cache@v4
@@ -164,7 +184,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [format, lint, typecheck, test]
     steps:
       - name: Checkout code
@@ -173,7 +193,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.3
+          bun-version: 1.3.10
 
       - name: Cache Bun dependencies
         uses: actions/cache@v4

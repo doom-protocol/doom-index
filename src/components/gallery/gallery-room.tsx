@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, type FC } from "react";
+import { useMemo } from "react";
+import type { FC } from "react";
 import { DoubleSide, MeshStandardMaterial, PlaneGeometry } from "three";
 
 export const GalleryRoom: FC = () => {

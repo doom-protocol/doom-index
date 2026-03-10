@@ -33,8 +33,8 @@ async function backfillArchive() {
   let cursor: string | undefined;
   const batchSize = 100;
 
-  while (true) {
-    logger.info("backfill.batch", { cursor: cursor || "start", batchSize });
+  for (;;) {
+    logger.info("backfill.batch", { cursor: cursor ?? "start", batchSize });
 
     const listResult = await listR2Objects(bucket, {
       prefix: "images/",
@@ -122,14 +122,16 @@ async function backfillArchive() {
   });
 
   console.log("\n=== Backfill Complete ===");
-  console.log(`Total Processed: ${totalProcessed}`);
-  console.log(`Total Inserted: ${totalInserted}`);
-  console.log(`Total Skipped: ${totalSkipped}`);
-  console.log(`Total Errors: ${totalErrors}`);
+  console.log(`Total Processed: ${String(totalProcessed)}`);
+  console.log(`Total Inserted: ${String(totalInserted)}`);
+  console.log(`Total Skipped: ${String(totalSkipped)}`);
+  console.log(`Total Errors: ${String(totalErrors)}`);
 }
 
-backfillArchive().catch((error) => {
-  logger.error("backfill.fatal", { error });
+backfillArchive().catch((error: unknown) => {
+  logger.error("backfill.fatal", {
+    error: error instanceof Error ? error.message : String(error),
+  });
   console.error("Fatal error during backfill:", error);
   process.exit(1);
 });

@@ -65,13 +65,13 @@ function isCloudflareTransformSupported(): boolean {
 function buildTransformParams(options: CloudflareImageOptions): string {
   const params: string[] = [];
 
-  if (options.width) params.push(`width=${options.width}`);
-  if (options.height) params.push(`height=${options.height}`);
-  if (options.quality) params.push(`quality=${options.quality}`);
+  if (options.width) params.push(`width=${String(options.width)}`);
+  if (options.height) params.push(`height=${String(options.height)}`);
+  if (options.quality) params.push(`quality=${String(options.quality)}`);
   if (options.fit) params.push(`fit=${options.fit}`);
   if (options.format) params.push(`format=${options.format}`);
-  if (options.dpr && options.dpr !== 1) params.push(`dpr=${options.dpr}`);
-  if (options.sharpen) params.push(`sharpen=${options.sharpen}`);
+  if (options.dpr && options.dpr !== 1) params.push(`dpr=${String(options.dpr)}`);
+  if (options.sharpen) params.push(`sharpen=${String(options.sharpen)}`);
 
   return params.join(",");
 }
@@ -127,7 +127,7 @@ export function getImageUrlWithDpr(imageUrl: string, preset: ImagePreset, dpr: n
   const clampedDpr = Math.min(Math.max(dpr, 1), 1.5);
   const options: CloudflareImageOptions = {
     ...presetOptions,
-    width: presetOptions.width ? Math.round(presetOptions.width * clampedDpr) : undefined,
+    width: Math.round(presetOptions.width * clampedDpr),
   };
 
   // For /api/r2 paths: Add query params for server-side transformation
@@ -143,9 +143,7 @@ export function getImageUrlWithDpr(imageUrl: string, preset: ImagePreset, dpr: n
   // For public directory images (root-relative paths that are not /api/*):
   // Skip Cloudflare Image transformation as it only works for R2 images
   // This handles static assets like /placeholder-painting.webp
-  const isRootRelative = imageUrl.startsWith("/");
-  const isApiPath = imageUrl.startsWith("/api/");
-  if (isRootRelative && !isApiPath) {
+  if (imageUrl.startsWith("/") && !imageUrl.startsWith("/api/")) {
     return imageUrl;
   }
 
@@ -443,5 +441,5 @@ export function buildImageOutputOptions(options: CloudflareImageOptions): ImageO
 export function buildTransformCacheKeySuffix(options: CloudflareImageOptions | null): string {
   if (!options) return "";
 
-  return `:w${options.width ?? 0}:h${options.height ?? 0}:f${options.fit ?? ""}:q${options.quality ?? 0}:fmt${options.format ?? ""}`;
+  return `:w${String(options.width ?? 0)}:h${String(options.height ?? 0)}:f${options.fit ?? ""}:q${String(options.quality ?? 0)}:fmt${options.format ?? ""}`;
 }

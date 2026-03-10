@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { getBaseUrl } from "@/utils/url";
 import type { Metadata, NextPage } from "next";
 
-const AboutScene = dynamic(() =>
+const AboutScene = dynamic(async () =>
   import("@/components/about/about-scene").then((mod) => ({
     default: mod.AboutScene,
   })),

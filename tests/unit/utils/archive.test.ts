@@ -1,5 +1,8 @@
 import { describe, expect, it, mock } from "bun:test";
 
+// Import after mocking
+import { buildPaintingKey, buildPublicR2Path, extractIdFromFilename, isValidPaintingFilename } from "@/utils/paintings";
+
 // Mock env module before importing dependent modules
 const mockR2Url: string | undefined = undefined;
 
@@ -10,9 +13,6 @@ void mock.module("@/env", () => ({
     },
   },
 }));
-
-// Import after mocking
-import { buildPaintingKey, buildPublicR2Path, extractIdFromFilename, isValidPaintingFilename } from "@/utils/paintings";
 
 describe("buildPublicR2Path", () => {
   it("should build public R2 path from key", () => {

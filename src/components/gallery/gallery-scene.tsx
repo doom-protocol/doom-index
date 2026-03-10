@@ -7,9 +7,11 @@ import { logger } from "@/utils/logger";
 import { Grid, OrbitControls, Stats } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import dynamic from "next/dynamic";
-import { Suspense, useEffect, useRef, useState, type FC } from "react";
+import { Suspense, startTransition, useEffect, useRef, useState } from "react";
+import type { FC } from "react";
 import { toast } from "sonner";
-import { ACESFilmicToneMapping, PCFSoftShadowMap, type Group } from "three";
+import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
+import type { Group } from "three";
 import { MintButton } from "../ui/mint-button";
 import { MintModal } from "../ui/mint-modal";
 import { ThreeErrorBoundary } from "../ui/three-error-boundary";
@@ -20,7 +22,7 @@ import { GalleryRoom } from "./gallery-room";
 import { isDevelopment } from "@/env";
 
 // Dynamic import for Lights to avoid hydration issues with dev controls
-const Lights = dynamic(() => import("./lights").then((mod) => ({ default: mod.Lights })), {
+const Lights = dynamic(async () => import("./lights").then((mod) => ({ default: mod.Lights })), {
   ssr: false,
   loading: () => (
     <>
@@ -31,7 +33,7 @@ const Lights = dynamic(() => import("./lights").then((mod) => ({ default: mod.Li
 });
 
 // Dynamic import for Leva to avoid SSR/document issues in test environment
-const Leva = dynamic(() => import("leva").then((mod) => ({ default: mod.Leva })), {
+const Leva = dynamic(async () => import("leva").then((mod) => ({ default: mod.Leva })), {
   ssr: false,
 });
 
@@ -131,8 +133,10 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
         lastTs: latestPainting?.timestamp ?? null,
       });
       previousThumbnailUrlRef.current = thumbnailUrl;
-      setExportedGlbFile(null);
-      setIsMintModalOpen(false);
+      startTransition(() => {
+        setExportedGlbFile(null);
+        setIsMintModalOpen(false);
+      });
     }
   }, [thumbnailUrl, latestPainting?.timestamp]);
 
@@ -183,12 +187,12 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
         }}
         style={{
           position: "fixed",
-          top: `${HEADER_HEIGHT}px`,
+          top: `${String(HEADER_HEIGHT)}px`,
           left: 0,
           right: 0,
           bottom: 0,
           width: "100%",
-          height: `calc(100% - ${HEADER_HEIGHT}px)`,
+          height: `calc(100% - ${String(HEADER_HEIGHT)}px)`,
           margin: 0,
           padding: 0,
           display: "block",
@@ -253,7 +257,13 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
           pointerEvents: "none",
         }}
       >
-        <MintButton onClick={handleExport} isLoading={isExporting || isWalletConnecting} disabled={!latestPainting} />
+        <MintButton
+          onClick={() => {
+            void handleExport();
+          }}
+          isLoading={isExporting || isWalletConnecting}
+          disabled={!latestPainting}
+        />
       </div>
 
       {/* Mint Modal */}
@@ -266,7 +276,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
         }}
         paintingMetadata={{
           timestamp: latestPainting?.timestamp ?? new Date().toISOString(),
-          paintingHash: latestPainting?.id ?? `painting-${Date.now()}`,
+          paintingHash: latestPainting?.id ?? `painting-${String(Date.now())}`,
           thumbnailUrl: latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL,
         }}
         glbFile={exportedGlbFile}

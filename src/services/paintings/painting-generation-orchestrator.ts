@@ -19,8 +19,8 @@ import { createImageProvider } from "@/lib/image-generation-providers";
 import { resolveBucketOrThrow } from "@/lib/r2";
 import { createTavilyClient } from "@/lib/tavily-client";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import { type MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
-import { type TokensRepository } from "@/repositories/tokens-repository";
+import type { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
+import type { TokensRepository } from "@/repositories/tokens-repository";
 import { createImageGenerationService } from "@/services/image-generation";
 import { createTokenAnalysisService } from "@/services/token-analysis-service";
 import { createWorldPromptService } from "@/services/world-prompt-service";
@@ -29,30 +29,31 @@ import type { PaintingMetadata, SelectedToken } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import { buildPaintingKey, extractIdFromFilename } from "@/utils/paintings";
 import { getIntervalBucket } from "@/utils/time";
-import { type Result, err, ok } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 import { createPaintingsService } from "./index";
-import { type MarketDataService } from "./market-data";
-import { type PaintingContextBuilder } from "./painting-context-builder";
-import { type TokenSelectionService } from "./token-selection";
+import type { MarketDataService } from "./market-data";
+import type { PaintingContextBuilder } from "./painting-context-builder";
+import type { TokenSelectionService } from "./token-selection";
+
+import type { PaintingsService } from "./index";
 
 /**
  * Painting Generation Result
  */
-export type PaintingGenerationResult = {
+export interface PaintingGenerationResult {
   status: "skipped" | "generated";
   hourBucket: string;
   selectedToken?: SelectedToken;
   imageUrl?: string;
   paramsHash?: string;
   seed?: string;
-};
-
-import type { PaintingsService } from "./index";
+}
 
 /**
  * Painting Generation Orchestrator Dependencies
  */
-type OrchestratorDeps = {
+interface OrchestratorDeps {
   tokenSelectionService: TokenSelectionService;
   marketDataService: MarketDataService;
   paintingContextBuilder: PaintingContextBuilder;
@@ -61,7 +62,7 @@ type OrchestratorDeps = {
   paintingsService?: PaintingsService; // Optional injected service
   r2Bucket?: R2Bucket;
   d1Binding?: D1Database;
-};
+}
 
 /**
  * Painting Generation Orchestrator

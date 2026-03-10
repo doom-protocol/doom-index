@@ -2,8 +2,10 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { folder, useControls } from "leva";
-import { useEffect, useMemo, useRef, type FC } from "react";
-import { CircleGeometry, DoubleSide, Float32BufferAttribute, type Mesh, type Object3D, type SpotLight } from "three";
+import { useEffect, useMemo, useRef } from "react";
+import type { FC } from "react";
+import { CircleGeometry, DoubleSide, Float32BufferAttribute } from "three";
+import type { Mesh, Object3D, SpotLight } from "three";
 
 /**
  * Development-only interactive lights component with Leva controls.

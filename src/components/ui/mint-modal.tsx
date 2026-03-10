@@ -17,9 +17,11 @@ import { logger } from "@/utils/logger";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { Suspense, useCallback, useRef, useState, type FC } from "react";
+import { Suspense, useCallback, useRef, useState } from "react";
+import type { FC } from "react";
 import { toast } from "sonner";
-import { ACESFilmicToneMapping, type Group } from "three";
+import { ACESFilmicToneMapping } from "three";
+import type { Group } from "three";
 import { useHaptic } from "use-haptic";
 
 export interface MintModalProps {
@@ -81,10 +83,10 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
 
       // Use placeholder URI for minting if metadata doesn't exist yet
       const tokenId = 1;
-      const mintUri = metadata ? `ipfs://${metadata.cidMetadata}` : `ipfs://${tokenId}/metadata.json`; // Placeholder
+      const mintUri = metadata ? `ipfs://${metadata.cidMetadata}` : `ipfs://${String(tokenId)}/metadata.json`; // Placeholder
 
       const result = await mint({
-        name: `DOOM INDEX #${tokenId}`,
+        name: `DOOM INDEX #${String(tokenId)}`,
         symbol: "DOOM",
         uri: mintUri,
         sellerFeeBasisPoints: 0,
@@ -156,8 +158,8 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
   const isLoading = isMinting || isWalletConnecting || isProcessing || isIpfsUploading;
 
   // Extract token ID from painting hash (first 8 characters as int)
-  const tokenId = parseInt(paintingMetadata.paintingHash.slice(0, 8), 16);
-  const collectionName = `DOOM NFT #${tokenId}`;
+  const tokenId = Number.parseInt(paintingMetadata.paintingHash.slice(0, 8), 16);
+  const collectionName = `DOOM NFT #${String(tokenId)}`;
 
   return (
     <div
@@ -174,6 +176,7 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
       >
         {/* Close button */}
         <button
+          type="button"
           onClick={handleClose}
           className="absolute top-3 right-3 z-10 flex h-10 w-10 cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md transition-all hover:bg-white/20 active:scale-95 sm:top-4 sm:right-4 sm:h-8 sm:w-8 sm:hover:scale-110"
           aria-label="Close modal"
@@ -249,52 +252,55 @@ export const MintModal: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadat
             </div>
 
             {/* Action Button */}
-            {
-              !connected ?
-                // Connect Wallet Button (always enabled)
-                <button
-                  onClick={handleConnectWallet}
-                  disabled={isLoading}
-                  tabIndex={isOpen ? 0 : -1}
-                  className={`relative flex h-[52px] w-full transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[26px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none sm:h-[56px] sm:rounded-[28px] ${
-                    isLoading ?
-                      "cursor-not-allowed border-white/25 bg-white/15 opacity-60 shadow-white/15"
+            {!connected ? (
+              // Connect Wallet Button (always enabled)
+              <button
+                type="button"
+                onClick={handleConnectWallet}
+                disabled={isLoading}
+                tabIndex={isOpen ? 0 : -1}
+                className={`relative flex h-[52px] w-full transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[26px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none sm:h-[56px] sm:rounded-[28px] ${
+                  isLoading
+                    ? "cursor-not-allowed border-white/25 bg-white/15 opacity-60 shadow-white/15"
                     : "cursor-pointer border-white/35 bg-white/25 opacity-100 shadow-white/20 active:scale-[0.97] active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 sm:hover:scale-[1.02] sm:hover:bg-white/30 sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25"
-                  } `}
-                >
-                  <span className="relative z-10 text-sm font-bold tracking-[0.5px] text-white uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-base">
-                    {isLoading ? "Processing..." : "Connect Wallet"}
-                  </span>
-                </button>
-                // Mint Button
-              : <button
-                  onClick={handleMint}
-                  disabled={isLoading || !glbFile || !isMintCompleted}
-                  tabIndex={isOpen ? 0 : -1}
-                  className={`relative flex h-[52px] w-full transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[26px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none sm:h-[56px] sm:rounded-[28px] ${
-                    isLoading || !glbFile || !isMintCompleted ?
-                      "cursor-not-allowed border-white/20 bg-white/10 opacity-40 shadow-white/10"
+                } `}
+              >
+                <span className="relative z-10 text-sm font-bold tracking-[0.5px] text-white uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-base">
+                  {isLoading ? "Processing..." : "Connect Wallet"}
+                </span>
+              </button>
+            ) : (
+              // Mint Button
+              <button
+                type="button"
+                onClick={() => {
+                  void handleMint();
+                }}
+                disabled={isLoading || !glbFile || !isMintCompleted}
+                tabIndex={isOpen ? 0 : -1}
+                className={`relative flex h-[52px] w-full transform-gpu touch-manipulation items-center justify-center overflow-hidden rounded-[26px] border p-0 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 ease-in-out will-change-transform outline-none sm:h-[56px] sm:rounded-[28px] ${
+                  isLoading || !glbFile || !isMintCompleted
+                    ? "cursor-not-allowed border-white/20 bg-white/10 opacity-40 shadow-white/10"
                     : "cursor-pointer border-white/35 bg-white/25 opacity-100 shadow-white/20 active:scale-[0.97] active:bg-white/35 active:shadow-[0_8px_24px_rgba(255,255,255,0.35)] active:shadow-white/30 sm:hover:scale-[1.02] sm:hover:bg-white/30 sm:hover:shadow-[0_6px_20px_rgba(255,255,255,0.25)] sm:hover:shadow-white/25"
-                  } `}
+                } `}
+              >
+                <span
+                  className={`relative z-10 text-sm font-bold tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-base ${
+                    isLoading || !glbFile || !isMintCompleted ? "text-white/50" : "text-white"
+                  }`}
                 >
-                  <span
-                    className={`relative z-10 text-sm font-bold tracking-[0.5px] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-base ${
-                      isLoading || !glbFile || !isMintCompleted ? "text-white/50" : "text-white"
-                    }`}
-                  >
-                    {isMintCompleted ?
-                      "Minted!"
-                    : isIpfsUploading ?
-                      "Uploading..."
-                    : isMinting ?
-                      "Minting..."
-                    : isProcessing ?
-                      "Processing..."
-                    : "Coming Soon"}
-                  </span>
-                </button>
-
-            }
+                  {isMintCompleted
+                    ? "Minted!"
+                    : isIpfsUploading
+                      ? "Uploading..."
+                      : isMinting
+                        ? "Minting..."
+                        : isProcessing
+                          ? "Processing..."
+                          : "Coming Soon"}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>

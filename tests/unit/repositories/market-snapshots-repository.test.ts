@@ -1,5 +1,6 @@
 import * as dbSchema from "@/db/schema";
-import { marketSnapshots, type NewMarketSnapshot } from "@/db/schema/market-snapshots";
+import { marketSnapshots } from "@/db/schema/market-snapshots";
+import type { NewMarketSnapshot } from "@/db/schema/market-snapshots";
 import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
 import { Database } from "bun:sqlite";
 import { beforeEach, describe, expect, it } from "bun:test";
@@ -7,9 +8,15 @@ import type { BatchItem, BatchResponse } from "drizzle-orm/batch";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 
+function runStatements(sqlite: Database, statements: string[]): void {
+  for (const statement of statements) {
+    sqlite.run(statement);
+  }
+}
+
 // Extended DB type with batch method for test compatibility
 type TestDb = BunSQLiteDatabase<typeof dbSchema> & {
-  batch<U extends BatchItem<"sqlite">, T extends Readonly<[U, ...U[]]>>(batch: T): Promise<BatchResponse<T>>;
+  batch: <U extends BatchItem<"sqlite">, T extends Readonly<[U, ...U[]]>>(batch: T) => Promise<BatchResponse<T>>;
 };
 
 describe("MarketSnapshotsRepository", () => {
@@ -21,8 +28,8 @@ describe("MarketSnapshotsRepository", () => {
     const sqlite = new Database(":memory:");
 
     // Create market_snapshots table
-    sqlite.exec(`
-      CREATE TABLE market_snapshots (
+    runStatements(sqlite, [
+      `CREATE TABLE market_snapshots (
         hour_bucket TEXT PRIMARY KEY NOT NULL,
         total_market_cap_usd REAL NOT NULL,
         total_volume_usd REAL NOT NULL,
@@ -34,9 +41,9 @@ describe("MarketSnapshotsRepository", () => {
         fear_greed_index INTEGER,
         updated_at INTEGER NOT NULL,
         created_at INTEGER NOT NULL
-      );
-      CREATE INDEX idx_market_snapshots_created_at ON market_snapshots(created_at);
-    `);
+      )`,
+      "CREATE INDEX idx_market_snapshots_created_at ON market_snapshots(created_at)",
+    ]);
 
     const baseDb = drizzle(sqlite, { schema: dbSchema });
 
@@ -44,7 +51,7 @@ describe("MarketSnapshotsRepository", () => {
     // BunSQLiteDatabase doesn't have batch, but DrizzleD1Database does
     // The batch method receives query builder objects and should execute them sequentially
     db = Object.assign(baseDb, {
-      batch: <T extends readonly BatchItem<"sqlite">[]>(operations: T): Promise<BatchResponse<T>> => {
+      batch: async <T extends readonly BatchItem<"sqlite">[]>(operations: T): Promise<BatchResponse<T>> => {
         // Simple sequential execution for test purposes
         // Each BatchItem is a query builder with methods like .execute(), .all(), etc.
         // For simplicity in tests, we return empty results since the repository

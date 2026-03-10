@@ -10,7 +10,7 @@ import "../../preload";
 
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { render, waitFor, cleanup } from "@testing-library/react";
-import { type FC, type ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 import { createLoggerMock, createMockPerformance, resetMockTime, advanceMockTime, getMockTime } from "../../mocks";
 
 // Store captured logger calls for assertions using shared helper
@@ -85,26 +85,29 @@ const mockPainting = {
 
 // Import the real module to spread its exports
 const realUseLatestPainting = await import("@/hooks/use-latest-painting");
+const latestPaintingHook = () => ({
+  data: mockPainting,
+  isLoading: false,
+  error: null,
+});
+const latestPaintingRefetch = () => async () => Promise.resolve(undefined);
 
 void mock.module("@/hooks/use-latest-painting", () => ({
   // Spread all real exports (constants, pure functions) to avoid breaking other tests
   ...realUseLatestPainting,
   // Only override the hooks that need mocking for our tests
-  useLatestPainting: () => ({
-    data: mockPainting,
-    isLoading: false,
-    error: null,
-  }),
-  useLatestPaintingRefetch: () => () => Promise.resolve(undefined),
+  useLatestPainting: latestPaintingHook,
+  useLatestPaintingRefetch: latestPaintingRefetch,
 }));
 
 // Mock Solana wallet hook
+const solanaWalletHook = () => ({
+  connecting: false,
+  connected: false,
+  publicKey: null,
+});
 void mock.module("@/hooks/use-solana-wallet", () => ({
-  useSolanaWallet: () => ({
-    connecting: false,
-    connected: false,
-    publicKey: null,
-  }),
+  useSolanaWallet: solanaWalletHook,
 }));
 
 // Note: We don't mock @/lib/glb-export-service globally as it interferes with
@@ -126,15 +129,17 @@ void mock.module("sonner", () => ({
 }));
 
 // Mock use-haptic
+const hapticHook = () => ({
+  triggerHaptic: mock(() => {}),
+});
 void mock.module("use-haptic", () => ({
-  useHaptic: () => ({
-    triggerHaptic: mock(() => {}),
-  }),
+  useHaptic: hapticHook,
 }));
 
 // Mock useTransformedTextureUrl
+const transformedTextureUrlHook = (url: string) => url;
 void mock.module("@/hooks/use-transformed-texture-url", () => ({
-  useTransformedTextureUrl: (url: string) => url,
+  useTransformedTextureUrl: transformedTextureUrlHook,
 }));
 
 // Mock useSafeTexture to capture onLoad callback and call it synchronously
@@ -147,7 +152,7 @@ void mock.module("@/hooks/use-safe-texture", () => {
     dispose: mock(() => {}),
   };
 
-  const useSafeTexture = (url: string, onLoad?: (texture: unknown) => void) => {
+  const loadSafeTexture = (_url: string, onLoad?: (texture: unknown) => void) => {
     // Store callback for later invocation
     if (onLoad) {
       // Simulate texture load completion after a controlled delay
@@ -159,10 +164,10 @@ void mock.module("@/hooks/use-safe-texture", () => {
     return mockTexture;
   };
 
-  useSafeTexture.preload = mock(() => {});
-  useSafeTexture.clear = mock(() => {});
+  loadSafeTexture.preload = mock(() => {});
+  loadSafeTexture.clear = mock(() => {});
 
-  return { useSafeTexture };
+  return { useSafeTexture: loadSafeTexture };
 });
 
 // Mock @react-three/fiber Canvas and hooks
@@ -170,45 +175,47 @@ const MockCanvas: FC<{ children: ReactNode }> = ({ children }) => {
   return <div data-testid="mock-canvas">{children}</div>;
 };
 
+const readThreeContext = () => ({
+  gl: {
+    initTexture: mock(() => {}),
+    shadowMap: { enabled: false, type: 0 },
+    toneMapping: 0,
+    setClearColor: mock(() => {}),
+  },
+  invalidate: mock(() => {}),
+});
 void mock.module("@react-three/fiber", () => ({
   Canvas: MockCanvas,
   useFrame: mock(() => {}),
-  useThree: () => ({
-    gl: {
-      initTexture: mock(() => {}),
-      shadowMap: { enabled: false, type: 0 },
-      toneMapping: 0,
-      setClearColor: mock(() => {}),
-    },
-    invalidate: mock(() => {}),
-  }),
+  useThree: readThreeContext,
 }));
 
 // Mock @react-three/drei
-void mock.module("@react-three/drei", () => ({
-  Grid: () => null,
-  OrbitControls: () => null,
-  Stats: () => null,
-  useGLTF: () => ({
-    scene: { clone: () => ({}) },
-    nodes: {},
-    materials: {},
-  }),
-}));
-
-// Add preload to useGLTF mock
-const useGLTFMock = () => ({
+const readGltf = () => ({
   scene: { clone: () => ({}) },
   nodes: {},
   materials: {},
 });
-useGLTFMock.preload = mock(() => {});
+void mock.module("@react-three/drei", () => ({
+  Grid: () => null,
+  OrbitControls: () => null,
+  Stats: () => null,
+  useGLTF: readGltf,
+}));
+
+// Add preload to useGLTF mock
+const readGltfWithPreload = () => ({
+  scene: { clone: () => ({}) },
+  nodes: {},
+  materials: {},
+});
+readGltfWithPreload.preload = mock(() => {});
 
 void mock.module("@react-three/drei", () => ({
   Grid: () => null,
   OrbitControls: () => null,
   Stats: () => null,
-  useGLTF: useGLTFMock,
+  useGLTF: readGltfWithPreload,
 }));
 
 // Note: We don't mock "three" module globally as it interferes with other tests
@@ -250,9 +257,10 @@ void mock.module("@/components/gallery/lights", () => ({
 }));
 
 // Mock leva (client-side only GUI library)
+const readLevaControls = () => ({});
 void mock.module("leva", () => ({
   Leva: () => null,
-  useControls: () => ({}),
+  useControls: readLevaControls,
 }));
 
 // Mock next/dynamic to return the mocked Lights component directly

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type DependencyList } from "react";
+import { startTransition, useEffect, useState } from "react";
+import type { DependencyList } from "react";
 
 /**
  * Generic hook for browser detection
@@ -16,7 +17,9 @@ function useBrowserDetection(detector: () => boolean, deps: DependencyList = [])
     const check = () => {
       const detected = detector();
       if (detected !== result) {
-        setResult(detected);
+        startTransition(() => {
+          setResult(detected);
+        });
       }
     };
 

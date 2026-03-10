@@ -7,14 +7,15 @@
  * URL: /api/r2/{...key}[?w=512&q=75&fit=scale-down&fmt=auto]
  */
 
-import { get, set, type CachedBinaryResponse } from "@/lib/cache";
+import { get, set } from "@/lib/cache";
+import type { CachedBinaryResponse } from "@/lib/cache";
 import {
   parseApiR2TransformParams,
   buildImageTransform,
   buildImageOutputOptions,
   buildTransformCacheKeySuffix,
-  type CloudflareImageOptions,
 } from "@/lib/cloudflare-image";
+import type { CloudflareImageOptions } from "@/lib/cloudflare-image";
 import { joinR2Key, resolveR2BucketAsync } from "@/lib/r2";
 import { R2_IMAGE_CACHE_TTL_SECONDS } from "@/constants";
 import { logger } from "@/utils/logger";
@@ -212,7 +213,7 @@ async function tryTransform(
     if (!env.IMAGES) return null;
 
     return await transformWithTimeout(env.IMAGES, sourceBuffer, contentType, options);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.warn("[R2] Transform error", {
       error: error instanceof Error ? error.message : String(error),
     });
@@ -241,7 +242,9 @@ async function transformWithTimeout(
   })();
 
   const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error("Transform timeout")), TRANSFORM_TIMEOUT_MS),
+    setTimeout(() => {
+      reject(new Error("Transform timeout"));
+    }, TRANSFORM_TIMEOUT_MS),
   );
 
   return Promise.race([transformPromise, timeoutPromise]);
@@ -271,7 +274,7 @@ function cacheAndServe(
     etag,
   };
 
-  set(cacheKey, cached, { ttlSeconds: INTERNAL_CACHE_TTL_SECONDS }).catch((err) => {
+  set(cacheKey, cached, { ttlSeconds: INTERNAL_CACHE_TTL_SECONDS }).catch((err: unknown) => {
     logger.warn("[R2] Cache write failed", { cacheKey, error: String(err) });
   });
 

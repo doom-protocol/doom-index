@@ -33,7 +33,7 @@ export const createRunwareProvider = (): ImageProvider => ({
         timeoutMs,
       });
 
-      const seedInt = input.seed ? parseInt(input.seed.substring(0, 8), 16) : undefined;
+      const seedInt = input.seed ? Number.parseInt(input.seed.substring(0, 8), 16) : undefined;
 
       // For image-to-image, always use FLUX.1 Kontext [dev] model
       // Otherwise, use the provided model or default
@@ -72,17 +72,24 @@ export const createRunwareProvider = (): ImageProvider => ({
         }),
       });
 
-      const image = images?.[0];
-
-      if (!image) {
+      if (images.length === 0) {
         logger.error("runware.generate.noImage", {
-          imagesCount: images?.length ?? 0,
+          imagesCount: images.length,
           images,
         });
         return err({
           type: "ExternalApiError",
           provider: "ImageProvider",
-          message: `Runware request returned no image data. Response count: ${images?.length ?? 0}`,
+          message: `Runware request returned no image data. Response count: ${String(images.length)}`,
+        } as AppError);
+      }
+
+      const image = images.at(0);
+      if (!image) {
+        return err({
+          type: "ExternalApiError",
+          provider: "ImageProvider",
+          message: "Runware request returned an empty image array",
         } as AppError);
       }
 
@@ -95,7 +102,7 @@ export const createRunwareProvider = (): ImageProvider => ({
         return err({
           type: "ExternalApiError",
           provider: "ImageProvider",
-          message: `Runware request returned image but no base64Data. Has URL: ${!!image.imageURL}, Has DataURI: ${!!image.imageDataURI}`,
+          message: `Runware request returned image but no base64Data. Has URL: ${String(!!image.imageURL)}, Has DataURI: ${String(!!image.imageDataURI)}`,
         } as AppError);
       }
 

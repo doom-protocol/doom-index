@@ -1,23 +1,24 @@
 import { deleteKv, listKv, putKv } from "@/lib/kv";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 const VIEWER_KEY_PREFIX = "viewer:";
 const VIEWER_TTL_SECONDS = 60;
 
-type ViewerServiceDeps = {
+interface ViewerServiceDeps {
   kvNamespace: KVNamespace;
   log?: typeof logger;
-};
+}
 
-type ViewerService = {
-  registerViewer(sessionId: string): Promise<Result<void, AppError>>;
-  updateViewer(sessionId: string): Promise<Result<void, AppError>>;
-  removeViewer(sessionId: string): Promise<Result<void, AppError>>;
-  hasActiveViewer(): Promise<Result<boolean, AppError>>;
-  countActiveViewers(): Promise<Result<number, AppError>>;
-};
+interface ViewerService {
+  registerViewer: (sessionId: string) => Promise<Result<void, AppError>>;
+  updateViewer: (sessionId: string) => Promise<Result<void, AppError>>;
+  removeViewer: (sessionId: string) => Promise<Result<void, AppError>>;
+  hasActiveViewer: () => Promise<Result<boolean, AppError>>;
+  countActiveViewers: () => Promise<Result<number, AppError>>;
+}
 
 export function createViewerService({ kvNamespace, log = logger }: ViewerServiceDeps): ViewerService {
   function getViewerKey(sessionId: string): string {
@@ -89,7 +90,7 @@ export function createViewerService({ kvNamespace, log = logger }: ViewerService
     const limit = 1000; // Maximum keys per page
 
     // Iterate through all pages until list_complete is true
-    while (true) {
+    for (;;) {
       const listResult = await listKv(kvNamespace, VIEWER_KEY_PREFIX, limit, cursor);
       if (listResult.isErr()) {
         return err(listResult.error);
@@ -116,7 +117,7 @@ export function createViewerService({ kvNamespace, log = logger }: ViewerService
       }
 
       // Otherwise, continue with the cursor
-      if ("cursor" in result && result.cursor) {
+      if ("cursor" in result) {
         cursor = result.cursor;
       } else {
         // No cursor but list is not complete - this shouldn't happen, but break to avoid infinite loop

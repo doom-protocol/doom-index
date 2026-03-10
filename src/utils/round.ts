@@ -1,6 +1,5 @@
 /**
- * Legacy market cap rounding utility
- * @deprecated This utility is part of the legacy 8-token system.
+ * Legacy market cap rounding utility retained for compatibility tests.
  */
 
 // Backward-compatible alias for older tests/imports
@@ -13,3 +12,5 @@ export function roundMc4<T extends Record<string, number>>(input: T): T {
   }
   return out as T;
 }
+
+export const roundMarketCaps = roundMc4;

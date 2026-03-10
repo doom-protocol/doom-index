@@ -1,12 +1,13 @@
-import { type TokensRepository } from "@/repositories/tokens-repository";
+import type { TokensRepository } from "@/repositories/tokens-repository";
 import type { AppError } from "@/types/app-error";
 import type { MarketClimate } from "@/types/painting-context";
-import type { SelectedToken, TokenCandidate } from "@/types/paintings";
+import type { MarketSnapshot, SelectedToken, TokenCandidate } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { type Result, err, ok } from "neverthrow";
-import { type MarketDataService } from "./market-data";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
+import type { MarketDataService } from "./market-data";
 import { ScoringEngine } from "./scoring-engine";
-import { type TokenDataFetchService } from "./token-data-fetch";
+import type { TokenDataFetchService } from "./token-data-fetch";
 
 /**
  * Constants
@@ -28,17 +29,15 @@ const MARKET_CAP_CHANGE_COOLING_THRESHOLD = 0.5;
 const MARKET_CAP_CHANGE_DESPAIR_THRESHOLD = -5;
 const MARKET_CAP_CHANGE_PANIC_THRESHOLD = -1.5;
 
-import { type MarketSnapshot } from "@/types/paintings";
-
 /**
  * Token Selection Options
  */
-export type TokenSelectionOptions = {
+export interface TokenSelectionOptions {
   forceTokenList?: string; // FORCE_TOKEN_LIST env var
   excludeRecentlySelected?: boolean; // Default: true
   recentSelectionWindowHours?: number; // Default: 24
   marketSnapshot?: MarketSnapshot; // Optional provided snapshot to avoid redundant fetch
-};
+}
 
 /**
  * Token Selection Service
@@ -130,7 +129,7 @@ export class TokenSelectionService {
           candidates = candidates.filter((c) => !recentIds.has(c.id));
           if (candidates.length < beforeFilter) {
             logger.debug(
-              `[TokenSelectionService] Excluded ${beforeFilter - candidates.length} recently selected tokens`,
+              `[TokenSelectionService] Excluded ${String(beforeFilter - candidates.length)} recently selected tokens`,
             );
           }
         }
@@ -159,7 +158,7 @@ export class TokenSelectionService {
         candidates.sort((a, b) => (a.forcePriority || 0) - (b.forcePriority || 0));
         selected = candidates[0];
         logger.info(
-          `[TokenSelectionService] Selected token from force override: ${selected.id} (priority: ${selected.forcePriority})`,
+          `[TokenSelectionService] Selected token from force override: ${selected.id} (priority: ${String(selected.forcePriority)})`,
         );
       } else {
         // Normal flow: score and select (Requirement 1D)
@@ -283,7 +282,7 @@ export class TokenSelectionService {
       });
     }
 
-    logger.info(`[TokenSelectionService] Resolving ${tickers.length} tickers from FORCE_TOKEN_LIST`);
+    logger.info(`[TokenSelectionService] Resolving ${String(tickers.length)} tickers from FORCE_TOKEN_LIST`);
 
     // Resolve tickers to CoinGecko IDs
     const resolveResult = await this.tokenDataFetchService.resolveTickersToIds(tickers);
@@ -307,7 +306,7 @@ export class TokenSelectionService {
       forcePriority: index,
     }));
 
-    logger.info(`[TokenSelectionService] Fetched ${candidates.length} tokens from FORCE_TOKEN_LIST`);
+    logger.info(`[TokenSelectionService] Fetched ${String(candidates.length)} tokens from FORCE_TOKEN_LIST`);
     return ok(candidates);
   }
 

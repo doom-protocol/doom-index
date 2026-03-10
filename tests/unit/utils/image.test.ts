@@ -7,7 +7,7 @@
  * - Edge cases (empty buffer, binary data)
  */
 
-import { arrayBufferToDataUrl } from "@/utils/image";
+import { arrayBufferToDataUrl, base64ToArrayBuffer } from "@/utils/image";
 import { describe, expect, test } from "bun:test";
 
 describe("Image Utilities", () => {
@@ -23,7 +23,7 @@ describe("Image Utilities", () => {
 
       // Verify base64 encoding
       const base64Part = dataUrl.split(",")[1];
-      const decoded = Buffer.from(base64Part, "base64").toString();
+      const decoded = new TextDecoder().decode(base64ToArrayBuffer(base64Part));
       expect(decoded).toBe(testData);
     });
 
@@ -50,7 +50,7 @@ describe("Image Utilities", () => {
 
     test("should handle binary data correctly", () => {
       // Create a buffer with JPEG magic bytes
-      const binaryData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
+      const binaryData = new Uint8Array([255, 216, 255, 224]);
       const buffer = binaryData.buffer;
 
       const dataUrl = arrayBufferToDataUrl(buffer, "image/jpeg");
@@ -59,8 +59,8 @@ describe("Image Utilities", () => {
 
       // Verify binary data is preserved
       const base64Part = dataUrl.split(",")[1];
-      const decoded = Buffer.from(base64Part, "base64");
-      expect(Array.from(new Uint8Array(decoded))).toEqual([0xff, 0xd8, 0xff, 0xe0]);
+      const decoded = base64ToArrayBuffer(base64Part);
+      expect(Array.from(new Uint8Array(decoded))).toEqual([255, 216, 255, 224]);
     });
 
     test("should handle large buffers", () => {

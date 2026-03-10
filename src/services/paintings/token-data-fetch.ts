@@ -1,8 +1,9 @@
-import { type CoinGeckoClient } from "@/lib/coingecko-client";
+import type { CoinGeckoClient } from "@/lib/coingecko-client";
 import type { AppError } from "@/types/app-error";
 import type { TokenCandidate } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { type Result, err, ok } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 /**
  * Token Data Fetch Service
@@ -26,7 +27,7 @@ export class TokenDataFetchService {
         return ok([]);
       }
 
-      logger.debug(`[TokenDataFetchService] Fetching details for ${ids.length} tokens`);
+      logger.debug(`[TokenDataFetchService] Fetching details for ${String(ids.length)} tokens`);
 
       // Fetch market data for all tokens in a single request
       const marketsResult = await this.coinGeckoClient.getCoinsMarkets(ids, {
@@ -66,7 +67,7 @@ export class TokenDataFetchService {
         };
       });
 
-      logger.debug(`[TokenDataFetchService] Fetched details for ${candidates.length} tokens`);
+      logger.debug(`[TokenDataFetchService] Fetched details for ${String(candidates.length)} tokens`);
       return ok(candidates);
     } catch (error) {
       logger.error("[TokenDataFetchService] Failed to fetch token details", {
@@ -192,7 +193,7 @@ export class TokenDataFetchService {
    */
   async resolveTickersToIds(tickers: string[]): Promise<Result<Array<{ ticker: string; id: string }>, AppError>> {
     try {
-      logger.debug(`[TokenDataFetchService] Resolving ${tickers.length} tickers to CoinGecko IDs`);
+      logger.debug(`[TokenDataFetchService] Resolving ${String(tickers.length)} tickers to CoinGecko IDs`);
 
       const coinsListResult = await this.coinGeckoClient.getCoinsList();
 
@@ -222,7 +223,7 @@ export class TokenDataFetchService {
         }
       }
 
-      logger.info(`[TokenDataFetchService] Resolved ${resolved.length} tickers to CoinGecko IDs`);
+      logger.info(`[TokenDataFetchService] Resolved ${String(resolved.length)} tickers to CoinGecko IDs`);
       return ok(resolved);
     } catch (error) {
       logger.error("[TokenDataFetchService] Failed to resolve tickers", {

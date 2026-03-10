@@ -1,10 +1,11 @@
-import { type AlternativeMeClient } from "@/lib/alternative-me-client";
-import { type CoinGeckoClient } from "@/lib/coingecko-client";
-import { type MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
+import type { AlternativeMeClient } from "@/lib/alternative-me-client";
+import type { CoinGeckoClient } from "@/lib/coingecko-client";
+import type { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
 import type { AppError } from "@/types/app-error";
 import type { MarketSnapshot } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { type Result, err, ok } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 /**
  * Market Data Service
@@ -41,7 +42,7 @@ export class MarketDataService {
 
       if (fgiResult.isOk()) {
         fearGreedIndex = fgiResult.value.value;
-        logger.debug(`[MarketDataService] Fetched Fear & Greed Index: ${fearGreedIndex}`);
+        logger.debug(`[MarketDataService] Fetched Fear & Greed Index: ${String(fearGreedIndex)}`);
       } else {
         logger.warn("[MarketDataService] Failed to fetch Fear & Greed Index, continuing without it");
       }

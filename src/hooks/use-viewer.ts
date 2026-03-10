@@ -4,11 +4,24 @@ import { viewerCountStore } from "@/lib/viewer-count-store";
 import { logger } from "@/utils/logger";
 import { useEffect, useRef } from "react";
 
-type ViewerCountMessage = {
+interface ViewerCountMessage {
   type: "viewer-count";
   count: number;
   updatedAt: number;
-};
+}
+
+function isViewerCountMessage(data: unknown): data is ViewerCountMessage {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "type" in data &&
+    data.type === "viewer-count" &&
+    "count" in data &&
+    typeof data.count === "number" &&
+    "updatedAt" in data &&
+    typeof data.updatedAt === "number"
+  );
+}
 
 export function useViewer(): null {
   const workerRef = useRef<Worker | null>(null);
@@ -20,34 +33,33 @@ export function useViewer(): null {
 
     logger.debug("viewer.start");
 
+    const handleError = (event: ErrorEvent) => {
+      logger.error("viewer.worker.error", {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error instanceof Error ? event.error.message : String(event.error),
+      });
+    };
+
+    const handleMessage = (event: MessageEvent<unknown>) => {
+      const data = event.data;
+
+      if (isViewerCountMessage(data)) {
+        console.log("[useViewer] Received count update from worker:", data.count);
+        viewerCountStore.update(data.count, data.updatedAt);
+      }
+    };
+
     let w: Worker | null = null;
     try {
       // Start Web Worker which handles WebSocket connection and Heartbeat
       w = new Worker(new URL("@/workers/viewer.worker", import.meta.url));
       workerRef.current = w;
 
-      // Add error handler to catch Worker errors
-      w.addEventListener("error", (event) => {
-        logger.error("viewer.worker.error", {
-          message: event.message,
-          filename: event.filename,
-          lineno: event.lineno,
-          colno: event.colno,
-          error: event.error,
-        });
-      });
-
-      // Add message handler for viewer count updates from WebSocket via Worker
-      w.addEventListener("message", (event) => {
-        const data = event.data;
-
-        // Handle viewer count updates
-        if (data && typeof data === "object" && "type" in data && data.type === "viewer-count") {
-          const message = data as ViewerCountMessage;
-          console.log("[useViewer] Received count update from worker:", message.count);
-          viewerCountStore.update(message.count, message.updatedAt);
-        }
-      });
+      w.addEventListener("error", handleError);
+      w.addEventListener("message", handleMessage);
 
       logger.debug("viewer.started");
     } catch (error) {
@@ -57,12 +69,11 @@ export function useViewer(): null {
 
     // cleanup
     return () => {
-      const worker = workerRef.current;
-      if (worker) {
-        logger.debug("viewer.terminate");
-        worker.terminate();
-        workerRef.current = null;
-      }
+      w.removeEventListener("error", handleError);
+      w.removeEventListener("message", handleMessage);
+      logger.debug("viewer.terminate");
+      w.terminate();
+      workerRef.current = null;
     };
   }, []); // dependency array is empty (only run once on mount)
 

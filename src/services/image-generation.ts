@@ -16,24 +16,25 @@ import type { PromptComposition, WorldPromptService } from "@/services/world-pro
 import type { AppError } from "@/types/app-error";
 import type { ImageProvider } from "@/types/domain";
 import { logger } from "@/utils/logger";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
-type ImageGenerationResult = {
+interface ImageGenerationResult {
   composition: PromptComposition;
   imageBuffer: ArrayBuffer;
   providerMeta: Record<string, unknown>;
-};
+}
 
-type ImageGenerationService = {
-  generateTokenImage(input: TokenImageGenerationInput): Promise<Result<ImageGenerationResult, AppError>>;
-};
+interface ImageGenerationService {
+  generateTokenImage: (input: TokenImageGenerationInput) => Promise<Result<ImageGenerationResult, AppError>>;
+}
 
-type ImageGenerationDeps = {
+interface ImageGenerationDeps {
   promptService: WorldPromptService;
   imageProvider: ImageProvider;
   generationTimeoutMs?: number;
   log?: typeof logger;
-};
+}
 
 type TokenImageGenerationInput = TokenOperationInput;
 
@@ -73,7 +74,7 @@ export function createImageGenerationService({
       visualParams: composition.vp,
       paramsHash: composition.paramsHash,
       seed: composition.seed,
-      size: `${composition.prompt.size.w}x${composition.prompt.size.h}`,
+      size: `${String(composition.prompt.size.w)}x${String(composition.prompt.size.h)}`,
       referenceImageUrl,
     });
 

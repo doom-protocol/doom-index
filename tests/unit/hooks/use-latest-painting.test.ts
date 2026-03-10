@@ -65,7 +65,7 @@ describe("unit/hooks/use-latest-painting", () => {
         cursor: undefined,
         hasMore: false,
       };
-      const mockQueryFn = mock(() => Promise.resolve(mockResponse));
+      const mockQueryFn = mock(async () => Promise.resolve(mockResponse));
 
       // Use controlled time function
       let time = 0;
@@ -88,7 +88,7 @@ describe("unit/hooks/use-latest-painting", () => {
         cursor: undefined,
         hasMore: false,
       };
-      const mockQueryFn = mock(() => Promise.resolve(mockResponse));
+      const mockQueryFn = mock(async () => Promise.resolve(mockResponse));
 
       let time = 0;
       const mockNow = () => {
@@ -139,7 +139,7 @@ describe("unit/hooks/use-latest-painting", () => {
       };
 
       // Instant response (0ms network delay)
-      const mockQueryFn = mock(() => Promise.resolve(mockResponse));
+      const mockQueryFn = mock(async () => Promise.resolve(mockResponse));
 
       const start = performance.now();
       const result = await fetchLatestPainting(mockQueryFn);
@@ -157,7 +157,7 @@ describe("unit/hooks/use-latest-painting", () => {
         cursor: undefined,
         hasMore: false,
       } as unknown as ArchiveListResponse;
-      const mockQueryFn = mock(() => Promise.resolve(mockResponse));
+      const mockQueryFn = mock(async () => Promise.resolve(mockResponse));
 
       const result = await fetchLatestPainting(mockQueryFn);
 
@@ -236,7 +236,7 @@ describe("unit/hooks/use-latest-painting/performance-guarantees", () => {
       return result;
     };
 
-    const mockQueryFn = mock(() => Promise.resolve(mockResponse));
+    const mockQueryFn = mock(async () => Promise.resolve(mockResponse));
 
     const result = await fetchLatestPainting(mockQueryFn, mockNow);
 
@@ -251,7 +251,7 @@ describe("unit/hooks/use-latest-painting/performance-guarantees", () => {
       hasMore: false,
     };
 
-    const mockQueryFn = mock(() => Promise.resolve(mockResponse));
+    const mockQueryFn = mock(async () => Promise.resolve(mockResponse));
 
     // Run multiple fetches in parallel
     const start = performance.now();

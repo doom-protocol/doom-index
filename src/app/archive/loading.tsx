@@ -1,6 +1,6 @@
 import { ArchiveLoader } from "@/components/archive/archive-loader";
 import { Header } from "@/components/ui/header";
-import { type FC } from "react";
+import type { FC } from "react";
 
 const Loading: FC = () => {
   return (

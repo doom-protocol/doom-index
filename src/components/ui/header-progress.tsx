@@ -4,7 +4,8 @@ import { GENERATION_INTERVAL_MS } from "@/constants";
 import { useLatestPainting, useLatestPaintingRefetch } from "@/hooks/use-latest-painting";
 import { getTimestampMs } from "@/lib/cloudflare-image";
 import { logger } from "@/utils/logger";
-import { useEffect, useRef, useState, type FC } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
+import type { FC } from "react";
 import { useHaptic } from "use-haptic";
 import useSound from "use-sound";
 
@@ -30,7 +31,7 @@ export const HeaderProgress: FC = () => {
     const updateProgressWidth = (ratio: number) => {
       if (progressBarRef.current) {
         const clamped = Math.min(1, Math.max(0, ratio));
-        progressBarRef.current.style.width = `${clamped * 100}%`;
+        progressBarRef.current.style.width = `${String(clamped * 100)}%`;
       }
     };
 
@@ -43,7 +44,9 @@ export const HeaderProgress: FC = () => {
 
       updateProgressWidth(initialProgress);
       lastDisplayedSecond = initialRemainingSeconds;
-      setDisplaySecond(initialRemainingSeconds);
+      startTransition(() => {
+        setDisplaySecond(initialRemainingSeconds);
+      });
     };
 
     const handleIntervalBoundary = (previousSecond: number) => {
@@ -59,9 +62,9 @@ export const HeaderProgress: FC = () => {
       const isDataFresh = timeSinceLastUpdate < INTERVAL_MS;
 
       if (!isDataFresh) {
-        refetchLatestPainting().catch((error) => {
+        refetchLatestPainting().catch((error: unknown) => {
           logger.error("header-progress.refetchLatestPainting.failed", {
-            error,
+            error: error instanceof Error ? error.message : String(error),
           });
         });
       } else {
@@ -99,7 +102,9 @@ export const HeaderProgress: FC = () => {
         if (nextRemainingSeconds <= HAPTIC_WINDOW_START_REMAINING_SECOND && nextRemainingSeconds > 0) {
           triggerHaptic();
         }
-        setDisplaySecond(nextRemainingSeconds);
+        startTransition(() => {
+          setDisplaySecond(nextRemainingSeconds);
+        });
         lastDisplayedSecond = nextRemainingSeconds;
       }
 

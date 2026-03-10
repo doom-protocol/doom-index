@@ -5,7 +5,7 @@ describe("listR2Objects", () => {
   it("forwards options with clamped limit", async () => {
     let receivedOptions: R2ListOptions | undefined;
     const bucket = {
-      list(options?: R2ListOptions): Promise<R2Objects> {
+      async list(options?: R2ListOptions): Promise<R2Objects> {
         receivedOptions = options;
         return Promise.resolve({
           objects: [],
@@ -37,7 +37,7 @@ describe("listR2Objects", () => {
 
   it("returns err when bucket.list throws", async () => {
     const bucket = {
-      list(): Promise<R2Objects> {
+      async list(): Promise<R2Objects> {
         return Promise.reject(new Error("boom"));
       },
     } as unknown as R2Bucket;

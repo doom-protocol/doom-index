@@ -5,7 +5,7 @@ const API_BASE_URL = "https://api.runware.ai/v1";
 /**
  * Parameters for image inference request
  */
-export type RunwareImageInferenceParams = {
+export interface RunwareImageInferenceParams {
   model: string;
   positivePrompt: string;
   negativePrompt?: string;
@@ -39,13 +39,13 @@ export type RunwareImageInferenceParams = {
   outputQuality?: number;
   includeCost?: boolean;
   checkNSFW?: boolean;
-};
+}
 
 /**
  * Actual API request format sent to Runware
  * Reference images must be nested inside the inputs object
  */
-type RunwareImageInferenceRequest = {
+interface RunwareImageInferenceRequest {
   taskType: "imageInference";
   taskUUID: string;
   model: string;
@@ -72,9 +72,9 @@ type RunwareImageInferenceRequest = {
   inputs?: {
     referenceImages: string[];
   };
-};
+}
 
-type RunwareImageInferenceResponse = {
+interface RunwareImageInferenceResponse {
   taskType: "imageInference";
   taskUUID: string;
   imageUUID: string;
@@ -84,12 +84,25 @@ type RunwareImageInferenceResponse = {
   seed?: number;
   NSFWContent?: boolean;
   cost?: number;
-};
+}
 
-type RunwareClientOptions = {
+function isRunwareImageInferenceResponse(value: unknown): value is RunwareImageInferenceResponse {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "taskType" in value &&
+    value.taskType === "imageInference" &&
+    "taskUUID" in value &&
+    typeof value.taskUUID === "string" &&
+    "imageUUID" in value &&
+    typeof value.imageUUID === "string"
+  );
+}
+
+interface RunwareClientOptions {
   apiKey: string;
   timeoutMs?: number;
-};
+}
 
 /**
  * Builds the API request from parameters.
@@ -138,11 +151,17 @@ function buildApiRequest(params: RunwareImageInferenceParams, taskUUID: string):
  * Parses the API response, handling both array and wrapped formats.
  */
 function parseApiResponse(responseData: unknown, taskUUID: string): RunwareImageInferenceResponse[] {
-  if (Array.isArray(responseData)) {
+  if (Array.isArray(responseData) && responseData.every(isRunwareImageInferenceResponse)) {
     return responseData;
   }
 
-  if (responseData && typeof responseData === "object" && "data" in responseData && Array.isArray(responseData.data)) {
+  if (
+    responseData &&
+    typeof responseData === "object" &&
+    "data" in responseData &&
+    Array.isArray(responseData.data) &&
+    responseData.data.every(isRunwareImageInferenceResponse)
+  ) {
     return responseData.data;
   }
 
@@ -183,7 +202,9 @@ export class RunwareClient {
 
     const request = buildApiRequest(params, taskUUID);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, this.timeoutMs);
 
     try {
       const response = await fetch(API_BASE_URL, {
@@ -206,7 +227,7 @@ export class RunwareClient {
           statusText: response.statusText,
           errorText,
         });
-        throw new Error(`Runware API error: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`Runware API error: ${String(response.status)} ${response.statusText} - ${errorText}`);
       }
 
       const responseData = await response.json();
@@ -221,7 +242,7 @@ export class RunwareClient {
     } catch (error) {
       clearTimeout(timeoutId);
       if (error instanceof Error && error.name === "AbortError") {
-        throw new Error(`Runware API timeout after ${this.timeoutMs}ms`);
+        throw new Error(`Runware API timeout after ${String(this.timeoutMs)}ms`);
       }
       throw error;
     }

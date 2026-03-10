@@ -53,16 +53,16 @@ export function useImagePreload(imageUrls: string[]): UseImagePreloadResult {
 
     const handleError = (url: string) => (event: Event | string) => {
       const errorDetails =
-        event instanceof Event && event.target instanceof HTMLImageElement ?
-          {
-            url,
-            naturalWidth: event.target.naturalWidth,
-            naturalHeight: event.target.naturalHeight,
-            currentSrc: event.target.currentSrc,
-            src: event.target.src,
-            complete: event.target.complete,
-          }
-        : { url, event: String(event) };
+        event instanceof Event && event.target instanceof HTMLImageElement
+          ? {
+              url,
+              naturalWidth: event.target.naturalWidth,
+              naturalHeight: event.target.naturalHeight,
+              currentSrc: event.target.currentSrc,
+              src: event.target.src,
+              complete: event.target.complete,
+            }
+          : { url, event: event instanceof Error ? event.message : JSON.stringify(event) };
       logger.debug("image.preload.failed", errorDetails);
       completedCount++;
       if (!isActive) return;

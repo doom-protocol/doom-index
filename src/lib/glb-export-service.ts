@@ -1,7 +1,9 @@
 import type { AppError } from "@/types/app-error";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 import type { RefObject } from "react";
-import { type Group, Mesh, type Object3D } from "three";
+import { Mesh } from "three";
+import type { Group, Object3D } from "three";
 import { GLTFExporter, GLTFLoader, SimplifyModifier } from "three-stdlib";
 
 interface GLTFResult {
@@ -13,13 +15,13 @@ interface GLTFResult {
 }
 
 interface GlbExportService {
-  exportPaintingModel(paintingRef: RefObject<Group | null>): Promise<Result<File, AppError>>;
-  optimizeGlb(glbBuffer: ArrayBuffer, targetSizeMB: number): Promise<Result<ArrayBuffer, AppError>>;
+  exportPaintingModel: (paintingRef: RefObject<Group | null>) => Promise<Result<File, AppError>>;
+  optimizeGlb: (glbBuffer: ArrayBuffer, targetSizeMB: number) => Promise<Result<ArrayBuffer, AppError>>;
 }
 
 export class GlbExportServiceImpl implements GlbExportService {
   async exportPaintingModel(paintingRef: RefObject<Group | null>): Promise<Result<File, AppError>> {
-    if (!paintingRef.current) {
+    if (paintingRef.current === null) {
       return err({
         type: "ValidationError" as const,
         message: "Painting model reference is null or undefined",
@@ -27,21 +29,6 @@ export class GlbExportServiceImpl implements GlbExportService {
     }
 
     const paintingGroup = paintingRef.current;
-
-    // Validate that the group contains meshes
-    let hasMeshes = false;
-    paintingGroup.traverse((child) => {
-      if (child.type === "Mesh") {
-        hasMeshes = true;
-      }
-    });
-
-    if (!hasMeshes) {
-      return err({
-        type: "ValidationError" as const,
-        message: "No meshes found in painting model",
-      });
-    }
 
     // Clone the painting group to avoid modifying the original
     const clonedGroup = paintingGroup.clone(true);
@@ -58,7 +45,7 @@ export class GlbExportServiceImpl implements GlbExportService {
         (result: ArrayBuffer | object) => {
           if (result instanceof ArrayBuffer) {
             // Create File object from the GLB buffer
-            const glbFile = new File([result], `painting-${Date.now()}.glb`, {
+            const glbFile = new File([result], `painting-${String(Date.now())}.glb`, {
               type: "application/octet-stream",
             });
 
@@ -100,8 +87,12 @@ export class GlbExportServiceImpl implements GlbExportService {
         loader.parse(
           glbBuffer,
           "",
-          (gltf) => resolve(gltf),
-          (err) => reject(err),
+          (gltf) => {
+            resolve(gltf);
+          },
+          (err) => {
+            reject(err instanceof Error ? err : new Error("GLTFLoader parse failed"));
+          },
         );
       });
 
@@ -124,7 +115,7 @@ export class GlbExportServiceImpl implements GlbExportService {
 
       // Re-export
       const exporter = new GLTFExporter();
-      return new Promise((resolve) => {
+      return await new Promise((resolve) => {
         exporter.parse(
           gltf.scene,
           (result: ArrayBuffer | object) => {

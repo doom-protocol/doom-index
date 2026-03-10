@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { Group, Mesh, MeshStandardMaterial, PlaneGeometry, type BufferGeometry } from "three";
+import { Group, Mesh, MeshStandardMaterial, PlaneGeometry } from "three";
+import type { BufferGeometry } from "three";
+
+// Import service directly - tests the real implementation
+import { glbExportService } from "@/lib/glb-export-service";
 
 // Mock GLTFExporter and GLTFLoader
 const mockParseExporter = mock(
@@ -40,9 +44,6 @@ void mock.module("three-stdlib", () => ({
     modify = mockSimplifyModifier;
   },
 }));
-
-// Import service directly - tests the real implementation
-import { glbExportService } from "@/lib/glb-export-service";
 
 describe("glbExportService", () => {
   beforeEach(() => {

@@ -10,7 +10,8 @@
  */
 
 import { mock } from "bun:test";
-import React, { type ReactElement, type ReactNode } from "react";
+import React from "react";
+import type { FC, ReactElement, ReactNode } from "react";
 
 type BunMock = ReturnType<typeof mock>;
 
@@ -32,7 +33,7 @@ type UseSoundMock = () => {
 };
 
 type ReactThreeFiberMock = () => {
-  Canvas: React.FC<{ children: ReactNode }>;
+  Canvas: FC<{ children: ReactNode }>;
   useFrame: BunMock;
   useThree: () => {
     gl: {
@@ -77,10 +78,12 @@ export function createSonnerMock(): SonnerMock {
  * Returns a function that returns the mock module object
  */
 export function createUseHapticMock(): UseHapticMock {
+  const createHapticHook = () => ({
+    triggerHaptic: mock(() => {}),
+  });
+
   return () => ({
-    useHaptic: () => ({
-      triggerHaptic: mock(() => {}),
-    }),
+    useHaptic: createHapticHook,
   });
 }
 
@@ -99,22 +102,23 @@ export function createUseSoundMock(): UseSoundMock {
  * Returns a function that returns the mock module object
  */
 export function createReactThreeFiberMock(): ReactThreeFiberMock {
-  const MockCanvas: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const MockCanvas: FC<{ children: ReactNode }> = ({ children }) => {
     return React.createElement("div", { "data-testid": "mock-canvas" }, children);
   };
+  const readThreeContext = () => ({
+    gl: {
+      initTexture: mock(() => {}),
+      shadowMap: { enabled: false, type: 0 },
+      toneMapping: 0,
+      setClearColor: mock(() => {}),
+    },
+    invalidate: mock(() => {}),
+  });
 
   return () => ({
     Canvas: MockCanvas,
     useFrame: mock(() => {}),
-    useThree: () => ({
-      gl: {
-        initTexture: mock(() => {}),
-        shadowMap: { enabled: false, type: 0 },
-        toneMapping: 0,
-        setClearColor: mock(() => {}),
-      },
-      invalidate: mock(() => {}),
-    }),
+    useThree: readThreeContext,
   });
 }
 
@@ -123,17 +127,17 @@ export function createReactThreeFiberMock(): ReactThreeFiberMock {
  * Returns a function that returns the mock module object
  */
 export function createReactThreeDreiMock(): ReactThreeDreiMock {
-  const useGLTFMock = () => ({
+  const readGltf = () => ({
     scene: { clone: () => ({}) },
     nodes: {},
     materials: {},
   });
-  useGLTFMock.preload = mock(() => {});
+  readGltf.preload = mock(() => {});
 
   return () => ({
     Grid: () => null,
     OrbitControls: () => null,
     Stats: () => null,
-    useGLTF: useGLTFMock,
+    useGLTF: readGltf,
   });
 }

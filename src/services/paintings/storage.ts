@@ -4,7 +4,8 @@ import type { AppError } from "@/types/app-error";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import { buildPaintingKey, buildPublicR2Path, extractIdFromFilename } from "@/utils/paintings";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 /**
  * Store image and metadata atomically to R2

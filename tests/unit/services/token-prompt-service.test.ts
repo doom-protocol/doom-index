@@ -37,13 +37,13 @@ describe("WorldPromptService (token mode)", () => {
 
   beforeEach(() => {
     mockTokenAnalysisService = {
-      generateAndSaveShortContext: mock(() =>
+      generateAndSaveShortContext: mock(async () =>
         Promise.resolve(ok(mockShortContext)),
       ) as unknown as TokenAnalysisService["generateAndSaveShortContext"],
     };
 
     mockWorkersAiClient = {
-      generateText: mock(() =>
+      generateText: mock(async () =>
         Promise.resolve(
           ok({
             modelId: "@cf/ibm-granite/granite-4.0-h-micro",
@@ -51,7 +51,7 @@ describe("WorldPromptService (token mode)", () => {
           }),
         ),
       ) as unknown as WorkersAiClient["generateText"],
-      generateJson: mock(() =>
+      generateJson: mock(async () =>
         Promise.resolve(
           err({
             type: "ExternalApiError",
@@ -101,7 +101,7 @@ describe("WorldPromptService (token mode)", () => {
       message: "generation failed",
     };
 
-    mockWorkersAiClient.generateText = mock(() =>
+    mockWorkersAiClient.generateText = mock(async () =>
       Promise.resolve(err(aiError)),
     ) as unknown as WorkersAiClient["generateText"];
 
@@ -124,7 +124,7 @@ describe("WorldPromptService (token mode)", () => {
       message: "context fetch failed",
     };
 
-    mockTokenAnalysisService.generateAndSaveShortContext = mock(() =>
+    mockTokenAnalysisService.generateAndSaveShortContext = mock(async () =>
       Promise.resolve(err(contextError)),
     ) as unknown as TokenAnalysisService["generateAndSaveShortContext"];
 

@@ -10,14 +10,7 @@ function debugLog(message: string, data?: unknown) {
 
 // Generate sessionId when Worker starts
 function generateSessionId(): string {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  return crypto.randomUUID();
 }
 
 const sessionId = generateSessionId();
@@ -47,11 +40,6 @@ function isValidBrowserRequest(): boolean {
 async function ping() {
   if (!isValidBrowserRequest()) {
     debugLog("Ping skipped - invalid browser");
-    return;
-  }
-
-  if (!sessionId) {
-    debugLog("ERROR: sessionId is not available!");
     return;
   }
 
@@ -95,7 +83,7 @@ function setupViewerCountSubscription(retryCount = 0) {
   // Calculate exponential backoff delay
   const delay = Math.min(baseDelay * Math.pow(2, retryCount), maxDelay);
 
-  debugLog(`Connecting to tRPC viewer count subscription (attempt ${retryCount + 1})`);
+  debugLog(`Connecting to tRPC viewer count subscription (attempt ${String(retryCount + 1)})`);
 
   try {
     const subscription = trpc.viewer.onCountUpdate.subscribe(undefined, {

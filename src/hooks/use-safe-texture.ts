@@ -116,7 +116,9 @@ export function useSafeTexture<Url extends string[] | string | Record<string, st
     if (IsObject(input)) {
       const keyed: Record<string, _Texture> = {};
       let i = 0;
-      for (const key in input) keyed[key] = (textures as _Texture[])[i++];
+      for (const key of Object.keys(input)) {
+        keyed[key] = (textures as _Texture[])[i++];
+      }
       return keyed as MappedTextureType<Url>;
     } else {
       return textures;
@@ -128,7 +130,7 @@ export function useSafeTexture<Url extends string[] | string | Record<string, st
 
 useSafeTexture.preload = (url: string | string[], options: UseSafeTextureOptions = {}) => {
   const { crossOrigin = "anonymous", onError } = options;
-  return useLoader.preload(TextureLoader, url, (loader: TextureLoader) => {
+  useLoader.preload(TextureLoader, url, (loader: TextureLoader) => {
     // Always set crossOrigin to override any cached loader settings
     loader.crossOrigin = crossOrigin;
     if (onError) {
@@ -137,4 +139,6 @@ useSafeTexture.preload = (url: string | string[], options: UseSafeTextureOptions
   });
 };
 
-useSafeTexture.clear = (input: string | string[]) => useLoader.clear(TextureLoader, input);
+useSafeTexture.clear = (input: string | string[]) => {
+  useLoader.clear(TextureLoader, input);
+};

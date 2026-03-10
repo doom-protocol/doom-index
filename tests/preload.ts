@@ -14,13 +14,19 @@ let testD1Db: BunSQLiteDatabase<typeof dbSchema> & {
   batch?: (operations: unknown[]) => Promise<unknown[]>;
 };
 
+function runStatements(sqlite: Database, statements: string[]): void {
+  for (const statement of statements) {
+    sqlite.run(statement);
+  }
+}
+
 beforeEach(() => {
   // Create fresh in-memory database for each test
   const sqlite = new Database(":memory:");
 
   // Create tables
-  sqlite.exec(`
-    CREATE TABLE paintings (
+  runStatements(sqlite, [
+    `CREATE TABLE paintings (
       id TEXT PRIMARY KEY NOT NULL,
       timestamp TEXT NOT NULL,
       minute_bucket TEXT NOT NULL,
@@ -33,14 +39,14 @@ beforeEach(() => {
       negative TEXT,
       r2_key TEXT NOT NULL,
       created_at INTEGER NOT NULL
-    );
-    CREATE INDEX idx_paintings_minute_bucket ON paintings(minute_bucket);
-    CREATE INDEX idx_paintings_timestamp ON paintings(timestamp);
-    CREATE INDEX idx_paintings_created_at ON paintings(created_at);
-  `);
+    )`,
+    "CREATE INDEX idx_paintings_minute_bucket ON paintings(minute_bucket)",
+    "CREATE INDEX idx_paintings_timestamp ON paintings(timestamp)",
+    "CREATE INDEX idx_paintings_created_at ON paintings(created_at)",
+  ]);
 
-  sqlite.exec(`
-    CREATE TABLE market_snapshots (
+  runStatements(sqlite, [
+    `CREATE TABLE market_snapshots (
       hour_bucket TEXT PRIMARY KEY NOT NULL,
       total_market_cap_usd REAL NOT NULL,
       total_volume_usd REAL NOT NULL,
@@ -52,12 +58,12 @@ beforeEach(() => {
       fear_greed_index INTEGER,
       updated_at INTEGER NOT NULL,
       created_at INTEGER NOT NULL
-    );
-    CREATE INDEX idx_market_snapshots_created_at ON market_snapshots(created_at);
-  `);
+    )`,
+    "CREATE INDEX idx_market_snapshots_created_at ON market_snapshots(created_at)",
+  ]);
 
-  sqlite.exec(`
-    CREATE TABLE tokens (
+  runStatements(sqlite, [
+    `CREATE TABLE tokens (
       id TEXT PRIMARY KEY NOT NULL,
       symbol TEXT NOT NULL,
       name TEXT NOT NULL,
@@ -72,11 +78,11 @@ beforeEach(() => {
       scores TEXT NOT NULL,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
-    );
-    CREATE INDEX idx_tokens_symbol ON tokens(symbol);
-    CREATE INDEX idx_tokens_created_at ON tokens(created_at);
-    CREATE INDEX idx_tokens_updated_at ON tokens(updated_at);
-  `);
+    )`,
+    "CREATE INDEX idx_tokens_symbol ON tokens(symbol)",
+    "CREATE INDEX idx_tokens_created_at ON tokens(created_at)",
+    "CREATE INDEX idx_tokens_updated_at ON tokens(updated_at)",
+  ]);
 
   // Create Drizzle instance
   testD1Db = drizzle(sqlite, { schema: dbSchema });

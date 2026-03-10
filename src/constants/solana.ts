@@ -84,8 +84,8 @@ export type SolanaNetwork = keyof typeof SOLANA_NETWORKS;
  */
 export const getDefaultSolanaNetwork = (): SolanaNetwork => {
   try {
-    const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK as SolanaNetwork;
-    if (network && network in SOLANA_NETWORKS) {
+    const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
+    if (network === "mainnet" || network === "devnet" || network === "testnet") {
       return network;
     }
   } catch {

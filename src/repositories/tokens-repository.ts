@@ -1,12 +1,14 @@
 import type * as schema from "@/db/schema";
-import { tokens, type NewToken, type Token } from "@/db/schema/tokens";
+import { tokens } from "@/db/schema/tokens";
+import type { NewToken, Token } from "@/db/schema/tokens";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 import { desc, eq, gte } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 /**
  * Tokens Repository
@@ -151,7 +153,7 @@ export class TokensRepository {
         .where(gte(tokens.updatedAt, cutoffTimestamp))
         .orderBy(desc(tokens.updatedAt));
 
-      logger.debug(`[TokensRepository] Found ${result.length} recently selected tokens`);
+      logger.debug(`[TokensRepository] Found ${String(result.length)} recently selected tokens`);
       return ok(result);
     } catch (error) {
       logger.error(`[TokensRepository] Failed to find recently selected tokens`, { error });

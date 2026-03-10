@@ -1,6 +1,7 @@
 "use client";
 
-import { FrameModel, PaintingGroup, type PaintingContentProps } from "@/components/ui/framed-painting-base";
+import { FrameModel, PaintingGroup } from "@/components/ui/framed-painting-base";
+import type { PaintingContentProps } from "@/components/ui/framed-painting-base";
 import type { Painting } from "@/types/paintings";
 import {
   calculatePlaneDimensions,
@@ -11,20 +12,19 @@ import {
 import { useSafeTexture } from "@/hooks/use-safe-texture";
 import { getDevicePixelRatio, getTransformedTextureUrl } from "@/lib/cloudflare-image";
 import { logger } from "@/utils/logger";
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, type FC } from "react";
-import {
-  AdditiveBlending,
-  EdgesGeometry,
-  PlaneGeometry,
-  SRGBColorSpace,
-  type Group,
-  type LineBasicMaterial,
-  type LineSegments,
-  type Mesh,
-  type MeshBasicMaterial,
-  type MeshStandardMaterial,
-  type Texture,
+import { useFrame } from "@react-three/fiber";
+import type { ThreeEvent } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import type { FC } from "react";
+import { AdditiveBlending, EdgesGeometry, PlaneGeometry, SRGBColorSpace } from "three";
+import type {
+  Group,
+  LineBasicMaterial,
+  LineSegments,
+  Mesh,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
+  Texture,
 } from "three";
 
 interface ArchiveFramedPaintingProps {
@@ -233,16 +233,12 @@ const PaintingContent: FC<PaintingContentProps> = ({
 
       if (pulseFillRef.current) {
         const material = pulseFillRef.current.material as MeshBasicMaterial;
-        if (material) {
-          material.opacity = INITIAL_PULSE_FILL_OPACITY * (1 - easedProgress);
-        }
+        material.opacity = INITIAL_PULSE_FILL_OPACITY * (1 - easedProgress);
       }
 
       if (pulseOutlineRef.current) {
         const material = pulseOutlineRef.current.material as LineBasicMaterial;
-        if (material) {
-          material.opacity = INITIAL_PULSE_OUTLINE_OPACITY * (1 - easedProgress);
-        }
+        material.opacity = INITIAL_PULSE_OUTLINE_OPACITY * (1 - easedProgress);
       }
 
       if (progress >= 1) {

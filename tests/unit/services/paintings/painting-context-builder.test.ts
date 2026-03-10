@@ -6,7 +6,8 @@ import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
 import type { MarketSnapshot, SelectedToken, TokenSnapshot } from "@/types/paintings";
 import { describe, expect, it } from "bun:test";
-import { ok, type Result } from "neverthrow";
+import { ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 const token = (overrides: Partial<SelectedToken> = {}): SelectedToken => ({
   id: "alpha",
@@ -45,7 +46,7 @@ const snapshot = (overrides: Partial<MarketSnapshot> = {}): MarketSnapshot => ({
 describe("PaintingContextBuilder", () => {
   const createBuilder = (repoResult: Result<Token | null, AppError>) => {
     const tokensRepository: Pick<TokensRepository, "findById"> = {
-      findById: () => Promise.resolve(repoResult),
+      findById: async () => Promise.resolve(repoResult),
     };
 
     return new PaintingContextBuilder(tokensRepository as TokensRepository);

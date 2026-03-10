@@ -2,7 +2,8 @@
 
 import { reportGlobalError } from "@/lib/actions/report-error";
 import NextError from "next/error";
-import { type FC, useEffect } from "react";
+import { useEffect } from "react";
+import type { FC } from "react";
 
 const GlobalError: FC<{ error: Error & { digest?: string } }> = ({ error }) => {
   useEffect(() => {

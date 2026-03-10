@@ -21,11 +21,11 @@ export type ApiProvider =
 /**
  * Standard error context for API error logging
  */
-export type ApiErrorContext = {
+export interface ApiErrorContext {
   provider: ApiProvider;
   operation?: string;
   [key: string]: unknown;
-};
+}
 
 /**
  * Extract standardized error message from unknown error
@@ -65,7 +65,7 @@ export function createExternalApiError(
 export function createTimeoutError(provider: ApiProvider, timeoutMs: number, operation?: string): AppError {
   return {
     type: "TimeoutError",
-    message: `${provider} ${operation ?? "request"} timed out after ${timeoutMs}ms`,
+    message: `${provider} ${operation ?? "request"} timed out after ${String(timeoutMs)}ms`,
     timeoutMs,
   };
 }

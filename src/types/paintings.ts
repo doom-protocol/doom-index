@@ -6,7 +6,7 @@ import type { VisualParams } from "@/lib/pure/mapping";
 /**
  * Base token data shared between candidate and selected tokens
  */
-type TokenBase = {
+interface TokenBase {
   id: string;
   symbol: string;
   name: string;
@@ -18,7 +18,7 @@ type TokenBase = {
   marketCapUsd: number;
   categories: string[];
   source: "coingecko-trending-search" | "force-override";
-};
+}
 
 /**
  * Token Candidate - candidate token for selection
@@ -46,7 +46,7 @@ export type SelectedToken = TokenBase & {
  * Market Snapshot - global market data snapshot
  * Requirement 3
  */
-export type MarketSnapshot = {
+export interface MarketSnapshot {
   totalMarketCapUsd: number;
   totalVolumeUsd: number;
   marketCapChangePercentage24hUsd: number;
@@ -56,24 +56,24 @@ export type MarketSnapshot = {
   markets: number;
   fearGreedIndex: number | null; // 0-100, from Alternative.me
   updatedAt: number; // Unix epoch seconds from CoinGecko
-};
+}
 
 /**
  * Token Snapshot - token market data snapshot
  * Requirement 2
  */
-export type TokenSnapshot = {
+export interface TokenSnapshot {
   p: number; // priceChange24h
   p7: number; // priceChange7d
   v: number; // volume24hUsd
   mc: number; // marketCapUsd
   vol: number; // volatilityScore (0-1)
-};
+}
 
 /**
  * Painting metadata stored in archive
  */
-export type PaintingMetadata = {
+export interface PaintingMetadata {
   id: string;
   timestamp: string;
   minuteBucket: string;
@@ -84,16 +84,16 @@ export type PaintingMetadata = {
   visualParams: VisualParams;
   prompt: string;
   negative: string;
-};
+}
 
 /**
  * Painting record returned via APIs/listing
  */
 export type Painting = PaintingMetadata;
 
-export type DatePrefix = {
+export interface DatePrefix {
   year: string;
   month: string;
   day: string;
   prefix: string;
-};
+}

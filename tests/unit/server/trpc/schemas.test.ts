@@ -2,8 +2,8 @@ import {
   createSignedUploadUrlSchema,
   paintingsListSchema,
   r2GetObjectSchema,
-  tokenGetStateSchema,
-  tokenTickerSchema,
+  tokenStateInputSchema,
+  tokenTickerInputSchema,
   viewerRegisterSchema,
   viewerRemoveSchema,
 } from "@/server/trpc/schemas";
@@ -11,16 +11,15 @@ import { describe, expect, it } from "bun:test";
 import * as v from "valibot";
 
 describe("Valibot Schemas", () => {
-  describe("tokenTickerSchema", () => {
+  describe("tokenTickerInputSchema", () => {
     it("should validate valid token tickers", () => {
-      // tokenTickerSchema is now just v.string(), so any string is valid
-      expect(() => v.parse(tokenTickerSchema, "CO2")).not.toThrow();
-      expect(() => v.parse(tokenTickerSchema, "ICE")).not.toThrow();
-      expect(() => v.parse(tokenTickerSchema, "any-string")).not.toThrow();
+      expect(() => v.parse(tokenTickerInputSchema, "CO2")).not.toThrow();
+      expect(() => v.parse(tokenTickerInputSchema, "ICE")).not.toThrow();
+      expect(() => v.parse(tokenTickerInputSchema, "any-string")).not.toThrow();
     });
 
     it("should reject non-strings", () => {
-      expect(() => v.parse(tokenTickerSchema, 123)).toThrow();
+      expect(() => v.parse(tokenTickerInputSchema, 123)).toThrow();
     });
   });
 
@@ -52,10 +51,10 @@ describe("Valibot Schemas", () => {
     });
   });
 
-  describe("tokenGetStateSchema", () => {
+  describe("tokenStateInputSchema", () => {
     it("should validate valid token state input", () => {
       const valid = { ticker: "CO2" };
-      expect(() => v.parse(tokenGetStateSchema, valid)).not.toThrow();
+      expect(() => v.parse(tokenStateInputSchema, valid)).not.toThrow();
     });
   });
 

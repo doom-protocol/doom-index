@@ -1,9 +1,13 @@
 "use client";
 
 import { useGLTF } from "@react-three/drei";
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import React, { memo, useRef, type FC, type ReactNode } from "react";
-import { Mesh, MeshBasicMaterial, MeshStandardMaterial, type Group } from "three";
+import { useFrame } from "@react-three/fiber";
+import type { ThreeEvent } from "@react-three/fiber";
+import * as React from "react";
+import { memo, useImperativeHandle, useRef } from "react";
+import type { FC, ReactNode, RefObject } from "react";
+import { Mesh, MeshBasicMaterial, MeshStandardMaterial } from "three";
+import type { Group, Material } from "three";
 import type { GLTF } from "three-stdlib";
 
 // Shared Types
@@ -25,6 +29,25 @@ export interface PaintingGroupProps {
 // Constants
 const ENTRANCE_DURATION = 0.5;
 
+type MeshWithTypedMaterial = Mesh & { material: Material | Material[] };
+
+function applyOpacity(material: Material | Material[], opacity: number, transparent: boolean): void {
+  if (Array.isArray(material)) {
+    material.forEach((mat) => {
+      if (mat instanceof MeshStandardMaterial || mat instanceof MeshBasicMaterial) {
+        mat.transparent = transparent;
+        mat.opacity = opacity;
+      }
+    });
+    return;
+  }
+
+  if (material instanceof MeshStandardMaterial || material instanceof MeshBasicMaterial) {
+    material.transparent = transparent;
+    material.opacity = opacity;
+  }
+}
+
 // Shared Components
 
 // Memoized to prevent re-renders when parent's thumbnailUrl changes
@@ -39,13 +62,18 @@ const FrameModelBase: FC = () => {
 export const FrameModel = memo(FrameModelBase);
 FrameModel.displayName = "FrameModel";
 
-export const PaintingGroup = React.forwardRef<Group, PaintingGroupProps>(({ position, rotation, children }, ref) => {
+export const PaintingGroup = ({
+  ref,
+  position,
+  rotation,
+  children,
+}: PaintingGroupProps & { ref?: RefObject<Group | null> }) => {
   const internalRef = useRef<Group>(null);
   const entranceElapsedRef = useRef(0);
   const isEntranceActiveRef = useRef(true);
 
   // Merge refs
-  React.useImperativeHandle(ref, () => internalRef.current as Group);
+  useImperativeHandle(ref, () => internalRef.current as Group);
 
   useFrame(({ invalidate }, delta) => {
     if (!isEntranceActiveRef.current || !internalRef.current) {
@@ -61,18 +89,7 @@ export const PaintingGroup = React.forwardRef<Group, PaintingGroupProps>(({ posi
     // Apply opacity to all children meshes
     internalRef.current.traverse((child) => {
       if (child instanceof Mesh && child.material) {
-        const material = child.material;
-        if (Array.isArray(material)) {
-          material.forEach((mat) => {
-            if (mat instanceof MeshStandardMaterial || mat instanceof MeshBasicMaterial) {
-              mat.transparent = true;
-              mat.opacity = opacity;
-            }
-          });
-        } else if (material instanceof MeshStandardMaterial || material instanceof MeshBasicMaterial) {
-          material.transparent = true;
-          material.opacity = opacity;
-        }
+        applyOpacity((child as MeshWithTypedMaterial).material, opacity, true);
       }
     });
 
@@ -81,18 +98,7 @@ export const PaintingGroup = React.forwardRef<Group, PaintingGroupProps>(({ posi
       // Reset transparency after animation
       internalRef.current.traverse((child) => {
         if (child instanceof Mesh && child.material) {
-          const material = child.material;
-          if (Array.isArray(material)) {
-            material.forEach((mat) => {
-              if (mat instanceof MeshStandardMaterial || mat instanceof MeshBasicMaterial) {
-                mat.transparent = false;
-                mat.opacity = 1;
-              }
-            });
-          } else if (material instanceof MeshStandardMaterial || material instanceof MeshBasicMaterial) {
-            material.transparent = false;
-            material.opacity = 1;
-          }
+          applyOpacity((child as MeshWithTypedMaterial).material, 1, false);
         }
       });
     }
@@ -105,5 +111,5 @@ export const PaintingGroup = React.forwardRef<Group, PaintingGroupProps>(({ posi
       {children}
     </group>
   );
-});
+};
 PaintingGroup.displayName = "PaintingGroup";

@@ -2,7 +2,7 @@
 
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import Link from "next/link";
-import { type FC, type ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 
 type ArchiveRoute = `/archive` | `/archive?${string}`;
 
@@ -52,7 +52,7 @@ export const PaginationControls: FC<PaginationControlsProps> = ({
 }) => {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = startItem + totalItems - 1;
-  const rangeText = totalItems > 0 ? `${startItem}-${endItem}` : "0 of 0";
+  const rangeText = totalItems > 0 ? `${String(startItem)}-${String(endItem)}` : "0 of 0";
 
   const createPageHref = (page: number): ArchiveRoute => {
     const params = new URLSearchParams();

@@ -9,7 +9,8 @@ import nextHandler from "../.open-next/worker.js";
 import { handleScheduledEvent } from "./cron";
 
 const worker = {
-  fetch: nextHandler.fetch,
+  fetch: async (...args: Parameters<typeof nextHandler.fetch>): Promise<Response> =>
+    nextHandler.fetch(...args) as Promise<Response>,
   scheduled: handleScheduledEvent,
 };
 

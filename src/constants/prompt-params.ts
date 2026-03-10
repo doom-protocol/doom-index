@@ -1,4 +1,4 @@
-export type PromptTuning = {
+export interface PromptTuning {
   imageSize: { w: number; h: number };
   secondaryElement: {
     threshold: number;
@@ -14,7 +14,7 @@ export type PromptTuning = {
     volatilityScale: number;
     offset: number;
   };
-};
+}
 
 /**
  * Master prompt tuning parameters.

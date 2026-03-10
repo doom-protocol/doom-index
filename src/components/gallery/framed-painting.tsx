@@ -1,6 +1,7 @@
 "use client";
 
-import { FrameModel, PaintingGroup, type PaintingContentProps } from "@/components/ui/framed-painting-base";
+import { FrameModel, PaintingGroup } from "@/components/ui/framed-painting-base";
+import type { PaintingContentProps } from "@/components/ui/framed-painting-base";
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import {
   calculatePlaneDimensions,
@@ -18,21 +19,19 @@ import {
   measureTextureLoadDuration,
 } from "@/lib/cloudflare-image";
 import { logger } from "@/utils/logger";
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { forwardRef, useEffect, useMemo, useRef, type FC } from "react";
+import { useFrame } from "@react-three/fiber";
+import type { ThreeEvent } from "@react-three/fiber";
+import { forwardRef, useEffect, useMemo, useRef } from "react";
+import type { FC, RefObject } from "react";
 import {
   AdditiveBlending,
   EdgesGeometry,
   LineBasicMaterial,
   MeshBasicMaterial,
-  type MeshStandardMaterial,
   PlaneGeometry,
   SRGBColorSpace,
-  type Group,
-  type LineSegments,
-  type Mesh,
-  type Texture,
 } from "three";
+import type { MeshStandardMaterial, Group, LineSegments, Mesh, Texture } from "three";
 import { useHaptic } from "use-haptic";
 
 interface FramedPaintingProps {
@@ -380,18 +379,16 @@ const PaintingContent: FC<PaintingContentProps> = ({
             depthTest={false}
           />
         </mesh>
-        {pulseOutlineGeometry && (
-          <lineSegments ref={pulseOutlineRef} geometry={pulseOutlineGeometry}>
-            <lineBasicMaterial
-              color="#ffffff"
-              transparent
-              opacity={0}
-              depthWrite={false}
-              depthTest={false}
-              blending={AdditiveBlending}
-            />
-          </lineSegments>
-        )}
+        <lineSegments ref={pulseOutlineRef} geometry={pulseOutlineGeometry}>
+          <lineBasicMaterial
+            color="#ffffff"
+            transparent
+            opacity={0}
+            depthWrite={false}
+            depthTest={false}
+            blending={AdditiveBlending}
+          />
+        </lineSegments>
       </group>
     </>
   );
@@ -399,83 +396,86 @@ const PaintingContent: FC<PaintingContentProps> = ({
 PaintingContent.displayName = "PaintingContent";
 
 // Main component - separates frame from painting content
-export const FramedPainting = forwardRef<Group, FramedPaintingProps>(
-  ({ thumbnailUrl, framePosition = DEFAULT_FRAME_POSITION, paintingId }, ref) => {
-    const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null);
-    const activePointerIdRef = useRef<number | null>(null);
-    const hasPointerMovedRef = useRef(false);
+export const FramedPainting = ({
+  ref,
+  thumbnailUrl,
+  framePosition = DEFAULT_FRAME_POSITION,
+  paintingId,
+}: FramedPaintingProps & { ref?: RefObject<Group | null> }) => {
+  const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+  const hasPointerMovedRef = useRef(false);
 
-    const resetPointerState = () => {
-      pointerDownPositionRef.current = null;
-      activePointerIdRef.current = null;
-      hasPointerMovedRef.current = false;
+  const resetPointerState = () => {
+    pointerDownPositionRef.current = null;
+    activePointerIdRef.current = null;
+    hasPointerMovedRef.current = false;
+  };
+
+  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
+    if (!event.isPrimary) {
+      return;
+    }
+
+    if (event.pointerType !== "touch" && event.button !== 0) {
+      return;
+    }
+
+    event.stopPropagation();
+    resetPointerState();
+
+    pointerDownPositionRef.current = {
+      x: event.clientX,
+      y: event.clientY,
     };
+    activePointerIdRef.current = event.pointerId;
+    hasPointerMovedRef.current = false;
+  };
 
-    const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
-      if (!event.isPrimary) {
-        return;
-      }
+  const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
+    handlePointerMoveForDrag(event, pointerDownPositionRef, hasPointerMovedRef, activePointerIdRef);
+  };
 
-      if (event.pointerType !== "touch" && event.button !== 0) {
-        return;
-      }
-
-      event.stopPropagation();
-      resetPointerState();
-
-      pointerDownPositionRef.current = {
-        x: event.clientX,
-        y: event.clientY,
-      };
-      activePointerIdRef.current = event.pointerId;
-      hasPointerMovedRef.current = false;
-    };
-
-    const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
-      handlePointerMoveForDrag(event, pointerDownPositionRef, hasPointerMovedRef, activePointerIdRef);
-    };
-
-    const handlePointerUp = (event: ThreeEvent<PointerEvent>): boolean => {
-      return handlePointerUpForClick(
-        event,
-        pointerDownPositionRef,
-        hasPointerMovedRef,
-        activePointerIdRef,
-        resetPointerState,
-        () => {
-          window.setTimeout(() => {
-            openTweetIntent();
-          }, PULSE_DURATION * 1000);
-        },
-      );
-    };
-
-    const handlePointerCancel = (event: ThreeEvent<PointerEvent>) => {
-      if (!isValidPointerEvent(event, activePointerIdRef.current)) {
-        return;
-      }
-
-      resetPointerState();
-    };
-
-    return (
-      <PaintingGroup ref={ref} position={framePosition} rotation={FRAME_ROTATION}>
-        {/* GLB Frame Model */}
-        <FrameModel />
-
-        {/* Painting content */}
-        <PaintingContent
-          thumbnailUrl={thumbnailUrl}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerCancel}
-          paintingId={paintingId}
-        />
-      </PaintingGroup>
+  const handlePointerUp = (event: ThreeEvent<PointerEvent>): boolean => {
+    return handlePointerUpForClick(
+      event,
+      pointerDownPositionRef,
+      hasPointerMovedRef,
+      activePointerIdRef,
+      resetPointerState,
+      () => {
+        window.setTimeout(() => {
+          openTweetIntent();
+        }, PULSE_DURATION * 1000);
+      },
     );
-  },
-);
+  };
+
+  const handlePointerCancel = (event: ThreeEvent<PointerEvent>) => {
+    if (!isValidPointerEvent(event, activePointerIdRef.current)) {
+      return;
+    }
+
+    resetPointerState();
+  };
+
+  return (
+    <PaintingGroup ref={ref} position={framePosition} rotation={FRAME_ROTATION}>
+      {/* GLB Frame Model */}
+      <FrameModel />
+
+      {/* Painting content */}
+      <PaintingContent
+        thumbnailUrl={thumbnailUrl}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+        paintingId={paintingId}
+      />
+    </PaintingGroup>
+  );
+};
 FramedPainting.displayName = "FramedPainting";
 
 // Preload the GLB model (outside component to avoid re-execution)

@@ -3,7 +3,7 @@
 import { ProgressiveImage } from "@/components/ui/progressive-image";
 import type { ResponsiveSizes } from "@/types/domain";
 import type { Painting } from "@/types/paintings";
-import { type FC } from "react";
+import type { FC } from "react";
 import { PaintingSkeleton } from "./painting-item-skeleton";
 
 const ARCHIVE_GRID_SIZES: ResponsiveSizes = [
@@ -27,7 +27,7 @@ export const PaintingComponent: FC<PaintingProps> = ({ item, onClick }) => {
     const d = date.getDate();
     const hh = String(date.getHours()).padStart(2, "0");
     const mm = String(date.getMinutes()).padStart(2, "0");
-    return `${m} ${d}, ${hh}:${mm}`;
+    return `${m} ${String(d)}, ${hh}:${mm}`;
   })();
 
   return (

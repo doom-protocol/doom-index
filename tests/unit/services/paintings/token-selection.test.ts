@@ -45,22 +45,25 @@ describe("TokenSelectionService", () => {
     tokensRepository?: Partial<TokensRepository>;
   }) => {
     const tokenDataFetchService = {
-      fetchTrendingTokens: async () => await Promise.resolve(okResult<TokenCandidate[]>([])),
-      resolveTickersToIds: async () => await Promise.resolve(okResult<Array<{ ticker: string; id: string }>>([])),
-      fetchTokenDetails: async () => await Promise.resolve(okResult<TokenCandidate[]>([])),
+      fetchTrendingTokens: async () => Promise.resolve(okResult<TokenCandidate[]>([])),
+      resolveTickersToIds: async () => Promise.resolve(okResult<Array<{ ticker: string; id: string }>>([])),
+      fetchTokenDetails: async () => Promise.resolve(okResult<TokenCandidate[]>([])),
       ...deps.tokenDataFetchService,
     } as TokenDataFetchService;
 
     const marketDataService = {
-      fetchGlobalMarketData: async () => await Promise.resolve(okResult(createSnapshot())),
+      fetchGlobalMarketData: async () => Promise.resolve(okResult(createSnapshot())),
       ...deps.marketDataService,
     } as MarketDataService;
 
     const tokensRepository = {
-      findRecentlySelected: async () => await Promise.resolve(okResult([])),
-      findById: async () => await Promise.resolve(okResult(null)),
-      insert: async () => await Promise.resolve(okResult(undefined)),
-      update: async () => new Promise((resolve) => resolve(okResult(undefined))),
+      findRecentlySelected: async () => Promise.resolve(okResult([])),
+      findById: async () => Promise.resolve(okResult(null)),
+      insert: async () => Promise.resolve(okResult(undefined)),
+      update: async () =>
+        new Promise((resolve) => {
+          resolve(okResult(undefined));
+        }),
       ...deps.tokensRepository,
     } as TokensRepository;
 
@@ -72,7 +75,7 @@ describe("TokenSelectionService", () => {
     const service = createService({
       tokenDataFetchService: {
         fetchTrendingTokens: async () =>
-          await Promise.resolve(
+          Promise.resolve(
             okResult([
               createCandidate({
                 id: "alpha",
@@ -95,10 +98,15 @@ describe("TokenSelectionService", () => {
           ),
       },
       tokensRepository: {
-        findById: async () => new Promise((resolve) => resolve(okResult(null))),
+        findById: async () =>
+          new Promise((resolve) => {
+            resolve(okResult(null));
+          }),
         insert: async (token) => {
           inserted.push(token);
-          return new Promise((resolve) => resolve(okResult(undefined)));
+          return new Promise((resolve) => {
+            resolve(okResult(undefined));
+          });
         },
       },
     });
@@ -121,7 +129,7 @@ describe("TokenSelectionService", () => {
     const service = createService({
       tokenDataFetchService: {
         fetchTrendingTokens: async () =>
-          await Promise.resolve(
+          Promise.resolve(
             okResult([
               createCandidate({
                 id: "stable",
@@ -139,7 +147,7 @@ describe("TokenSelectionService", () => {
       },
       tokensRepository: {
         findRecentlySelected: async () =>
-          await Promise.resolve(
+          Promise.resolve(
             okResult([
               {
                 id: "fresh",
@@ -172,7 +180,7 @@ describe("TokenSelectionService", () => {
     const service = createService({
       tokenDataFetchService: {
         fetchTrendingTokens: async () =>
-          await Promise.resolve(
+          Promise.resolve(
             okResult([
               createCandidate({
                 id: "alpha",
@@ -197,7 +205,7 @@ describe("TokenSelectionService", () => {
       },
       tokensRepository: {
         findRecentlySelected: async () =>
-          await Promise.resolve(
+          Promise.resolve(
             okResult([
               {
                 id: "alpha",
@@ -223,10 +231,15 @@ describe("TokenSelectionService", () => {
               },
             ]),
           ),
-        findById: async () => new Promise((resolve) => resolve(okResult(null))),
+        findById: async () =>
+          new Promise((resolve) => {
+            resolve(okResult(null));
+          }),
         insert: async (token) => {
           inserted.push(token);
-          return new Promise((resolve) => resolve(okResult(undefined)));
+          return new Promise((resolve) => {
+            resolve(okResult(undefined));
+          });
         },
       },
     });
@@ -253,7 +266,7 @@ describe("TokenSelectionService", () => {
       tokenDataFetchService: {
         resolveTickersToIds: async (tickers) => {
           resolvedTickers = tickers;
-          return await Promise.resolve(
+          return Promise.resolve(
             okResult(
               tickers.map((t) => ({
                 ticker: t,
@@ -264,7 +277,7 @@ describe("TokenSelectionService", () => {
         },
         fetchTokenDetails: async (ids, source) => {
           fetchCalls.push({ ids, source });
-          return await Promise.resolve(
+          return Promise.resolve(
             okResult(
               ids.map((id, index) =>
                 createCandidate({
@@ -280,8 +293,14 @@ describe("TokenSelectionService", () => {
         },
       },
       tokensRepository: {
-        findById: async () => new Promise((resolve) => resolve(okResult(null))),
-        insert: async () => new Promise((resolve) => resolve(okResult(undefined))),
+        findById: async () =>
+          new Promise((resolve) => {
+            resolve(okResult(null));
+          }),
+        insert: async () =>
+          new Promise((resolve) => {
+            resolve(okResult(undefined));
+          }),
       },
     });
 

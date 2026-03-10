@@ -10,16 +10,15 @@
  */
 
 import { getCurrentPaintingDataUrl, getFrameDataUrl, getPlaceholderDataUrl } from "@/app/opengraph-image";
+import { base64ToArrayBuffer } from "@/utils/image";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { createTestR2Bucket } from "../../lib/memory-r2";
 
 describe("OGP Image Generation (Integration Tests)", () => {
   const createMockFetcher = (shouldSucceed: boolean, imageData?: string, contentType = "image/webp"): Fetcher => {
     return {
-      fetch: mock((input: RequestInfo | URL) => {
-        void (typeof input === "string" ? input
-        : input instanceof URL ? input.pathname
-        : input.url);
+      fetch: mock(async (input: RequestInfo | URL) => {
+        void (typeof input === "string" ? input : input instanceof URL ? input.pathname : input.url);
         if (shouldSucceed) {
           const buffer = new TextEncoder().encode(imageData || "mock image data").buffer;
           return Promise.resolve(
@@ -69,7 +68,7 @@ describe("OGP Image Generation (Integration Tests)", () => {
 
       expect(dataUrl).not.toBeNull();
       expect(dataUrl).toStartWith("data:image/png;base64,");
-      expect(dataUrl!.length).toBeGreaterThan(30);
+      expect(dataUrl?.length ?? 0).toBeGreaterThan(30);
     });
 
     test("should return null when frame fetch fails", async () => {
@@ -103,12 +102,9 @@ describe("OGP Image Generation (Integration Tests)", () => {
       const mockFetcher = createMockFetcher(true, "placeholder");
 
       const { bucket } = createTestR2Bucket();
-      const failingBucket = {
-        ...bucket,
-        get: mock(() => {
-          return Promise.reject(new Error("R2 failure"));
-        }),
-      } as unknown as R2Bucket;
+      const failingBucket = Object.create(null) as R2Bucket;
+      Object.assign(failingBucket, bucket);
+      failingBucket.get = mock(async () => Promise.reject(new Error("R2 failure")));
 
       const result = await getCurrentPaintingDataUrl(mockFetcher, failingBucket, "images/test.webp");
 
@@ -140,9 +136,9 @@ describe("OGP Image Generation (Integration Tests)", () => {
     });
 
     test("should handle binary image data correctly", async () => {
-      const binaryData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
+      const binaryData = new Uint8Array([255, 216, 255, 224]);
       const mockFetcher: Fetcher = {
-        fetch: mock(() => {
+        fetch: mock(async () => {
           return Promise.resolve(
             new Response(binaryData.buffer, {
               status: 200,
@@ -161,8 +157,8 @@ describe("OGP Image Generation (Integration Tests)", () => {
 
       // Verify binary data is preserved
       const base64Part = dataUrl.split(",")[1];
-      const decoded = Buffer.from(base64Part, "base64");
-      expect(Array.from(new Uint8Array(decoded))).toEqual([0xff, 0xd8, 0xff, 0xe0]);
+      const decoded = base64ToArrayBuffer(base64Part);
+      expect(Array.from(new Uint8Array(decoded))).toEqual([255, 216, 255, 224]);
     });
   });
 });

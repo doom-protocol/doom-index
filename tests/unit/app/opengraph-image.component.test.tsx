@@ -12,8 +12,21 @@
 import "../../preload";
 
 import { alt, size } from "@/app/opengraph-image";
+import NextImage from "next/image";
 import { render } from "@testing-library/react";
 import { describe, expect, test } from "bun:test";
+import type { ComponentProps } from "react";
+
+type TestImageProps = Omit<ComponentProps<"img">, "alt" | "height" | "src" | "width"> & {
+  alt?: string;
+  height?: number;
+  src: string;
+  width?: number;
+};
+
+const TestImage = ({ alt = "", height = 100, width = 100, ...props }: TestImageProps) => (
+  <NextImage alt={alt} height={height} unoptimized width={width} {...props} />
+);
 
 describe("OGP Image Generation Components", () => {
   describe("Framed Layout JSX Structure", () => {
@@ -31,7 +44,7 @@ describe("OGP Image Generation Components", () => {
             position: "relative",
           }}
         >
-          <img
+          <TestImage
             src="data:image/webp;base64,test"
             alt="Test Image"
             style={{
@@ -41,7 +54,7 @@ describe("OGP Image Generation Components", () => {
               objectFit: "contain",
             }}
           />
-          <img
+          <TestImage
             src="data:image/png;base64,frame"
             alt="Frame"
             style={{
@@ -68,7 +81,7 @@ describe("OGP Image Generation Components", () => {
     test("should render artwork image with correct styling", () => {
       const ArtworkImage = () => (
         <div>
-          <img
+          <TestImage
             src="data:image/webp;base64,test"
             alt={alt}
             data-testid="artwork-image"
@@ -96,7 +109,7 @@ describe("OGP Image Generation Components", () => {
     test("should render frame overlay with correct styling", () => {
       const FrameOverlay = () => (
         <div>
-          <img
+          <TestImage
             src="data:image/png;base64,frame"
             alt="Frame"
             data-testid="frame-overlay"
@@ -123,7 +136,7 @@ describe("OGP Image Generation Components", () => {
 
     test("should maintain aspect ratio with objectFit contain", () => {
       const AspectRatioImage = () => (
-        <img
+        <TestImage
           src="data:image/webp;base64,test"
           alt="Test"
           data-testid="aspect-ratio-image"
@@ -211,7 +224,9 @@ describe("OGP Image Generation Components", () => {
 
   describe("Image Data URL Rendering", () => {
     test("should render image with data URL source", () => {
-      const DataUrlImage = () => <img src="data:image/webp;base64,dGVzdA==" alt="Test" data-testid="data-url-image" />;
+      const DataUrlImage = () => (
+        <TestImage src="data:image/webp;base64,dGVzdA==" alt="Test" data-testid="data-url-image" />
+      );
 
       const { getByTestId } = render(<DataUrlImage />);
 
@@ -223,9 +238,9 @@ describe("OGP Image Generation Components", () => {
     test("should handle multiple images with different data URLs", () => {
       const MultipleImages = () => (
         <div>
-          <img src="data:image/webp;base64,aW1hZ2Ux" alt="Image 1" data-testid="image-1" />
-          <img src="data:image/webp;base64,aW1hZ2Uy" alt="Image 2" data-testid="image-2" />
-          <img src="data:image/png;base64,aW1hZ2Uz" alt="Image 3" data-testid="image-3" />
+          <TestImage src="data:image/webp;base64,aW1hZ2Ux" alt="Image 1" data-testid="image-1" />
+          <TestImage src="data:image/webp;base64,aW1hZ2Uy" alt="Image 2" data-testid="image-2" />
+          <TestImage src="data:image/png;base64,aW1hZ2Uz" alt="Image 3" data-testid="image-3" />
         </div>
       );
 
@@ -246,7 +261,7 @@ describe("OGP Image Generation Components", () => {
       let imageLoaded = false;
 
       const ImageWithLoadHandler = () => (
-        <img
+        <TestImage
           src="data:image/gif;base64,R0lGODlhAQABAAAAACw="
           alt="Test"
           data-testid="load-image"
@@ -270,7 +285,7 @@ describe("OGP Image Generation Components", () => {
       let imageError = false;
 
       const ImageWithErrorHandler = () => (
-        <img
+        <TestImage
           src="invalid-url"
           alt="Test"
           data-testid="error-image"
@@ -295,9 +310,7 @@ describe("OGP Image Generation Components", () => {
     test("should render different content based on fallback state", () => {
       const ConditionalRender = ({ useFallback }: { useFallback: boolean }) => (
         <div data-testid="conditional-content">
-          {useFallback ?
-            <span>Fallback Image</span>
-          : <span>Actual Image</span>}
+          {useFallback ? <span>Fallback Image</span> : <span>Actual Image</span>}
         </div>
       );
 
@@ -329,15 +342,13 @@ describe("OGP Image Generation Components", () => {
 
   describe("Cache Control Headers Logic", () => {
     test("should determine correct cache headers for successful image", () => {
-      const fallbackUsed = false;
-      const cacheControl = fallbackUsed ? "public, max-age=300" : "public, max-age=60, stale-while-revalidate=30";
+      const cacheControl = "public, max-age=60, stale-while-revalidate=30";
 
       expect(cacheControl).toBe("public, max-age=60, stale-while-revalidate=30");
     });
 
     test("should determine correct cache headers for fallback", () => {
-      const fallbackUsed = true;
-      const cacheControl = fallbackUsed ? "public, max-age=300" : "public, max-age=60, stale-while-revalidate=30";
+      const cacheControl = "public, max-age=300";
 
       expect(cacheControl).toBe("public, max-age=300");
     });

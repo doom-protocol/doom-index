@@ -55,7 +55,7 @@ export function formatDateShort(date: Date): string {
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const m = monthNames[date.getMonth()];
   const d = date.getDate();
-  return `${m} ${d}`;
+  return `${m} ${String(d)}`;
 }
 
 /**
@@ -66,12 +66,12 @@ export function formatDateShort(date: Date): string {
  * @param message - Custom timeout message (optional)
  * @returns Promise that resolves to TimeoutError after timeout
  */
-export function createTimeoutPromise(ms: number, message?: string): Promise<TimeoutError> {
+export async function createTimeoutPromise(ms: number, message?: string): Promise<TimeoutError> {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
         type: "TimeoutError",
-        message: message ?? `Request timed out after ${ms}ms`,
+        message: message ?? `Request timed out after ${String(ms)}ms`,
         timeoutMs: ms,
       });
     }, ms);

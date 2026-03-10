@@ -20,7 +20,7 @@ describe("Token Router", () => {
 
     void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () => ok({} as R2Bucket),
-      getJsonR2: () => Promise.resolve(ok(mockTokenState)),
+      getJsonR2: async () => Promise.resolve(ok(mockTokenState)),
     }));
 
     const ctx = createMockContext();
@@ -34,7 +34,7 @@ describe("Token Router", () => {
   it("should return null when token state does not exist", async () => {
     void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () => ok({} as R2Bucket),
-      getJsonR2: () => Promise.resolve(ok(null)),
+      getJsonR2: async () => Promise.resolve(ok(null)),
     }));
 
     const ctx = createMockContext();
@@ -65,7 +65,7 @@ describe("Token Router", () => {
 
     void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () => err(bucketError),
-      getJsonR2: () => Promise.resolve(ok(null)),
+      getJsonR2: async () => Promise.resolve(ok(null)),
     }));
 
     const ctx = createMockContext();
@@ -92,7 +92,7 @@ describe("Token Router", () => {
 
     void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () => ok({} as R2Bucket),
-      getJsonR2: () => Promise.resolve(err(r2Error)),
+      getJsonR2: async () => Promise.resolve(err(r2Error)),
     }));
 
     const ctx = createMockContext();

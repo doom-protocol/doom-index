@@ -92,7 +92,7 @@ export function useSolanaMint(): UseSolanaMintResult {
         };
 
         // Optional: Add collection if configured
-        if (DOOM_INDEX_COLLECTION_ADDRESS) {
+        if (typeof DOOM_INDEX_COLLECTION_ADDRESS === "string") {
           nftConfig.collection = {
             verified: false,
             key: DOOM_INDEX_COLLECTION_ADDRESS,
@@ -100,13 +100,14 @@ export function useSolanaMint(): UseSolanaMintResult {
         }
 
         // Optional: Add update authority if configured
-        if (UPDATE_AUTHORITY_ADDRESS) {
+        if (typeof UPDATE_AUTHORITY_ADDRESS === "string") {
           nftConfig.updateAuthority = UPDATE_AUTHORITY_ADDRESS;
         }
 
         // Optional: Add creators if configured and valid
-        if (CREATORS.length > 0 && CREATORS[0].address) {
-          nftConfig.creators = CREATORS.map((creator) => ({
+        const validCreators = CREATORS.filter((creator) => creator.address.length > 0);
+        if (validCreators.length > 0) {
+          nftConfig.creators = validCreators.map((creator) => ({
             address: publicKey(creator.address),
             verified: creator.verified,
             share: creator.share,

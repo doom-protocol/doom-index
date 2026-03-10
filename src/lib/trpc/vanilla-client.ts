@@ -1,10 +1,11 @@
 import type { AppRouter } from "@/server/trpc/routers/_app";
 import { getBaseUrl } from "@/utils/url";
-import { createTRPCClient, httpBatchLink, httpSubscriptionLink, splitLink, type TRPCClient } from "@trpc/client";
+import { createTRPCClient, httpBatchLink, httpSubscriptionLink, splitLink } from "@trpc/client";
+import type { TRPCClient } from "@trpc/client";
 
-type CreateVanillaTRPCClientOptions = {
+interface CreateVanillaTRPCClientOptions {
   baseUrl?: string;
-};
+}
 
 /**
  * Create a vanilla tRPC client for use in Web Workers or other non-React contexts

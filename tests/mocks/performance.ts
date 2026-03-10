@@ -21,18 +21,18 @@ const originalPerformance = globalThis.performance;
  * Create a complete performance mock that includes measure() for React 19
  */
 export function createMockPerformance(): Performance {
-  return {
-    ...originalPerformance,
-    now: () => mockTime,
-    measure: () => ({}) as PerformanceMeasure,
-    mark: () => ({}) as PerformanceMark,
-    clearMarks: () => {},
-    clearMeasures: () => {},
-    getEntries: () => [],
-    getEntriesByName: () => [],
-    getEntriesByType: () => [],
-    toJSON: () => ({}),
-  };
+  const performanceMock = Object.create(null) as Performance;
+  Object.assign(performanceMock, originalPerformance);
+  performanceMock.now = () => mockTime;
+  performanceMock.measure = () => ({}) as PerformanceMeasure;
+  performanceMock.mark = () => ({}) as PerformanceMark;
+  performanceMock.clearMarks = () => {};
+  performanceMock.clearMeasures = () => {};
+  performanceMock.getEntries = () => [];
+  performanceMock.getEntriesByName = () => [];
+  performanceMock.getEntriesByType = () => [];
+  performanceMock.toJSON = () => ({});
+  return performanceMock;
 }
 
 /**

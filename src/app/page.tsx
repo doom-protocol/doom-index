@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import type { NextPage } from "next";
 
 const GalleryScene = dynamic(
-  () =>
+  async () =>
     import("@/components/gallery/gallery-scene").then((mod) => ({
       default: mod.GalleryScene,
     })),

@@ -1,12 +1,8 @@
 import { GET } from "@/app/api/r2/[...key]/route";
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { NextRequest } from "next/server";
-import {
-  createMockCache,
-  restoreCacheMock,
-  setupCacheMock,
-  type CachedResponseData,
-} from "../../lib/cache-test-helpers";
+import { createMockCache, restoreCacheMock, setupCacheMock } from "../../lib/cache-test-helpers";
+import type { CachedResponseData } from "../../lib/cache-test-helpers";
 
 describe("R2 Route Handler Integration - Cache", () => {
   let originalCaches: CacheStorage | undefined;
@@ -30,7 +26,7 @@ describe("R2 Route Handler Integration - Cache", () => {
   it("should cache HTTP response using get and set", async () => {
     const testData = new Uint8Array([1, 2, 3]);
     const mockObject = {
-      get: () =>
+      get: async () =>
         Promise.resolve({
           writeHttpMetadata: (headers: Headers) => {
             headers.set("Content-Type", "image/webp");
@@ -45,12 +41,12 @@ describe("R2 Route Handler Integration - Cache", () => {
               controller.close();
             },
           }),
-          arrayBuffer: () => Promise.resolve(testData.buffer),
+          arrayBuffer: async () => Promise.resolve(testData.buffer),
         }),
     } as unknown as R2Bucket;
 
     void mock.module("@/lib/r2", () => ({
-      resolveR2BucketAsync: () => Promise.resolve({ isErr: () => false, value: mockObject }),
+      resolveR2BucketAsync: async () => Promise.resolve({ isErr: () => false, value: mockObject }),
     }));
 
     const request1 = new NextRequest("https://example.com/api/r2/test/image.webp");
@@ -78,7 +74,7 @@ describe("R2 Route Handler Integration - Cache", () => {
 
     let bucketCallCount = 0;
     void mock.module("@/lib/r2", () => ({
-      resolveR2BucketAsync: () => {
+      resolveR2BucketAsync: async () => {
         bucketCallCount++;
         return Promise.resolve({ isErr: () => false, value: mockObject });
       },
@@ -92,7 +88,7 @@ describe("R2 Route Handler Integration - Cache", () => {
   it("should handle cache miss gracefully", async () => {
     const testData = new TextEncoder().encode('{"test": "data"}');
     const mockObject = {
-      get: () =>
+      get: async () =>
         Promise.resolve({
           writeHttpMetadata: (headers: Headers) => {
             headers.set("Content-Type", "application/json");
@@ -105,12 +101,12 @@ describe("R2 Route Handler Integration - Cache", () => {
               controller.close();
             },
           }),
-          arrayBuffer: () => Promise.resolve(testData.buffer),
+          arrayBuffer: async () => Promise.resolve(testData.buffer),
         }),
     } as unknown as R2Bucket;
 
     void mock.module("@/lib/r2", () => ({
-      resolveR2BucketAsync: () => Promise.resolve({ isErr: () => false, value: mockObject }),
+      resolveR2BucketAsync: async () => Promise.resolve({ isErr: () => false, value: mockObject }),
     }));
 
     const request = new NextRequest("https://example.com/api/r2/data.json");

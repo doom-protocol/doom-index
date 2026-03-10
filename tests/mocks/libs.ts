@@ -42,11 +42,11 @@ type ViewerCountStoreMock = () => {
   };
 };
 
-type EnvMockOptions = {
+interface EnvMockOptions {
   NEXT_PUBLIC_BASE_URL?: string;
   LOG_LEVEL?: string;
   NEXT_PUBLIC_R2_URL?: string;
-};
+}
 
 type EnvMock = () => {
   env: {
@@ -98,10 +98,10 @@ export function createAnalyticsMock(): AnalyticsMock {
 export function createGlbExportServiceMock(): GlbExportServiceMock {
   return () => ({
     glbExportService: {
-      exportPaintingModel: mock(() =>
+      exportPaintingModel: mock(async () =>
         Promise.resolve(ok<File, AppError>(new File([], "test.glb", { type: "application/octet-stream" }))),
       ),
-      optimizeGlb: mock(() => Promise.resolve(ok<ArrayBuffer, AppError>(new ArrayBuffer(1024)))),
+      optimizeGlb: mock(async () => Promise.resolve(ok<ArrayBuffer, AppError>(new ArrayBuffer(1024)))),
     },
   });
 }
@@ -123,7 +123,9 @@ export function createViewerCountStoreMock(): ViewerCountStoreMock {
       update: (newCount: number, newUpdatedAt: number) => {
         state.count = newCount;
         state.updatedAt = newUpdatedAt;
-        listeners.forEach((listener) => listener());
+        listeners.forEach((listener) => {
+          listener();
+        });
       },
       subscribe: (listener: () => void) => {
         listeners.add(listener);

@@ -34,12 +34,12 @@ const createGlobalResponse = (overrides: Partial<GlobalMarketDataResponse["data"
 describe("MarketDataService", () => {
   it("fetchGlobalMarketData returns snapshot with Fear & Greed Index", async () => {
     const coinGeckoClient: CoinGeckoClientStub = {
-      getGlobalMarketData: async () => await Promise.resolve(ok(createGlobalResponse())),
+      getGlobalMarketData: async () => Promise.resolve(ok(createGlobalResponse())),
     };
 
     const alternativeMeClient: AlternativeMeClientStub = {
       getFearGreedIndex: async () =>
-        await Promise.resolve(
+        Promise.resolve(
           ok({
             value: 65,
             valueClassification: "Greed",
@@ -49,7 +49,7 @@ describe("MarketDataService", () => {
     };
 
     const repository: MarketSnapshotsRepositoryStub = {
-      upsert: async () => await Promise.resolve(ok(undefined)),
+      upsert: async () => Promise.resolve(ok(undefined)),
     };
 
     const service = new MarketDataService(
@@ -75,12 +75,12 @@ describe("MarketDataService", () => {
 
   it("fetchGlobalMarketData continues when Fear & Greed Index fails", async () => {
     const coinGeckoClient: CoinGeckoClientStub = {
-      getGlobalMarketData: async () => await Promise.resolve(ok(createGlobalResponse())),
+      getGlobalMarketData: async () => Promise.resolve(ok(createGlobalResponse())),
     };
 
     const alternativeMeClient: AlternativeMeClientStub = {
       getFearGreedIndex: async () =>
-        await Promise.resolve(
+        Promise.resolve(
           err({
             type: "ExternalApiError",
             provider: "alternative.me",
@@ -90,7 +90,7 @@ describe("MarketDataService", () => {
     };
 
     const repository: MarketSnapshotsRepositoryStub = {
-      upsert: async () => await Promise.resolve(ok(undefined)),
+      upsert: async () => Promise.resolve(ok(undefined)),
     };
 
     const service = new MarketDataService(
@@ -109,12 +109,12 @@ describe("MarketDataService", () => {
 
   it("storeMarketSnapshot persists via repository", async () => {
     const coinGeckoClient: CoinGeckoClientStub = {
-      getGlobalMarketData: async () => await Promise.resolve(ok(createGlobalResponse())),
+      getGlobalMarketData: async () => Promise.resolve(ok(createGlobalResponse())),
     };
 
     const alternativeMeClient: AlternativeMeClientStub = {
       getFearGreedIndex: async () =>
-        await Promise.resolve(
+        Promise.resolve(
           ok({
             value: 50,
             valueClassification: "Neutral",
@@ -130,7 +130,7 @@ describe("MarketDataService", () => {
     const repository: MarketSnapshotsRepositoryStub = {
       upsert: async (hourBucket, payload) => {
         upsertCalls.push({ hourBucket, payload });
-        return await Promise.resolve(ok(undefined));
+        return Promise.resolve(ok(undefined));
       },
     };
 

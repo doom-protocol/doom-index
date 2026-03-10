@@ -1,4 +1,5 @@
-import { useEffect, type RefObject } from "react";
+import { useEffect } from "react";
+import type { RefObject } from "react";
 
 /**
  * Hook to handle click outside detection for dropdowns/menus

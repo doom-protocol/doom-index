@@ -65,8 +65,9 @@ describe("Archive List Service - Date Filtering", () => {
       const metadataKey = imageKey.replace(/\.webp$/, ".json");
       // Extract date from path for timestamp
       const dateMatch = imageKey.match(/\/(\d{4})\/(\d{2})\/(\d{2})\//);
-      const timestamp =
-        dateMatch ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}T12:00:00Z` : "2025-11-14T12:00:00Z";
+      const timestamp = dateMatch
+        ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}T12:00:00Z`
+        : "2025-11-14T12:00:00Z";
 
       store.set(imageKey, {
         content: new TextEncoder().encode("fake image").buffer,

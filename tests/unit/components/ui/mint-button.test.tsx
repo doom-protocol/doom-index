@@ -2,7 +2,7 @@ import { MintButton } from "@/components/ui/mint-button";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render } from "@testing-library/react";
 import { describe, expect, it, mock } from "bun:test";
-import type { ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 
 // Mock analytics
 void mock.module("@/lib/analytics", () => ({
@@ -17,14 +17,15 @@ void mock.module("@/lib/analytics", () => ({
 }));
 
 // Mock use-haptic
+const hapticHook = () => ({
+  triggerHaptic: mock(() => {}),
+});
 void mock.module("use-haptic", () => ({
-  useHaptic: () => ({
-    triggerHaptic: mock(() => {}),
-  }),
+  useHaptic: hapticHook,
 }));
 
 // Mock MintModal
-const MockMintModal: React.FC<{ isOpen: boolean }> = ({ isOpen }) =>
+const MockMintModal: FC<{ isOpen: boolean }> = ({ isOpen }) =>
   isOpen ? <div data-testid="mint-modal">Modal</div> : null;
 MockMintModal.displayName = "MockMintModal";
 
@@ -41,7 +42,7 @@ const createWrapper = () => {
     },
   });
 
-  const Wrapper: React.FC<{ children: ReactNode }> = ({ children }) => (
+  const Wrapper: FC<{ children: ReactNode }> = ({ children }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
   Wrapper.displayName = "QueryClientWrapper";

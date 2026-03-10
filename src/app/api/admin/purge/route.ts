@@ -1,6 +1,7 @@
 import { env } from "@/env";
 import { logger } from "@/utils/logger";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest): Promise<Response> {
   // check authentication

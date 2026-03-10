@@ -39,7 +39,7 @@ describe("Cache Integration - tRPC Context Graceful Degradation", () => {
     // Make caches available
     const cacheMap = new Map<string, { body: string; headers: Headers; status: number; statusText: string }>();
     const mockCache = {
-      match: (key: string | Request) => {
+      match: async (key: string | Request) => {
         const keyStr = typeof key === "string" ? key : key.url;
         const cached = cacheMap.get(keyStr);
         if (!cached) return Promise.resolve(undefined);
@@ -62,7 +62,7 @@ describe("Cache Integration - tRPC Context Graceful Degradation", () => {
           statusText: response.statusText,
         });
       },
-      delete: (key: string | Request) => {
+      delete: async (key: string | Request) => {
         const keyStr = typeof key === "string" ? key : key.url;
         return Promise.resolve(cacheMap.delete(keyStr));
       },

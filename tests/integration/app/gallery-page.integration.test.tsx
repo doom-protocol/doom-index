@@ -32,6 +32,8 @@ import {
 } from "../../mocks";
 import { glbExportService } from "@/lib/glb-export-service";
 
+import Page from "@/app/page";
+
 // Setup mocks before importing modules
 void mock.module("@/utils/url", createUrlMock());
 
@@ -67,26 +69,27 @@ let mockUseLatestPaintingFn: ReturnType<typeof mock> | null = null;
 
 // Mock use-latest-painting hook at module level
 const realUseLatestPainting = await import("@/hooks/use-latest-painting");
+type LatestPaintingHookResult = ReturnType<typeof realUseLatestPainting.useLatestPainting>;
+const latestPaintingHook = (): LatestPaintingHookResult => {
+  if (mockUseLatestPaintingFn) {
+    return mockUseLatestPaintingFn() as LatestPaintingHookResult;
+  }
+  return {
+    data: null,
+    isLoading: false,
+    error: null,
+    dataUpdatedAt: Date.now(),
+  } as LatestPaintingHookResult;
+};
+const latestPaintingRefetch = () => async () => Promise.resolve(undefined);
 void mock.module("@/hooks/use-latest-painting", () => ({
   ...realUseLatestPainting,
-  useLatestPainting: () => {
-    if (mockUseLatestPaintingFn) {
-      return mockUseLatestPaintingFn();
-    }
-    return {
-      data: null,
-      isLoading: false,
-      error: null,
-      dataUpdatedAt: Date.now(),
-    };
-  },
-  useLatestPaintingRefetch: () => async () => Promise.resolve(undefined),
+  useLatestPainting: latestPaintingHook,
+  useLatestPaintingRefetch: latestPaintingRefetch,
 }));
 
 // Mock useSolanaWallet at module level
 void mock.module("@/hooks/use-solana-wallet", createUseSolanaWalletMock());
-
-import Page from "@/app/page";
 
 const renderGalleryPage = () => {
   const pageFactory = Page as () => JSX.Element;
@@ -342,7 +345,7 @@ describe("Gallery Page Integration", () => {
     for (let i = 0; i < iterations; i++) {
       const timings = measureTimings(queryClient, mockUseLatestPainting);
       allTimings.push(timings);
-      logTimings(`should measure time for multiple renders (iteration ${i + 1})`, timings);
+      logTimings(`should measure time for multiple renders (iteration ${String(i + 1)})`, timings);
     }
 
     // Calculate averages for each metric

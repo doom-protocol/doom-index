@@ -13,18 +13,16 @@ type CoinGeckoClientStub = Pick<CoinGeckoClient, "getCoinsMarkets" | "getTrendin
 
 const createClient = (overrides: Partial<CoinGeckoClientStub> = {}): CoinGeckoClientStub => {
   return {
-    getCoinsMarkets:
-      overrides.getCoinsMarkets ?? (async () => await Promise.resolve(ok<CoinsMarketsResponse, never>([]))),
+    getCoinsMarkets: overrides.getCoinsMarkets ?? (async () => Promise.resolve(ok<CoinsMarketsResponse>([]))),
     getTrendingSearch:
-      overrides.getTrendingSearch ??
-      (async () => await Promise.resolve(ok<TrendingSearchResponse, never>({ coins: [] }))),
-    getCoinsList: overrides.getCoinsList ?? (async () => await Promise.resolve(ok<CoinsListResponse, never>([]))),
+      overrides.getTrendingSearch ?? (async () => Promise.resolve(ok<TrendingSearchResponse>({ coins: [] }))),
+    getCoinsList: overrides.getCoinsList ?? (async () => Promise.resolve(ok<CoinsListResponse>([]))),
   };
 };
 
 describe("TokenDataFetchService", () => {
   it("fetchTokenDetails returns normalized candidates", async () => {
-    const coinsMarkets = ok<CoinsMarketsResponse, never>([
+    const coinsMarkets = ok<CoinsMarketsResponse>([
       {
         id: "bitcoin",
         symbol: "btc",
@@ -58,7 +56,7 @@ describe("TokenDataFetchService", () => {
       getCoinsMarkets: async (ids: string[], options?: CoinsMarketsOptions) => {
         expect(ids).toEqual(["bitcoin"]);
         expect(options?.vs_currency).toBe("usd");
-        return await Promise.resolve(coinsMarkets);
+        return Promise.resolve(coinsMarkets);
       },
     });
 
@@ -86,7 +84,7 @@ describe("TokenDataFetchService", () => {
   it("fetchTokenDetails propagates CoinGecko errors", async () => {
     const client = createClient({
       getCoinsMarkets: async () =>
-        await Promise.resolve(
+        Promise.resolve(
           err({
             type: "ExternalApiError" as const,
             provider: "coingecko",
@@ -105,7 +103,7 @@ describe("TokenDataFetchService", () => {
   });
 
   it("fetchTrendingTokens enriches candidates with trending rank", async () => {
-    const trending = ok<TrendingSearchResponse, never>({
+    const trending = ok<TrendingSearchResponse>({
       coins: [
         {
           id: "bitcoin",
@@ -123,7 +121,7 @@ describe("TokenDataFetchService", () => {
       ],
     });
 
-    const markets = ok<CoinsMarketsResponse, never>([
+    const markets = ok<CoinsMarketsResponse>([
       {
         id: "bitcoin",
         symbol: "btc",
@@ -154,8 +152,8 @@ describe("TokenDataFetchService", () => {
     ]);
 
     const client = createClient({
-      getTrendingSearch: async () => await Promise.resolve(trending),
-      getCoinsMarkets: async () => await Promise.resolve(markets),
+      getTrendingSearch: async () => Promise.resolve(trending),
+      getCoinsMarkets: async () => Promise.resolve(markets),
     });
 
     const service = new TokenDataFetchService(client as CoinGeckoClient);
@@ -169,10 +167,10 @@ describe("TokenDataFetchService", () => {
   });
 
   it("resolveTickersToIds uses CoinGecko mapping with fallback", async () => {
-    const coinsList = ok<CoinsListResponse, never>([{ id: "bitcoin", symbol: "btc", name: "Bitcoin" }]);
+    const coinsList = ok<CoinsListResponse>([{ id: "bitcoin", symbol: "btc", name: "Bitcoin" }]);
 
     const client = createClient({
-      getCoinsList: async () => await Promise.resolve(coinsList),
+      getCoinsList: async () => Promise.resolve(coinsList),
     });
 
     const service = new TokenDataFetchService(client as CoinGeckoClient);

@@ -3,7 +3,8 @@ import { logger } from "@/utils/logger";
 import { parseJsonFromText } from "@/utils/text";
 import { createTimeoutPromise } from "@/utils/time";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { type Result, err, ok } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 /**
  * Default Workers AI model ID
@@ -13,20 +14,20 @@ const DEFAULT_WORKERS_AI_MODEL = "@cf/ibm-granite/granite-4.0-h-micro" as keyof 
 /**
  * Request for text generation
  */
-export type TextGenerationRequest = {
+export interface TextGenerationRequest {
   model?: keyof AiModels;
   modelId?: keyof AiModels; // Alias for model (for backward compatibility with tests)
   systemPrompt: string;
   userPrompt: string;
-};
+}
 
 /**
  * Text generation result
  */
-type TextGenerationResult = {
+interface TextGenerationResult {
   text: string;
   modelId: keyof AiModels;
-};
+}
 
 /**
  * Request for JSON generation (extends TextGenerationRequest)
@@ -38,25 +39,56 @@ export type JsonGenerationRequest<_T> = TextGenerationRequest & {
 /**
  * JSON generation result wrapper
  */
-type JsonGenerationResult<T> = {
+interface JsonGenerationResult<T> {
   value: T;
   modelId?: keyof AiModels;
-};
+}
 
 /**
  * Workers AI client interface
  */
 export interface WorkersAiClient {
-  generateText(input: TextGenerationRequest): Promise<Result<TextGenerationResult, AppError>>;
-  generateJson<T>(input: JsonGenerationRequest<T>): Promise<Result<JsonGenerationResult<T>, AppError>>;
+  generateText: (input: TextGenerationRequest) => Promise<Result<TextGenerationResult, AppError>>;
+  generateJson: <T>(input: JsonGenerationRequest<T>) => Promise<Result<JsonGenerationResult<T>, AppError>>;
 }
 
-type CreateWorkersAiClientDeps = {
+interface CreateWorkersAiClientDeps {
   aiBinding?: Ai;
   defaultModel?: keyof AiModels;
   timeoutMs?: number; // Default: 30 seconds for Workers AI
   log?: typeof logger;
-};
+}
+
+function isRecord(value: unknown): value is Record<PropertyKey, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function getOpenAiMessageContent(value: unknown): string | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const { choices } = value;
+  if (!Array.isArray(choices) || choices.length === 0) {
+    return null;
+  }
+
+  const firstChoice: unknown = choices[0];
+  if (!isRecord(firstChoice)) {
+    return null;
+  }
+
+  const { message } = firstChoice;
+  if (!isRecord(message)) {
+    return null;
+  }
+
+  return typeof message.content === "string" ? message.content : null;
+}
+
+function isTimeoutError(value: AiTextGenerationOutput | TimeoutError): value is TimeoutError {
+  return "type" in value;
+}
 
 /**
  * Create Workers AI client
@@ -79,15 +111,7 @@ export function createWorkersAiClient({
     try {
       // Try to get binding from Cloudflare context
       const { env } = await getCloudflareContext({ async: true });
-      const binding = env.AI;
-      if (!binding) {
-        return err({
-          type: "ConfigurationError",
-          message: "Cloudflare AI binding not found",
-          missingVar: "AI",
-        });
-      }
-      return ok(binding);
+      return ok(env.AI);
     } catch {
       return err({
         type: "ConfigurationError",
@@ -107,20 +131,7 @@ export function createWorkersAiClient({
     }
 
     // Check OpenAI Chat Completion format
-    if (
-      "choices" in value &&
-      Array.isArray(value.choices) &&
-      value.choices.length > 0 &&
-      value.choices[0] &&
-      "message" in value.choices[0] &&
-      value.choices[0].message &&
-      "content" in value.choices[0].message &&
-      typeof value.choices[0].message.content === "string"
-    ) {
-      return true;
-    }
-
-    return false;
+    return getOpenAiMessageContent(value) !== null;
   }
 
   async function generateText(input: TextGenerationRequest): Promise<Result<TextGenerationResult, AppError>> {
@@ -149,11 +160,14 @@ export function createWorkersAiClient({
     try {
       const requestPromise = ai.run(model, inputOptions) as Promise<AiTextGenerationOutput>;
 
-      const timeoutPromise = createTimeoutPromise(timeoutMs, `Workers AI request timed out after ${timeoutMs}ms`);
+      const timeoutPromise = createTimeoutPromise(
+        timeoutMs,
+        `Workers AI request timed out after ${String(timeoutMs)}ms`,
+      );
 
       const result = await Promise.race<AiTextGenerationOutput | TimeoutError>([requestPromise, timeoutPromise]);
 
-      if ("type" in result && result.type === "TimeoutError") {
+      if (isTimeoutError(result)) {
         log.error("workers-ai.generate-text.timeout", {
           modelId: model,
           timeoutMs,
@@ -180,18 +194,10 @@ export function createWorkersAiClient({
       let text = "";
       if ("response" in result && typeof result.response === "string") {
         // Traditional Workers AI format
-        text = result.response ?? "";
-      } else if (
-        "choices" in result &&
-        Array.isArray(result.choices) &&
-        result.choices.length > 0 &&
-        result.choices[0] &&
-        "message" in result.choices[0] &&
-        result.choices[0].message &&
-        "content" in result.choices[0].message
-      ) {
+        text = result.response;
+      } else {
         // OpenAI Chat Completion format
-        text = result.choices[0].message.content ?? "";
+        text = getOpenAiMessageContent(result) ?? "";
       }
 
       log.debug("workers-ai.generate-text.success", {
@@ -261,7 +267,7 @@ export function createWorkersAiClient({
     }
 
     log.debug("workers-ai.generate-json.success", {
-      modelId: textResult.value.modelId ?? "unknown",
+      modelId: textResult.value.modelId,
     });
 
     return ok({

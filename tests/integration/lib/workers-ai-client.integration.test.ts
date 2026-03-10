@@ -28,7 +28,7 @@ async function isAiBindingAvailable(): Promise<boolean> {
 }
 
 describe("WorkersAiClient Integration (External API)", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     // Rate limit: Wait 1 second between tests to avoid hitting rate limits
     return new Promise((resolve) => setTimeout(resolve, 1000));
   });

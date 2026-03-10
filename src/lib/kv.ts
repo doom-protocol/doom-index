@@ -9,12 +9,13 @@
 
 import type { AppError } from "@/types/app-error";
 import { getErrorMessage } from "@/utils/error";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
-type KvPutOptions = {
+interface KvPutOptions {
   expirationTtl?: number;
   expiration?: number;
-};
+}
 
 /**
  * Put a value into KV namespace
@@ -63,7 +64,7 @@ export async function listKv(
   prefix: string,
   limit?: number,
   cursor?: string,
-): Promise<Result<KVNamespaceListResult<unknown, string>, AppError>> {
+): Promise<Result<KVNamespaceListResult<unknown>, AppError>> {
   try {
     return ok(
       await kvNamespace.list({

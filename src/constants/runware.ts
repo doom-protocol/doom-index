@@ -11,14 +11,14 @@
  * Runware AIR Model Configuration
  * Format: runware:aid@version
  */
-type RunwareAirModel = {
+interface RunwareAirModel {
   /** Model identifier in Runware AIR format */
   model: `runware:${number}@${number}`;
   /** Human-readable model name */
   name: string;
   /** Model description */
   description?: string;
-};
+}
 
 /**
  * Predefined Runware AIR Models

@@ -34,30 +34,23 @@ const ArchivePage: NextPage<ArchivePageProps> = async ({ searchParams }) => {
 
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const r2 = env.R2_BUCKET;
-    const db = env.DB;
+    const limit = 24;
+    const offset = (page - 1) * limit;
 
-    if (r2 && db) {
-      const limit = 24;
-      const offset = (page - 1) * limit;
+    const result = await listImages(env.R2_BUCKET, env.DB, {
+      limit,
+      offset,
+      from,
+      to,
+    });
 
-      const result = await listImages(r2, db, {
-        limit,
-        offset,
-        from,
-        to,
-      });
-
-      if (result.isOk()) {
-        items = result.value.items;
-        hasMore = result.value.hasMore;
-      } else {
-        logger.error("ArchivePage: Failed to fetch images", {
-          error: result.error,
-        });
-      }
+    if (result.isOk()) {
+      items = result.value.items;
+      hasMore = result.value.hasMore;
     } else {
-      logger.warn("ArchivePage: Missing R2 or DB binding");
+      logger.error("ArchivePage: Failed to fetch images", {
+        error: result.error,
+      });
     }
   } catch (e) {
     logger.error("ArchivePage: Error fetching context or data", { error: e });
