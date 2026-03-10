@@ -8,7 +8,7 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 2
     if: github.event.pull_request.user.login == 'devin-ai-integration[bot]'
     steps:
