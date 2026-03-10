@@ -13,3 +13,7 @@
 - `NextImage` を含む既存実装は、ユーザー指示なしに素の `img` へ置き換えない。テスト失敗は event の起こし方や mock で解消する。
 
 - `declare module "*.css" {}` のような空の宣言で型エラーを塞がない。型や import 境界の根本原因を直し、workaround 風の修正は見つけ次第戻す。
+
+- Bun 管理の repo では依存確認やバージョン確認にも `npm` を使わない。`bun pm` や `bun install`、必要なら `bunx` を優先し、`package-lock.json` を発生させうる操作を避ける。
+
+- 外部依存の warning を env var で suppress する前に、lockfile と `node_modules` の再解決で根本解消するかを先に確認する。warning が自然に消えるなら script の環境変数は追加しない。
