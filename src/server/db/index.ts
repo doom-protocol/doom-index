@@ -9,6 +9,10 @@ interface DbBindings {
 
 let db: DrizzleD1Database<typeof schema> | undefined;
 
+export function resetDBForTests(): void {
+  db = undefined;
+}
+
 /**
  * Get D1 database instance
  * Works in both Cloudflare Workers (direct env.DB) and Next.js/OpenNext (getCloudflareContext)

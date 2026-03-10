@@ -1,16 +1,18 @@
 import { describe, expect, it, mock } from "bun:test";
 
+let cloudflareEnv: { DB?: D1Database } = {};
+
 void mock.module("@opennextjs/cloudflare", () => ({
-  getCloudflareContext: (_options?: { async?: boolean }) => ({
-    env: {},
-  }),
+  getCloudflareContext: async (_options?: { async?: boolean }) => Promise.resolve({ env: cloudflareEnv }),
 }));
 
 describe("getDB", () => {
   it("throws a clear error when the DB binding is missing from Cloudflare context", async () => {
-    const { getDB } = (await import(
-      new URL("../../../src/server/db/index.ts?missing-db-binding", import.meta.url).href
-    )) as typeof import("../../../src/server/db/index");
+    cloudflareEnv = {};
+
+    const { getDB, resetDBForTests } = await import("@/server/db/index");
+    resetDBForTests();
+
     let thrown: unknown;
     try {
       await getDB();
