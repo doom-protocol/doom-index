@@ -13,7 +13,11 @@
       "Bash(cat:*)",
       "Bash(bun run:*)",
       "Bash(bun tsc:*)",
-      "Bash(bunx tsc:*)"
+      "Bash(bunx tsc:*)",
+      "Bash(gh issue list --limit 20)",
+      "Bash(gh issue view 37)",
+      "Bash(pnpm add:*)",
+      "Bash(npx:*)"
     ]
   }
 }
