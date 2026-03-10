@@ -8,9 +8,9 @@
 import nextHandler from "../.open-next/worker.js";
 import { handleScheduledEvent } from "./cron";
 
-const worker = {
-  fetch: async (...args: Parameters<typeof nextHandler.fetch>): Promise<Response> =>
-    nextHandler.fetch(...args) as Promise<Response>,
+const worker: ExportedHandler<Cloudflare.Env> = {
+  fetch: async (...args: Parameters<ExportedHandlerFetchHandler<Cloudflare.Env>>) =>
+    (nextHandler.fetch as ExportedHandlerFetchHandler<Cloudflare.Env>)(...args),
   scheduled: handleScheduledEvent,
 };
 

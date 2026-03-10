@@ -74,7 +74,7 @@ async function executeHourlyGeneration(env: Cloudflare.Env): Promise<Result<Pain
 // ============================================================================
 
 export async function handleScheduledEvent(
-  event: ScheduledEvent,
+  event: ScheduledController,
   env: Cloudflare.Env,
   _ctx: ExecutionContext,
 ): Promise<void> {

@@ -33,6 +33,14 @@ export class GlbExportServiceImpl implements GlbExportService {
     // Clone the painting group to avoid modifying the original
     const clonedGroup = paintingGroup.clone(true);
 
+    const firstMesh = clonedGroup.getObjectByProperty("isMesh", true);
+    if (firstMesh === undefined) {
+      return err({
+        type: "ValidationError" as const,
+        message: "No meshes found in painting model",
+      });
+    }
+
     // Reset rotation to ensure GLB export has correct orientation (facing front)
     clonedGroup.rotation.set(0, 0, 0);
 

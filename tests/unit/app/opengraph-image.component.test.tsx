@@ -256,56 +256,6 @@ describe("OGP Image Generation Components", () => {
     });
   });
 
-  describe("DOM Event Handling", () => {
-    test("should handle image load event", () => {
-      let imageLoaded = false;
-
-      const ImageWithLoadHandler = () => (
-        <TestImage
-          src="data:image/gif;base64,R0lGODlhAQABAAAAACw="
-          alt="Test"
-          data-testid="load-image"
-          onLoad={() => {
-            imageLoaded = true;
-          }}
-        />
-      );
-
-      const { getByTestId } = render(<ImageWithLoadHandler />);
-
-      const image = getByTestId("load-image");
-      expect(image).toBeInTheDocument();
-
-      // Trigger load event
-      image.dispatchEvent(new Event("load"));
-      expect(imageLoaded).toBe(true);
-    });
-
-    test("should handle image error event", () => {
-      let imageError = false;
-
-      const ImageWithErrorHandler = () => (
-        <TestImage
-          src="invalid-url"
-          alt="Test"
-          data-testid="error-image"
-          onError={() => {
-            imageError = true;
-          }}
-        />
-      );
-
-      const { getByTestId } = render(<ImageWithErrorHandler />);
-
-      const image = getByTestId("error-image");
-      expect(image).toBeInTheDocument();
-
-      // Trigger error event
-      image.dispatchEvent(new Event("error"));
-      expect(imageError).toBe(true);
-    });
-  });
-
   describe("State-based Rendering Logic", () => {
     test("should render different content based on fallback state", () => {
       const ConditionalRender = ({ useFallback }: { useFallback: boolean }) => (

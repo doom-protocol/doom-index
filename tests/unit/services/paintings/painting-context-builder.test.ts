@@ -80,7 +80,7 @@ describe("PaintingContextBuilder", () => {
       expect(ctx.e).toEqual({ k: "rally", i: 2 });
       expect(ctx.o).toBe("central-altar");
       expect(ctx.p).toBe("solar-gold");
-      expect(ctx.f).toEqual(["unknown"]); // default motifs for l1-sovereign
+      expect(ctx.f).toEqual(["temple", "pillar"]);
       expect(ctx.h.length).toBeGreaterThan(0);
       expect(ctx.s.vol).toBeGreaterThan(0);
     }

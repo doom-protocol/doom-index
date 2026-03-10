@@ -58,7 +58,7 @@ export function resolveCache(): Cache | null {
       });
       return null;
     }
-    return caches.default;
+    return "default" in caches ? caches.default : null;
   } catch {
     logger.warn("cache.unavailable", {
       reason: "Failed to resolve cache",

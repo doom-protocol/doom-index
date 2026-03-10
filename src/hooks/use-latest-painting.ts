@@ -68,18 +68,19 @@ export async function fetchLatestPainting(
 
   const result = await queryFn();
   const durationMs = now() - start;
+  const items = Array.isArray(result.items) ? result.items : [];
 
-  if (result.items.length === 0) {
+  if (items.length === 0) {
     logger.debug("use-latest-painting.no-paintings", { durationMs });
     return { painting: null, durationMs };
   }
 
   logger.debug("use-latest-painting.fetch.success", {
     durationMs,
-    paintingId: result.items[0].id,
+    paintingId: items[0].id,
   });
 
-  return { painting: result.items[0], durationMs };
+  return { painting: items[0], durationMs };
 }
 
 /**
