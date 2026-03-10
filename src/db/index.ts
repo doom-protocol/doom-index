@@ -26,10 +26,14 @@ export async function getDB(d1Binding?: D1Database): Promise<DrizzleD1Database<t
   try {
     const { getCloudflareContext } = await import("@opennextjs/cloudflare");
     const { env } = await getCloudflareContext({ async: true });
-    binding = env.DB;
+    binding = Object.prototype.hasOwnProperty.call(env, "DB") ? env.DB : undefined;
   } catch (error) {
     logger.error("Failed to get Cloudflare context", { error });
     throw new Error("Failed to get Cloudflare context for D1 binding");
+  }
+
+  if (!binding) {
+    throw new Error("D1 DB binding not found (env.DB). Check wrangler.toml [[d1_databases]].");
   }
 
   logger.debug("Connecting to Cloudflare D1 database");

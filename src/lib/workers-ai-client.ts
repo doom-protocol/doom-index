@@ -111,7 +111,15 @@ export function createWorkersAiClient({
     try {
       // Try to get binding from Cloudflare context
       const { env } = await getCloudflareContext({ async: true });
-      return ok(env.AI);
+      const binding = Object.prototype.hasOwnProperty.call(env, "AI") ? env.AI : undefined;
+      if (binding === undefined) {
+        return err({
+          type: "ConfigurationError",
+          message: "Cloudflare AI binding not found",
+          missingVar: "AI",
+        });
+      }
+      return ok(binding);
     } catch {
       return err({
         type: "ConfigurationError",

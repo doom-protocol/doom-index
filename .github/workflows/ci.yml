@@ -18,7 +18,7 @@ on:
       - "lefthook.yml"
       - "migrations/**"
       - ".github/workflows/ci.yml"
-      - ".example.vars"
+      - ".env.example"
   pull_request:
     branches: [main]
     paths:
@@ -36,7 +36,7 @@ on:
       - "lefthook.yml"
       - "migrations/**"
       - ".github/workflows/ci.yml"
-      - ".example.vars"
+      - ".env.example"
 
 jobs:
   format:
