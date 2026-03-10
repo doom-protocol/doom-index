@@ -1,6 +1,6 @@
-import * as dbSchema from "@/db/schema";
-import { tokens } from "@/db/schema/tokens";
-import { TokensRepository } from "@/repositories/tokens-repository";
+import * as dbSchema from "@/server/db/schema";
+import { tokens } from "@/server/db/schema/tokens";
+import { TokensRepository } from "@/server/repositories/tokens-repository";
 import { Database } from "bun:sqlite";
 import { beforeEach, describe, expect, it } from "bun:test";
 import { drizzle } from "drizzle-orm/bun-sqlite";

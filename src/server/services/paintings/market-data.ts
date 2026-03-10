@@ -1,6 +1,6 @@
 import type { AlternativeMeClient } from "@/lib/alternative-me-client";
 import type { CoinGeckoClient } from "@/lib/coingecko-client";
-import type { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
+import type { MarketSnapshotsRepository } from "@/server/repositories/market-snapshots-repository";
 import type { AppError } from "@/types/app-error";
 import type { MarketSnapshot } from "@/types/paintings";
 import { logger } from "@/utils/logger";

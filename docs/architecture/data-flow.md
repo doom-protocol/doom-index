@@ -647,7 +647,7 @@ erDiagram
 ### 削除されたファイル
 
 - `src/constants/prompts/doom-painting.ts` - Legacy プロンプト定義
-- `src/repositories/token-context-repository.ts` - TokenContextは直接`tokens`テーブルに保存
+- `src/server/repositories/token-context-repository.ts` - TokenContextは直接`tokens`テーブルに保存
 
 ### 削除されたコンポーネント
 
@@ -737,28 +737,28 @@ flowchart TB
 
 ### サービス
 
-- `src/services/paintings/token-selection.ts` - トークン選択
-- `src/services/paintings/market-data.ts` - 市場データ取得
-- `src/services/paintings/painting-context-builder.ts` - コンテキスト構築
-- `src/services/token-context-service.ts` - トークンコンテキスト生成
-- `src/services/world-prompt-service.ts` - プロンプト生成
-- `src/services/image-generation.ts` - 画像生成
-- `src/services/paintings/painting-generation-orchestrator.ts` - オーケストレーション
+- `src/server/services/paintings/token-selection.ts` - トークン選択
+- `src/server/services/paintings/market-data.ts` - 市場データ取得
+- `src/server/services/paintings/painting-context-builder.ts` - コンテキスト構築
+- `src/server/services/token-context-service.ts` - トークンコンテキスト生成
+- `src/server/services/world-prompt-service.ts` - プロンプト生成
+- `src/server/services/image-generation.ts` - 画像生成
+- `src/server/services/paintings/painting-generation-orchestrator.ts` - オーケストレーション
 
 ### リポジトリ
 
-- `src/repositories/tokens-repository.ts` - トークンメタデータ
-- `src/repositories/market-snapshots-repository.ts` - 市場スナップショット
-- `src/repositories/paintings-repository.ts` - 画像メタデータ
+- `src/server/repositories/tokens-repository.ts` - トークンメタデータ
+- `src/server/repositories/market-snapshots-repository.ts` - 市場スナップショット
+- `src/server/repositories/paintings-repository.ts` - 画像メタデータ
 
 ### 型定義
 
 - `src/types/paintings.ts` - SelectedToken, MarketSnapshot, etc.
 - `src/types/painting-context.ts` - PaintingContext
-- `src/services/token-context-service.ts` - TokenContext
+- `src/server/services/token-context-service.ts` - TokenContext
 
 ### データベーススキーマ
 
-- `src/db/schema/tokens.ts` - tokensテーブル
-- `src/db/schema/market-snapshots.ts` - market_snapshotsテーブル
-- `src/db/schema/paintings.ts` - paintingsテーブル
+- `src/server/db/schema/tokens.ts` - tokensテーブル
+- `src/server/db/schema/market-snapshots.ts` - market_snapshotsテーブル
+- `src/server/db/schema/paintings.ts` - paintingsテーブル

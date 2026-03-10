@@ -5,7 +5,7 @@ import type {
   CoinsMarketsResponse,
   TrendingSearchResponse,
 } from "@/lib/coingecko-client";
-import { TokenDataFetchService } from "@/services/paintings/token-data-fetch";
+import { TokenDataFetchService } from "@/server/services/paintings/token-data-fetch";
 import { describe, expect, it } from "bun:test";
 import { err, ok } from "neverthrow";
 

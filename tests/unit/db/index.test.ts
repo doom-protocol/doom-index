@@ -9,8 +9,8 @@ void mock.module("@opennextjs/cloudflare", () => ({
 describe("getDB", () => {
   it("throws a clear error when the DB binding is missing from Cloudflare context", async () => {
     const { getDB } = (await import(
-      new URL("../../../src/db/index.ts?missing-db-binding", import.meta.url).href
-    )) as typeof import("../../../src/db/index");
+      new URL("../../../src/server/db/index.ts?missing-db-binding", import.meta.url).href
+    )) as typeof import("../../../src/server/db/index");
     let thrown: unknown;
     try {
       await getDB();

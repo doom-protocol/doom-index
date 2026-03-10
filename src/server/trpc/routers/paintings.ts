@@ -1,5 +1,5 @@
 import { get, set } from "@/lib/cache";
-import { createPaintingsService } from "@/services/paintings";
+import { createPaintingsService } from "@/server/services/paintings";
 import { CACHE_TTL_SECONDS } from "@/constants";
 import * as v from "valibot";
 import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";

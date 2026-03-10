@@ -7,12 +7,12 @@
  * - Error handling
  */
 
-import { getDB } from "@/db";
+import { getDB } from "@/server/db";
 import { createTavilyClient } from "@/lib/tavily-client";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import { TokensRepository } from "@/repositories/tokens-repository";
-import type { TokenMetaInput } from "@/services/token-analysis-service";
-import { createTokenAnalysisService } from "@/services/token-analysis-service";
+import { TokensRepository } from "@/server/repositories/tokens-repository";
+import type { TokenMetaInput } from "@/server/services/token-analysis-service";
+import { createTokenAnalysisService } from "@/server/services/token-analysis-service";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 

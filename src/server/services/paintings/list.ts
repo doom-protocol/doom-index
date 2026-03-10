@@ -2,9 +2,10 @@ import type { VisualParams } from "@/lib/pure/mapping";
 import { parseDatePrefix } from "@/lib/pure/painting-date";
 import { isPaintingMetadata } from "@/lib/pure/painting-metadata";
 import { getJsonR2, listR2Objects } from "@/lib/r2";
-import type { PaintingsRepository } from "@/repositories/paintings-repository";
-import { createPaintingsRepository } from "@/repositories/paintings-repository";
+import type { PaintingsRepository } from "@/server/repositories/paintings-repository";
+import { createPaintingsRepository } from "@/server/repositories/paintings-repository";
 import type { AppError } from "@/types/app-error";
+import type { ArchiveListResponse } from "@/types/archive-list-response";
 import type { Painting, PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import { buildPublicR2Path, isValidPaintingFilename } from "@/utils/paintings";
@@ -227,12 +228,6 @@ export interface ListImagesOptions {
   to?: string;
 }
 
-export interface ListImagesResponse {
-  items: Painting[];
-  cursor?: string;
-  hasMore: boolean;
-}
-
 /**
  * List images from archive with pagination
  * Uses D1 for efficient listing with DESC sorting
@@ -243,7 +238,7 @@ export async function listImages(
   d1Binding: D1Database | undefined,
   options: ListImagesOptions,
   archiveRepository?: PaintingsRepository,
-): Promise<Result<ListImagesResponse, AppError>> {
+): Promise<Result<ArchiveListResponse, AppError>> {
   try {
     const limit = Math.min(options.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const repo = archiveRepository ?? createPaintingsRepository({ d1Binding });
@@ -347,7 +342,7 @@ export async function listImages(
       });
       const limitedItems = items.slice(0, limit).map((entry) => entry.item);
       // Date-range queries span multiple prefixes and currently do not support pagination.
-      const response: ListImagesResponse = {
+      const response: ArchiveListResponse = {
         items: limitedItems,
         hasMore: false,
         cursor: undefined,

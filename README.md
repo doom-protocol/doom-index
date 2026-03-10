@@ -635,7 +635,7 @@ flowchart TD
     StoreToken --> End
 ```
 
-See `src/cron.ts` and `src/services/paintings/painting-generation-orchestrator.ts` for implementation details.
+See `src/cron.ts` and `src/server/services/paintings/painting-generation-orchestrator.ts` for implementation details.
 
 ## Prompt System
 
@@ -666,7 +666,7 @@ Key files:
 
 - `src/constants/prompts/` – Base style, negative prompt, and token-specific motifs
 - `src/lib/pure/weighted-prompt.ts` – Weighted prompt generation logic
-- `src/services/world-prompt-service.ts` – Dynamic world context generation
+- `src/server/services/world-prompt-service.ts` – Dynamic world context generation
 
 See [Weighted Prompt System Documentation](./docs/legacy/weighted-prompt-system.md) for details.
 

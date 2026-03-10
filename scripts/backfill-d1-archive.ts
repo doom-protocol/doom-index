@@ -1,6 +1,6 @@
 import { isPaintingMetadata } from "@/lib/pure/painting-metadata";
 import { getJsonR2, listR2Objects, resolveBucketOrThrow } from "@/lib/r2";
-import { createPaintingsService } from "@/services/paintings";
+import { createPaintingsService } from "@/server/services/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import { isValidPaintingFilename } from "@/utils/paintings";

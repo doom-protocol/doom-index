@@ -14,9 +14,13 @@ import {
 import { buildGenerationFileName, hashVisualParams, seedForMinute } from "@/lib/pure/hash";
 import type { VisualParams } from "@/lib/pure/mapping";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
-import type { TokensRepository } from "@/repositories/tokens-repository";
-import type { TokenAnalysisService, TokenMetaInput, TokenOperationInput } from "@/services/token-analysis-service";
-import { FALLBACK_SHORT_CONTEXT } from "@/services/token-analysis-service";
+import type { TokensRepository } from "@/server/repositories/tokens-repository";
+import type {
+  TokenAnalysisService,
+  TokenMetaInput,
+  TokenOperationInput,
+} from "@/server/services/token-analysis-service";
+import { FALLBACK_SHORT_CONTEXT } from "@/server/services/token-analysis-service";
 import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
 import { logger } from "@/utils/logger";

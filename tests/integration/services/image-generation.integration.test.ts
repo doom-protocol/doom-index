@@ -8,8 +8,8 @@
  * - Reference image URL handling
  */
 
-import { createImageGenerationService } from "@/services/image-generation";
-import type { PromptComposition, WorldPromptService } from "@/services/world-prompt-service";
+import { createImageGenerationService } from "@/server/services/image-generation";
+import type { PromptComposition, WorldPromptService } from "@/server/services/world-prompt-service";
 import type { AppError } from "@/types/app-error";
 import type { ImageProvider } from "@/types/domain";
 import type { PaintingContext } from "@/types/painting-context";

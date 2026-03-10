@@ -7,12 +7,12 @@
  * - Error handling (API failures, D1 failures)
  */
 
-import type { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
-import type { TokensRepository } from "@/repositories/tokens-repository";
-import type { MarketDataService } from "@/services/paintings/market-data";
-import type { PaintingContextBuilder } from "@/services/paintings/painting-context-builder";
-import { PaintingGenerationOrchestrator } from "@/services/paintings/painting-generation-orchestrator";
-import type { TokenSelectionService } from "@/services/paintings/token-selection";
+import type { MarketSnapshotsRepository } from "@/server/repositories/market-snapshots-repository";
+import type { TokensRepository } from "@/server/repositories/tokens-repository";
+import type { MarketDataService } from "@/server/services/paintings/market-data";
+import type { PaintingContextBuilder } from "@/server/services/paintings/painting-context-builder";
+import { PaintingGenerationOrchestrator } from "@/server/services/paintings/painting-generation-orchestrator";
+import type { TokenSelectionService } from "@/server/services/paintings/token-selection";
 import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
 import type { MarketSnapshot, SelectedToken } from "@/types/paintings";

@@ -8,7 +8,7 @@
 
 import { getImageR2 } from "@/lib/r2";
 import { CACHE_TTL_SECONDS } from "@/constants";
-import { createPaintingsRepository } from "@/repositories/paintings-repository";
+import { createPaintingsRepository } from "@/server/repositories/paintings-repository";
 import { arrayBufferToDataUrl, base64ToArrayBuffer } from "@/utils/image";
 import { logger } from "@/utils/logger";
 import { getBaseUrl } from "@/utils/url";

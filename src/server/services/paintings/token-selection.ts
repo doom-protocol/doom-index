@@ -1,4 +1,4 @@
-import type { TokensRepository } from "@/repositories/tokens-repository";
+import type { TokensRepository } from "@/server/repositories/tokens-repository";
 import type { AppError } from "@/types/app-error";
 import type { MarketClimate } from "@/types/painting-context";
 import type { MarketSnapshot, SelectedToken, TokenCandidate } from "@/types/paintings";

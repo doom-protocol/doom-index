@@ -8,7 +8,7 @@
 
 **Users**: フロントエンド開発者、バックエンド開発者、QAエンジニアが、型補完とバリデーションの恩恵を受けながら、より安全で保守性の高いコードを記述できます。
 
-**Impact**: 既存のREST API Routesを完全に置き換え、Cloudflare Pages + Workers環境でのEdge Runtime実行を維持しながら、型安全性を大幅に向上させます。既存のサービス層（`src/services/*`）、neverthrowによるエラーハンドリング、zodバリデーションパターンは全て保持します。
+**Impact**: 既存のREST API Routesを完全に置き換え、Cloudflare Pages + Workers環境でのEdge Runtime実行を維持しながら、型安全性を大幅に向上させます。既存のサービス層（`src/server/services/*`）、neverthrowによるエラーハンドリング、zodバリデーションパターンは全て保持します。
 
 ### Goals
 
@@ -33,7 +33,7 @@
 
 - Next.js App Router（Edge Runtime）
 - API Routes: `/api/*` 配下のRoute Handlers
-- サービス層: `src/services/*` でビジネスロジックを抽象化
+- サービス層: `src/server/services/*` でビジネスロジックを抽象化
 - エラーハンドリング: neverthrowのResult型を全体で使用
 - データ取得: TanStack Query（クライアント）+ fetch（サーバー）
 - 環境: Cloudflare Pages + Workers（KV, R2 Bindings）
@@ -599,7 +599,7 @@ export type AppRouter = typeof appRouter;
 // src/server/trpc/routers/mc.ts
 
 import { router, publicProcedure } from "../trpc";
-import { createMarketCapService } from "@/services/market-cap";
+import { createMarketCapService } from "@/server/services/market-cap";
 import { roundMc } from "@/lib/round";
 import { TOKEN_TICKERS } from "@/constants/token";
 import { TRPCError } from "@trpc/server";
@@ -711,7 +711,7 @@ export const mcRouter = router({
 // src/server/trpc/routers/viewer.ts
 
 import { router, publicProcedure } from "../trpc";
-import { createViewerService } from "@/services/viewer";
+import { createViewerService } from "@/server/services/viewer";
 import { isBotUserAgent } from "@/utils/user-agent";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";

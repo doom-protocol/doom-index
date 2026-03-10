@@ -47,7 +47,7 @@
   - `symbol` と `chainId`（DB カラム名: `chain_id`）の組み合わせによる検索を最適化するためのインデックス `idx_token_contexts_symbol_chain` を定義する
   - TokenContextRepository として `findById(id: string)` を実装し、id に対応するレコードを取得できるようにする
   - tags フィールドを JSON.parse して `string[] | null` 型に変換し、TokenContextRecord 型として返す
-  - D1 バインディング（`env.DB`）を Drizzle ORM 経由で使用し、既存の `src/db` パターンに準拠する
+  - D1 バインディング（`env.DB`）を Drizzle ORM 経由で使用し、既存の `src/server/db` パターンに準拠する
   - _Requirements: 1, 4, 6, 7_
 
 - [x] 3.2 D1 アクセスエラーと存在しないレコードの扱い
