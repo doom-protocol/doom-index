@@ -101,3 +101,25 @@
 - `bunx lefthook run pre-push --force` passed.
 - `bunx lefthook run pre-commit --force` was blocked by the current dirty worktree: `git stash create` fails on `.claude/commands/bug-fix.md` because it is beyond a symbolic link.
 - Independent of this task, `bun run format` and `bun run lint` already fail on the current branch due pre-existing formatting and lint debt.
+
+---
+
+# Create PR
+
+## Plan
+
+- [x] Confirm branch state, review readiness, and quality-gate status before opening the PR
+- [x] Create a feature branch, commit the current repository changes, and push to origin
+- [x] Open a pull request against `main` with a concise body describing the repo/tooling and lint cleanup
+- [x] Check remote CI/review status and record any blockers to merge readiness
+
+## Review
+
+- Created and pushed branch `chore/repo-cleanup-eslint`.
+- Committed the current worktree as `d3a989f chore: reorganize tooling and clear lint debt`.
+- Opened PR `#35`: `https://github.com/doom-protocol/doom-index/pull/35`.
+- Confirmed the branch is mergeable and `origin/main` is not ahead of the branch (`1 ahead / 0 behind`).
+- Remote status at handoff:
+- GitHub Actions `CI` and `Bundle Size Analyzer` are still `queued`, so no workflow result is available yet.
+- Cloudflare check `Workers Builds: doom-index` is already failing for commit `d3a989fc`; logs are not accessible from CLI because `dash.cloudflare.com` returns a Cloudflare challenge (`HTTP 403`).
+- No human review comments are present; only the Cloudflare bot deployment status comment exists.
