@@ -59,6 +59,10 @@ interface CreateWorkersAiClientDeps {
   log?: typeof logger;
 }
 
+interface WorkersAiBindings {
+  AI?: Ai;
+}
+
 function isRecord(value: unknown): value is Record<PropertyKey, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -111,8 +115,8 @@ export function createWorkersAiClient({
     try {
       // Try to get binding from Cloudflare context
       const { env } = await getCloudflareContext({ async: true });
-      const binding = Object.prototype.hasOwnProperty.call(env, "AI") ? env.AI : undefined;
-      if (binding === undefined) {
+      const binding = (env as WorkersAiBindings).AI;
+      if (!binding) {
         return err({
           type: "ConfigurationError",
           message: "Cloudflare AI binding not found",

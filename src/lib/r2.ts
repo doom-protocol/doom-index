@@ -36,6 +36,10 @@ interface R2ListParams {
   startAfter?: string;
 }
 
+interface R2Bindings {
+  R2_BUCKET?: R2Bucket;
+}
+
 const contextError = (message: string, cause?: unknown): AppError => ({
   type: "InternalError",
   message,
@@ -51,8 +55,8 @@ const resolveContextAsync = cache(async () => getCloudflareContext({ async: true
 export function resolveR2Bucket(): Result<R2Bucket, AppError> {
   try {
     const { env } = resolveContext();
-    const bucket = Object.prototype.hasOwnProperty.call(env, "R2_BUCKET") ? env.R2_BUCKET : undefined;
-    if (bucket === undefined) {
+    const bucket = (env as R2Bindings).R2_BUCKET;
+    if (!bucket) {
       return err(contextError("R2_BUCKET binding is not configured on Cloudflare environment"));
     }
     return ok(bucket);
@@ -67,8 +71,8 @@ export function resolveR2Bucket(): Result<R2Bucket, AppError> {
 export async function resolveR2BucketAsync(): Promise<Result<R2Bucket, AppError>> {
   try {
     const { env } = await resolveContextAsync();
-    const bucket = Object.prototype.hasOwnProperty.call(env, "R2_BUCKET") ? env.R2_BUCKET : undefined;
-    if (bucket === undefined) {
+    const bucket = (env as R2Bindings).R2_BUCKET;
+    if (!bucket) {
       return err(contextError("R2_BUCKET binding is not configured on Cloudflare environment"));
     }
     return ok(bucket);
