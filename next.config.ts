@@ -22,6 +22,9 @@ interface MutableWebpackConfig {
   };
   resolve?: {
     alias?: WebpackAliasMap;
+    extensions?: string[];
+    modules?: string[];
+    plugins?: unknown[];
   };
 }
 
@@ -35,6 +38,19 @@ function composePlugins(...plugins: NextPlugin[]) {
 
 function getAliasMap(config: MutableWebpackConfig): WebpackAliasMap {
   return config.resolve?.alias ?? {};
+}
+
+function mergeResolve(
+  config: MutableWebpackConfig,
+  aliasUpdates: WebpackAliasMap,
+): NonNullable<MutableWebpackConfig["resolve"]> {
+  return {
+    ...config.resolve,
+    alias: {
+      ...getAliasMap(config),
+      ...aliasUpdates,
+    },
+  };
 }
 
 const serverBundleStubbedModules = [
@@ -54,39 +70,40 @@ const serverBundleStubbedModules = [
   "leva",
 ] as const;
 
+const appAliases = {
+  "@": resolvePath(process.cwd(), "src"),
+} as const;
+
 function shouldStubServerBundle(): boolean {
   const value = process.env.DOOM_ENABLE_SERVER_BUNDLE_STUBS;
   return value === "1" || value === "true";
 }
 
 function customizeWebpack(config: MutableWebpackConfig, { isServer }: WebpackOptions): MutableWebpackConfig {
+  config.resolve = mergeResolve(config, appAliases);
+
   if (isServer && shouldStubServerBundle()) {
     const stub = resolvePath(process.cwd(), "scripts/webpack/stub.cjs");
     const stubAliases = Object.fromEntries(serverBundleStubbedModules.map((name) => [name, stub])) as WebpackAliasMap;
 
-    config.resolve = {
-      alias: {
-        ...getAliasMap(config),
-        ...stubAliases,
-      },
-    };
+    config.resolve = mergeResolve(config, stubAliases);
   }
 
   if (!isServer) {
-    config.resolve = {
-      alias: {
-        ...getAliasMap(config),
-        "@solana/wallet-adapter-react-ui/styles.css": resolvePath(
-          process.cwd(),
-          "node_modules/@solana/wallet-adapter-react-ui/styles.css",
-        ),
-      },
-    };
+    config.resolve = mergeResolve(config, {
+      "@solana/wallet-adapter-react-ui/styles.css": resolvePath(
+        process.cwd(),
+        "node_modules/@solana/wallet-adapter-react-ui/styles.css",
+      ),
+    });
 
     config.optimization = {
+      ...config.optimization,
       splitChunks: {
+        ...config.optimization?.splitChunks,
         chunks: "all",
         cacheGroups: {
+          ...config.optimization?.splitChunks?.cacheGroups,
           react: {
             test: /[\\/]node_modules[\\/](react|react-dom|@react-three\/fiber|@react-three\/drei|three|three-stdlib)[\\/]/,
             name: "react-vendor",
