@@ -2,12 +2,8 @@ import { get } from "@/lib/cache";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { createMockContext } from "../../../unit/server/trpc/helpers";
-import {
-  createMockCache,
-  restoreCacheMock,
-  setupCacheMock,
-  type CachedResponseData,
-} from "../../lib/cache-test-helpers";
+import { createMockCache, restoreCacheMock, setupCacheMock } from "../../lib/cache-test-helpers";
+import type { CachedResponseData } from "../../lib/cache-test-helpers";
 
 describe("R2 Integration", () => {
   let originalCaches: CacheStorage | undefined;
@@ -29,15 +25,15 @@ describe("R2 Integration", () => {
     it("should cache r2.getJson result", async () => {
       const mockJsonData = { foo: "bar", count: 42 };
       const mockBucket = {
-        get: () =>
+        get: async () =>
           Promise.resolve({
-            json: () => Promise.resolve(mockJsonData),
+            json: async () => Promise.resolve(mockJsonData),
           }),
       } as unknown as R2Bucket;
 
       void mock.module("@/lib/r2", () => ({
         resolveR2Bucket: () => ({ isErr: () => false, value: mockBucket }),
-        getJsonR2: () => Promise.resolve({ isErr: () => false, value: mockJsonData }),
+        getJsonR2: async () => Promise.resolve({ isErr: () => false, value: mockJsonData }),
       }));
 
       const ctx = createMockContext();

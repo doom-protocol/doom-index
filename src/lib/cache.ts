@@ -22,17 +22,17 @@ declare global {
 /**
  * Cache options for cache operations
  */
-export type CacheOptions = {
+export interface CacheOptions {
   ttlSeconds: number;
   namespace?: string;
   logger?: typeof logger;
-};
+}
 
 /**
  * Cached binary response structure
  * Used for caching HTTP responses with binary data (images, etc.)
  */
-export type CachedBinaryResponse = {
+export interface CachedBinaryResponse {
   /** Base64 encoded body */
   body: string;
   /** Response headers (lowercase keys) */
@@ -43,7 +43,7 @@ export type CachedBinaryResponse = {
   statusText: string;
   /** Optional ETag for conditional requests */
   etag?: string;
-};
+}
 
 /**
  * Resolve Cloudflare Cache API instance
@@ -52,13 +52,13 @@ export type CachedBinaryResponse = {
  */
 export function resolveCache(): Cache | null {
   try {
-    if (typeof caches === "undefined" || !caches.default) {
+    if (typeof caches === "undefined") {
       logger.warn("cache.unavailable", {
         reason: "Cache is not available",
       });
       return null;
     }
-    return caches.default;
+    return "default" in caches ? caches.default : null;
   } catch {
     logger.warn("cache.unavailable", {
       reason: "Failed to resolve cache",
@@ -124,7 +124,7 @@ export async function get<T>(key: string, options?: Omit<CacheOptions, "ttlSecon
  * @param value - Value to cache (must be JSON-serializable)
  * @param options - Cache options including TTL
  */
-export async function set<T>(key: string, value: T, options: CacheOptions): Promise<void> {
+export async function set(key: string, value: unknown, options: CacheOptions): Promise<void> {
   const log = options.logger || logger;
   const cache = resolveCache();
   if (!cache) {
@@ -141,7 +141,7 @@ export async function set<T>(key: string, value: T, options: CacheOptions): Prom
     const response = new Response(JSON.stringify(value), {
       headers: {
         "Content-Type": "application/json",
-        "Cache-Control": `public, max-age=${options.ttlSeconds}`,
+        "Cache-Control": `public, max-age=${String(options.ttlSeconds)}`,
       },
     });
 
@@ -170,7 +170,7 @@ export async function set<T>(key: string, value: T, options: CacheOptions): Prom
  * @param value - Value to update
  * @param options - Cache options including TTL
  */
-export async function update<T>(key: string, value: T, options: CacheOptions): Promise<void> {
+export async function update(key: string, value: unknown, options: CacheOptions): Promise<void> {
   await set(key, value, options);
 }
 
@@ -313,7 +313,7 @@ async function setCached(
  * Text-based cache helpers (for string values)
  */
 export async function getText(key: string, options?: Omit<CacheOptions, "ttlSeconds">): Promise<string | null> {
-  return getCached(key, (response) => response.text(), options);
+  return getCached(key, async (response) => response.text(), options);
 }
 
 export async function setText(key: string, value: string, options: CacheOptions): Promise<void> {
@@ -323,7 +323,7 @@ export async function setText(key: string, value: string, options: CacheOptions)
       new Response(value, {
         headers: {
           "Content-Type": "text/plain",
-          "Cache-Control": `public, max-age=${options.ttlSeconds}`,
+          "Cache-Control": `public, max-age=${String(options.ttlSeconds)}`,
         },
       }),
     options,
@@ -338,7 +338,7 @@ export async function updateText(key: string, value: string, options: CacheOptio
  * Binary cache helpers (for ArrayBuffer values)
  */
 export async function getBinary(key: string, options?: Omit<CacheOptions, "ttlSeconds">): Promise<ArrayBuffer | null> {
-  return getCached(key, (response) => response.arrayBuffer(), options);
+  return getCached(key, async (response) => response.arrayBuffer(), options);
 }
 
 export async function setBinary(key: string, value: ArrayBuffer, options: CacheOptions): Promise<void> {
@@ -348,7 +348,7 @@ export async function setBinary(key: string, value: ArrayBuffer, options: CacheO
       new Response(value, {
         headers: {
           "Content-Type": "application/octet-stream",
-          "Cache-Control": `public, max-age=${options.ttlSeconds}`,
+          "Cache-Control": `public, max-age=${String(options.ttlSeconds)}`,
         },
       }),
     options,

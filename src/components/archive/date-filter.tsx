@@ -2,7 +2,7 @@
 
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import { useRouter } from "next/navigation";
-import { type FC, type FocusEvent } from "react";
+import type { FC, FocusEvent } from "react";
 
 interface DateFilterProps {
   from?: string;
@@ -82,6 +82,7 @@ export const DateFilter: FC<DateFilterProps> = ({ from = "", to = "" }) => {
 
         {(from || to) && (
           <button
+            type="button"
             onClick={handleClear}
             className="rounded border border-white/20 bg-white/10 px-4 py-1 text-[10px] text-white transition-colors hover:bg-white/20 md:px-3 md:py-1 md:text-xs"
           >

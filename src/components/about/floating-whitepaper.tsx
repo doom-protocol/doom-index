@@ -2,8 +2,8 @@
 
 import { Html } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import type { PropsWithChildren } from "react";
-import { useEffect, useMemo, useRef, useState, type FC } from "react";
+import type { FC, PropsWithChildren } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Group } from "three";
 import WhitepaperViewer from "./whitepaper-viewer";
 
@@ -14,10 +14,11 @@ interface FloatingWhitepaperProps extends PropsWithChildren {
 }
 
 const ENTRANCE_DURATION = 0.5;
+const DEFAULT_WHITEPAPER_POSITION: [number, number, number] = [0, 0.8, 4.0];
 
 export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
   children,
-  position = [0, 0.8, 4.0],
+  position = DEFAULT_WHITEPAPER_POSITION,
   isMobile = false,
   onHoverChange,
 }) => {
@@ -42,34 +43,34 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
   }, [position]);
 
   useFrame(({ invalidate }, delta) => {
-    if (!groupRef.current) {
+    const group = groupRef.current;
+    const scrollContainer = scrollContainerRef.current;
+
+    if (!group || !scrollContainer) {
       return;
     }
 
     const [baseX, baseY, baseZ] = basePositionRef.current;
 
     // Fixed position - no floating animation for better readability
-    groupRef.current.position.set(baseX, baseY, baseZ);
+    group.position.set(baseX, baseY, baseZ);
 
     // Face camera: rotate 180 degrees around Y axis to face camera correctly
     // Camera is at [0, 0.8, 0.8] looking at [0, 0.8, 4.0]
     // Paper is at [0, 0.8, 4.0], so it needs to face back towards camera
-    groupRef.current.rotation.set(0, Math.PI, 0);
+    group.rotation.set(0, Math.PI, 0);
 
     // Entrance animation: fade in from 0 to 1
-    if (isEntranceActiveRef.current && scrollContainerRef.current) {
+    if (isEntranceActiveRef.current) {
       entranceElapsedRef.current += delta;
       const progress = Math.min(entranceElapsedRef.current / ENTRANCE_DURATION, 1);
       const opacity = progress;
 
-      scrollContainerRef.current.style.opacity = opacity.toString();
+      scrollContainer.style.opacity = opacity.toString();
 
       if (progress >= 1) {
         isEntranceActiveRef.current = false;
-        // Ensure final opacity is 1
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.style.opacity = "1";
-        }
+        scrollContainer.style.opacity = "1";
       }
 
       invalidate();
@@ -140,8 +141,8 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
     }
 
     return {
-      paperWidth: `${finalWidth}px`,
-      paperHeight: `${finalHeight}px`,
+      paperWidth: `${String(finalWidth)}px`,
+      paperHeight: `${String(finalHeight)}px`,
     };
   }, [size, PAPER_ASPECT_RATIO]);
 
@@ -169,33 +170,39 @@ export const FloatingWhitepaper: FC<FloatingWhitepaperProps> = ({
               0 8px 24px rgba(0, 0, 0, 0.15),
               0 16px 48px rgba(0, 0, 0, 0.2)
             `,
-            ...(isMobile ?
-              {
-                WebkitOverflowScrolling: "touch",
-                touchAction: "pan-y",
-              }
-            : {}),
+            ...(isMobile
+              ? {
+                  WebkitOverflowScrolling: "touch",
+                  touchAction: "pan-y",
+                }
+              : {}),
           }}
-          onMouseEnter={() => setHover(true)}
-          onMouseLeave={() => setHover(false)}
+          onMouseEnter={() => {
+            setHover(true);
+          }}
+          onMouseLeave={() => {
+            setHover(false);
+          }}
           onWheel={(e) => {
             // Stop event propagation to prioritize mouse wheel scrolling on PC
             if (!isMobile) {
               e.stopPropagation();
             }
           }}
-          {...(isMobile ?
-            {
-              onTouchStart: () => {
-                // Set hover state on touch start (to enable scrolling)
-                setHover(true);
-              },
-              onTouchEnd: () => {
-                // Clear hover state with slight delay on touch end
-                setTimeout(() => setHover(false), 100);
-              },
-            }
-          : {})}
+          {...(isMobile
+            ? {
+                onTouchStart: () => {
+                  // Set hover state on touch start (to enable scrolling)
+                  setHover(true);
+                },
+                onTouchEnd: () => {
+                  // Clear hover state with slight delay on touch end
+                  setTimeout(() => {
+                    setHover(false);
+                  }, 100);
+                },
+              }
+            : {})}
         >
           <WhitepaperViewer>{children}</WhitepaperViewer>
         </div>

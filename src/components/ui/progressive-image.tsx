@@ -1,9 +1,11 @@
 "use client";
 
-import { buildSizesAttr, type ResponsiveSizes } from "@/types/domain";
+import { buildSizesAttr } from "@/types/domain";
+import type { ResponsiveSizes } from "@/types/domain";
 import { logger } from "@/utils/logger";
 import Image from "next/image";
-import { useState, type FC, type ReactNode, type SyntheticEvent } from "react";
+import { useState } from "react";
+import type { FC, ReactNode, SyntheticEvent } from "react";
 
 interface ProgressiveImageProps {
   src: string;
@@ -15,7 +17,7 @@ interface ProgressiveImageProps {
   sizes?: ResponsiveSizes;
   priority?: boolean;
   onLoad?: () => void;
-  onError?: (error: SyntheticEvent<HTMLImageElement, Event>) => void;
+  onError?: (error: SyntheticEvent<HTMLImageElement>) => void;
   fallback?: ReactNode;
   skeleton?: ReactNode;
   logContext?: Record<string, unknown>;
@@ -40,7 +42,7 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
   onError,
   fallback,
   skeleton,
-  logContext = {},
+  logContext,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -48,17 +50,17 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
   const handleImageLoad = () => {
     logger.debug("progressive-image.loaded", {
       src,
-      ...logContext,
+      ...(logContext ?? {}),
     });
     setIsLoading(false);
     onLoad?.();
   };
 
-  const handleImageError = (event: SyntheticEvent<HTMLImageElement, Event>) => {
+  const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
     logger.error("progressive-image.failed", {
       src,
       error: event,
-      ...logContext,
+      ...(logContext ?? {}),
     });
     setIsLoading(false);
     setHasError(true);

@@ -87,7 +87,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse | n
   // Cache 404 responses for suspicious paths for 1 hour
   // This reduces repeated processing of the same attack patterns
   const cacheHeaders: Record<string, string> = {
-    "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_HOUR}`,
+    "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_HOUR)}`,
   };
 
   await set(

@@ -8,20 +8,21 @@ import {
   pickComposition,
   pickPalette,
 } from "@/lib/pure/painting-context-classification";
-import { type TokensRepository } from "@/repositories/tokens-repository";
+import type { TokensRepository } from "@/repositories/tokens-repository";
 import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
 import type { MarketSnapshot, SelectedToken, TokenSnapshot } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { type Result, err, ok } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 /**
  * Painting Context Input
  */
-type PaintingContextInput = {
+interface PaintingContextInput {
   selectedToken: SelectedToken;
   marketSnapshot: MarketSnapshot;
-};
+}
 
 /**
  * Painting Context Builder

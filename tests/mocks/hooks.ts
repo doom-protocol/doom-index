@@ -14,11 +14,11 @@ import type { PaintingMetadata } from "@/types/paintings";
 
 type BunMock = ReturnType<typeof mock>;
 
-type UseLatestPaintingMockOptions = {
+interface UseLatestPaintingMockOptions {
   painting?: PaintingMetadata | null;
   isLoading?: boolean;
   error?: Error | null;
-};
+}
 
 type UseSolanaWalletModuleFactory = () => {
   useSolanaWallet: () => {
@@ -30,7 +30,7 @@ type UseSolanaWalletModuleFactory = () => {
   };
 };
 
-type UseLatestPaintingModuleMock = {
+interface UseLatestPaintingModuleMock {
   useLatestPainting: BunMock;
   useLatestPaintingRefetch: () => () => Promise<void>;
   MIN_REFETCH_INTERVAL_MS: number;
@@ -39,7 +39,7 @@ type UseLatestPaintingModuleMock = {
   clampInterval: (value: number) => number;
   computeRefetchDelay: (lastTimestamp?: string | null) => number;
   fetchLatestPainting: unknown;
-};
+}
 
 /**
  * Create mock for @/hooks/use-latest-painting
@@ -54,11 +54,12 @@ export function createUseLatestPaintingMock(options?: UseLatestPaintingMockOptio
     error: options?.error ?? null,
     dataUpdatedAt: Date.now(),
   }));
+  const refetchLatestPainting = () => async () => Promise.resolve(undefined);
 
   return (): UseLatestPaintingModuleMock => ({
     ...realUseLatestPainting,
     useLatestPainting: mockUseLatestPainting,
-    useLatestPaintingRefetch: () => async () => Promise.resolve(undefined),
+    useLatestPaintingRefetch: refetchLatestPainting,
   });
 }
 
@@ -71,14 +72,16 @@ export function createUseSolanaWalletMock(options?: {
   connected?: boolean;
   publicKey?: string | null;
 }): UseSolanaWalletModuleFactory {
+  const readSolanaWallet = () => ({
+    connecting: options?.connecting ?? false,
+    connected: options?.connected ?? false,
+    publicKey: options?.publicKey ?? null,
+    disconnect: mock(() => {}),
+    connect: mock(() => {}),
+  });
+
   return () => ({
-    useSolanaWallet: () => ({
-      connecting: options?.connecting ?? false,
-      connected: options?.connected ?? false,
-      publicKey: options?.publicKey ?? null,
-      disconnect: mock(() => {}),
-      connect: mock(() => {}),
-    }),
+    useSolanaWallet: readSolanaWallet,
   });
 }
 
@@ -87,10 +90,12 @@ export function createUseSolanaWalletMock(options?: {
  * Returns a function that returns the mock module object
  */
 export function createUseViewerMock(): () => { useViewer: () => void } {
+  const watchViewer = () => {
+    // No-op: viewer worker is not available in test environment
+  };
+
   return () => ({
-    useViewer: () => {
-      // No-op: viewer worker is not available in test environment
-    },
+    useViewer: watchViewer,
   });
 }
 
@@ -101,8 +106,10 @@ export function createUseViewerMock(): () => { useViewer: () => void } {
 export function createUseTransformedTextureUrlMock(): () => {
   useTransformedTextureUrl: (url: string) => string;
 } {
+  const transformTextureUrl = (url: string) => url;
+
   return () => ({
-    useTransformedTextureUrl: (url: string) => url,
+    useTransformedTextureUrl: transformTextureUrl,
   });
 }
 
@@ -125,17 +132,17 @@ export function createUseSafeTextureMock(options?: { texture?: unknown; onLoad?:
     dispose: mock(() => {}),
   };
 
-  const useSafeTexture = (url: string, onLoad?: (texture: unknown) => void) => {
+  const loadSafeTexture = (_url: string, onLoad?: (texture: unknown) => void) => {
     if (onLoad || options?.onLoad) {
       (onLoad || options?.onLoad)?.(mockTexture);
     }
     return mockTexture;
   };
 
-  useSafeTexture.preload = mock(() => {});
-  useSafeTexture.clear = mock(() => {});
+  loadSafeTexture.preload = mock(() => {});
+  loadSafeTexture.clear = mock(() => {});
 
   return () => ({
-    useSafeTexture,
+    useSafeTexture: loadSafeTexture,
   });
 }

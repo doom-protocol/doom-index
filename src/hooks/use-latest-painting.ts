@@ -5,7 +5,8 @@ import { useTRPCClient } from "@/lib/trpc/client";
 import type { ArchiveListResponse } from "@/services/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 export const MIN_REFETCH_INTERVAL_MS = 30_000;
@@ -67,18 +68,19 @@ export async function fetchLatestPainting(
 
   const result = await queryFn();
   const durationMs = now() - start;
+  const items = Array.isArray(result.items) ? result.items : [];
 
-  if (!result.items || result.items.length === 0) {
+  if (items.length === 0) {
     logger.debug("use-latest-painting.no-paintings", { durationMs });
     return { painting: null, durationMs };
   }
 
   logger.debug("use-latest-painting.fetch.success", {
     durationMs,
-    paintingId: result.items[0]?.id,
+    paintingId: items[0].id,
   });
 
-  return { painting: result.items[0], durationMs };
+  return { painting: items[0], durationMs };
 }
 
 /**
@@ -103,14 +105,14 @@ export const useLatestPainting = (): UseQueryResult<PaintingMetadata | null, unk
         })) as ArchiveListResponse;
         const durationMs = getTimestampMs() - start;
 
-        if (!result.items || result.items.length === 0) {
+        if (result.items.length === 0) {
           logger.debug("use-latest-painting.no-paintings", { durationMs });
           return null;
         }
 
         logger.debug("use-latest-painting.fetch.success", {
           durationMs,
-          paintingId: result.items[0]?.id,
+          paintingId: result.items[0].id,
         });
         return result.items[0];
       } catch (error) {

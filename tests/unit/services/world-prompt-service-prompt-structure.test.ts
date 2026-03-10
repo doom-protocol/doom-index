@@ -31,13 +31,13 @@ describe("WorldPromptService - FLUX Prompt Structure", () => {
 
   beforeEach(() => {
     mockTokenAnalysisService = {
-      generateAndSaveShortContext: mock(() =>
+      generateAndSaveShortContext: mock(async () =>
         Promise.resolve(ok(mockShortContext)),
       ) as unknown as TokenAnalysisService["generateAndSaveShortContext"],
     };
 
     mockWorkersAiClient = {
-      generateText: mock(() =>
+      generateText: mock(async () =>
         Promise.resolve(
           ok({
             modelId: "@cf/ibm-granite/granite-4.0-h-micro",
@@ -49,7 +49,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
           }),
         ),
       ) as unknown as WorkersAiClient["generateText"],
-      generateJson: mock(() => Promise.resolve(ok({}))) as unknown as WorkersAiClient["generateJson"],
+      generateJson: mock(async () => Promise.resolve(ok({}))) as unknown as WorkersAiClient["generateJson"],
     };
   });
 
@@ -64,6 +64,17 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       getMinuteBucket: () => "2025-11-21T10:00",
     });
 
+  const getLatestGenerateTextInput = (): Parameters<WorkersAiClient["generateText"]>[0] => {
+    const calls = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls as Array<
+      [Parameters<WorkersAiClient["generateText"]>[0]]
+    >;
+    const latestCall = calls.at(-1);
+    if (!latestCall) {
+      throw new Error("Expected generateText to be called");
+    }
+    return latestCall[0];
+  };
+
   it("system prompt includes FLUX framework structure instructions", async () => {
     const service = createService();
     const result = await service.composeTokenPrompt({
@@ -71,8 +82,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
     });
 
     expect(result.isOk()).toBe(true);
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const systemPrompt = generateTextCall[0].systemPrompt;
+    const systemPrompt = getLatestGenerateTextInput().systemPrompt;
 
     // Check FLUX framework is mentioned
     expect(systemPrompt).toContain("FLUX Prompt Framework");
@@ -91,8 +101,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: baseContext,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const systemPrompt = generateTextCall[0].systemPrompt;
+    const systemPrompt = getLatestGenerateTextInput().systemPrompt;
 
     expect(systemPrompt).toContain("WORD ORDER MATTERS");
     expect(systemPrompt).toContain("Front-load");
@@ -104,8 +113,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: baseContext,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const systemPrompt = generateTextCall[0].systemPrompt;
+    const systemPrompt = getLatestGenerateTextInput().systemPrompt;
 
     expect(systemPrompt).toContain("POSITIVE FRAMING");
     expect(systemPrompt).toContain("positive descriptions instead of negative prompts");
@@ -117,8 +125,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: baseContext,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const systemPrompt = generateTextCall[0].systemPrompt;
+    const systemPrompt = getLatestGenerateTextInput().systemPrompt;
 
     expect(systemPrompt).toContain("NARRATIVE FOCUS");
     expect(systemPrompt).toContain("decisive moment");
@@ -137,8 +144,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: context,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const userPrompt = generateTextCall[0].userPrompt;
+    const userPrompt = getLatestGenerateTextInput().userPrompt;
 
     expect(userPrompt).toContain("NARRATIVE MOMENT");
     expect(userPrompt).toContain("rising-euphoria");
@@ -157,8 +163,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: context,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const userPrompt = generateTextCall[0].userPrompt;
+    const userPrompt = getLatestGenerateTextInput().userPrompt;
 
     expect(userPrompt).toContain("falling-panic");
     expect(userPrompt).toContain("collapse");
@@ -175,8 +180,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: context,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const userPrompt = generateTextCall[0].userPrompt;
+    const userPrompt = getLatestGenerateTextInput().userPrompt;
 
     expect(userPrompt).toContain("golden seeds sprouting");
   });
@@ -192,8 +196,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: context,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const userPrompt = generateTextCall[0].userPrompt;
+    const userPrompt = getLatestGenerateTextInput().userPrompt;
 
     expect(userPrompt).toContain("meteor striking");
   });
@@ -204,8 +207,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: baseContext,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const userPrompt = generateTextCall[0].userPrompt;
+    const userPrompt = getLatestGenerateTextInput().userPrompt;
 
     expect(userPrompt).toContain("FLUX PROMPT STRUCTURE");
     expect(userPrompt).toContain("SETTING");
@@ -227,8 +229,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: context,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const userPrompt = generateTextCall[0].userPrompt;
+    const userPrompt = getLatestGenerateTextInput().userPrompt;
 
     // Character action should be included in the user prompt instructions
     // Check for any of the character action patterns
@@ -244,8 +245,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       referenceImageUrl: "https://example.com/logo.png",
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const userPrompt = generateTextCall[0].userPrompt;
+    const userPrompt = getLatestGenerateTextInput().userPrompt;
 
     expect(userPrompt).toContain("IMAGE-TO-IMAGE (i2i)");
     expect(userPrompt).toContain("maintaining classical oil painting technique");
@@ -263,8 +263,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: context,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const userPrompt = generateTextCall[0].userPrompt;
+    const userPrompt = getLatestGenerateTextInput().userPrompt;
 
     expect(userPrompt).toContain("extreme-volatility");
     expect(userPrompt).toContain("battle");
@@ -276,8 +275,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: baseContext,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const userPrompt = generateTextCall[0].userPrompt;
+    const userPrompt = getLatestGenerateTextInput().userPrompt;
 
     expect(userPrompt).toContain("positive framing");
     expect(userPrompt).toContain("describe what you want to see");
@@ -289,8 +287,7 @@ ${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}`,
       paintingContext: baseContext,
     });
 
-    const generateTextCall = (mockWorkersAiClient.generateText as ReturnType<typeof mock>).mock.calls[0];
-    const userPrompt = generateTextCall[0].userPrompt;
+    const userPrompt = getLatestGenerateTextInput().userPrompt;
 
     expect(userPrompt).toContain("active verbs");
     expect(userPrompt).toContain("ascending");

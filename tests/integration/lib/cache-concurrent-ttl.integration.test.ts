@@ -1,6 +1,7 @@
 import { getOrSet } from "@/lib/cache";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { createMockCache, restoreCacheMock, setupCacheMock, type CachedResponseData } from "./cache-test-helpers";
+import { createMockCache, restoreCacheMock, setupCacheMock } from "./cache-test-helpers";
+import type { CachedResponseData } from "./cache-test-helpers";
 
 describe("Cache Integration - Concurrent Requests and TTL", () => {
   let originalCaches: CacheStorage | undefined;
@@ -25,11 +26,11 @@ describe("Cache Integration - Concurrent Requests and TTL", () => {
       computeCallCount++;
       // Simulate async computation
       await new Promise((resolve) => setTimeout(resolve, 10));
-      return { value: `computed-${computeCallCount}` };
+      return { value: `computed-${String(computeCallCount)}` };
     };
 
     // Make 5 concurrent requests
-    const promises = Array.from({ length: 5 }, () => getOrSet(testKey, computeFn, { ttlSeconds: 60 }));
+    const promises = Array.from({ length: 5 }, async () => getOrSet(testKey, computeFn, { ttlSeconds: 60 }));
 
     const results = await Promise.all(promises);
 
@@ -44,11 +45,11 @@ describe("Cache Integration - Concurrent Requests and TTL", () => {
   });
 
   it("should preserve tRPC procedure return types", async () => {
-    type TokenState = {
+    interface TokenState {
       ticker: string;
       thumbnailUrl: string;
       updatedAt: string;
-    };
+    }
 
     const testKey = "integration:type-preservation";
     const mockTokenState: TokenState = {
@@ -57,7 +58,7 @@ describe("Cache Integration - Concurrent Requests and TTL", () => {
       updatedAt: new Date().toISOString(),
     };
 
-    const computeFn = (): Promise<TokenState> => {
+    const computeFn = async (): Promise<TokenState> => {
       return Promise.resolve(mockTokenState);
     };
 

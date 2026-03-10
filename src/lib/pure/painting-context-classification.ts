@@ -156,14 +156,20 @@ export function classifyDynamics(tokenSnapshot: TokenSnapshot): {
  */
 export function deriveMotifs(archetype: TokenArchetype): MotifTag[] {
   switch (archetype) {
+    case "unknown":
+      return ["unknown"];
+    case "l1-sovereign":
+      return ["temple", "pillar"];
+    case "ai-oracle":
+      return ["idol", "mask"];
     case "perp-liquidity":
       return ["temple", "wheel-of-liquidity", "pillar"];
     case "meme-ascendant":
       return ["crowd", "idol"];
     case "privacy":
       return ["mask", "graveyard"];
-    default:
-      return ["unknown"];
+    case "political":
+      return ["crowd", "pillar"];
   }
 }
 
@@ -195,10 +201,10 @@ export function deriveNarrativeHints(climate: MarketClimate, event: { k: EventKi
   // Event-based hints
   switch (event.k) {
     case "rally":
-      hints.push(`momentum building (intensity ${event.i})`);
+      hints.push(`momentum building (intensity ${String(event.i)})`);
       break;
     case "collapse":
-      hints.push(`foundation crumbling (intensity ${event.i})`);
+      hints.push(`foundation crumbling (intensity ${String(event.i)})`);
       break;
     case "ritual":
       hints.push("steady rhythm", "enduring pattern");

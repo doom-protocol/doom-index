@@ -110,8 +110,8 @@ export const env = createEnv({
  * due to Next.js build optimizations setting it to "production" at build time.
  */
 export function isDevelopment(): boolean {
-  const baseUrl = env.NEXT_PUBLIC_BASE_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? "";
-  return baseUrl.includes("localhost");
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  return typeof baseUrl === "string" && baseUrl.includes("localhost");
 }
 
 /**

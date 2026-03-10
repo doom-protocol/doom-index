@@ -1,11 +1,9 @@
 import * as v from "valibot";
 
 /**
- * Legacy Token Ticker Schema
- * @deprecated This schema is for backward compatibility only.
- * The legacy 8-token system has been removed.
+ * Legacy Token Ticker Schema kept for backward compatibility.
  */
-export const tokenTickerSchema = v.string();
+export const tokenTickerInputSchema = v.string();
 
 // Viewer Schemas
 export const viewerRegisterSchema = v.object({
@@ -19,11 +17,10 @@ export const viewerRemoveSchema = v.object({
 
 // Token Schemas
 /**
- * Legacy token state schema
- * @deprecated This schema is for backward compatibility only.
+ * Legacy token state schema kept for backward compatibility.
  */
-export const tokenGetStateSchema = v.object({
-  ticker: tokenTickerSchema,
+export const tokenStateInputSchema = v.object({
+  ticker: tokenTickerInputSchema,
 });
 
 // R2 Schemas

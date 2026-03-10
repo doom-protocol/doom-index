@@ -1,8 +1,10 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef, type FC } from "react";
-import { CircleGeometry, DoubleSide, Float32BufferAttribute, type Mesh, type Object3D, type SpotLight } from "three";
+import { useMemo, useRef } from "react";
+import type { FC } from "react";
+import { CircleGeometry, DoubleSide, Float32BufferAttribute } from "three";
+import type { Mesh, Object3D, SpotLight } from "three";
 
 import { isDevelopment } from "@/env";
 

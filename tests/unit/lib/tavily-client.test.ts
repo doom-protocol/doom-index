@@ -14,7 +14,7 @@ describe("TavilyClient", () => {
     mock.restore();
 
     // Mock TavilyClient wrapper interface
-    mockSearchToken = mock((_input: TavilyQueryInput) => {
+    mockSearchToken = mock(async (_input: TavilyQueryInput) => {
       const result: TavilySearchResult = {
         articles: [
           {
@@ -68,7 +68,7 @@ describe("TavilyClient", () => {
       }
 
       expect(mockSearchToken).toHaveBeenCalledTimes(1);
-      const callArgs = mockSearchToken.mock.calls[0];
+      const callArgs = mockSearchToken.mock.calls[0] as [{ maxResults?: number }];
       expect(callArgs[0]).toEqual(input);
     });
 
@@ -84,7 +84,7 @@ describe("TavilyClient", () => {
 
       await client.searchToken(input);
 
-      const callArgs = mockSearchToken.mock.calls[0];
+      const callArgs = mockSearchToken.mock.calls[0] as [{ maxResults?: number }];
       expect(callArgs[0]).toEqual(input);
     });
 
@@ -101,14 +101,14 @@ describe("TavilyClient", () => {
 
       await client.searchToken(input);
 
-      const callArgs = mockSearchToken.mock.calls[0];
+      const callArgs = mockSearchToken.mock.calls[0] as [{ maxResults?: number }];
       expect(callArgs[0].maxResults).toBe(10);
     });
 
     it("should truncate combinedText to 6000 characters", async () => {
       const longContent = "A".repeat(4000);
       const fakeSdk = {
-        search: () =>
+        search: async () =>
           Promise.resolve({
             results: [
               {
@@ -172,7 +172,7 @@ describe("TavilyClient", () => {
         provider: "Tavily",
         message: "API error: 404 Not Found",
       };
-      mockTavilyClient.searchToken = mock(() => Promise.resolve(err(error)));
+      mockTavilyClient.searchToken = mock(async () => Promise.resolve(err(error)));
 
       const client = createTavilyClient({ mockClient: mockTavilyClient });
       const input: TavilyQueryInput = {
@@ -199,7 +199,7 @@ describe("TavilyClient", () => {
         status: 429,
         message: "Rate limit exceeded: 429",
       };
-      mockTavilyClient.searchToken = mock(() => Promise.resolve(err(error)));
+      mockTavilyClient.searchToken = mock(async () => Promise.resolve(err(error)));
 
       const client = createTavilyClient({ mockClient: mockTavilyClient });
       const input: TavilyQueryInput = {
@@ -226,7 +226,7 @@ describe("TavilyClient", () => {
         message: "Tavily request timed out after 500ms",
         timeoutMs: 500,
       };
-      mockTavilyClient.searchToken = mock(() => Promise.resolve(err(timeoutError)));
+      mockTavilyClient.searchToken = mock(async () => Promise.resolve(err(timeoutError)));
 
       const client = createTavilyClient({ mockClient: mockTavilyClient });
       const input: TavilyQueryInput = {
@@ -251,7 +251,7 @@ describe("TavilyClient", () => {
         articles: [],
         combinedText: "",
       };
-      mockTavilyClient.searchToken = mock(() => Promise.resolve(ok(mockResult)));
+      mockTavilyClient.searchToken = mock(async () => Promise.resolve(ok(mockResult)));
 
       const client = createTavilyClient({ mockClient: mockTavilyClient });
       const input: TavilyQueryInput = {
@@ -282,7 +282,7 @@ describe("TavilyClient", () => {
         ],
         combinedText: "Test Article\nThis is a snippet\nhttps://example.com/article",
       };
-      mockTavilyClient.searchToken = mock(() => Promise.resolve(ok(mockResult)));
+      mockTavilyClient.searchToken = mock(async () => Promise.resolve(ok(mockResult)));
 
       const client = createTavilyClient({ mockClient: mockTavilyClient });
       const input: TavilyQueryInput = {
@@ -307,7 +307,7 @@ describe("TavilyClient", () => {
         provider: "Tavily",
         message: "Network error: fetch failed",
       };
-      mockTavilyClient.searchToken = mock(() => Promise.resolve(err(error)));
+      mockTavilyClient.searchToken = mock(async () => Promise.resolve(err(error)));
 
       const client = createTavilyClient({ mockClient: mockTavilyClient });
       const input: TavilyQueryInput = {
@@ -334,7 +334,7 @@ describe("TavilyClient", () => {
         status: 401,
         message: "Authentication failed: 401 Unauthorized",
       };
-      mockTavilyClient.searchToken = mock(() => Promise.resolve(err(error)));
+      mockTavilyClient.searchToken = mock(async () => Promise.resolve(err(error)));
 
       const client = createTavilyClient({ mockClient: mockTavilyClient });
       const input: TavilyQueryInput = {
@@ -368,7 +368,7 @@ describe("TavilyClient", () => {
         combinedText: "Custom Article: Custom content",
       };
       const customClient: TavilyClient = {
-        searchToken: mock(() => Promise.resolve(ok(customResult))),
+        searchToken: mock(async () => Promise.resolve(ok(customResult))),
       };
 
       const client = createTavilyClient({

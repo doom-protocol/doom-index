@@ -8,7 +8,8 @@ import type { AppError } from "@/types/app-error";
 import type { Painting, PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import { buildPublicR2Path, isValidPaintingFilename } from "@/utils/paintings";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -25,9 +26,9 @@ function filterWebpObjects(objects: R2Object[]): R2Object[] {
   });
 }
 
-type BuildMetadataOptions = {
+interface BuildMetadataOptions {
   sortOrder?: "asc" | "desc";
-};
+}
 
 /**
  * Build Painting array from R2Object array with metadata loading
@@ -37,30 +38,32 @@ async function buildPaintingsWithMetadata(
   bucket: R2Bucket,
   options: BuildMetadataOptions = {},
 ): Promise<Array<{ key: string; item: Painting }>> {
-  const metadataPromises = webpObjects.map(async (obj) => {
-    const metadataKey = obj.key.replace(/\.webp$/, ".json");
-    const metadataResult = await getJsonR2<PaintingMetadata>(bucket, metadataKey);
+  const metadataPromises: Array<Promise<{ obj: R2Object; metadata: PaintingMetadata | null }>> = webpObjects.map(
+    async (obj) => {
+      const metadataKey = obj.key.replace(/\.webp$/, ".json");
+      const metadataResult = await getJsonR2<PaintingMetadata>(bucket, metadataKey);
 
-    if (metadataResult.isErr()) {
-      logger.warn("archive.list.metadata.load.failed", {
-        imageKey: obj.key,
-        metadataKey,
-        error: metadataResult.error.message,
-      });
-      return { obj, metadata: null };
-    }
+      if (metadataResult.isErr()) {
+        logger.warn("archive.list.metadata.load.failed", {
+          imageKey: obj.key,
+          metadataKey,
+          error: metadataResult.error.message,
+        });
+        return { obj, metadata: null };
+      }
 
-    const metadata = metadataResult.value;
-    if (!metadata || !isPaintingMetadata(metadata)) {
-      logger.warn("archive.list.metadata.invalid", {
-        imageKey: obj.key,
-        metadataKey,
-      });
-      return { obj, metadata: null };
-    }
+      const metadata = metadataResult.value;
+      if (!metadata || !isPaintingMetadata(metadata)) {
+        logger.warn("archive.list.metadata.invalid", {
+          imageKey: obj.key,
+          metadataKey,
+        });
+        return { obj, metadata: null };
+      }
 
-    return { obj, metadata };
-  });
+      return { obj, metadata };
+    },
+  );
 
   const metadataResults = await Promise.allSettled(metadataPromises);
   const items: Array<{ key: string; item: Painting }> = [];
@@ -68,12 +71,13 @@ async function buildPaintingsWithMetadata(
   for (const result of metadataResults) {
     if (result.status === "rejected") {
       logger.error("archive.list.metadata.load.error", {
-        error: result.reason,
+        error: result.reason instanceof Error ? result.reason.message : String(result.reason),
       });
       continue;
     }
 
-    const { obj, metadata } = result.value;
+    const settledValue: { obj: R2Object; metadata: PaintingMetadata | null } = result.value;
+    const { obj, metadata } = settledValue;
 
     if (!metadata) {
       continue;
@@ -85,13 +89,13 @@ async function buildPaintingsWithMetadata(
       itemId: metadata.id,
       r2Key: obj.key,
       imageUrl,
-      fileSize: obj.size ?? metadata.fileSize,
+      fileSize: obj.size,
     });
 
     const item: Painting = {
       ...metadata,
       imageUrl,
-      fileSize: obj.size ?? metadata.fileSize,
+      fileSize: obj.size,
     };
 
     items.push({
@@ -111,11 +115,11 @@ async function buildPaintingsWithMetadata(
   });
 }
 
-type PaginatedCollectionResult = {
+interface PaginatedCollectionResult {
   entries: Array<{ key: string; item: Painting }>;
   cursor?: string;
   hasMore: boolean;
-};
+}
 
 async function collectPaginatedPaintings({
   bucket,
@@ -191,7 +195,7 @@ function generateDatePrefixes(from: string, to: string): string[] {
     const year = current.getFullYear();
     const month = String(current.getMonth() + 1).padStart(2, "0");
     const day = String(current.getDate()).padStart(2, "0");
-    prefixes.push(`images/${year}/${month}/${day}/`);
+    prefixes.push(`images/${String(year)}/${month}/${day}/`);
 
     // Move to next day
     current.setDate(current.getDate() + 1);
@@ -210,10 +214,10 @@ function calculateStartAfterForto(to: string): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-  return `images/${year}/${month}/${day}/`;
+  return `images/${String(year)}/${month}/${day}/`;
 }
 
-export type ListImagesOptions = {
+export interface ListImagesOptions {
   limit?: number;
   cursor?: string;
   offset?: number;
@@ -221,13 +225,13 @@ export type ListImagesOptions = {
   startAfter?: string;
   from?: string;
   to?: string;
-};
+}
 
-export type ListImagesResponse = {
+export interface ListImagesResponse {
   items: Painting[];
   cursor?: string;
   hasMore: boolean;
-};
+}
 
 /**
  * List images from archive with pagination
@@ -323,7 +327,9 @@ export async function listImages(
         });
       }
 
-      const listResults = await Promise.all(datePrefixes.map((prefix) => listR2Objects(bucket, { limit, prefix })));
+      const listResults = await Promise.all(
+        datePrefixes.map(async (prefix) => listR2Objects(bucket, { limit, prefix })),
+      );
 
       const failedResult = listResults.find((result) => result.isErr());
       if (failedResult && failedResult.isErr()) {

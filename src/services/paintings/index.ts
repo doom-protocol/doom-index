@@ -16,20 +16,20 @@ import { createPaintingsRepository } from "@/repositories/paintings-repository";
 import type { AppError } from "@/types/app-error";
 import type { PaginationOptions } from "@/types/domain";
 import type { PaintingMetadata } from "@/types/paintings";
-import { type Result } from "neverthrow";
+import type { Result } from "neverthrow";
 import * as list from "./list";
 import * as storage from "./storage";
 
-type PaintingsServiceDeps = {
+interface PaintingsServiceDeps {
   r2Bucket?: R2Bucket;
   d1Binding?: D1Database;
   archiveRepository?: PaintingsRepository;
-};
+}
 
-type ArchiveStorageResult = {
+interface ArchiveStorageResult {
   imageUrl: string;
   metadataUrl: string;
-};
+}
 
 type ArchiveListOptions = PaginationOptions & {
   prefix?: string;
@@ -38,34 +38,34 @@ type ArchiveListOptions = PaginationOptions & {
 
 export type ArchiveListResponse = list.ListImagesResponse;
 
-export type PaintingsService = {
+export interface PaintingsService {
   /**
    * Store image and metadata atomically to R2
    * If metadata save fails, image save is rolled back
    */
-  storeImageWithMetadata(
+  storeImageWithMetadata: (
     minuteBucket: string,
     filename: string,
     imageBuffer: ArrayBuffer,
     metadata: PaintingMetadata,
-  ): Promise<Result<ArchiveStorageResult, AppError>>;
+  ) => Promise<Result<ArchiveStorageResult, AppError>>;
 
   /**
    * List images from archive with pagination
    * Uses D1 for efficient listing, falls back to R2 if needed
    */
-  listImages(options: ArchiveListOptions): Promise<Result<ArchiveListResponse, AppError>>;
+  listImages: (options: ArchiveListOptions) => Promise<Result<ArchiveListResponse, AppError>>;
 
   /**
    * Insert archive item metadata into D1 index (idempotent)
    */
-  insertPainting(metadata: PaintingMetadata, r2Key: string): Promise<Result<void, AppError>>;
+  insertPainting: (metadata: PaintingMetadata, r2Key: string) => Promise<Result<void, AppError>>;
 
   /**
    * Get archive item by ID from D1 index
    */
-  getPaintingById(id: string): Promise<Result<PaintingMetadata | null, AppError>>;
-};
+  getPaintingById: (id: string) => Promise<Result<PaintingMetadata | null, AppError>>;
+}
 
 /**
  * Create archive service with unified interface
@@ -83,13 +83,13 @@ export function createPaintingsService({
   const repo = archiveRepository ?? createPaintingsRepository({ d1Binding });
 
   return {
-    storeImageWithMetadata: (minuteBucket, filename, imageBuffer, metadata) =>
+    storeImageWithMetadata: async (minuteBucket, filename, imageBuffer, metadata) =>
       storage.storeImageWithMetadata(bucket, minuteBucket, filename, imageBuffer, metadata),
 
-    listImages: (options) => list.listImages(bucket, d1Binding, options, repo),
+    listImages: async (options) => list.listImages(bucket, d1Binding, options, repo),
 
-    insertPainting: (metadata, r2Key) => repo.insert(metadata, r2Key),
+    insertPainting: async (metadata, r2Key) => repo.insert(metadata, r2Key),
 
-    getPaintingById: (id) => repo.findById(id),
+    getPaintingById: async (id) => repo.findById(id),
   };
 }

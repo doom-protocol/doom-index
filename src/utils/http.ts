@@ -7,7 +7,7 @@ import { R2_IMAGE_CACHE_TTL_SECONDS } from "@/constants";
 /**
  * Cache control configuration for different use cases
  */
-export type CacheControlConfig = {
+export interface CacheControlConfig {
   /** Browser cache duration in seconds */
   browserMaxAge: number;
   /** CDN (s-maxage) cache duration in seconds */
@@ -16,7 +16,7 @@ export type CacheControlConfig = {
   staleWhileRevalidate: number;
   /** Whether content is immutable */
   immutable: boolean;
-};
+}
 
 /**
  * Default cache control config for immutable images
@@ -41,9 +41,9 @@ export const IMMUTABLE_IMAGE_CACHE_CONFIG: CacheControlConfig = {
 export function buildCacheControlHeader(config: CacheControlConfig = IMMUTABLE_IMAGE_CACHE_CONFIG): string {
   const parts = [
     "public",
-    `max-age=${config.browserMaxAge}`,
-    `s-maxage=${config.cdnMaxAge}`,
-    `stale-while-revalidate=${config.staleWhileRevalidate}`,
+    `max-age=${String(config.browserMaxAge)}`,
+    `s-maxage=${String(config.cdnMaxAge)}`,
+    `stale-while-revalidate=${String(config.staleWhileRevalidate)}`,
   ];
 
   if (config.immutable) {

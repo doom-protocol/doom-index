@@ -1,26 +1,27 @@
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
-import { type Result, err, ok } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 /**
  * Fear & Greed Index Response
  */
-type FearGreedIndexResponse = {
+interface FearGreedIndexResponse {
   value: number; // 0-100
   valueClassification: "Extreme Fear" | "Fear" | "Neutral" | "Greed" | "Extreme Greed";
   timestamp: number; // Unix epoch seconds
-};
+}
 
 /**
  * Alternative.me API Response
  */
-type AlternativeMeApiResponse = {
+interface AlternativeMeApiResponse {
   data: Array<{
     value: string;
     value_classification: string;
     timestamp: string;
   }>;
-};
+}
 
 /**
  * Alternative.me Fear & Greed Index Client
@@ -39,7 +40,9 @@ export class AlternativeMeClient {
    */
   async getFearGreedIndex(): Promise<Result<FearGreedIndexResponse, AppError>> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, this.timeoutMs);
 
     try {
       logger.debug("[AlternativeMeClient] Fetching Fear & Greed Index");
@@ -51,19 +54,19 @@ export class AlternativeMeClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        logger.error(`[AlternativeMeClient] API returned status ${response.status}`);
+        logger.error(`[AlternativeMeClient] API returned status ${String(response.status)}`);
         return err({
           type: "ExternalApiError" as const,
           provider: "alternative.me",
           status: response.status,
-          message: `Alternative.me API returned status ${response.status}`,
+          message: `Alternative.me API returned status ${String(response.status)}`,
         });
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       const { data } = (await response.json()) as AlternativeMeApiResponse;
 
-      if (!data || data.length === 0) {
+      if (data.length === 0) {
         logger.error("[AlternativeMeClient] Invalid response from Alternative.me API");
         return err({
           type: "ExternalApiError" as const,
@@ -91,17 +94,17 @@ export class AlternativeMeClient {
         timestamp,
       };
 
-      logger.info(`[AlternativeMeClient] Fetched Fear & Greed Index: ${value} (${result.valueClassification})`);
+      logger.info(`[AlternativeMeClient] Fetched Fear & Greed Index: ${String(value)} (${result.valueClassification})`);
       return ok(result);
     } catch (error) {
       clearTimeout(timeoutId);
 
       // Handle abort/timeout errors
       if (error instanceof Error && error.name === "AbortError") {
-        logger.error(`[AlternativeMeClient] Request timed out after ${this.timeoutMs}ms`);
+        logger.error(`[AlternativeMeClient] Request timed out after ${String(this.timeoutMs)}ms`);
         return err({
           type: "TimeoutError" as const,
-          message: `Alternative.me API request timed out after ${this.timeoutMs}ms`,
+          message: `Alternative.me API request timed out after ${String(this.timeoutMs)}ms`,
           timeoutMs: this.timeoutMs,
         });
       }

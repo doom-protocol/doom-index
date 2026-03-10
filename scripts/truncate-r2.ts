@@ -36,29 +36,56 @@
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 import { DeleteObjectsCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
-type Args = {
+interface Args {
   dryRun: boolean;
-};
+}
 
-type R2Client = {
+interface R2Client {
   list: (options: { prefix?: string; cursor?: string; limit?: number }) => Promise<Result<R2Objects, AppError>>;
   delete: (keys: string[]) => Promise<Result<void, AppError>>;
-};
+}
 
-type R2Object = {
+interface R2Object {
   key: string;
   size: number;
   etag: string;
   uploaded: Date;
-};
+}
 
-type R2Objects = {
+interface R2Objects {
   objects: R2Object[];
   truncated: boolean;
   cursor?: string;
-};
+}
+
+function extractCount(result: unknown): number {
+  if (!Array.isArray(result) || result.length === 0) {
+    return 0;
+  }
+
+  const first = (result as readonly unknown[])[0];
+  if (Array.isArray(first) && first.length > 0) {
+    const nestedFirst = (first as readonly unknown[])[0];
+    if (typeof nestedFirst === "number") {
+      return nestedFirst;
+    }
+    if (typeof nestedFirst === "object" && nestedFirst !== null && "count" in nestedFirst) {
+      const { count } = nestedFirst as { count: unknown };
+      return typeof count === "number" ? count : 0;
+    }
+    return 0;
+  }
+
+  if (typeof first === "object" && first !== null && "count" in first) {
+    const { count } = first as { count: unknown };
+    return typeof count === "number" ? count : 0;
+  }
+
+  return 0;
+}
 
 /**
  * Create S3-compatible R2 client using environment variables
@@ -216,7 +243,7 @@ async function executeD1Query(sql: string, params: unknown[] = []): Promise<Resu
         type: "StorageError",
         op: "list",
         key: "d1",
-        message: `D1 query failed: ${response.status} ${response.statusText} - ${errorText}`,
+        message: `D1 query failed: ${String(response.status)} ${response.statusText} - ${errorText}`,
       });
     }
 
@@ -258,17 +285,7 @@ async function deleteD1Records(dryRun: boolean): Promise<Result<number, AppError
 
       // Handle different response formats
       const results = countResult.value;
-      let count = 0;
-
-      if (Array.isArray(results) && results.length > 0) {
-        const firstResult = results[0];
-        if (Array.isArray(firstResult) && firstResult.length > 0) {
-          count =
-            typeof firstResult[0] === "number" ? firstResult[0] : (firstResult[0] as { count: number })?.count || 0;
-        } else if (typeof firstResult === "object" && firstResult !== null) {
-          count = (firstResult as { count: number })?.count || 0;
-        }
-      }
+      const count = extractCount(results);
 
       logger.info("truncate.d1.dry-run", {
         recordsToDelete: count,
@@ -286,17 +303,7 @@ async function deleteD1Records(dryRun: boolean): Promise<Result<number, AppError
 
     // Handle different response formats
     const results = countResult.value;
-    let countBefore = 0;
-
-    if (Array.isArray(results) && results.length > 0) {
-      const firstResult = results[0];
-      if (Array.isArray(firstResult) && firstResult.length > 0) {
-        countBefore =
-          typeof firstResult[0] === "number" ? firstResult[0] : (firstResult[0] as { count: number })?.count || 0;
-      } else if (typeof firstResult === "object" && firstResult !== null) {
-        countBefore = (firstResult as { count: number })?.count || 0;
-      }
-    }
+    const countBefore = extractCount(results);
 
     // Delete all records
     const deleteResult = await executeD1Query(`DELETE FROM paintings`, []);
@@ -463,15 +470,15 @@ async function main() {
 
     console.log("\n📊 Objects to delete:");
     console.log(`  R2 Objects:`);
-    console.log(`    - ${webpToDelete.length} .webp files`);
-    console.log(`    - ${jsonToDelete.length} .json files`);
-    console.log(`    - ${otherToDelete.length} other files`);
-    console.log(`    Total: ${toDelete.length} objects`);
+    console.log(`    - ${String(webpToDelete.length)} .webp files`);
+    console.log(`    - ${String(jsonToDelete.length)} .json files`);
+    console.log(`    - ${String(otherToDelete.length)} other files`);
+    console.log(`    Total: ${String(toDelete.length)} objects`);
     if (d1RecordsToDelete > 0) {
       console.log(`  D1 Records:`);
-      console.log(`    - ${d1RecordsToDelete} paintings records`);
+      console.log(`    - ${String(d1RecordsToDelete)} paintings records`);
     }
-    console.log(`  Total: ${toDelete.length + d1RecordsToDelete} items\n`);
+    console.log(`  Total: ${String(toDelete.length + d1RecordsToDelete)} items\n`);
 
     if (args.dryRun) {
       console.log("🔍 DRY RUN MODE - No objects or records will be deleted\n");
@@ -480,7 +487,7 @@ async function main() {
         console.log(`  - ${key}`);
       });
       if (toDelete.length > 10) {
-        console.log(`  ... and ${toDelete.length - 10} more`);
+        console.log(`  ... and ${String(toDelete.length - 10)} more`);
       }
       console.log("\n💡 Run without --dry-run to actually delete these objects and records.");
       return;
@@ -488,9 +495,9 @@ async function main() {
 
     // Confirm deletion
     console.log("⚠️  WARNING: This will permanently delete:");
-    console.log(`   - ${toDelete.length} R2 objects (ALL objects in bucket)`);
+    console.log(`   - ${String(toDelete.length)} R2 objects (ALL objects in bucket)`);
     if (d1RecordsToDelete > 0) {
-      console.log(`   - ${d1RecordsToDelete} D1 records (ALL records in paintings)`);
+      console.log(`   - ${String(d1RecordsToDelete)} D1 records (ALL records in paintings)`);
     }
     console.log("Press Ctrl+C to cancel, or wait 5 seconds to proceed...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -509,7 +516,7 @@ async function main() {
     logger.info("truncate.r2.delete.complete", {
       deletedCount,
     });
-    console.log(`✅ Successfully deleted ${deletedCount} R2 objects`);
+    console.log(`✅ Successfully deleted ${String(deletedCount)} R2 objects`);
 
     // Delete D1 records
     if (hasD1Credentials && d1RecordsToDelete > 0) {
@@ -524,14 +531,14 @@ async function main() {
         logger.info("truncate.d1.delete.complete", {
           deletedCount: d1DeleteResult.value,
         });
-        console.log(`✅ Successfully deleted ${d1DeleteResult.value} D1 records`);
+        console.log(`✅ Successfully deleted ${String(d1DeleteResult.value)} D1 records`);
       }
     }
 
     console.log("\n📊 Truncate Summary:");
-    console.log(`  ✅ R2: Deleted ${deletedCount} objects`);
-    console.log(`  ✅ D1: Deleted ${d1RecordsToDelete} records`);
-    console.log(`  📦 Total processed: ${deletedCount + d1RecordsToDelete} items\n`);
+    console.log(`  ✅ R2: Deleted ${String(deletedCount)} objects`);
+    console.log(`  ✅ D1: Deleted ${String(d1RecordsToDelete)} records`);
+    console.log(`  📦 Total processed: ${String(deletedCount + d1RecordsToDelete)} items\n`);
 
     console.log("✅ Truncate completed successfully!");
   } catch (error) {
@@ -544,7 +551,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   logger.error("truncate.unhandled", {
     error: error instanceof Error ? error.message : String(error),
     stack: error instanceof Error ? error.stack : undefined,

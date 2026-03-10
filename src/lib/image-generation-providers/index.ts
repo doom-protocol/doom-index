@@ -9,7 +9,7 @@ import { createRunwareProvider } from "./runware";
  */
 
 // Mock provider is for testing only
-type ProviderNameWithMock = "mock";
+type ProviderNameWithMock = string;
 
 /**
  * Creates the default Runware image provider
@@ -21,9 +21,5 @@ export const createImageProvider = (): ImageProvider => createRunwareProvider();
  * Resolve provider including mock (for testing only)
  */
 export const resolveProviderWithMock = (name: ProviderNameWithMock): ImageProvider => {
-  if (name === "mock") {
-    return createMockImageProvider();
-  }
-  // Fallback to default provider
-  return createImageProvider();
+  return name === "mock" ? createMockImageProvider() : createImageProvider();
 };

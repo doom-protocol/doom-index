@@ -12,11 +12,11 @@
  *   bun scripts/watch-cron.ts --interval 60
  */
 
-type Args = {
+interface Args {
   port: number;
   interval: number; // seconds
   cron: string;
-};
+}
 
 const parseArgs = (): Args => {
   const args = process.argv.slice(2);
@@ -33,12 +33,12 @@ const parseArgs = (): Args => {
     switch (arg) {
       case "--port":
       case "-p":
-        parsed.port = parseInt(next, 10);
+        parsed.port = Number.parseInt(next, 10);
         i++;
         break;
       case "--interval":
       case "-i":
-        parsed.interval = parseInt(next, 10);
+        parsed.interval = Number.parseInt(next, 10);
         i++;
         break;
       case "--cron":
@@ -70,7 +70,7 @@ Examples:
 };
 
 const callCronEndpoint = async (port: number, cron: string): Promise<boolean> => {
-  const url = `http://localhost:${port}/__scheduled?cron=${encodeURIComponent(cron)}`;
+  const url = `http://localhost:${String(port)}/__scheduled?cron=${encodeURIComponent(cron)}`;
   const timestamp = new Date().toISOString();
 
   // カウントダウン行をクリアしてからログを出力
@@ -85,13 +85,13 @@ const callCronEndpoint = async (port: number, cron: string): Promise<boolean> =>
     });
 
     if (response.ok) {
-      console.log(`[${timestamp}] ✅ Cron triggered successfully (${response.status})`);
+      console.log(`[${timestamp}] ✅ Cron triggered successfully (${String(response.status)})`);
       return true;
     } else {
-      console.log(`[${timestamp}] ⚠️  Cron endpoint returned ${response.status}`);
+      console.log(`[${timestamp}] ⚠️  Cron endpoint returned ${String(response.status)}`);
       return false;
     }
-  } catch (error) {
+  } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.log(`[${timestamp}] ❌ Failed to call cron endpoint: ${errorMessage}`);
     return false;
@@ -121,7 +121,7 @@ const updateCountdown = (
     const remaining = Math.max(0, targetIntervalMs - elapsed);
     const remainingSeconds = Math.ceil(remaining / 1000);
     const timestamp = new Date().toISOString();
-    const line = `[${timestamp}] ⏱️  ${label}: ${remainingSeconds}s remaining`;
+    const line = `[${timestamp}] ⏱️  ${label}: ${String(remainingSeconds)}s remaining`;
 
     // 前の行をクリア（前回の行の長さ分のスペースで上書き）
     process.stdout.write("\r" + " ".repeat(Math.max(lastLineLength, line.length)) + "\r");
@@ -150,20 +150,20 @@ const updateCountdown = (
   };
 };
 
-const main = (): Promise<void> => {
+const main = async (): Promise<void> => {
   const args = parseArgs();
 
   console.log("🚀 Starting cron watcher...");
-  console.log(`   Port: ${args.port}`);
-  console.log(`   Interval: ${args.interval} seconds`);
+  console.log(`   Port: ${String(args.port)}`);
+  console.log(`   Interval: ${String(args.interval)} seconds`);
   console.log(`   Cron: ${args.cron}`);
-  console.log(`   URL: http://localhost:${args.port}/__scheduled?cron=${encodeURIComponent(args.cron)}`);
+  console.log(`   URL: http://localhost:${String(args.port)}/__scheduled?cron=${encodeURIComponent(args.cron)}`);
 
   // Calculate time until next minute (0 seconds)
   const msUntilNextMinute = getMillisecondsUntilNextMinute();
   const nextMinuteDate = new Date(Date.now() + msUntilNextMinute);
   console.log(`   Next execution: ${nextMinuteDate.toISOString()}`);
-  console.log(`   Interval: ${args.interval} seconds`);
+  console.log(`   Interval: ${String(args.interval)} seconds`);
   console.log("\nPress Ctrl+C to stop\n");
 
   let intervalId: ReturnType<typeof setInterval> | null = null;
@@ -229,7 +229,7 @@ const main = (): Promise<void> => {
   return Promise.resolve();
 };
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   console.error("❌ Fatal error:", error);
   process.exit(1);
 });

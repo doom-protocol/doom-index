@@ -93,7 +93,7 @@ curl "http://localhost:8787/__scheduled?cron=0+*+*+*+*"
 bun run deploy
 ```
 
-> **Note**: When using `bun run preview` with OpenNextJS Cloudflare, environment variable loading behaves differently than direct `wrangler dev`. See [OpenNextJS Environment Variables](./docs/opennextjs-env-vars.md) for details about development environment detection and configuration.
+> **Note**: When using `bun run preview` with OpenNextJS Cloudflare, environment variable loading behaves differently than direct `wrangler dev`. See [OpenNextJS Environment Variables](./docs/guides/opennextjs-env-vars.md) for details about development environment detection and configuration.
 
 ### Database Management
 
@@ -374,7 +374,7 @@ r2://doom-index-storage/
 - **Atomic storage**: Images and metadata are always saved together as pairs
 - **Unique filenames**: Each file is uniquely identified by timestamp, params hash, and seed
 
-For detailed documentation, see [R2 Storage Structure](docs/r2-storage-structure.md).
+For detailed documentation, see [R2 Storage Structure](docs/reference/r2-storage-structure.md).
 
 #### Key Features
 
@@ -458,7 +458,7 @@ The project uses tRPC v11 for end-to-end type safety. All API endpoints are expo
 - **Viewer**: `trpc.viewer.register.mutate()`, `trpc.viewer.remove.mutate()`
 - **R2 Objects**: `trpc.r2.getObject.useQuery({ key })`
 
-See [tRPC Architecture Documentation](./docs/trpc-architecture.md) for details.
+See [tRPC Architecture Documentation](./docs/architecture/trpc-architecture.md) for details.
 
 ## Cron Pipeline
 
@@ -668,7 +668,7 @@ Key files:
 - `src/lib/pure/weighted-prompt.ts` – Weighted prompt generation logic
 - `src/services/world-prompt-service.ts` – Dynamic world context generation
 
-See [Weighted Prompt System Documentation](./docs/weighted-prompt-system.md) for details.
+See [Weighted Prompt System Documentation](./docs/legacy/weighted-prompt-system.md) for details.
 
 ## Deployment
 
@@ -766,31 +766,33 @@ For testing without API keys, use the mock provider:
 bun run generate --provider mock
 ```
 
-See [Runware Models Documentation](./docs/runware-models.md) for available models and their characteristics.
+See [Runware Models Documentation](./docs/guides/runware-models.md) for available models and their characteristics.
 
 ## Documentation
 
 Additional documentation is available in the `docs/` directory:
 
-- [Project Description](./docs/project-description.md) – High-level overview and goals
-- [Development Specification](./docs/development-spec.md) – Technical specifications
-- [tRPC Architecture](./docs/trpc-architecture.md) – API architecture and patterns
-- [R2 Storage Structure](./docs/r2-storage-structure.md) – Storage organization
-- [Weighted Prompt System](./docs/weighted-prompt-system.md) – Prompt generation details
-- [Runware Models](./docs/runware-models.md) – Available models and configurations
-- [Cache Impact Analysis](./docs/cache-impact-analysis.md) – Caching strategy
-- [OpenNextJS Environment Variables](./docs/opennextjs-env-vars.md) – Environment variable handling in OpenNextJS Cloudflare
+- [Docs Overview](./docs/README.md) – Documentation map and directory guide
+- [PRODUCT](./docs/PRODUCT.md) – Product goals and scope
+- [TECH](./docs/TECH.md) – Stack, runtime, and operations
+- [STRUCTURE](./docs/STRUCTURE.md) – Project layout and conventions
+- [tRPC Architecture](./docs/architecture/trpc-architecture.md) – API architecture and patterns
+- [R2 Storage Structure](./docs/reference/r2-storage-structure.md) – Storage organization
+- [Runware Models](./docs/guides/runware-models.md) – Available models and configurations
+- [Cache Impact Analysis](./docs/analysis/cache-impact-analysis.md) – Caching strategy
+- [OpenNextJS Environment Variables](./docs/guides/opennextjs-env-vars.md) – Environment variable handling in OpenNextJS Cloudflare
+- [Legacy Development Specification](./docs/legacy/development-spec.md) – Historical technical specification
 
 ### Design Specifications
 
 Detailed design documents for current features:
 
-- [Dynamic Draw Design](./.kiro/specs/dynamic-draw/design.md) – Hourly painting generation architecture
-- [Dynamic Draw Requirements](./.kiro/specs/dynamic-draw/requirements.md) – Functional requirements and constraints
-- [Dynamic Draw Tasks](./.kiro/specs/dynamic-draw/tasks.md) – Implementation task breakdown
-- [Dynamic Prompt Design](./.kiro/specs/dynamic-prompt/design.md) – AI-powered prompt generation system
-- [Dynamic Prompt Requirements](./.kiro/specs/dynamic-prompt/requirements.md) – Prompt generation requirements
-- [Dynamic Prompt Tasks](./.kiro/specs/dynamic-prompt/tasks.md) – Prompt system implementation tasks
+- [Dynamic Draw Design](./docs/specs/dynamic-draw/design.md) – Hourly painting generation architecture
+- [Dynamic Draw Requirements](./docs/specs/dynamic-draw/requirements.md) – Functional requirements and constraints
+- [Dynamic Draw Tasks](./docs/specs/dynamic-draw/tasks.md) – Implementation task breakdown
+- [Dynamic Prompt Design](./docs/specs/dynamic-prompt/design.md) – AI-powered prompt generation system
+- [Dynamic Prompt Requirements](./docs/specs/dynamic-prompt/requirements.md) – Prompt generation requirements
+- [Dynamic Prompt Tasks](./docs/specs/dynamic-prompt/tasks.md) – Prompt system implementation tasks
 
 ## Links
 

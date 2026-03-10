@@ -9,8 +9,10 @@
 
 import { env } from "@/env";
 import type { AppError } from "@/types/app-error";
-import { err, ok, type Result } from "neverthrow";
-import { PinataSDK, type UploadResponse } from "pinata";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
+import { PinataSDK } from "pinata";
+import type { UploadResponse } from "pinata";
 
 /**
  * Options for creating signed upload URL
@@ -41,8 +43,8 @@ export interface PinataUploadResult {
  * Pinata Client interface
  */
 export interface PinataClient {
-  createSignedUploadUrl(options: CreateSignedUrlOptions): Promise<Result<SignedUrl, AppError>>;
-  convertToGatewayUrl(cid: string): Promise<Result<string, AppError>>;
+  createSignedUploadUrl: (options: CreateSignedUrlOptions) => Promise<Result<SignedUrl, AppError>>;
+  convertToGatewayUrl: (cid: string) => Promise<Result<string, AppError>>;
   /**
    * Upload file using signed URL (client-side)
    *
@@ -50,7 +52,7 @@ export interface PinataClient {
    * @param signedUrl - Pre-signed URL from server
    * @returns Upload result with CID and size
    */
-  uploadFile(file: File, signedUrl: string): Promise<Result<PinataUploadResult, AppError>>;
+  uploadFile: (file: File, signedUrl: string) => Promise<Result<PinataUploadResult, AppError>>;
 }
 
 /**

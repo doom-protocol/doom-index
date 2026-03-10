@@ -10,15 +10,16 @@
  *   mock.module("@/components/ui/mint-modal", createUIComponentMocks().mintModal);
  */
 
-import React, { type ReactElement, type ReactNode } from "react";
+import React from "react";
+import type { ReactElement, ReactNode } from "react";
 
-type GalleryComponentMocks = {
+interface GalleryComponentMocks {
   cameraRig: () => { CameraRig: () => ReactElement | null };
   galleryRoom: () => { GalleryRoom: () => ReactElement | null };
   lights: () => { Lights: () => ReactElement | null };
-};
+}
 
-type UIComponentMocks = {
+interface UIComponentMocks {
   framedPaintingBase: () => {
     FrameModel: () => ReactElement | null;
     PaintingGroup: ({ children }: { children: ReactNode }) => ReactElement;
@@ -27,7 +28,7 @@ type UIComponentMocks = {
     ThreeErrorBoundary: ({ children }: { children: ReactNode }) => ReactElement;
   };
   mintModal: () => { MintModal: React.FC<{ isOpen: boolean }> };
-};
+}
 
 /**
  * Create mocks for gallery components

@@ -19,11 +19,12 @@ export function normalizeValue(value: number, min: number, max: number): number 
 }
 
 /**
- * Legacy function: normalizeMcMap
- * @deprecated This function is part of the legacy 8-token system and should not be used.
+ * Legacy function: normalizeMcMap.
  * It returns an empty object for backward compatibility.
  */
 export function normalizeMcMap(_input: Record<string, number>): Record<string, number> {
   // Legacy system is deprecated - return empty map
   return {};
 }
+
+export const normalizeMarketCapMap = normalizeMcMap;

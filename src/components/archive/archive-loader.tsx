@@ -1,4 +1,4 @@
-import { type FC } from "react";
+import type { FC } from "react";
 import { ArchiveGrid } from "./archive-grid";
 
 const ITEMS_PER_PAGE = 24;

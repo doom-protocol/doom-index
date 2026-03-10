@@ -1,4 +1,4 @@
-import { normalizeMcMap, normalizeValue } from "@/lib/pure/normalize";
+import { normalizeMarketCapMap, normalizeValue } from "@/lib/pure/normalize";
 import { quantize01 } from "@/lib/pure/quantize";
 import { describe, expect, it } from "bun:test";
 // TOKEN_CONFIG_MAP and TOKEN_TICKERS no longer exist - legacy token system removed
@@ -17,7 +17,7 @@ describe("Normalization utilities (1.1)", () => {
   it.skip("produces a normalized map for all eight tokens using configured bounds", () => {
     // Legacy test - TOKEN_CONFIG_MAP and TOKEN_TICKERS no longer exist
     const raw: Record<string, number> = {};
-    const normalized = normalizeMcMap(raw);
+    const normalized = normalizeMarketCapMap(raw);
     expect(Object.keys(normalized)).toEqual([]);
   });
 });

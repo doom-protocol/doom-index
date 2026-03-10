@@ -4,28 +4,29 @@ import type { TokensRepository } from "@/repositories/tokens-repository";
 import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
 import { logger } from "@/utils/logger";
-import { type Result, err, ok } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 /**
  * Token metadata input
  */
-export type TokenMetaInput = {
+export interface TokenMetaInput {
   id: string;
   name: string;
   symbol: string;
   chainId: string;
   contractAddress: string | null;
   createdAt: string;
-};
+}
 
 /**
  * Input for token-related operations that require painting context and token metadata
  */
-export type TokenOperationInput = {
+export interface TokenOperationInput {
   paintingContext: PaintingContext;
   tokenMeta: TokenMetaInput;
   referenceImageUrl?: string | null;
-};
+}
 
 /**
  * Fallback shortContext constant
@@ -38,15 +39,15 @@ export const FALLBACK_SHORT_CONTEXT =
  * Token analysis service interface
  */
 export interface TokenAnalysisService {
-  generateAndSaveShortContext(input: TokenMetaInput): Promise<Result<string, AppError>>;
+  generateAndSaveShortContext: (input: TokenMetaInput) => Promise<Result<string, AppError>>;
 }
 
-type CreateTokenAnalysisServiceDeps = {
+interface CreateTokenAnalysisServiceDeps {
   tavilyClient: TavilyClient;
   workersAiClient: WorkersAiClient;
   tokensRepository: TokensRepository;
   log?: typeof logger;
-};
+}
 
 /**
  * Create token analysis service
@@ -67,7 +68,7 @@ export function createTokenAnalysisService({
     if (length < 50) {
       return err({
         type: "ValidationError",
-        message: `shortContext is too short (${length} characters, minimum 50). Consider using FALLBACK_SHORT_CONTEXT.`,
+        message: `shortContext is too short (${String(length)} characters, minimum 50). Consider using FALLBACK_SHORT_CONTEXT.`,
         details: {
           length,
           minLength: 50,
@@ -79,7 +80,7 @@ export function createTokenAnalysisService({
     if (length > 1000) {
       return err({
         type: "ValidationError",
-        message: `shortContext is too long (${length} characters, maximum 1000). Consider using FALLBACK_SHORT_CONTEXT.`,
+        message: `shortContext is too long (${String(length)} characters, maximum 1000). Consider using FALLBACK_SHORT_CONTEXT.`,
         details: {
           length,
           maxLength: 1000,
@@ -121,12 +122,12 @@ export function createTokenAnalysisService({
         chainId: input.chainId,
         errorType: tavilyResult.error.type,
         message: tavilyResult.error.message,
-        ...(tavilyResult.error.type === "ExternalApiError" && tavilyResult.error.provider === "Tavily" ?
-          {
-            provider: tavilyResult.error.provider,
-            status: tavilyResult.error.status,
-          }
-        : {}),
+        ...(tavilyResult.error.type === "ExternalApiError" && tavilyResult.error.provider === "Tavily"
+          ? {
+              provider: tavilyResult.error.provider,
+              status: tavilyResult.error.status,
+            }
+          : {}),
       });
       return err(tavilyResult.error);
     }
@@ -160,9 +161,9 @@ Generate a concise context JSON for this token.`;
       userPrompt,
     });
 
-    type TokenContextJson = {
+    interface TokenContextJson {
       short_context: string;
-    };
+    }
 
     const aiResult = await workersAiClient.generateJson<TokenContextJson>({
       systemPrompt,
@@ -177,9 +178,9 @@ Generate a concise context JSON for this token.`;
         chainId: input.chainId,
         errorType: aiResult.error.type,
         message: aiResult.error.message,
-        ...(aiResult.error.type === "ExternalApiError" && aiResult.error.provider === "WorkersAI" ?
-          { provider: aiResult.error.provider }
-        : {}),
+        ...(aiResult.error.type === "ExternalApiError" && aiResult.error.provider === "WorkersAI"
+          ? { provider: aiResult.error.provider }
+          : {}),
       });
       return err(aiResult.error);
     }

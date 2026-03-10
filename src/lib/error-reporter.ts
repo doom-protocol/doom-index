@@ -1,12 +1,13 @@
 import { logger } from "@/utils/logger";
-import { type ErrorSource, formatErrorForSlack, sendSlackMessage } from "./slack-client";
+import { formatErrorForSlack, sendSlackMessage } from "./slack-client";
+import type { ErrorSource } from "./slack-client";
 
 export type { ErrorSource };
 
-type ReportErrorOptions = {
+interface ReportErrorOptions {
   context?: string;
   source?: ErrorSource;
-};
+}
 
 /**
  * Report an error to external monitoring services (Slack).

@@ -16,8 +16,8 @@ describe("Viewer Router", () => {
 
       void mock.module("@/services/viewer", () => ({
         createViewerService: () => ({
-          registerViewer: () => Promise.resolve(ok(undefined)),
-          removeViewer: () => Promise.resolve(ok(undefined)),
+          registerViewer: async () => Promise.resolve(ok(undefined)),
+          removeViewer: async () => Promise.resolve(ok(undefined)),
         }),
       }));
 
@@ -121,8 +121,8 @@ describe("Viewer Router", () => {
 
       void mock.module("@/services/viewer", () => ({
         createViewerService: () => ({
-          registerViewer: () => Promise.resolve(err(serviceError)),
-          removeViewer: () => Promise.resolve(ok(undefined)),
+          registerViewer: async () => Promise.resolve(err(serviceError)),
+          removeViewer: async () => Promise.resolve(ok(undefined)),
         }),
       }));
 
@@ -177,8 +177,8 @@ describe("Viewer Router", () => {
 
       void mock.module("@/services/viewer", () => ({
         createViewerService: () => ({
-          registerViewer: () => Promise.resolve(ok(undefined)),
-          removeViewer: () => Promise.resolve(ok(undefined)),
+          registerViewer: async () => Promise.resolve(ok(undefined)),
+          removeViewer: async () => Promise.resolve(ok(undefined)),
         }),
       }));
 
@@ -224,8 +224,8 @@ describe("Viewer Router", () => {
 
       void mock.module("@/services/viewer", () => ({
         createViewerService: () => ({
-          registerViewer: () => Promise.resolve(ok(undefined)),
-          removeViewer: () => Promise.resolve(err(serviceError)),
+          registerViewer: async () => Promise.resolve(ok(undefined)),
+          removeViewer: async () => Promise.resolve(err(serviceError)),
         }),
       }));
 
@@ -255,9 +255,9 @@ describe("Viewer Router", () => {
 
       void mock.module("@/services/viewer", () => ({
         createViewerService: () => ({
-          registerViewer: () => Promise.resolve(ok(undefined)),
-          removeViewer: () => Promise.resolve(ok(undefined)),
-          countActiveViewers: () => Promise.resolve(ok(42)),
+          registerViewer: async () => Promise.resolve(ok(undefined)),
+          removeViewer: async () => Promise.resolve(ok(undefined)),
+          countActiveViewers: async () => Promise.resolve(ok(42)),
         }),
       }));
 
@@ -300,9 +300,9 @@ describe("Viewer Router", () => {
 
       void mock.module("@/services/viewer", () => ({
         createViewerService: () => ({
-          registerViewer: () => Promise.resolve(ok(undefined)),
-          removeViewer: () => Promise.resolve(ok(undefined)),
-          countActiveViewers: () => Promise.resolve(err(serviceError)),
+          registerViewer: async () => Promise.resolve(ok(undefined)),
+          removeViewer: async () => Promise.resolve(ok(undefined)),
+          countActiveViewers: async () => Promise.resolve(err(serviceError)),
         }),
       }));
 

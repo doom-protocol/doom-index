@@ -41,14 +41,14 @@ import { ok } from "neverthrow";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
-type Args = {
+interface Args {
   seed?: string;
   model?: string;
   width: number;
   height: number;
   format: "webp" | "png";
   output: string;
-};
+}
 
 type BunWithOptionalExit = typeof Bun & {
   exit?: (code?: number) => never;
@@ -86,12 +86,12 @@ const parseArgs = (): Args => {
         break;
       case "--w":
       case "--width":
-        parsed.width = parseInt(next, 10);
+        parsed.width = Number.parseInt(next, 10);
         i++;
         break;
       case "--h":
       case "--height":
-        parsed.height = parseInt(next, 10);
+        parsed.height = Number.parseInt(next, 10);
         i++;
         break;
       case "--format":
@@ -147,14 +147,14 @@ const createLocalBucket = (outputDir: string): R2Bucket => {
       await Bun.write(filePath, buffer);
       return null;
     },
-    get: () => Promise.resolve(null),
+    get: async () => Promise.resolve(null),
   } as unknown as R2Bucket;
 };
 
 // Create local paintings repository adapter
 const createLocalPaintingsRepository = (db: BunSQLiteDatabase<typeof schema>): PaintingsRepository => {
   return {
-    list: () => Promise.resolve(ok({ items: [], hasMore: false })),
+    list: async () => Promise.resolve(ok({ items: [], hasMore: false })),
     insert: async (metadata: PaintingMetadata, r2Key: string) => {
       try {
         const ts = Math.floor(new Date(metadata.timestamp).getTime() / 1000);
@@ -183,7 +183,7 @@ const createLocalPaintingsRepository = (db: BunSQLiteDatabase<typeof schema>): P
         return ok(undefined);
       }
     },
-    findById: () => Promise.resolve(ok(null)),
+    findById: async () => Promise.resolve(ok(null)),
   };
 };
 
@@ -291,8 +291,8 @@ const main = async () => {
       console.log("\n⚠️ Skipped: Generation already exists for this hour");
     } else {
       console.log("\n✅ Generation complete!");
-      console.log(`Token: ${value.selectedToken?.name} (${value.selectedToken?.symbol})`);
-      console.log(`Image URL: ${value.imageUrl}`);
+      console.log(`Token: ${String(value.selectedToken?.name)} (${String(value.selectedToken?.symbol)})`);
+      console.log(`Image URL: ${String(value.imageUrl)}`);
       console.log(`Local Path: ${join(outputDir, value.imageUrl?.split("/").pop() || "")}`);
 
       if (value.selectedToken?.logoUrl) {
@@ -303,15 +303,15 @@ const main = async () => {
           if (response.ok) {
             const buffer = await response.arrayBuffer();
             const ext = logoUrl.split(".").pop()?.split("?")[0] || "png";
-            const tokenFileName = `token_${value.selectedToken.symbol}_${Date.now()}.${ext}`;
+            const tokenFileName = `token_${value.selectedToken.symbol}_${String(Date.now())}.${ext}`;
             const tokenPath = join(outputDir, tokenFileName);
 
             await Bun.write(tokenPath, buffer);
             console.log(`Token Logo Saved: ${tokenPath}`);
           } else {
-            console.warn(`Failed to download token logo: ${response.status} ${response.statusText}`);
+            console.warn(`Failed to download token logo: ${String(response.status)} ${response.statusText}`);
           }
-        } catch (error) {
+        } catch (error: unknown) {
           console.warn("Failed to download token logo:", error);
         }
       }
@@ -321,7 +321,7 @@ const main = async () => {
 
 main()
   .then(() => safeExit(0))
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error("\n❌ Unexpected error:", error);
     safeExit(1);
   });

@@ -5,8 +5,8 @@ import { sendGAEvent } from "@/lib/analytics";
 import { logger } from "@/utils/logger";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import type { PropsWithChildren } from "react";
-import { Suspense, useEffect, useMemo, useState, type FC } from "react";
+import type { FC, PropsWithChildren } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { ACESFilmicToneMapping } from "three";
 import { GalleryRoom } from "../gallery/gallery-room";
 import { Lights } from "../gallery/lights";
@@ -18,6 +18,7 @@ interface AboutSceneProps extends PropsWithChildren {
 }
 
 const ENTRANCE_DURATION = 500; // milliseconds for CSS transition
+const DEFAULT_CAMERA_POSITION: [number, number, number] = [0, 0.8, 0.8];
 
 // WebGL error fallback component with entrance animation
 const WebGLErrorFallback: FC<PropsWithChildren & { paperSize: { width: string; height: string } }> = ({
@@ -60,7 +61,7 @@ const WebGLErrorFallback: FC<PropsWithChildren & { paperSize: { width: string; h
           borderRadius: "2px",
           border: "1px solid rgba(200, 200, 200, 0.3)",
           opacity,
-          transition: `opacity ${ENTRANCE_DURATION}ms ease-out`,
+          transition: `opacity ${String(ENTRANCE_DURATION)}ms ease-out`,
         }}
       >
         <WhitepaperViewer>{children}</WhitepaperViewer>
@@ -89,7 +90,7 @@ const IOSFallback: FC<
     <div
       style={{
         position: "fixed",
-        top: `${headerHeight}px`,
+        top: `${String(headerHeight)}px`,
         left: 0,
         right: 0,
         bottom: 0,
@@ -121,7 +122,7 @@ const IOSFallback: FC<
           WebkitTouchCallout: "none",
           WebkitUserSelect: "text",
           opacity,
-          transition: `opacity ${ENTRANCE_DURATION}ms ease-out`,
+          transition: `opacity ${String(ENTRANCE_DURATION)}ms ease-out`,
         }}
       >
         <div style={{ padding: "1px 0" }}>
@@ -132,7 +133,7 @@ const IOSFallback: FC<
   );
 };
 
-export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPosition = [0, 0.8, 0.8] }) => {
+export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPosition = DEFAULT_CAMERA_POSITION }) => {
   const HEADER_HEIGHT = 56;
   const isMobile = useMobile();
   const isIOS = useIOS();
@@ -194,8 +195,8 @@ export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPositio
     }
 
     return {
-      width: `${finalWidth}px`,
-      height: `${finalHeight}px`,
+      width: `${String(finalWidth)}px`,
+      height: `${String(finalHeight)}px`,
     };
   }, [PAPER_ASPECT_RATIO]);
 
@@ -239,8 +240,8 @@ export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPositio
     }
 
     return {
-      width: `${finalWidth}px`,
-      height: `${finalHeight}px`,
+      width: `${String(finalWidth)}px`,
+      height: `${String(finalHeight)}px`,
     };
   }, [PAPER_ASPECT_RATIO]);
 
@@ -268,12 +269,12 @@ export const AboutScene: FC<AboutSceneProps> = ({ children, initialCameraPositio
         }}
         style={{
           position: "fixed",
-          top: `${HEADER_HEIGHT}px`,
+          top: `${String(HEADER_HEIGHT)}px`,
           left: 0,
           right: 0,
           bottom: 0,
           width: "100%",
-          height: `calc(100% - ${HEADER_HEIGHT}px)`,
+          height: `calc(100% - ${String(HEADER_HEIGHT)}px)`,
           background: "#000000",
         }}
         onCreated={({ gl }) => {

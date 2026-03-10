@@ -12,7 +12,7 @@ import {
   getSymbolicElementForArchetypeClimate,
 } from "@/constants/prompts/world-painting";
 import { buildGenerationFileName, hashVisualParams, seedForMinute } from "@/lib/pure/hash";
-import { type VisualParams } from "@/lib/pure/mapping";
+import type { VisualParams } from "@/lib/pure/mapping";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
 import type { TokensRepository } from "@/repositories/tokens-repository";
 import type { TokenAnalysisService, TokenMetaInput, TokenOperationInput } from "@/services/token-analysis-service";
@@ -21,9 +21,10 @@ import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
 import { logger } from "@/utils/logger";
 import { getMinuteBucket } from "@/utils/time";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
-export type PromptComposition = {
+export interface PromptComposition {
   seed: string;
   minuteBucket: string;
   vp: VisualParams;
@@ -36,7 +37,7 @@ export type PromptComposition = {
     filename: string;
   };
   paramsHash: string;
-};
+}
 
 /**
  * Input for token prompt composition - allows optional tokenMeta for fallback handling
@@ -45,17 +46,17 @@ type TokenPromptRequest = Omit<TokenOperationInput, "tokenMeta"> & {
   tokenMeta?: TokenMetaInput;
 };
 
-type WorldPromptServiceDeps = {
+interface WorldPromptServiceDeps {
   tokenAnalysisService?: TokenAnalysisService;
   tokensRepository?: TokensRepository;
   workersAiClient?: WorkersAiClient;
   getMinuteBucket?: () => string;
   log?: typeof logger;
-};
+}
 
-export type WorldPromptService = {
-  composeTokenPrompt(request: TokenPromptRequest): Promise<Result<PromptComposition, AppError>>;
-};
+export interface WorldPromptService {
+  composeTokenPrompt: (request: TokenPromptRequest) => Promise<Result<PromptComposition, AppError>>;
+}
 
 /**
  * World Prompt Service
@@ -75,7 +76,7 @@ export type WorldPromptService = {
  * - Enhancement layers: Foundation + Visual + Technical + Atmospheric
  *
  * @see https://docs.bfl.ai/guides/prompting_summary
- * @see docs/flux-prompting-guide.md
+ * @see docs/guides/flux-prompting-guide.md
  */
 const DEFAULT_IMAGE_SIZE = PROMPT_TUNING.imageSize;
 
@@ -162,30 +163,17 @@ export function createWorldPromptService({
   };
 
   const getReferenceIntegrationInstruction = (ctx: PaintingContext): string => {
-    // Determine role based on archetype
-    let role = "divine sacred logo";
-    switch (ctx.a) {
-      case "l1-sovereign":
-        role = "divine royal seal";
-        break;
-      case "meme-ascendant":
-        role = "worshipped idol symbol";
-        break;
-      case "ai-oracle":
-        role = "glowing holographic glyph";
-        break;
-      case "perp-liquidity":
-        role = "golden financial emblem";
-        break;
-      case "privacy":
-        role = "shadowy encrypted sigil";
-        break;
-      case "political":
-        role = "grand political crest";
-        break;
-      default:
-        role = "mysterious ancient symbol";
-    }
+    const roleByArchetype: Record<PaintingContext["a"], string> = {
+      "l1-sovereign": "divine royal seal",
+      "meme-ascendant": "worshipped idol symbol",
+      "ai-oracle": "glowing holographic glyph",
+      "perp-liquidity": "golden financial emblem",
+      privacy: "shadowy encrypted sigil",
+      political: "grand political crest",
+      unknown: "mysterious ancient symbol",
+    };
+
+    const role = roleByArchetype[ctx.a];
 
     // Determine placement based on composition - vary positions to avoid repetitive sky placements
     let placement = "carved into an ancient stone monument at the scene's center";
@@ -211,9 +199,8 @@ export function createWorldPromptService({
   };
 
   const buildTokenSystemPrompt = (hasReferenceImage: boolean): string => {
-    const referenceImageInstruction =
-      hasReferenceImage ?
-        `\n\n5. IMAGE-TO-IMAGE (i2i) REQUIREMENTS:
+    const referenceImageInstruction = hasReferenceImage
+      ? `\n\n5. IMAGE-TO-IMAGE (i2i) REQUIREMENTS:
    - A reference image (token logo) is provided. You MUST incorporate this image into the painting.
    - CRITICAL: Explicitly state style preservation: "maintaining classical oil painting technique with visible brushwork and impasto texture"
    - Include explicit integration instructions like: "(token logo integrated into the scene as divine royal seal:1.20)"
@@ -427,7 +414,7 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
       `Market Dynamics:`,
       `- Market Climate: ${ctx.c}`,
       `- Token Archetype: ${ctx.a}`,
-      `- Event: ${ctx.e.k} (intensity ${ctx.e.i})`,
+      `- Event: ${ctx.e.k} (intensity ${String(ctx.e.i)})`,
       `- Trend Direction: ${ctx.d.dir} (${ctx.d.vol} volatility)`,
       `- Price Change (7d): ${ctx.s.p7.toFixed(2)}%`,
       `- Volatility Index: ${numberFormatter.format(ctx.s.vol)}`,
@@ -462,20 +449,22 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
       `   - Always include: ${MEDIEVAL_FIGURES_ELEMENT}`,
       `4. Add ATMOSPHERIC LAYER: "${narrativeMoment.atmosphere}"`,
       `5. Add SYMBOLIC ELEMENTS: "${narrativeMoment.symbols}" (weight: 1.05)`,
-      ...(referenceImageUrl ?
-        [
-          ``,
-          `6. IMAGE-TO-IMAGE (i2i) REQUIREMENTS:`,
-          `   - A reference image (token logo) is provided and MUST be integrated.`,
-          `   - Include: "(token logo integrated into the scene as ${
-            ctx.a === "l1-sovereign" ? "divine royal seal"
-            : ctx.a === "meme-ascendant" ? "worshipped idol symbol"
-            : "divine sacred logo"
-          }, maintaining classical oil painting technique:1.10)"`,
-          `   - ALWAYS include style preservation: "(maintaining classical oil painting technique with visible brushwork and impasto texture:1.5)" and "(preserving traditional renaissance master style throughout entire composition:1.4)"`,
-          `   - Be comprehensive: Specify what to change (logo integration) and what to maintain (oil painting style, composition, atmosphere).`,
-        ]
-      : []),
+      ...(referenceImageUrl
+        ? [
+            ``,
+            `6. IMAGE-TO-IMAGE (i2i) REQUIREMENTS:`,
+            `   - A reference image (token logo) is provided and MUST be integrated.`,
+            `   - Include: "(token logo integrated into the scene as ${
+              ctx.a === "l1-sovereign"
+                ? "divine royal seal"
+                : ctx.a === "meme-ascendant"
+                  ? "worshipped idol symbol"
+                  : "divine sacred logo"
+            }, maintaining classical oil painting technique:1.10)"`,
+            `   - ALWAYS include style preservation: "(maintaining classical oil painting technique with visible brushwork and impasto texture:1.5)" and "(preserving traditional renaissance master style throughout entire composition:1.4)"`,
+            `   - Be comprehensive: Specify what to change (logo integration) and what to maintain (oil painting style, composition, atmosphere).`,
+          ]
+        : []),
       `7. End with: "${MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION}"`,
       ``,
       `CRITICAL REMINDERS:`,
@@ -577,9 +566,8 @@ Respond with ONLY the prompt text in this exact format. Do not include markdown,
 
       // For image-to-image with reference image, remove "logo" from negative prompt
       // to allow the token logo to be integrated into the scene
-      const negativePrompt =
-        hasReferenceImage ?
-          WORLD_PAINTING_NEGATIVE_PROMPT.replace(/\s*,\s*\blogo\b\s*,?/gi, ",")
+      const negativePrompt = hasReferenceImage
+        ? WORLD_PAINTING_NEGATIVE_PROMPT.replace(/\s*,\s*\blogo\b\s*,?/gi, ",")
             .replace(/\s*,\s*,\s*/g, ",")
             .replace(/^,\s*|\s*,$/g, "")
             .replace(/\s+/g, " ")

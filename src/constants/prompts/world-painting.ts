@@ -1,3 +1,5 @@
+import type { MarketClimate, TokenArchetype } from "@/types/painting-context";
+
 /**
  * Prompt constants for Doom Index "world allegorical painting" style.
  * Centralized management of base styles and token-specific motifs that are
@@ -51,50 +53,51 @@ export const SYMBOLIC_ELEMENTS = {
  * Mapping of archetype and climate to symbolic visual elements.
  * Used to determine which elements should appear based on token characteristics.
  */
-const ARCHETYPE_CLIMATE_ELEMENT_MAP: Record<string, Record<string, keyof typeof SYMBOLIC_ELEMENTS>> = {
-  "l1-sovereign": {
-    euphoria: "radiant golden divine light breaking the clouds",
-    cooling: "glittering blue glaciers and cold reflections",
-    despair: "oppressive darkness with many red eyes",
-    panic: "dense toxic smog in the sky",
-    transition: "lush emerald forests and living roots",
-  },
-  "meme-ascendant": {
-    euphoria: "bioluminescent spores and organic clusters",
-    cooling: "glittering blue glaciers and cold reflections",
-    despair: "oppressive darkness with many red eyes",
-    panic: "blinding nuclear flash on the horizon",
-    transition: "lush emerald forests and living roots",
-  },
-  privacy: {
-    euphoria: "radiant golden divine light breaking the clouds",
-    cooling: "glittering blue glaciers and cold reflections",
-    despair: "oppressive darkness with many red eyes",
-    panic: "dense toxic smog in the sky",
-    transition: "lush emerald forests and living roots",
-  },
-  "ai-oracle": {
-    euphoria: "colossal dystopian machine towers and metal grids",
-    cooling: "glittering blue glaciers and cold reflections",
-    despair: "oppressive darkness with many red eyes",
-    panic: "blinding nuclear flash on the horizon",
-    transition: "bioluminescent spores and organic clusters",
-  },
-  political: {
-    euphoria: "radiant golden divine light breaking the clouds",
-    cooling: "dense toxic smog in the sky",
-    despair: "oppressive darkness with many red eyes",
-    panic: "blinding nuclear flash on the horizon",
-    transition: "lush emerald forests and living roots",
-  },
-  "perp-liquidity": {
-    euphoria: "colossal dystopian machine towers and metal grids",
-    cooling: "glittering blue glaciers and cold reflections",
-    despair: "oppressive darkness with many red eyes",
-    panic: "dense toxic smog in the sky",
-    transition: "bioluminescent spores and organic clusters",
-  },
-} as const;
+const ARCHETYPE_CLIMATE_ELEMENT_MAP: Partial<Record<string, Partial<Record<string, keyof typeof SYMBOLIC_ELEMENTS>>>> =
+  {
+    "l1-sovereign": {
+      euphoria: "radiant golden divine light breaking the clouds",
+      cooling: "glittering blue glaciers and cold reflections",
+      despair: "oppressive darkness with many red eyes",
+      panic: "dense toxic smog in the sky",
+      transition: "lush emerald forests and living roots",
+    },
+    "meme-ascendant": {
+      euphoria: "bioluminescent spores and organic clusters",
+      cooling: "glittering blue glaciers and cold reflections",
+      despair: "oppressive darkness with many red eyes",
+      panic: "blinding nuclear flash on the horizon",
+      transition: "lush emerald forests and living roots",
+    },
+    privacy: {
+      euphoria: "radiant golden divine light breaking the clouds",
+      cooling: "glittering blue glaciers and cold reflections",
+      despair: "oppressive darkness with many red eyes",
+      panic: "dense toxic smog in the sky",
+      transition: "lush emerald forests and living roots",
+    },
+    "ai-oracle": {
+      euphoria: "colossal dystopian machine towers and metal grids",
+      cooling: "glittering blue glaciers and cold reflections",
+      despair: "oppressive darkness with many red eyes",
+      panic: "blinding nuclear flash on the horizon",
+      transition: "bioluminescent spores and organic clusters",
+    },
+    political: {
+      euphoria: "radiant golden divine light breaking the clouds",
+      cooling: "dense toxic smog in the sky",
+      despair: "oppressive darkness with many red eyes",
+      panic: "blinding nuclear flash on the horizon",
+      transition: "lush emerald forests and living roots",
+    },
+    "perp-liquidity": {
+      euphoria: "colossal dystopian machine towers and metal grids",
+      cooling: "glittering blue glaciers and cold reflections",
+      despair: "oppressive darkness with many red eyes",
+      panic: "dense toxic smog in the sky",
+      transition: "bioluminescent spores and organic clusters",
+    },
+  } as const;
 
 /**
  * Default symbolic element when archetype/climate combination is not found.
@@ -109,14 +112,18 @@ const DEFAULT_SYMBOLIC_ELEMENT: keyof typeof SYMBOLIC_ELEMENTS = "lush emerald f
  * @returns Symbolic element key
  */
 export function getSymbolicElementForArchetypeClimate(
-  archetype: string,
-  climate: string,
+  archetype: TokenArchetype,
+  climate: MarketClimate,
 ): keyof typeof SYMBOLIC_ELEMENTS {
-  return (
-    ARCHETYPE_CLIMATE_ELEMENT_MAP[archetype]?.[climate] ||
-    ARCHETYPE_CLIMATE_ELEMENT_MAP["unknown"]?.[climate] ||
-    DEFAULT_SYMBOLIC_ELEMENT
-  );
+  const archetypeMap = ARCHETYPE_CLIMATE_ELEMENT_MAP[archetype];
+  if (archetypeMap !== undefined) {
+    const directElement = archetypeMap[climate];
+    if (directElement !== undefined) {
+      return directElement;
+    }
+  }
+
+  return DEFAULT_SYMBOLIC_ELEMENT;
 }
 
 /**
@@ -124,7 +131,7 @@ export function getSymbolicElementForArchetypeClimate(
  * Each template describes a specific dramatic moment with characters, actions, and consequences.
  * These follow FLUX's context-focused prompt structure: Setting → Action → Style → Context
  */
-export type NarrativeMoment = {
+export interface NarrativeMoment {
   /** The scene/setting - what is happening where */
   scene: string;
   /** The main action - the decisive moment being captured */
@@ -135,7 +142,7 @@ export type NarrativeMoment = {
   atmosphere: string;
   /** Symbolic elements that reinforce the narrative */
   symbols: string;
-};
+}
 
 export const NARRATIVE_MOMENTS: Record<string, NarrativeMoment> = {
   // Token rising + Market euphoria = "Coronation"

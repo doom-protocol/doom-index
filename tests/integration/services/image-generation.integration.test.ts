@@ -46,7 +46,7 @@ describe("ImageGenerationService Integration", () => {
 
       mockImageProvider = {
         name: "mock",
-        generate: mock(() =>
+        generate: mock(async () =>
           Promise.resolve(
             ok({
               imageBuffer: mockImageBuffer,
@@ -89,7 +89,7 @@ describe("ImageGenerationService Integration", () => {
       };
 
       mockPromptService = {
-        composeTokenPrompt: mock(() => Promise.resolve(ok(mockComposition))),
+        composeTokenPrompt: mock(async () => Promise.resolve(ok(mockComposition))),
       };
 
       const service = createImageGenerationService({
@@ -125,7 +125,7 @@ describe("ImageGenerationService Integration", () => {
 
       mockImageProvider = {
         name: "mock",
-        generate: mock(() =>
+        generate: mock(async () =>
           Promise.resolve(
             ok({
               imageBuffer: mockImageBuffer,
@@ -168,7 +168,7 @@ describe("ImageGenerationService Integration", () => {
       };
 
       mockPromptService = {
-        composeTokenPrompt: mock(() => Promise.resolve(ok(mockComposition))),
+        composeTokenPrompt: mock(async () => Promise.resolve(ok(mockComposition))),
       };
 
       const service = createImageGenerationService({
@@ -200,7 +200,7 @@ describe("ImageGenerationService Integration", () => {
 
       mockImageProvider = {
         name: "mock",
-        generate: mock(() =>
+        generate: mock(async () =>
           Promise.resolve(
             ok({
               imageBuffer: mockImageBuffer,
@@ -243,7 +243,7 @@ describe("ImageGenerationService Integration", () => {
       };
 
       mockPromptService = {
-        composeTokenPrompt: mock(() => Promise.resolve(ok(mockComposition))),
+        composeTokenPrompt: mock(async () => Promise.resolve(ok(mockComposition))),
       };
 
       const service = createImageGenerationService({
@@ -276,11 +276,11 @@ describe("ImageGenerationService Integration", () => {
 
       mockImageProvider = {
         name: "mock",
-        generate: mock(() => Promise.resolve(ok({ imageBuffer: new ArrayBuffer(1024), providerMeta: {} }))),
+        generate: mock(async () => Promise.resolve(ok({ imageBuffer: new ArrayBuffer(1024), providerMeta: {} }))),
       };
 
       mockPromptService = {
-        composeTokenPrompt: mock(() => Promise.resolve(err(mockError))),
+        composeTokenPrompt: mock(async () => Promise.resolve(err(mockError))),
       };
 
       const service = createImageGenerationService({

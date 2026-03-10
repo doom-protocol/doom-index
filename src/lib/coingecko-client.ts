@@ -2,7 +2,8 @@ import { handleApiError } from "@/lib/pure/error-handling";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 import Coingecko from "@coingecko/coingecko-typescript";
-import { type Result, err, ok } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 // Helper to extract return types from the SDK methods
 type CoinGeckoInstance = Coingecko;
@@ -86,7 +87,7 @@ export class CoinGeckoClient {
       categories: [],
     } as unknown as TrendingSearchResponse;
 
-    return this.execute(() => this.client.search.trending.get(), dummyTrending);
+    return this.execute(async () => this.client.search.trending.get(), dummyTrending);
   }
 
   /**
@@ -94,7 +95,7 @@ export class CoinGeckoClient {
    */
   async getCoinsList(): Promise<Result<CoinsListResponse, AppError>> {
     return this.execute(
-      () => this.client.coins.list.get({ include_platform: false }),
+      async () => this.client.coins.list.get({ include_platform: false }),
       [] as unknown as CoinsListResponse,
     );
   }
@@ -111,9 +112,9 @@ export class CoinGeckoClient {
       symbol: id === "solana" ? "sol" : "btc",
       name: id === "solana" ? "Solana" : "Bitcoin",
       image:
-        id === "solana" ?
-          "https://coin-images.coingecko.com/coins/images/4128/large/solana.png"
-        : "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png",
+        id === "solana"
+          ? "https://coin-images.coingecko.com/coins/images/4128/large/solana.png"
+          : "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png",
       current_price: 200,
       market_cap: 80000000000,
       market_cap_rank: 5,
@@ -139,7 +140,7 @@ export class CoinGeckoClient {
     })) as unknown as CoinsMarketsResponse;
 
     return this.execute(
-      () =>
+      async () =>
         this.client.coins.markets.get({
           vs_currency: options.vs_currency || "usd",
           ids: ids.join(","),
@@ -157,7 +158,7 @@ export class CoinGeckoClient {
    * Get Global Market Data (Requirement 3)
    */
   async getGlobalMarketData(): Promise<Result<GlobalMarketDataResponse, AppError>> {
-    return this.execute(() => this.client.global.get(), {
+    return this.execute(async () => this.client.global.get(), {
       data: {
         total_market_cap: { usd: 2000000000000 },
         total_volume: { usd: 100000000000 },
@@ -182,7 +183,7 @@ export class CoinGeckoClient {
       }
 
       // Extract status if possible (Stainless errors usually have 'status')
-      const status = (error as { status?: number } & Error)?.status;
+      const status = error instanceof Error && "status" in error ? (error.status as number | undefined) : undefined;
       const apiError = handleApiError(error, { provider: "coingecko" });
 
       return err(status !== undefined ? { ...apiError, status } : apiError);

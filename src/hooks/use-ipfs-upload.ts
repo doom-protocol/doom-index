@@ -9,8 +9,10 @@
  * 5. Return both CIDs
  */
 
-import { buildNftMetadata, type BuildMetadataParams } from "@/lib/metadata-builder";
-import { createPinataClient, type PinataClient } from "@/lib/pinata-client";
+import { buildNftMetadata } from "@/lib/metadata-builder";
+import type { BuildMetadataParams } from "@/lib/metadata-builder";
+import { createPinataClient } from "@/lib/pinata-client";
+import type { PinataClient } from "@/lib/pinata-client";
 import { useTRPCClient } from "@/lib/trpc/client";
 import { logger } from "@/utils/logger";
 import { useCallback, useMemo, useState } from "react";
@@ -31,6 +33,16 @@ export interface IpfsUploadResult {
 export interface IpfsUploadError {
   message: string;
   details?: unknown;
+}
+
+class IpfsUploadException extends Error {
+  details?: unknown;
+
+  constructor(message: string, details?: unknown) {
+    super(message);
+    this.name = "IpfsUploadException";
+    this.details = details;
+  }
 }
 
 /**
@@ -159,10 +171,7 @@ export function useIpfsUpload(): UseIpfsUploadResult {
           details: err,
         });
 
-        const uploadError: IpfsUploadError = {
-          message: errorMessage,
-          details: err,
-        };
+        const uploadError = new IpfsUploadException(errorMessage, err);
 
         setError(uploadError);
         setIsUploading(false);

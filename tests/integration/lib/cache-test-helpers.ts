@@ -2,12 +2,12 @@
  * Common test helpers for cache integration tests
  */
 
-export type CachedResponseData = {
+export interface CachedResponseData {
   body: string;
   headers: Record<string, string>;
   status: number;
   statusText: string;
-};
+}
 
 /**
  * Create a mock Cache instance for integration tests
@@ -18,7 +18,7 @@ export function createMockCache(): {
 } {
   const cacheMap = new Map<string, CachedResponseData>();
   const mockCache = {
-    match: (key: string | Request) => {
+    match: async (key: string | Request) => {
       const keyStr = typeof key === "string" ? key : key.url;
       const cached = cacheMap.get(keyStr);
       if (!cached) return Promise.resolve(undefined);
@@ -41,7 +41,7 @@ export function createMockCache(): {
         statusText: response.statusText,
       });
     },
-    delete: (key: string | Request) => {
+    delete: async (key: string | Request) => {
       const keyStr = typeof key === "string" ? key : key.url;
       return Promise.resolve(cacheMap.delete(keyStr));
     },

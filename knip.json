@@ -1,5 +1,24 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "open-next.config.ts",
+    "scripts/backfill-d1-archive.ts",
+    "scripts/gen-img.ts",
+    "scripts/test-slack-report.ts",
+    "scripts/update-react-imports.ts",
+    "scripts/webpack/stub.cjs",
+    "src/lib/image-loader.ts"
+  ],
+  "project": [
+    "src/**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts,mdx}",
+    "scripts/**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts}",
+    "tests/**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts}",
+    "*.{js,mjs,cjs,jsx,ts,tsx,mts,cts}",
+    "*.d.ts"
+  ],
+  "ignoreDependencies": ["tailwindcss", "postcss"],
+  "ignoreFiles": ["src/assets/whitepaper/v1.mdx"],
+  "ignoreUnresolved": ["bun-types"],
   "ignoreExportsUsedInFile": {
     "interface": true,
     "type": true

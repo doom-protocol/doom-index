@@ -67,12 +67,12 @@ const tokenMeta: TokenMetaInput = {
 
 const createDeps = () => {
   const promptService: WorldPromptService = {
-    composeTokenPrompt: mock(() =>
+    composeTokenPrompt: mock(async () =>
       Promise.resolve(ok(composition)),
     ) as unknown as WorldPromptService["composeTokenPrompt"],
   };
 
-  const mockGenerate = mock(() =>
+  const mockGenerate = mock(async () =>
     Promise.resolve(
       ok({
         imageBuffer: new ArrayBuffer(8),
@@ -112,7 +112,7 @@ describe("ImageGenerationService.generateTokenImage", () => {
     const calls = mockGenerate.mock.calls as unknown as Array<[ImageRequest, unknown?]>;
     const request = calls[0][0];
     expect(request).toBeDefined();
-    expect(request?.referenceImageUrl).toBe("https://assets.example.com/logo.png?size=large");
+    expect(request.referenceImageUrl).toBe("https://assets.example.com/logo.png?size=large");
   });
 
   it("drops unsafe reference URLs before calling the provider", async () => {
@@ -132,7 +132,7 @@ describe("ImageGenerationService.generateTokenImage", () => {
     const calls = mockGenerate.mock.calls as unknown as Array<[ImageRequest, unknown?]>;
     const request = calls[0][0];
     expect(request).toBeDefined();
-    expect(request?.referenceImageUrl).toBeUndefined();
+    expect(request.referenceImageUrl).toBeUndefined();
   });
 
   it("propagates prompt composition errors", async () => {
@@ -143,7 +143,7 @@ describe("ImageGenerationService.generateTokenImage", () => {
     };
 
     const { promptService, imageProvider } = createDeps();
-    promptService.composeTokenPrompt = mock(() =>
+    promptService.composeTokenPrompt = mock(async () =>
       Promise.resolve(err(promptError)),
     ) as unknown as WorldPromptService["composeTokenPrompt"];
 

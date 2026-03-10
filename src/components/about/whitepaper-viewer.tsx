@@ -1,7 +1,6 @@
 "use client";
 
-import type { PropsWithChildren } from "react";
-import { type FC } from "react";
+import type { FC, PropsWithChildren } from "react";
 
 const WhitepaperViewer: FC<PropsWithChildren> = ({ children }) => {
   return (

@@ -26,7 +26,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Only report internal server errors to Slack
       if (error.code === "INTERNAL_SERVER_ERROR") {
-        void reportError(error, `TRPC Internal Error at ${path}`);
+        void reportError(error, `TRPC Internal Error at ${String(path)}`);
       }
     },
   });

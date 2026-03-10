@@ -2,19 +2,19 @@ import type { AppError } from "@/types/app-error";
 import type { Result } from "neverthrow";
 
 /**
- * Legacy type aliases for backward compatibility
- * @deprecated These types are for backward compatibility only.
- * The legacy 8-token system has been removed.
+ * Legacy type aliases for backward compatibility.
+ * The legacy 8-token system has been removed, but these exports remain for
+ * code paths that have not been fully migrated yet.
  */
 export type TokenTicker = string;
 
-export type TokenState = {
-  ticker: TokenTicker;
+export interface TokenState {
+  ticker: string;
   thumbnailUrl: string;
   updatedAt: string;
-};
+}
 
-export type ImageRequest = {
+export interface ImageRequest {
   prompt: string;
   negative: string;
   width: number;
@@ -23,12 +23,12 @@ export type ImageRequest = {
   seed: string;
   model?: string;
   referenceImageUrl?: string;
-};
+}
 
-export type ImageResponse = {
+export interface ImageResponse {
   imageBuffer: ArrayBuffer;
   providerMeta: Record<string, unknown>;
-};
+}
 
 /**
  * Common pagination options used across the application
@@ -40,13 +40,13 @@ export interface PaginationOptions {
   to?: string;
 }
 
-export type ImageGenerationOptions = {
+export interface ImageGenerationOptions {
   timeoutMs?: number;
-};
+}
 
 export interface ImageProvider {
   name: string;
-  generate(input: ImageRequest, options?: ImageGenerationOptions): Promise<Result<ImageResponse, AppError>>;
+  generate: (input: ImageRequest, options?: ImageGenerationOptions) => Promise<Result<ImageResponse, AppError>>;
 }
 
 export type SizeValue = `${number}vw` | `${number}px`;
@@ -62,8 +62,8 @@ export function buildSizesAttr(sizes?: ResponsiveSizes): string | undefined {
   if (!sizes || sizes.length === 0) return undefined;
   return sizes
     .map((s) => {
-      if ("maxWidth" in s) return `(max-width: ${s.maxWidth}px) ${s.size}`;
-      if ("minWidth" in s) return `(min-width: ${s.minWidth}px) ${s.size}`;
+      if ("maxWidth" in s) return `(max-width: ${String(s.maxWidth)}px) ${s.size}`;
+      if ("minWidth" in s) return `(min-width: ${String(s.minWidth)}px) ${s.size}`;
       return s.size;
     })
     .join(", ");

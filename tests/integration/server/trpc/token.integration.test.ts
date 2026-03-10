@@ -3,12 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { createMockContext } from "../../../unit/server/trpc/helpers";
 // TOKEN_TICKERS no longer exists - legacy token system removed
 import { get } from "@/lib/cache";
-import {
-  createMockCache,
-  restoreCacheMock,
-  setupCacheMock,
-  type CachedResponseData,
-} from "../../lib/cache-test-helpers";
+import { createMockCache, restoreCacheMock, setupCacheMock } from "../../lib/cache-test-helpers";
+import type { CachedResponseData } from "../../lib/cache-test-helpers";
 
 describe("Token Integration", () => {
   let originalCaches: CacheStorage | undefined;
@@ -85,15 +81,15 @@ describe("Token Integration", () => {
 
       // Mock R2 bucket and getJsonR2
       const mockBucket = {
-        get: () =>
+        get: async () =>
           Promise.resolve({
-            json: () => Promise.resolve(mockTokenState),
+            json: async () => Promise.resolve(mockTokenState),
           }),
       } as unknown as R2Bucket;
 
       void mock.module("@/lib/r2", () => ({
         resolveR2Bucket: () => ({ isErr: () => false, value: mockBucket }),
-        getJsonR2: () => Promise.resolve({ isErr: () => false, value: mockTokenState }),
+        getJsonR2: async () => Promise.resolve({ isErr: () => false, value: mockTokenState }),
       }));
 
       const ctx = createMockContext();

@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "node:fs";
 
 interface OpenNextMetaInput {
   bytes: number;
@@ -12,6 +12,26 @@ interface BundleEntry {
   path: string;
   bytes: number;
   library?: string;
+}
+
+function isOpenNextMeta(value: unknown): value is OpenNextMeta {
+  if (typeof value !== "object" || value === null || !("inputs" in value)) {
+    return false;
+  }
+
+  const { inputs } = value;
+  if (typeof inputs !== "object" || inputs === null) {
+    return false;
+  }
+
+  return Object.values(inputs).every((input) => {
+    if (typeof input !== "object" || input === null || !("bytes" in input)) {
+      return false;
+    }
+
+    const bytes: unknown = Reflect.get(input, "bytes");
+    return typeof bytes === "number";
+  });
 }
 
 function extractLibraryName(path: string): string | undefined {
@@ -44,7 +64,13 @@ if (!fs.existsSync(metaPath)) {
   process.exit(1);
 }
 
-const meta: OpenNextMeta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+const parsedMeta: unknown = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+
+if (!isOpenNextMeta(parsedMeta)) {
+  throw new Error(`Invalid OpenNext meta file: ${metaPath}`);
+}
+
+const meta = parsedMeta;
 
 const entries: BundleEntry[] = Object.entries(meta.inputs).map(([path, data]: [string, OpenNextMetaInput]) => ({
   path,
@@ -98,8 +124,8 @@ libraryEntries.slice(0, 30).forEach((entry, index) => {
 console.log("\n" + "=".repeat(80));
 console.log("SUMMARY");
 console.log("=".repeat(80));
-console.log(`Total files: ${entries.length}`);
-console.log(`Total libraries: ${libraryEntries.length}`);
+console.log(`Total files: ${String(entries.length)}`);
+console.log(`Total libraries: ${String(libraryEntries.length)}`);
 console.log(`Average file size: ${formatBytes(totalSize / entries.length)}`);
 console.log(`Largest file: ${formatBytes(entries[0]?.bytes || 0)} - ${entries[0]?.path || "N/A"}`);
 console.log(`Largest library: ${formatBytes(libraryEntries[0]?.bytes || 0)} - ${libraryEntries[0]?.library || "N/A"}`);

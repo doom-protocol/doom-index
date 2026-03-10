@@ -188,7 +188,7 @@ describe("cloudflare-image", () => {
       const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 2);
 
       const expectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * Math.min(2, 1.5));
-      expect(result).toContain(`w=${expectedWidth}`);
+      expect(result).toContain(`w=${String(expectedWidth)}`);
     });
 
     it("should clamp DPR to maximum of 1.5 for /api/r2/ paths", async () => {
@@ -200,7 +200,7 @@ describe("cloudflare-image", () => {
       const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 3);
 
       const expectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * 1.5);
-      expect(result).toContain(`w=${expectedWidth}`);
+      expect(result).toContain(`w=${String(expectedWidth)}`);
     });
 
     it("should clamp DPR to minimum of 1 for /api/r2/ paths", async () => {
@@ -212,7 +212,7 @@ describe("cloudflare-image", () => {
       const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 0.5);
 
       const expectedWidth = IMAGE_PRESETS.galleryTexture.width;
-      expect(result).toContain(`w=${expectedWidth}`);
+      expect(result).toContain(`w=${String(expectedWidth)}`);
     });
 
     it("should return original URL for public directory images (non-/api/ paths)", async () => {
@@ -238,7 +238,7 @@ describe("cloudflare-image", () => {
       const { getTransformedTextureUrl, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
       const result = getTransformedTextureUrl("/api/r2/paintings/test.jpg");
 
-      expect(result).toContain(`w=${IMAGE_PRESETS.galleryTexture.width}`);
+      expect(result).toContain(`w=${String(IMAGE_PRESETS.galleryTexture.width)}`);
     });
 
     it("should apply DPR scaling for /api/r2/ paths", async () => {
@@ -250,7 +250,7 @@ describe("cloudflare-image", () => {
       const result = getTransformedTextureUrl("/api/r2/paintings/test.jpg", "galleryTexture", 1.5);
 
       const expectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * 1.5);
-      expect(result).toContain(`w=${expectedWidth}`);
+      expect(result).toContain(`w=${String(expectedWidth)}`);
     });
 
     it("should use specified preset for /api/r2/ paths", async () => {
@@ -261,7 +261,7 @@ describe("cloudflare-image", () => {
       const { getTransformedTextureUrl, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
       const result = getTransformedTextureUrl("/api/r2/paintings/test.jpg", "modalFull", 1);
 
-      expect(result).toContain(`w=${IMAGE_PRESETS.modalFull.width}`);
+      expect(result).toContain(`w=${String(IMAGE_PRESETS.modalFull.width)}`);
     });
 
     it("should return original URL for public directory images", async () => {
@@ -388,7 +388,7 @@ describe("cloudflare-image", () => {
       const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 3);
       const maxExpectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * 1.5);
 
-      expect(result).toContain(`w=${maxExpectedWidth}`);
+      expect(result).toContain(`w=${String(maxExpectedWidth)}`);
       // Ensure we never exceed 1.5x the base width
       expect(maxExpectedWidth).toBeLessThanOrEqual(IMAGE_PRESETS.galleryTexture.width * 1.5);
     });

@@ -1,6 +1,11 @@
 import { logger } from "@/utils/logger";
-import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
+import { drizzle } from "drizzle-orm/d1";
+import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "./schema";
+
+interface DbBindings {
+  DB?: D1Database;
+}
 
 let db: DrizzleD1Database<typeof schema> | undefined;
 
@@ -19,18 +24,16 @@ export async function getDB(d1Binding?: D1Database): Promise<DrizzleD1Database<t
     return db;
   }
 
-  if (db) return db;
+  if (db !== undefined) return db;
 
-  let binding: D1Database | undefined = d1Binding;
-  if (!binding) {
-    try {
-      const { getCloudflareContext } = await import("@opennextjs/cloudflare");
-      const { env } = await getCloudflareContext({ async: true });
-      binding = env.DB;
-    } catch (error) {
-      logger.error("Failed to get Cloudflare context", { error });
-      throw new Error("Failed to get Cloudflare context for D1 binding");
-    }
+  let binding: D1Database | undefined;
+  try {
+    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
+    const { env } = await getCloudflareContext({ async: true });
+    binding = (env as DbBindings).DB;
+  } catch (error) {
+    logger.error("Failed to get Cloudflare context", { error });
+    throw new Error("Failed to get Cloudflare context for D1 binding");
   }
 
   if (!binding) {

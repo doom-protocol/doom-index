@@ -24,8 +24,8 @@ const getTimestamp = () => {
 };
 
 const getCurrentLogLevel = (): LogLevel => {
-  const envLevel = env.LOG_LEVEL ?? "DEBUG";
-  if (envLevel && LOG_LEVELS.includes(envLevel as LogLevel)) {
+  const envLevel = env.LOG_LEVEL;
+  if (LOG_LEVELS.includes(envLevel as LogLevel)) {
     return envLevel as LogLevel;
   }
 
@@ -40,14 +40,14 @@ const shouldLog = (level: LogLevel): boolean => {
 
 const colorize = (message: string, level: LogLevel): string => {
   const colors = {
-    [LogLevel.ERROR]: "\x1b[31m", // Red
-    [LogLevel.WARN]: "\x1b[33m", // Yellow
-    [LogLevel.INFO]: "\x1b[36m", // Cyan
-    [LogLevel.DEBUG]: "\x1b[32m", // Green
+    [LogLevel.ERROR]: "\x1B[31m", // Red
+    [LogLevel.WARN]: "\x1B[33m", // Yellow
+    [LogLevel.INFO]: "\x1B[36m", // Cyan
+    [LogLevel.DEBUG]: "\x1B[32m", // Green
     [LogLevel.LOG]: null, // No color (standard)
   };
 
-  const reset = "\x1b[0m";
+  const reset = "\x1B[0m";
   const color = colors[level];
 
   if (color === null) {

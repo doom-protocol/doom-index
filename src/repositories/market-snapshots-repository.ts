@@ -1,12 +1,14 @@
 import type * as schema from "@/db/schema";
-import { marketSnapshots, type MarketSnapshot, type NewMarketSnapshot } from "@/db/schema/market-snapshots";
+import { marketSnapshots } from "@/db/schema/market-snapshots";
+import type { MarketSnapshot, NewMarketSnapshot } from "@/db/schema/market-snapshots";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 import { eq } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 /**
  * Market Snapshots Repository

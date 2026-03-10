@@ -5,10 +5,10 @@ import { createMockContext } from "../../../unit/server/trpc/helpers";
 describe("Viewer Integration", () => {
   it("should handle concurrent viewer registrations", async () => {
     const kvNamespace = {
-      get: () => Promise.resolve(null),
-      put: () => Promise.resolve(),
-      delete: () => Promise.resolve(),
-      list: () => Promise.resolve({ keys: [], cursor: "", complete: true }),
+      get: async () => Promise.resolve(null),
+      put: async () => Promise.resolve(),
+      delete: async () => Promise.resolve(),
+      list: async () => Promise.resolve({ keys: [], cursor: "", complete: true }),
     } as unknown as KVNamespace;
 
     const headers = new Headers({
@@ -26,7 +26,7 @@ describe("Viewer Integration", () => {
 
     // 並行リクエストのシミュレーション
     const results = await Promise.allSettled(
-      sessionIds.map((sessionId) =>
+      sessionIds.map(async (sessionId) =>
         caller.viewer.register({
           sessionId,
           userAgent: "Mozilla/5.0",

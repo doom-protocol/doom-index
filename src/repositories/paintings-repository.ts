@@ -1,12 +1,17 @@
 import { getDB } from "@/db";
 import { paintings } from "@/db/schema/paintings";
+import type { VisualParams } from "@/lib/pure/mapping";
 import type { AppError } from "@/types/app-error";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import { and, asc, desc, eq, gt, lt, or, sql } from "drizzle-orm";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
-export type PaintingCursor = { ts: number; id: string };
+export interface PaintingCursor {
+  ts: number;
+  id: string;
+}
 
 /**
  * Encode cursor to base64 string
@@ -19,7 +24,19 @@ export const encodeCursor = (c: PaintingCursor): string => {
  * Decode cursor from base64 string
  */
 export const decodeCursor = (s: string): PaintingCursor => {
-  return JSON.parse(atob(s));
+  const value: unknown = JSON.parse(atob(s));
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "ts" in value &&
+    typeof value.ts === "number" &&
+    "id" in value &&
+    typeof value.id === "string"
+  ) {
+    return { ts: value.ts, id: value.id };
+  }
+
+  throw new Error("Invalid painting cursor");
 };
 
 /**
@@ -28,12 +45,13 @@ export const decodeCursor = (s: string): PaintingCursor => {
  */
 function toRangeTs(from?: string, to?: string) {
   const startTs = from ? Math.floor(new Date(`${from}T00:00:00Z`).getTime() / 1000) : undefined;
-  const endExclusiveTs =
-    to ? Math.floor(new Date(new Date(`${to}T00:00:00Z`).getTime() + 86400_000).getTime() / 1000) : undefined;
+  const endExclusiveTs = to
+    ? Math.floor(new Date(new Date(`${to}T00:00:00Z`).getTime() + 86400_000).getTime() / 1000)
+    : undefined;
   return { startTs, endExclusiveTs };
 }
 
-type ArchiveIndexRow = {
+interface ArchiveIndexRow {
   id: string;
   timestamp: string;
   minuteBucket: string;
@@ -46,7 +64,36 @@ type ArchiveIndexRow = {
   visualParamsJson: string;
   prompt: string;
   negative: string;
-};
+}
+
+function isVisualParams(value: unknown): value is VisualParams {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const visualParams = value as Record<string, unknown>;
+
+  const keys: Array<keyof VisualParams> = [
+    "fogDensity",
+    "skyTint",
+    "reflectivity",
+    "blueBalance",
+    "vegetationDensity",
+    "organicPattern",
+    "radiationGlow",
+    "debrisIntensity",
+    "mechanicalPattern",
+    "metallicRatio",
+    "fractalDensity",
+    "bioluminescence",
+    "shadowDepth",
+    "redHighlight",
+    "lightIntensity",
+    "warmHue",
+  ];
+
+  return keys.every((key) => typeof visualParams[key] === "number");
+}
 
 /**
  * Sort direction for archive queries
@@ -59,7 +106,7 @@ export type ArchiveSortDirection = "asc" | "desc";
  * Archive query options with flexible pagination support
  * Designed to support future extensions like token-based timeline queries
  */
-export type ListArchiveOptions = {
+export interface ListArchiveOptions {
   limit: number;
   cursor?: string;
   offset?: number;
@@ -76,12 +123,12 @@ export type ListArchiveOptions = {
    */
   paramsHash?: string;
   seed?: string;
-};
+}
 
 /**
  * Archive query result with bidirectional cursor support
  */
-export type ListArchiveResult = {
+export interface ListArchiveResult {
   items: ArchiveIndexRow[];
   /**
    * Cursor for next page (forward pagination)
@@ -93,21 +140,21 @@ export type ListArchiveResult = {
    */
   prevCursor?: string;
   hasMore: boolean;
-};
+}
 
 /**
  * Paintings repository interface
  */
 export interface PaintingsRepository {
-  list(options: ListArchiveOptions): Promise<Result<ListArchiveResult, AppError>>;
-  insert(metadata: PaintingMetadata, r2Key: string): Promise<Result<void, AppError>>;
-  findById(id: string): Promise<Result<PaintingMetadata | null, AppError>>;
+  list: (options: ListArchiveOptions) => Promise<Result<ListArchiveResult, AppError>>;
+  insert: (metadata: PaintingMetadata, r2Key: string) => Promise<Result<void, AppError>>;
+  findById: (id: string) => Promise<Result<PaintingMetadata | null, AppError>>;
 }
 
-type CreatePaintingsRepositoryDeps = {
+interface CreatePaintingsRepositoryDeps {
   d1Binding?: D1Database;
   log?: typeof logger;
-};
+}
 
 /**
  * Create paintings repository
@@ -292,13 +339,18 @@ export function createPaintingsRepository({
         return ok(null);
       }
 
+      const parsedVisualParams: unknown = JSON.parse(row.visualParamsJson);
+      if (!isVisualParams(parsedVisualParams)) {
+        throw new Error(`Invalid visual params JSON for painting ${id}`);
+      }
+
       const metadata: PaintingMetadata = {
         id: row.id,
         timestamp: row.timestamp,
         minuteBucket: row.minuteBucket,
         paramsHash: row.paramsHash,
         seed: row.seed,
-        visualParams: JSON.parse(row.visualParamsJson),
+        visualParams: parsedVisualParams,
         imageUrl: row.imageUrl,
         fileSize: row.fileSize,
         prompt: row.prompt,

@@ -7,12 +7,12 @@
  * - Error handling (API failures, D1 failures)
  */
 
-import { type MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
-import { type TokensRepository } from "@/repositories/tokens-repository";
-import { type MarketDataService } from "@/services/paintings/market-data";
-import { type PaintingContextBuilder } from "@/services/paintings/painting-context-builder";
+import type { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
+import type { TokensRepository } from "@/repositories/tokens-repository";
+import type { MarketDataService } from "@/services/paintings/market-data";
+import type { PaintingContextBuilder } from "@/services/paintings/painting-context-builder";
 import { PaintingGenerationOrchestrator } from "@/services/paintings/painting-generation-orchestrator";
-import { type TokenSelectionService } from "@/services/paintings/token-selection";
+import type { TokenSelectionService } from "@/services/paintings/token-selection";
 import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
 import type { MarketSnapshot, SelectedToken } from "@/types/paintings";
@@ -87,7 +87,7 @@ describe("PaintingGenerationOrchestrator Integration", () => {
 
     // Mock R2Bucket
     mockR2Bucket = {
-      put: mock(() =>
+      put: mock(async () =>
         Promise.resolve({
           key: "test-key",
           version: "1",
@@ -110,32 +110,32 @@ describe("PaintingGenerationOrchestrator Integration", () => {
 
     // Mock MarketSnapshotsRepository
     mockMarketSnapshotsRepository = {
-      findByHourBucket: mock(() => Promise.resolve(ok(null))),
-      upsert: mock(() => Promise.resolve(ok(undefined))),
+      findByHourBucket: mock(async () => Promise.resolve(ok(null))),
+      upsert: mock(async () => Promise.resolve(ok(undefined))),
     } as unknown as MarketSnapshotsRepository;
 
     // Mock TokensRepository
     mockTokensRepository = {
-      findById: mock(() => Promise.resolve(ok(null))),
-      insert: mock(() => Promise.resolve(ok(undefined))),
-      update: mock(() => Promise.resolve(ok(undefined))),
-      findRecentlySelected: mock(() => Promise.resolve(ok([]))),
+      findById: mock(async () => Promise.resolve(ok(null))),
+      insert: mock(async () => Promise.resolve(ok(undefined))),
+      update: mock(async () => Promise.resolve(ok(undefined))),
+      findRecentlySelected: mock(async () => Promise.resolve(ok([]))),
     } as unknown as TokensRepository;
 
     // Mock TokenSelectionService
     mockTokenSelectionService = {
-      selectToken: mock(() => Promise.resolve(ok(mockSelectedToken))),
+      selectToken: mock(async () => Promise.resolve(ok(mockSelectedToken))),
     } as unknown as TokenSelectionService;
 
     // Mock MarketDataService
     mockMarketDataService = {
-      fetchGlobalMarketData: mock(() => Promise.resolve(ok(mockMarketSnapshot))),
-      storeMarketSnapshot: mock(() => Promise.resolve(ok(undefined))),
+      fetchGlobalMarketData: mock(async () => Promise.resolve(ok(mockMarketSnapshot))),
+      storeMarketSnapshot: mock(async () => Promise.resolve(ok(undefined))),
     } as unknown as MarketDataService;
 
     // Mock PaintingContextBuilder
     mockPaintingContextBuilder = {
-      buildContext: mock(() => Promise.resolve(ok(mockPaintingContext))),
+      buildContext: mock(async () => Promise.resolve(ok(mockPaintingContext))),
     } as unknown as PaintingContextBuilder;
   });
 
@@ -152,7 +152,7 @@ describe("PaintingGenerationOrchestrator Integration", () => {
       }));
 
       // Mock existing snapshot
-      mockMarketSnapshotsRepository.findByHourBucket = mock(() =>
+      mockMarketSnapshotsRepository.findByHourBucket = mock(async () =>
         Promise.resolve(ok(mockMarketSnapshot)),
       ) as unknown as typeof mockMarketSnapshotsRepository.findByHourBucket;
 
@@ -177,7 +177,8 @@ describe("PaintingGenerationOrchestrator Integration", () => {
       }
 
       // Verify token selection was not called
-      expect(mockTokenSelectionService.selectToken).not.toHaveBeenCalled();
+      const selectTokenCalls = (mockTokenSelectionService.selectToken as ReturnType<typeof mock>).mock.calls;
+      expect(selectTokenCalls).toHaveLength(0);
     });
 
     it("should handle token selection errors", async () => {
@@ -187,7 +188,7 @@ describe("PaintingGenerationOrchestrator Integration", () => {
         message: "API rate limit exceeded",
       };
 
-      mockTokenSelectionService.selectToken = mock(() =>
+      mockTokenSelectionService.selectToken = mock(async () =>
         Promise.resolve(err(mockError)),
       ) as unknown as typeof mockTokenSelectionService.selectToken;
 
@@ -219,7 +220,7 @@ describe("PaintingGenerationOrchestrator Integration", () => {
         message: "Network error",
       };
 
-      mockMarketDataService.fetchGlobalMarketData = mock(() =>
+      mockMarketDataService.fetchGlobalMarketData = mock(async () =>
         Promise.resolve(err(mockError)),
       ) as unknown as typeof mockMarketDataService.fetchGlobalMarketData;
 
@@ -247,7 +248,7 @@ describe("PaintingGenerationOrchestrator Integration", () => {
         message: "Context building failed",
       };
 
-      mockPaintingContextBuilder.buildContext = mock(() =>
+      mockPaintingContextBuilder.buildContext = mock(async () =>
         Promise.resolve(err(mockError)),
       ) as unknown as typeof mockPaintingContextBuilder.buildContext;
 
@@ -277,7 +278,7 @@ describe("PaintingGenerationOrchestrator Integration", () => {
         message: "D1 write failed",
       };
 
-      mockMarketDataService.storeMarketSnapshot = mock(() =>
+      mockMarketDataService.storeMarketSnapshot = mock(async () =>
         Promise.resolve(err(mockError)),
       ) as unknown as typeof mockMarketDataService.storeMarketSnapshot;
 
@@ -307,7 +308,7 @@ describe("PaintingGenerationOrchestrator Integration", () => {
         message: "D1 query failed",
       };
 
-      mockMarketSnapshotsRepository.findByHourBucket = mock(() =>
+      mockMarketSnapshotsRepository.findByHourBucket = mock(async () =>
         Promise.resolve(err(mockError)),
       ) as unknown as typeof mockMarketSnapshotsRepository.findByHourBucket;
 

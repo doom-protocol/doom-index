@@ -21,7 +21,6 @@ describe("Provider Resolution", () => {
     });
 
     it("should fallback to runware provider for non-mock names", () => {
-      // @ts-expect-error - Testing fallback behavior with invalid input
       const provider = resolveProviderWithMock("invalid");
       expect(provider.name).toBe("runware");
     });

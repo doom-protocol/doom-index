@@ -10,7 +10,7 @@ describe("R2 Router", () => {
     mock.restore();
     // Mock getCloudflareContext
     void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: mock(() =>
+      getCloudflareContext: mock(async () =>
         Promise.resolve({
           env: {
             R2_BUCKET: {} as R2Bucket,
@@ -24,6 +24,8 @@ describe("R2 Router", () => {
         R2_PUBLIC_DOMAIN: undefined,
         NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
       },
+      isDevelopment: () => true,
+      getEnvironmentName: () => "development" as const,
     }));
   });
 
@@ -33,11 +35,11 @@ describe("R2 Router", () => {
       resolveR2Bucket: () =>
         ok({
           get: async () =>
-            await Promise.resolve({
-              text: async () => await Promise.resolve(JSON.stringify(mockData)),
+            Promise.resolve({
+              text: async () => Promise.resolve(JSON.stringify(mockData)),
             }),
         } as unknown as R2Bucket),
-      getJsonR2: async () => await Promise.resolve(ok(mockData)),
+      getJsonR2: async () => Promise.resolve(ok(mockData)),
     }));
 
     const ctx = createMockContext();
@@ -54,12 +56,12 @@ describe("R2 Router", () => {
     void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () =>
         ok({
-          get: () =>
+          get: async () =>
             Promise.resolve({
-              text: () => Promise.resolve(JSON.stringify({})),
+              text: async () => Promise.resolve(JSON.stringify({})),
             }),
         } as unknown as R2Bucket),
-      getJsonR2: async () => await Promise.resolve(ok({})),
+      getJsonR2: async () => Promise.resolve(ok({})),
     }));
 
     const ctx = createMockContext();
@@ -137,9 +139,9 @@ describe("R2 Router", () => {
     void mock.module("@/lib/r2", () => ({
       resolveR2Bucket: () =>
         ok({
-          get: () => Promise.resolve(null),
+          get: async () => Promise.resolve(null),
         } as unknown as R2Bucket),
-      getJsonR2: async () => await Promise.resolve(ok(null)),
+      getJsonR2: async () => Promise.resolve(ok(null)),
     }));
 
     const ctx = createMockContext();

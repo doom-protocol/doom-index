@@ -1,7 +1,7 @@
 "use client";
 
 import type { Painting } from "@/types/paintings";
-import { type FC } from "react";
+import type { FC } from "react";
 import { PaintingComponent } from "./painting-item";
 import { PaintingSkeleton } from "./painting-item-skeleton";
 
@@ -19,7 +19,7 @@ export const ArchiveGrid: FC<ArchiveGridProps> = ({ items, isLoading = false, sk
         <PaintingComponent key={item.id} item={item} onClick={() => onItemClick?.(item)} />
       ))}
       {isLoading &&
-        Array.from({ length: skeletonCount }).map((_, index) => <PaintingSkeleton key={`skeleton-${index}`} />)}
+        Array.from({ length: skeletonCount }).map((_, index) => <PaintingSkeleton key={`skeleton-${String(index)}`} />)}
     </div>
   );
 };

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useRef, useState, type FC, type SVGProps } from "react";
+import { useCallback, useRef, useState } from "react";
+import type { FC, SVGProps } from "react";
 import { useHaptic } from "use-haptic";
 
 import { ArchiveIcon } from "@/components/icons/archive-icon";
@@ -15,11 +16,11 @@ import { useClickOutside, useEscapeKey } from "@/hooks/use-click-outside";
 import { HeaderProgress } from "./header-progress";
 import { ViewerCountBadge } from "./viewer-count-badge";
 
-type NavLinkConfig = {
+interface NavLinkConfig {
   href: string;
   label: string;
   Icon: FC<SVGProps<SVGSVGElement>>;
-};
+}
 
 const NAV_LINKS: NavLinkConfig[] = [
   {
@@ -60,9 +61,19 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
     setIsMenuOpen(false);
   }, []);
 
-  useClickOutside(menuContainerRef, () => setIsMenuOpen(false), isMenuOpen, "window", "pointerdown");
+  useClickOutside(
+    menuContainerRef,
+    () => {
+      setIsMenuOpen(false);
+    },
+    isMenuOpen,
+    "window",
+    "pointerdown",
+  );
 
-  useEscapeKey(() => setIsMenuOpen(false), isMenuOpen);
+  useEscapeKey(() => {
+    setIsMenuOpen(false);
+  }, isMenuOpen);
 
   return (
     <div className="fixed top-0 right-0 left-0 z-50 bg-black/80 backdrop-blur-sm">
@@ -101,7 +112,7 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
                   />
                 </span>
               </button>
-              {isMenuOpen ?
+              {isMenuOpen ? (
                 <nav
                   id="header-mobile-menu"
                   aria-label="Navigation Links"
@@ -137,13 +148,11 @@ export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
                     </a>
                   ))}
                 </nav>
-              : null}
+              ) : null}
             </div>
           </div>
           <div className="flex flex-col items-center md:justify-self-center">
-            {showProgress ?
-              <HeaderProgress />
-            : <div className="h-0 md:h-[68px]" aria-hidden="true" />}
+            {showProgress ? <HeaderProgress /> : <div className="h-0 md:h-[68px]" aria-hidden="true" />}
           </div>
           <div className="hidden justify-end md:flex">
             <nav className="flex items-center justify-end gap-3" aria-label="Navigation Links">

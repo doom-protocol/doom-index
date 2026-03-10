@@ -38,11 +38,6 @@ describe.skip("TokenAnalysisService Integration", () => {
         console.log("Skipping test: D1 database not available", error);
         return;
       }
-      if (!d1Binding) {
-        console.log("Skipping test: D1 database not available");
-        return;
-      }
-
       const db = await getDB(d1Binding);
       const tokensRepository = new TokensRepository(db);
       const tavilyClient = createTavilyClient();
@@ -98,11 +93,6 @@ describe.skip("TokenAnalysisService Integration", () => {
         console.log("Skipping test: D1 database not available", error);
         return;
       }
-      if (!d1Binding) {
-        console.log("Skipping test: D1 database not available");
-        return;
-      }
-
       const db = await getDB(d1Binding);
       const tokensRepository = new TokensRepository(db);
       const tavilyClient = createTavilyClient();
@@ -114,7 +104,7 @@ describe.skip("TokenAnalysisService Integration", () => {
       });
 
       // Use a unique token ID to ensure cache miss
-      const uniqueId = `integration-test-${Date.now()}`;
+      const uniqueId = `integration-test-${String(Date.now())}`;
       const testTokenMeta: TokenMetaInput = {
         id: uniqueId,
         name: "Bitcoin",
@@ -154,11 +144,6 @@ describe.skip("TokenAnalysisService Integration", () => {
         console.log("Skipping test: D1 database not available", error);
         return;
       }
-      if (!d1Binding) {
-        console.log("Skipping test: D1 database not available");
-        return;
-      }
-
       const db = await getDB(d1Binding);
       const tokensRepository = new TokensRepository(db);
       // Use invalid API key to force error
@@ -171,7 +156,7 @@ describe.skip("TokenAnalysisService Integration", () => {
       });
 
       const testTokenMeta: TokenMetaInput = {
-        id: `error-test-${Date.now()}`,
+        id: `error-test-${String(Date.now())}`,
         name: "Test Token",
         symbol: "TEST",
         chainId: "ethereum",

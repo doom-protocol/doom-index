@@ -9,7 +9,8 @@
 import type { AppError } from "@/types/app-error";
 import { getErrorMessage } from "@/utils/error";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 import { cache } from "react";
 
 /**
@@ -26,14 +27,18 @@ export function joinR2Key(segments: string[]): string {
     .join("/");
 }
 
-type R2ListParams = {
+interface R2ListParams {
   limit?: number;
   cursor?: string;
   prefix?: string;
   delimiter?: string;
   include?: Array<"httpMetadata" | "customMetadata">;
   startAfter?: string;
-};
+}
+
+interface R2Bindings {
+  R2_BUCKET?: R2Bucket;
+}
 
 const contextError = (message: string, cause?: unknown): AppError => ({
   type: "InternalError",
@@ -50,7 +55,7 @@ const resolveContextAsync = cache(async () => getCloudflareContext({ async: true
 export function resolveR2Bucket(): Result<R2Bucket, AppError> {
   try {
     const { env } = resolveContext();
-    const bucket = env.R2_BUCKET;
+    const bucket = (env as R2Bindings).R2_BUCKET;
     if (!bucket) {
       return err(contextError("R2_BUCKET binding is not configured on Cloudflare environment"));
     }
@@ -66,7 +71,7 @@ export function resolveR2Bucket(): Result<R2Bucket, AppError> {
 export async function resolveR2BucketAsync(): Promise<Result<R2Bucket, AppError>> {
   try {
     const { env } = await resolveContextAsync();
-    const bucket = env.R2_BUCKET;
+    const bucket = (env as R2Bindings).R2_BUCKET;
     if (!bucket) {
       return err(contextError("R2_BUCKET binding is not configured on Cloudflare environment"));
     }
@@ -76,10 +81,10 @@ export async function resolveR2BucketAsync(): Promise<Result<R2Bucket, AppError>
   }
 }
 
-type ResolveBucketOrThrowParams = {
+interface ResolveBucketOrThrowParams {
   r2Bucket?: R2Bucket;
   errorContext?: string;
-};
+}
 
 /**
  * Resolve an R2 bucket, preferring a provided instance when available.

@@ -91,4 +91,4 @@ if (patchesApplied === 0) {
 }
 
 writeFileSync(targetFile, updated, "utf8");
-console.info(`[patch-setimmediate] Applied ${patchesApplied} patch(es) for Cloudflare Workers compatibility`);
+console.info(`[patch-setimmediate] Applied ${String(patchesApplied)} patch(es) for Cloudflare Workers compatibility`);

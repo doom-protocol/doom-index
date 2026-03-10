@@ -12,7 +12,7 @@ describe("AlternativeMeClient", () => {
     it("should fetch Fear & Greed Index successfully", async () => {
       // Mock fetch
       global.fetch = Object.assign(
-        () => {
+        async () => {
           return Promise.resolve(
             new Response(
               JSON.stringify({
@@ -43,7 +43,7 @@ describe("AlternativeMeClient", () => {
 
     it("should handle Extreme Fear classification", async () => {
       global.fetch = Object.assign(
-        () => {
+        async () => {
           return Promise.resolve(
             new Response(
               JSON.stringify({
@@ -73,7 +73,7 @@ describe("AlternativeMeClient", () => {
 
     it("should handle Extreme Greed classification", async () => {
       global.fetch = Object.assign(
-        () => {
+        async () => {
           return Promise.resolve(
             new Response(
               JSON.stringify({
@@ -103,7 +103,7 @@ describe("AlternativeMeClient", () => {
 
     it("should return error when API returns non-200 status", async () => {
       global.fetch = Object.assign(
-        () => {
+        async () => {
           return Promise.resolve(new Response("Not Found", { status: 404 }));
         },
         { preconnect: () => {} },
@@ -123,7 +123,7 @@ describe("AlternativeMeClient", () => {
 
     it("should return error when API returns invalid JSON", async () => {
       global.fetch = Object.assign(
-        () => {
+        async () => {
           return Promise.resolve(new Response("Invalid JSON", { status: 200 }));
         },
         { preconnect: () => {} },
@@ -142,7 +142,7 @@ describe("AlternativeMeClient", () => {
 
     it("should return error when API returns empty data array", async () => {
       global.fetch = Object.assign(
-        () => {
+        async () => {
           return Promise.resolve(
             new Response(
               JSON.stringify({
@@ -168,7 +168,7 @@ describe("AlternativeMeClient", () => {
 
     it("should return error when fetch throws", async () => {
       global.fetch = Object.assign(
-        () => {
+        async () => {
           return Promise.reject(new Error("Network error"));
         },
         { preconnect: () => {} },
@@ -235,7 +235,7 @@ describe("AlternativeMeClient", () => {
 
       // Mock fast successful response
       global.fetch = Object.assign(
-        () => {
+        async () => {
           return Promise.resolve(
             new Response(
               JSON.stringify({

@@ -11,9 +11,9 @@ describe("Cache Helper - resolveCache", () => {
 
   it("should return Cache instance when Cloudflare context is available", async () => {
     const mockCache = {
-      match: mock(() => Promise.resolve(undefined)),
-      put: mock(() => Promise.resolve()),
-      delete: mock(() => Promise.resolve(false)),
+      match: mock(async () => Promise.resolve(undefined)),
+      put: mock(async () => Promise.resolve()),
+      delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
 
     // Mock globalThis.caches with default property
@@ -90,15 +90,15 @@ describe("Cache Helper - get", () => {
   let originalCaches: CacheStorage | undefined;
 
   beforeEach(() => {
-    mockMatch = mock(() => Promise.resolve(undefined));
+    mockMatch = mock(async () => Promise.resolve(undefined));
     mockCache = {
       match: mockMatch,
-      put: mock(() => Promise.resolve()),
-      delete: mock(() => Promise.resolve(false)),
+      put: mock(async () => Promise.resolve()),
+      delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
 
     void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: () =>
+      getCloudflareContext: async () =>
         Promise.resolve({
           env: {},
         }),
@@ -142,7 +142,7 @@ describe("Cache Helper - get", () => {
 
   it("should return null when cache is unavailable", async () => {
     void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: () => {
+      getCloudflareContext: async () => {
         return Promise.reject(new Error("Cache unavailable"));
       },
     }));
@@ -179,15 +179,15 @@ describe("Cache Helper - set", () => {
   let originalCaches: CacheStorage | undefined;
 
   beforeEach(() => {
-    mockPut = mock(() => Promise.resolve());
+    mockPut = mock(async () => Promise.resolve());
     mockCache = {
-      match: mock(() => Promise.resolve(undefined)),
+      match: mock(async () => Promise.resolve(undefined)),
       put: mockPut,
-      delete: mock(() => Promise.resolve(false)),
+      delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
 
     void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: () =>
+      getCloudflareContext: async () =>
         Promise.resolve({
           env: {},
         }),
@@ -258,11 +258,11 @@ describe("Cache Helper - update", () => {
   let originalCaches: CacheStorage | undefined;
 
   beforeEach(() => {
-    mockPut = mock(() => Promise.resolve());
+    mockPut = mock(async () => Promise.resolve());
     mockCache = {
-      match: mock(() => Promise.resolve(undefined)),
+      match: mock(async () => Promise.resolve(undefined)),
       put: mockPut,
-      delete: mock(() => Promise.resolve(false)),
+      delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
 
     originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
@@ -305,12 +305,12 @@ describe("Cache Helper - getOrSet", () => {
   let originalCaches: CacheStorage | undefined;
 
   beforeEach(() => {
-    mockMatch = mock(() => Promise.resolve(undefined));
-    mockPut = mock(() => Promise.resolve());
+    mockMatch = mock(async () => Promise.resolve(undefined));
+    mockPut = mock(async () => Promise.resolve());
     mockCache = {
       match: mockMatch,
       put: mockPut,
-      delete: mock(() => Promise.resolve(false)),
+      delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
 
     originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
@@ -331,7 +331,7 @@ describe("Cache Helper - getOrSet", () => {
     });
     mockMatch.mockResolvedValueOnce(mockResponse);
 
-    const computeFn = mock(() => Promise.resolve({ foo: "baz" }));
+    const computeFn = mock(async () => Promise.resolve({ foo: "baz" }));
     const { getOrSet } = await import("@/lib/cache");
     const result = await getOrSet("test-key", computeFn, { ttlSeconds: 60 });
 
@@ -342,7 +342,7 @@ describe("Cache Helper - getOrSet", () => {
   it("should execute compute function and cache result when cache miss", async () => {
     mockMatch.mockResolvedValueOnce(undefined);
     const computedValue = { foo: "baz" };
-    const computeFn = mock(() => Promise.resolve(computedValue));
+    const computeFn = mock(async () => Promise.resolve(computedValue));
 
     const { getOrSet } = await import("@/lib/cache");
     const result = await getOrSet("test-key", computeFn, { ttlSeconds: 60 });
@@ -354,13 +354,13 @@ describe("Cache Helper - getOrSet", () => {
 
   it("should execute compute function when cache is unavailable", async () => {
     void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: () => {
+      getCloudflareContext: async () => {
         return Promise.reject(new Error("Cache unavailable"));
       },
     }));
 
     const computedValue = { foo: "baz" };
-    const computeFn = mock(() => Promise.resolve(computedValue));
+    const computeFn = mock(async () => Promise.resolve(computedValue));
 
     const { getOrSet } = await import("@/lib/cache");
     const result = await getOrSet("test-key", computeFn, { ttlSeconds: 60 });
@@ -372,7 +372,7 @@ describe("Cache Helper - getOrSet", () => {
   it("should propagate compute function errors", async () => {
     mockMatch.mockResolvedValueOnce(undefined);
     const computeError = new Error("Compute error");
-    const computeFn = mock(() => Promise.reject(computeError));
+    const computeFn = mock(async () => Promise.reject(computeError));
 
     const { getOrSet } = await import("@/lib/cache");
     expect(getOrSet("test-key", computeFn, { ttlSeconds: 60 })).rejects.toThrow("Compute error");
@@ -381,7 +381,7 @@ describe("Cache Helper - getOrSet", () => {
 
   it("should use namespace in cache key when provided", async () => {
     mockMatch.mockResolvedValueOnce(undefined);
-    const computeFn = mock(() => Promise.resolve({ foo: "bar" }));
+    const computeFn = mock(async () => Promise.resolve({ foo: "bar" }));
 
     const { getOrSet } = await import("@/lib/cache");
     await getOrSet("test-key", computeFn, { ttlSeconds: 60, namespace: "ns" });
@@ -397,15 +397,15 @@ describe("Cache Helper - remove", () => {
   let originalCaches: CacheStorage | undefined;
 
   beforeEach(() => {
-    mockDelete = mock(() => Promise.resolve(false));
+    mockDelete = mock(async () => Promise.resolve(false));
     mockCache = {
-      match: mock(() => Promise.resolve(undefined)),
-      put: mock(() => Promise.resolve()),
+      match: mock(async () => Promise.resolve(undefined)),
+      put: mock(async () => Promise.resolve()),
       delete: mockDelete,
     } as unknown as Cache;
 
     void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: () =>
+      getCloudflareContext: async () =>
         Promise.resolve({
           env: {},
         }),
@@ -483,16 +483,16 @@ describe("Cache Helper - getOrSet deduplication", () => {
   let originalCaches: CacheStorage | undefined;
 
   beforeEach(() => {
-    mockMatch = mock(() => Promise.resolve(undefined));
-    mockPut = mock(() => Promise.resolve());
+    mockMatch = mock(async () => Promise.resolve(undefined));
+    mockPut = mock(async () => Promise.resolve());
     mockCache = {
       match: mockMatch,
       put: mockPut,
-      delete: mock(() => Promise.resolve(false)),
+      delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
 
     void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: () =>
+      getCloudflareContext: async () =>
         Promise.resolve({
           env: {},
         }),
@@ -515,17 +515,19 @@ describe("Cache Helper - getOrSet deduplication", () => {
     mockMatch.mockResolvedValue(undefined);
     const computedValue = { foo: "bar" };
     let computeCallCount = 0;
-    const computeFn = mock(() => {
+    const computeFn = mock(async () => {
       computeCallCount++;
       return new Promise<typeof computedValue>((resolve) => {
-        setTimeout(() => resolve(computedValue), 10);
+        setTimeout(() => {
+          resolve(computedValue);
+        }, 10);
       });
     });
 
     const { getOrSet } = await import("@/lib/cache");
 
     // Make 5 concurrent requests
-    const promises = Array.from({ length: 5 }, () => getOrSet("test-key", computeFn, { ttlSeconds: 60 }));
+    const promises = Array.from({ length: 5 }, async () => getOrSet("test-key", computeFn, { ttlSeconds: 60 }));
 
     const results = await Promise.all(promises);
 
@@ -546,12 +548,12 @@ describe("Cache Helper - Text Helpers", () => {
   let originalCaches: CacheStorage | undefined;
 
   beforeEach(() => {
-    mockMatch = mock(() => Promise.resolve(undefined));
-    mockPut = mock(() => Promise.resolve());
+    mockMatch = mock(async () => Promise.resolve(undefined));
+    mockPut = mock(async () => Promise.resolve());
     mockCache = {
       match: mockMatch,
       put: mockPut,
-      delete: mock(() => Promise.resolve(false)),
+      delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
 
     originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
@@ -686,12 +688,12 @@ describe("Cache Helper - Binary Helpers", () => {
   let originalCaches: CacheStorage | undefined;
 
   beforeEach(() => {
-    mockMatch = mock(() => Promise.resolve(undefined));
-    mockPut = mock(() => Promise.resolve());
+    mockMatch = mock(async () => Promise.resolve(undefined));
+    mockPut = mock(async () => Promise.resolve());
     mockCache = {
       match: mockMatch,
       put: mockPut,
-      delete: mock(() => Promise.resolve(false)),
+      delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
 
     originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
@@ -717,7 +719,10 @@ describe("Cache Helper - Binary Helpers", () => {
       const result = await getBinary("test-key");
 
       expect(result).not.toBeNull();
-      expect(new Uint8Array(result!)).toEqual(new Uint8Array(cachedBinary));
+      if (result === null) {
+        throw new Error("Expected cached binary result");
+      }
+      expect(new Uint8Array(result)).toEqual(new Uint8Array(cachedBinary));
       expect(mockMatch).toHaveBeenCalledTimes(1);
     });
 
@@ -830,12 +835,12 @@ describe("Cache Helper - HTTP Response Cache", () => {
   let originalCaches: CacheStorage | undefined;
 
   beforeEach(() => {
-    mockMatch = mock(() => Promise.resolve(undefined));
-    mockPut = mock(() => Promise.resolve());
+    mockMatch = mock(async () => Promise.resolve(undefined));
+    mockPut = mock(async () => Promise.resolve());
     mockCache = {
       match: mockMatch,
       put: mockPut,
-      delete: mock(() => Promise.resolve(false)),
+      delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
 
     originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;

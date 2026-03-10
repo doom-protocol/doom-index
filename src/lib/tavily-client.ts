@@ -2,52 +2,66 @@ import { env } from "@/env";
 import type { AppError, TimeoutError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 import { tavily } from "@tavily/core";
-import { type Result, err, ok } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 /**
  * Input for Tavily search query
  */
-export type TavilyQueryInput = {
+export interface TavilyQueryInput {
   id: string;
   name: string;
   symbol: string;
   chainId: string;
   contractAddress: string | null;
   maxResults?: number;
-};
+}
 
 /**
  * Tavily article structure
  */
-type TavilyArticle = {
+interface TavilyArticle {
   title: string;
   content: string;
   url: string;
-};
+}
 
 /**
  * Tavily search result
  */
-export type TavilySearchResult = {
+export interface TavilySearchResult {
   articles: TavilyArticle[];
   combinedText: string;
-};
+}
 
 /**
  * Tavily client interface
  * Anti-corruption layer wrapping @tavily/core SDK
  */
 export interface TavilyClient {
-  searchToken(input: TavilyQueryInput): Promise<Result<TavilySearchResult, AppError>>;
+  searchToken: (input: TavilyQueryInput) => Promise<Result<TavilySearchResult, AppError>>;
 }
 
-type CreateTavilyClientDeps = {
+interface CreateTavilyClientDeps {
   apiKey?: string;
   timeoutMs?: number; // Default: 5 seconds for Tavily
   log?: typeof logger;
   tavilyClient?: ReturnType<typeof tavily>;
   mockClient?: TavilyClient; // For testing: inject a TavilyClient mock directly
-};
+}
+
+function isTimeoutError(value: unknown): value is TimeoutError {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    value.type === "TimeoutError" &&
+    "message" in value &&
+    typeof value.message === "string" &&
+    "timeoutMs" in value &&
+    typeof value.timeoutMs === "number"
+  );
+}
 
 /**
  * Create Tavily client
@@ -87,9 +101,11 @@ export function createTavilyClient({
         const article = item as Record<string, unknown>;
         const title = typeof article.title === "string" ? article.title : "";
         const content =
-          typeof article.content === "string" ? article.content
-          : typeof article.snippet === "string" ? article.snippet
-          : "";
+          typeof article.content === "string"
+            ? article.content
+            : typeof article.snippet === "string"
+              ? article.snippet
+              : "";
         const url = typeof article.url === "string" ? article.url : "";
 
         if (!title && !content && !url) {
@@ -133,12 +149,12 @@ export function createTavilyClient({
   };
 
   // Create timeout promise
-  const createTimeout = (ms: number): Promise<TimeoutError> => {
+  const createTimeout = async (ms: number): Promise<TimeoutError> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
           type: "TimeoutError",
-          message: `Tavily request timed out after ${ms}ms`,
+          message: `Tavily request timed out after ${String(ms)}ms`,
           timeoutMs: ms,
         });
       }, ms);
@@ -176,10 +192,10 @@ export function createTavilyClient({
 
       const timeoutPromise = createTimeout(timeoutMs);
 
-      const result = await Promise.race([searchPromise, timeoutPromise]);
+      const result: unknown = await Promise.race([searchPromise, timeoutPromise]);
 
       // Check for timeout
-      if ("type" in result && result.type === "TimeoutError") {
+      if (isTimeoutError(result)) {
         log.error("tavily.search.timeout", {
           tokenId: input.id,
           symbol: input.symbol,
@@ -189,7 +205,8 @@ export function createTavilyClient({
       }
 
       // Extract results from SDK response
-      const sdkResponse = result as { results?: unknown[] };
+      const sdkResponse =
+        typeof result === "object" && result !== null && "results" in result ? result : { results: [] as unknown[] };
       const results = Array.isArray(sdkResponse.results) ? sdkResponse.results : [];
 
       const articles = extractArticles(results);

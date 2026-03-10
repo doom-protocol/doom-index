@@ -12,8 +12,17 @@ const TEST_IMAGE_KEYS = [
   "images/2025/11/14/DOOM_202511141204_abc12345_def456789012.webp",
 ];
 
+function extractLimit(params: unknown[]): number {
+  return typeof params[0] === "number" ? params[0] : 20;
+}
+
+function extractImageId(imageKey: string): string {
+  const fileName = imageKey.split("/").pop();
+  return fileName ? fileName.replace(/\.webp$/, "") : "";
+}
+
 function createTestMetadata(id: string, imageKey: string, index: number): PaintingMetadata {
-  const timestamp = `2025-11-14T12:0${index}:00Z`;
+  const timestamp = `2025-11-14T12:0${String(index)}:00Z`;
   return {
     id,
     timestamp,
@@ -98,19 +107,15 @@ describe("Archive List Service", () => {
     // Mock D1 database using Drizzle ORM's expected API
     // @ts-expect-error - Mock D1 database for testing
     mockD1 = {
-      prepare: mock((sql) => ({
-        bind: mock((...params) => ({
+      prepare: mock((sql: string) => ({
+        bind: mock((...params: unknown[]) => ({
           all: mock(async () => {
             // Parse the SQL to understand what data is requested
             const isLimitQuery = sql.includes("limit ?");
             if (isLimitQuery) {
-              const limit = params[0] || 20;
+              const limit = extractLimit(params);
               const testData = TEST_IMAGE_KEYS.map((imageKey, index) => {
-                const id =
-                  imageKey
-                    .split("/")
-                    .pop()
-                    ?.replace(/\.webp$/, "") || "";
+                const id = extractImageId(imageKey);
                 const metadata = createTestMetadata(id, imageKey, index);
                 return {
                   id: metadata.id,
@@ -130,21 +135,21 @@ describe("Archive List Service", () => {
 
               const limitedData = testData.slice(0, limit);
               const hasMore = testData.length > limit;
-              const cursor =
-                hasMore ?
-                  encodeCursor({
-                    ts: limitedData[limitedData.length - 1].ts,
-                    id: limitedData[limitedData.length - 1].id,
+              const lastItem = limitedData.at(-1);
+              const cursor = hasMore
+                ? encodeCursor({
+                    ts: lastItem?.ts ?? 0,
+                    id: lastItem?.id ?? "",
                   })
                 : undefined;
 
-              return await Promise.resolve({
+              return Promise.resolve({
                 items: limitedData,
                 cursor,
                 hasMore,
               });
             }
-            return await Promise.resolve({
+            return Promise.resolve({
               items: [],
               cursor: undefined,
               hasMore: false,
@@ -154,13 +159,9 @@ describe("Archive List Service", () => {
             // Parse the SQL to understand what data is requested
             const isLimitQuery = sql.includes("limit ?");
             if (isLimitQuery) {
-              const limit = params[0] || 20;
+              const limit = extractLimit(params);
               const testData = TEST_IMAGE_KEYS.map((imageKey, index) => {
-                const id =
-                  imageKey
-                    .split("/")
-                    .pop()
-                    ?.replace(/\.webp$/, "") || "";
+                const id = extractImageId(imageKey);
                 const metadata = createTestMetadata(id, imageKey, index);
                 return {
                   id: metadata.id,
@@ -180,21 +181,21 @@ describe("Archive List Service", () => {
 
               const limitedData = testData.slice(0, limit);
               const hasMore = testData.length > limit;
-              const cursor =
-                hasMore ?
-                  encodeCursor({
-                    ts: limitedData[limitedData.length - 1].ts,
-                    id: limitedData[limitedData.length - 1].id,
+              const lastItem = limitedData.at(-1);
+              const cursor = hasMore
+                ? encodeCursor({
+                    ts: lastItem?.ts ?? 0,
+                    id: lastItem?.id ?? "",
                   })
                 : undefined;
 
-              return await Promise.resolve({
+              return Promise.resolve({
                 items: limitedData,
                 cursor,
                 hasMore,
               });
             }
-            return await Promise.resolve({
+            return Promise.resolve({
               items: [],
               cursor: undefined,
               hasMore: false,

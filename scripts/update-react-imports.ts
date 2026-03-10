@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
-import { readdirSync, statSync, readFileSync, writeFileSync } from "fs";
-import { join, extname } from "path";
+import { readdirSync, statSync, readFileSync, writeFileSync } from "node:fs";
+import { join, extname } from "node:path";
 
 const REACT_IMPORT_REGEX = /^import React, \{([^}]+)\} from "react";$/gm;
 const REACT_ONLY_IMPORT_REGEX = /^import React from "react";$/gm;
@@ -72,7 +72,7 @@ function updateReactImports(filePath: string): boolean {
   }
 
   // Update import React, { ... } from "react" to import { ..., ReactTypes } from "react"
-  updatedContent = updatedContent.replace(REACT_IMPORT_REGEX, (match, imports) => {
+  updatedContent = updatedContent.replace(REACT_IMPORT_REGEX, (_match: string, imports: string) => {
     const existingImports = imports
       .split(",")
       .map((s: string) => s.trim())
@@ -97,10 +97,7 @@ function updateReactImports(filePath: string): boolean {
   for (const [reactType, imports] of Object.entries(REACT_TYPE_MAPPING)) {
     if (content.includes(reactType)) {
       const replacement = imports[0]; // Use the first import name
-      updatedContent = updatedContent.replace(
-        new RegExp(reactType.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
-        replacement,
-      );
+      updatedContent = updatedContent.split(reactType).join(replacement);
       hasChanges = true;
     }
   }
@@ -121,7 +118,7 @@ function main() {
   console.log("Finding TypeScript/React files...");
   const files = findFiles(srcDir, extensions);
 
-  console.log(`Found ${files.length} files. Processing...`);
+  console.log(`Found ${String(files.length)} files. Processing...`);
 
   let updatedCount = 0;
   for (const file of files) {
@@ -130,7 +127,7 @@ function main() {
     }
   }
 
-  console.log(`\nDone! Updated ${updatedCount} files.`);
+  console.log(`\nDone! Updated ${String(updatedCount)} files.`);
 }
 
 if (require.main === module) {

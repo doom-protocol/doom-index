@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+lefthook-local.yml
 
 # debug
 npm-debug.log*
@@ -48,6 +49,7 @@ yarn-error.log*
 # cloudflare
 .wrangler
 .open-next
+.cache
 
 # typescript
 *.tsbuildinfo

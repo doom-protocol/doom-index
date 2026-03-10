@@ -4,12 +4,15 @@ import { CACHE_TTL_SECONDS } from "@/constants";
 import type { TokenState } from "@/types/domain";
 import * as v from "valibot";
 import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
-import { tokenGetStateSchema } from "../schemas";
 import { publicProcedure, router } from "../trpc";
+
+const tokenStateInputSchema = v.object({
+  ticker: v.string(),
+});
 
 export const tokenRouter = router({
   getState: publicProcedure
-    .input((val) => v.parse(tokenGetStateSchema, val))
+    .input((val) => v.parse(tokenStateInputSchema, val))
     .query(async ({ input, ctx }) => {
       const cacheKey = `token:getState:${input.ticker}`;
       const cached = await get<TokenState>(cacheKey, { logger: ctx.logger });

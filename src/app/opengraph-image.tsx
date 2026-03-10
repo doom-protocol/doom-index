@@ -9,7 +9,7 @@
 import { getImageR2 } from "@/lib/r2";
 import { CACHE_TTL_SECONDS } from "@/constants";
 import { createPaintingsRepository } from "@/repositories/paintings-repository";
-import { arrayBufferToDataUrl } from "@/utils/image";
+import { arrayBufferToDataUrl, base64ToArrayBuffer } from "@/utils/image";
 import { logger } from "@/utils/logger";
 import { getBaseUrl } from "@/utils/url";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
@@ -49,11 +49,7 @@ const BACKGROUND_IMAGE_PATH = "/ogp-bg.png";
 const FALLBACK_BACKGROUND_COLOR = "#000000";
 const BLACK_PIXEL_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
-const BLACK_PIXEL_BYTES = Buffer.from(BLACK_PIXEL_BASE64, "base64");
-const BLACK_PIXEL_ARRAY_BUFFER = BLACK_PIXEL_BYTES.buffer.slice(
-  BLACK_PIXEL_BYTES.byteOffset,
-  BLACK_PIXEL_BYTES.byteOffset + BLACK_PIXEL_BYTES.byteLength,
-);
+const BLACK_PIXEL_ARRAY_BUFFER = base64ToArrayBuffer(BLACK_PIXEL_BASE64);
 
 function createReadableStreamFromArrayBuffer(buffer: ArrayBuffer): ReadableStream<Uint8Array> {
   const chunk = new Uint8Array(buffer);
@@ -114,19 +110,16 @@ async function renderPaintingOnCanvas(
   });
 
   const response = transformedResult.response();
-  return await response.arrayBuffer();
+  return response.arrayBuffer();
 }
 
 async function getFallbackImageBuffer(assetsFetcher: Fetcher): Promise<ArrayBuffer> {
   logger.info("ogp.fallback-buffer-fetch-start");
-  if (!assetsFetcher) {
-    throw new Error("ASSETS fetcher not available");
-  }
   const baseUrl = getBaseUrl();
   const fallbackUrl = new URL("/og-fallback.png", baseUrl).toString();
   const response = await assetsFetcher.fetch(new Request(fallbackUrl, { method: "GET" }));
   if (!response.ok) {
-    throw new Error(`Failed to fetch fallback image: ${response.status}`);
+    throw new Error(`Failed to fetch fallback image: ${String(response.status)}`);
   }
   const buffer = await response.arrayBuffer();
   logger.info("ogp.fallback-buffer-fetch-success", {
@@ -195,10 +188,6 @@ async function getBackgroundImageBuffer(assetsFetcher?: Fetcher): Promise<ArrayB
 async function getFallbackImageDataUrl(assetsFetcher: Fetcher): Promise<string> {
   logger.info("ogp.fallback-fetch-start");
   try {
-    if (!assetsFetcher) {
-      throw new Error("ASSETS fetcher not available");
-    }
-
     // Get base URL from getBaseUrl()
     const baseUrl = getBaseUrl();
     const origin = new URL(baseUrl).origin;
@@ -211,7 +200,7 @@ async function getFallbackImageDataUrl(assetsFetcher: Fetcher): Promise<string> 
     const response = await assetsFetcher.fetch(request);
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch fallback image: ${response.status}`);
+      throw new Error(`Failed to fetch fallback image: ${String(response.status)}`);
     }
 
     const buffer = await response.arrayBuffer();
@@ -245,8 +234,9 @@ async function getCurrentPaintingImageBuffer(
   const listResult = await repo.list({ limit: 1 });
 
   if (listResult.isErr() || listResult.value.items.length === 0) {
-    const reason =
-      listResult.isErr() ? `repo.list() failed: ${listResult.error.message}` : "No paintings found in database";
+    const reason = listResult.isErr()
+      ? `repo.list() failed: ${listResult.error.message}`
+      : "No paintings found in database";
     logger.error("ogp.step1-state-failed", {
       reason,
       error: listResult.isErr() ? listResult.error.message : "No paintings found",
@@ -287,9 +277,8 @@ async function getCurrentPaintingImageBuffer(
   // Step 3: Fetch image from R2
   const imageResult = await getImageR2(bucket, imageKey);
   if (imageResult.isErr() || !imageResult.value) {
-    const reason =
-      imageResult.isErr() ?
-        `R2 getImageR2() failed: ${imageResult.error.message}`
+    const reason = imageResult.isErr()
+      ? `R2 getImageR2() failed: ${imageResult.error.message}`
       : "R2 returned null/empty image data";
     logger.error("ogp.step3-image-failed", {
       reason,
@@ -332,7 +321,7 @@ async function getCurrentPaintingImageBuffer(
         frameBuffer ? Promise.resolve(frameBuffer) : getFrameImageBuffer(assetsFetcher),
         backgroundBuffer ? Promise.resolve(backgroundBuffer) : getBackgroundImageBuffer(assetsFetcher),
       ]);
-      return await renderPaintingOnCanvas(fallbackBuffer, imagesBinding, fallbackFrameBuffer, fallbackBackgroundBuffer);
+      return renderPaintingOnCanvas(fallbackBuffer, imagesBinding, fallbackFrameBuffer, fallbackBackgroundBuffer);
     }
 
     const noFallbackReason = "ASSETS fetcher not available for fallback";
@@ -440,7 +429,7 @@ export default async function Image(): Promise<Response> {
       status: 200,
       headers: {
         "Content-Type": "image/png",
-        "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_MINUTE}, stale-while-revalidate=30`,
+        "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}, stale-while-revalidate=30`,
       },
     });
 
@@ -489,7 +478,7 @@ export default async function Image(): Promise<Response> {
             status: 200,
             headers: {
               "Content-Type": "image/png",
-              "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_MINUTE}`,
+              "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`,
             },
           });
         } catch (fallbackTransformError) {
@@ -502,7 +491,7 @@ export default async function Image(): Promise<Response> {
           });
 
           const fallbackDataUrl = await getFallbackImageDataUrl(fallbackAssetsFetcher);
-          const fallbackBuffer = await fetch(fallbackDataUrl).then((r) => r.arrayBuffer());
+          const fallbackBuffer = await fetch(fallbackDataUrl).then(async (r) => r.arrayBuffer());
           const [frameBuffer, backgroundBuffer] = await Promise.all([
             getFrameImageBuffer(fallbackAssetsFetcher),
             getBackgroundImageBuffer(fallbackAssetsFetcher),
@@ -523,7 +512,7 @@ export default async function Image(): Promise<Response> {
             status: 200,
             headers: {
               "Content-Type": "image/png",
-              "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_MINUTE}`,
+              "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`,
             },
           });
         }
@@ -547,7 +536,7 @@ export default async function Image(): Promise<Response> {
     // Create a minimal black PNG using data URL
     const blackPngDataUrl =
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
-    const blackBuffer = await fetch(blackPngDataUrl).then((r) => r.arrayBuffer());
+    const blackBuffer = await fetch(blackPngDataUrl).then(async (r) => r.arrayBuffer());
 
     logger.info("ogp.fallback-black-completed", {
       durationMs: Date.now() - startTime,
@@ -557,7 +546,7 @@ export default async function Image(): Promise<Response> {
       status: 200,
       headers: {
         "Content-Type": "image/png",
-        "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS.ONE_MINUTE}`,
+        "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`,
       },
     });
   }

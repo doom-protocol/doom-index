@@ -7,10 +7,12 @@ import { sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
 import { Stats } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Suspense, useCallback, useEffect, useRef, useState, type FC } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import type { FC } from "react";
 import { ACESFilmicToneMapping, Vector3 } from "three";
 import { useHaptic } from "use-haptic";
 import { ArchiveFramedPainting } from "./archive-framed-painting";
+import { isDevelopment } from "@/env";
 
 interface ArchiveDetailViewProps {
   item: Painting;
@@ -21,7 +23,6 @@ const DETAIL_FRAME_POSITION: [number, number, number] = [0, 0.8, 4.0];
 const INITIAL_CAMERA_POSITION: [number, number, number] = [0, 0.8, 0.8];
 const ZOOMED_CAMERA_POSITION: [number, number, number] = [0, 0.8, 2.5];
 const CAMERA_LERP_FACTOR = 0.05;
-import { isDevelopment } from "@/env";
 
 const isDevMode = isDevelopment();
 
@@ -91,7 +92,7 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
     setIsClosing(true);
     setIsVisible(false);
     // Wait for zoom out animation to complete
-    setTimeout(() => {
+    window.setTimeout(() => {
       onClose();
     }, 800); // Slightly longer than camera animation
   }, [onClose, triggerHaptic]);
@@ -100,10 +101,13 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
   useEffect(() => {
     document.body.style.overflow = "hidden";
     // Trigger fade in after mount
-    setTimeout(() => setIsVisible(true), 50);
+    const timeoutId = window.setTimeout(() => {
+      setIsVisible(true);
+    }, 50);
     // Track detail view
     sendGAEvent("archive_detail_view", { painting_id: item.id });
     return () => {
+      window.clearTimeout(timeoutId);
       document.body.style.overflow = "";
     };
   }, [item.id]);
@@ -119,7 +123,7 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
     const hh = String(date.getHours()).padStart(2, "0");
     const mm = String(date.getMinutes()).padStart(2, "0");
     const ss = String(date.getSeconds()).padStart(2, "0");
-    return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+    return `${String(y)}-${m}-${d} ${hh}:${mm}:${ss}`;
   };
 
   return (
@@ -129,6 +133,7 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
     >
       {/* Back Button - Liquid Glass Style */}
       <button
+        type="button"
         onClick={handleClose}
         className="fixed top-4 left-4 z-50 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md transition-all hover:scale-110 hover:bg-white/20"
         aria-label="Back to list"

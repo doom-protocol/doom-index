@@ -3,12 +3,13 @@
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
 import { formatDateShort } from "@/utils/time";
-import { useMemo, useRef, useState, Suspense, lazy, type FC } from "react";
+import { useMemo, useRef, useState, Suspense, lazy } from "react";
+import type { FC } from "react";
 import { ArchiveGrid } from "./archive-grid";
 import { DateFilter } from "./date-filter";
 import { PaginationControls } from "./pagination-controls";
 
-const ArchiveDetailView = lazy(() =>
+const ArchiveDetailView = lazy(async () =>
   import("./archive-detail-view").then((mod) => ({
     default: mod.ArchiveDetailView,
   })),

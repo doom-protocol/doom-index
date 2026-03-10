@@ -5,14 +5,14 @@ import { render } from "@testing-library/react";
 import { describe, expect, it, mock } from "bun:test";
 import type { JSX } from "react";
 
+import Page from "@/app/about/page";
+
 // Mock getBaseUrl before importing page to ensure it returns valid URL
 // This must be done at module level, before importing Page
 void mock.module("@/utils/url", () => ({
   getBaseUrl: () => "http://localhost:8787",
   getPumpFunUrl: (address: string) => `https://pump.fun/${address}`,
 }));
-
-import Page from "@/app/about/page";
 
 const renderAboutPage = () => {
   const pageFactory = Page as () => JSX.Element;
@@ -48,7 +48,8 @@ describe("About Page Integration", () => {
     const article = container.querySelector("article");
     expect(article).toBeDefined();
     // Check if any content is rendered
-    expect(container.textContent?.length).toBeGreaterThan(0);
+    expect(container.textContent).not.toBeNull();
+    expect(container.textContent.length).toBeGreaterThan(0);
   });
 
   it("should render DOOM INDEX content", () => {

@@ -7,6 +7,12 @@
  * - Image format handling
  */
 
+function toArrayBuffer(view: Uint8Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(view.byteLength);
+  new Uint8Array(buffer).set(view);
+  return buffer;
+}
+
 /**
  * Convert ArrayBuffer to base64 data URL
  *
@@ -22,7 +28,12 @@
  * ```
  */
 export function arrayBufferToDataUrl(buffer: ArrayBuffer, mimeType: string): string {
-  const base64 = Buffer.from(buffer).toString("base64");
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  const base64 = globalThis.btoa(binary);
   return `data:${mimeType};base64,${base64}`;
 }
 
@@ -56,20 +67,13 @@ export function base64ToArrayBuffer(base64: string): ArrayBuffer {
   // Remove data URL prefix if present
   const cleanBase64 = base64.replace(/^data:image\/\w+;base64,/, "");
 
-  // Use Buffer API if available (Node.js environment)
-  if (typeof Buffer !== "undefined") {
-    const buffer = Buffer.from(cleanBase64, "base64");
-    return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-  }
-
-  // Use atob API if available (Browser/Workers environment)
   if (typeof globalThis.atob === "function") {
     const binaryString = globalThis.atob(cleanBase64);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
-    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+    return toArrayBuffer(bytes);
   }
 
   throw new Error("Base64 decoding not supported in this environment");

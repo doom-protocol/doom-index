@@ -1,6 +1,8 @@
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
+import { createContext } from "@/server/trpc/context";
+
 // Mock must be set up before importing createContext so getCloudflareContext
 // is replaced when the module is evaluated
 void mock.module("@opennextjs/cloudflare", () => ({
@@ -8,8 +10,6 @@ void mock.module("@opennextjs/cloudflare", () => ({
     throw new Error("Cloudflare context not available");
   },
 }));
-
-import { createContext } from "@/server/trpc/context";
 
 describe("Context Creator", () => {
   beforeEach(() => {
@@ -33,11 +33,11 @@ describe("Context Creator", () => {
       info: {} as unknown as FetchCreateContextFnOptions["info"],
     };
 
-    const context = await createContext(opts);
+    const TestAppContext = await createContext(opts);
 
-    expect(context.headers).toBeDefined();
-    expect(context.logger).toBeDefined();
-    expect(context.headers.get("user-agent")).toBe("test-agent");
+    expect(TestAppContext.headers).toBeDefined();
+    expect(TestAppContext.logger).toBeDefined();
+    expect(TestAppContext.headers.get("user-agent")).toBe("test-agent");
   });
 
   it("should handle Cloudflare context unavailable gracefully", async () => {
@@ -48,11 +48,11 @@ describe("Context Creator", () => {
       info: {} as unknown as FetchCreateContextFnOptions["info"],
     };
 
-    const context = await createContext(opts);
+    const TestAppContext = await createContext(opts);
 
-    expect(context.headers).toBeDefined();
-    expect(context.logger).toBeDefined();
-    expect(context.kvNamespace).toBeUndefined();
-    expect(context.r2Bucket).toBeUndefined();
+    expect(TestAppContext.headers).toBeDefined();
+    expect(TestAppContext.logger).toBeDefined();
+    expect(TestAppContext.kvNamespace).toBeUndefined();
+    expect(TestAppContext.r2Bucket).toBeUndefined();
   });
 });

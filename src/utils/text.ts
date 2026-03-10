@@ -5,7 +5,8 @@
  */
 
 import type { ParsingError } from "@/types/app-error";
-import { type Result, err, ok } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
 /**
  * Estimate token count from text using character and word-based heuristics

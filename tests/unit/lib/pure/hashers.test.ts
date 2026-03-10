@@ -11,7 +11,7 @@ import { describe, expect, it } from "bun:test";
 const createMcMap = (base: number): Record<string, number> => {
   const map: Record<string, number> = {};
   for (let i = 0; i < 8; i++) {
-    map[`TOKEN${i}`] = base + i * 10;
+    map[`TOKEN${String(i)}`] = base + i * 10;
   }
   return map;
 };
@@ -49,7 +49,7 @@ describe("hash tooling (1.2)", () => {
     const hashB = await hashRoundedMap(mapB);
     expect(hashA).toBe(hashB);
 
-    const mapC = { ...mapA, TOKEN0: (mapA.TOKEN0 ?? 0) + 1 };
+    const mapC = { ...mapA, TOKEN0: mapA.TOKEN0 + 1 };
     const hashC = await hashRoundedMap(mapC);
     expect(hashC).not.toBe(hashA);
   });

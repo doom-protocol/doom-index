@@ -1,4 +1,4 @@
-export type VisualParams = {
+export interface VisualParams {
   fogDensity: number;
   skyTint: number;
   reflectivity: number;
@@ -17,7 +17,7 @@ export type VisualParams = {
   warmHue: number;
   tokenWeights?: Record<string, number>;
   worldPrompt?: string;
-};
+}
 
 /**
  * Legacy function: mapToVisualParams

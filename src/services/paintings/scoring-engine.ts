@@ -46,7 +46,7 @@ export class ScoringEngine {
     // Price change magnitude (0-1)
     // Adjusted to be more sensitive to recent moves (24h) while respecting weekly trends (7d)
     const change24h = Math.abs(candidate.priceChange24h);
-    const change7d = Math.abs(candidate.priceChange7d ?? 0);
+    const change7d = Math.abs(candidate.priceChange7d);
 
     const score24h = Math.min(1, change24h / 30); // 30% move in 24h is max score
     const score7d = Math.min(1, change7d / 60); // 60% move in 7d is max score

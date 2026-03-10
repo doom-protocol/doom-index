@@ -1,55 +1,55 @@
-type ExternalApiError = {
+interface ExternalApiError {
   type: "ExternalApiError";
   provider: "ImageProvider" | "WorkersAI" | "Tavily" | "coingecko" | "alternative.me" | "runware" | "pinata";
   status?: number;
   message: string;
   ticker?: string;
   details?: unknown;
-};
+}
 
-type StorageError = {
+interface StorageError {
   type: "StorageError";
   op: "get" | "put" | "delete" | "list";
   key: string;
   status?: number;
   message: string;
-};
+}
 
-type ValidationError = {
+interface ValidationError {
   type: "ValidationError";
   message: string;
   details?: unknown;
   status?: number;
-};
+}
 
-type InternalError = {
+interface InternalError {
   type: "InternalError";
   message: string;
   cause?: unknown;
   status?: number;
-};
+}
 
-export type ConfigurationError = {
+export interface ConfigurationError {
   type: "ConfigurationError";
   message: string;
   missingVar?: string;
   status?: number;
-};
+}
 
-export type ParsingError = {
+export interface ParsingError {
   type: "ParsingError";
   message: string;
   rawValue?: string;
   status?: number;
-};
+}
 
-export type TimeoutError = {
+export interface TimeoutError {
   type: "TimeoutError";
   message: string;
   timeoutMs: number;
   elapsedMs?: number;
   status?: number;
-};
+}
 
 export type AppError =
   | ExternalApiError

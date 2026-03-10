@@ -105,7 +105,15 @@ describe("Archive tRPC Router Integration", () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
       // zod will throw error for values > 100
-      await expect(caller.paintings.list({ limit: 200 as unknown as number })).rejects.toThrow();
+      let error: unknown;
+
+      try {
+        await caller.paintings.list({ limit: 200 as unknown as number });
+      } catch (caught) {
+        error = caught;
+      }
+
+      expect(error).toBeDefined();
     });
 
     it("should parse cursor parameter", async () => {
@@ -146,24 +154,46 @@ describe("Archive tRPC Router Integration", () => {
     it("should throw error for invalid date format", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
-      await expect(caller.paintings.list({ from: "invalid-date" as unknown as string })).rejects.toThrow();
+      let error: unknown;
+
+      try {
+        await caller.paintings.list({ from: "invalid-date" as unknown as string });
+      } catch (caught) {
+        error = caught;
+      }
+
+      expect(error).toBeDefined();
     });
 
     it("should throw error for invalid limit (negative)", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
-      await expect(caller.paintings.list({ limit: -1 as unknown as number })).rejects.toThrow();
+      let error: unknown;
+
+      try {
+        await caller.paintings.list({ limit: -1 as unknown as number });
+      } catch (caught) {
+        error = caught;
+      }
+
+      expect(error).toBeDefined();
     });
 
     it("should throw error when from > to", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
-      await expect(
-        caller.paintings.list({
+      let error: unknown;
+
+      try {
+        await caller.paintings.list({
           from: "2025-11-15",
           to: "2025-11-14",
-        }),
-      ).rejects.toThrow();
+        });
+      } catch (caught) {
+        error = caught;
+      }
+
+      expect(error).toBeDefined();
     });
   });
 });

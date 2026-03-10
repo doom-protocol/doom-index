@@ -5,6 +5,12 @@ import { Database } from "bun:sqlite";
 import { beforeEach, describe, expect, it } from "bun:test";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 
+function runStatements(sqlite: Database, statements: string[]): void {
+  for (const statement of statements) {
+    sqlite.run(statement);
+  }
+}
+
 describe("TokensRepository", () => {
   let db: ReturnType<typeof drizzle<typeof dbSchema>>;
   let repository: TokensRepository;
@@ -14,8 +20,8 @@ describe("TokensRepository", () => {
     const sqlite = new Database(":memory:");
 
     // Create tokens table
-    sqlite.exec(`
-      CREATE TABLE tokens (
+    runStatements(sqlite, [
+      `CREATE TABLE tokens (
         id TEXT PRIMARY KEY NOT NULL,
         symbol TEXT NOT NULL,
         name TEXT NOT NULL,
@@ -25,10 +31,10 @@ describe("TokensRepository", () => {
         categories TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
-      );
-      CREATE INDEX idx_tokens_symbol ON tokens(symbol);
-      CREATE INDEX idx_tokens_coingecko_id ON tokens(coingecko_id);
-    `);
+      )`,
+      "CREATE INDEX idx_tokens_symbol ON tokens(symbol)",
+      "CREATE INDEX idx_tokens_coingecko_id ON tokens(coingecko_id)",
+    ]);
 
     db = drizzle(sqlite, { schema: dbSchema });
 

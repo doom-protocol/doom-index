@@ -2,10 +2,10 @@
  * In-memory R2 bucket implementation for tests.
  * Not included in production builds.
  */
-export type StoredValue = {
+export interface StoredValue {
   content: ArrayBuffer | string;
   contentType?: string;
-};
+}
 
 const extractContentType = (metadata?: R2PutOptions["httpMetadata"]): string | undefined => {
   if (!metadata) {
@@ -28,7 +28,7 @@ export function createTestR2Bucket(): {
   const store = new Map<string, StoredValue>();
 
   const bucket = {
-    put(key: string, value: ArrayBuffer | string, options?: R2PutOptions): Promise<void> {
+    async put(key: string, value: ArrayBuffer | string, options?: R2PutOptions): Promise<void> {
       const content = value instanceof ArrayBuffer ? cloneBuffer(value) : value;
       const contentType = extractContentType(options?.httpMetadata);
       store.set(key, {
@@ -38,7 +38,7 @@ export function createTestR2Bucket(): {
       return Promise.resolve();
     },
 
-    get(key: string): Promise<R2Object | null> {
+    async get(key: string): Promise<R2Object | null> {
       const entry = store.get(key);
       if (!entry) return Promise.resolve(null);
 
@@ -61,8 +61,8 @@ export function createTestR2Bucket(): {
             headers.set("Content-Type", entry.contentType);
           }
         },
-        arrayBuffer: () => Promise.resolve(arrayBuffer),
-        text: () => {
+        arrayBuffer: async () => Promise.resolve(arrayBuffer),
+        text: async () => {
           if (typeof content === "string") {
             return Promise.resolve(content);
           }
@@ -73,12 +73,12 @@ export function createTestR2Bucket(): {
       } as unknown as R2ObjectBody);
     },
 
-    delete(key: string): Promise<void> {
+    async delete(key: string): Promise<void> {
       store.delete(key);
       return Promise.resolve();
     },
 
-    list(options?: R2ListOptions): Promise<R2Objects> {
+    async list(options?: R2ListOptions): Promise<R2Objects> {
       const prefix = options?.prefix ?? "";
       const limit = options?.limit ?? 1000;
       const startAfter = options?.startAfter;
@@ -105,7 +105,7 @@ export function createTestR2Bucket(): {
 
       const objects: R2Object[] = resultKeys.map((key) => {
         const entry = store.get(key);
-        const size = entry?.content instanceof ArrayBuffer ? entry.content.byteLength : (entry?.content?.length ?? 0);
+        const size = entry?.content instanceof ArrayBuffer ? entry.content.byteLength : (entry?.content.length ?? 0);
         const etag = `"${key}"`;
         return {
           key,

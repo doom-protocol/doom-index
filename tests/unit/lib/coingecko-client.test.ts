@@ -42,11 +42,11 @@ describe("CoinGeckoClient", () => {
       };
 
       // @ts-expect-error - Bun test mocking requires global.fetch reassignment
-      global.fetch = mock(() =>
+      global.fetch = mock(async () =>
         Promise.resolve({
           ok: true,
           headers: new Headers({ "content-type": "application/json" }),
-          json: () => Promise.resolve(mockResponse),
+          json: async () => Promise.resolve(mockResponse),
         } as Response),
       );
 
@@ -55,8 +55,8 @@ describe("CoinGeckoClient", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk() && result.value.coins) {
-        // @ts-expect-error - CoinGecko trending API response structure may not match SDK types exactly
-        expect(result.value.coins[0]?.item?.id).toBe("solana");
+        const firstCoin = result.value.coins[0] as { item?: { id?: string } };
+        expect(firstCoin.item?.id).toBe("solana");
       }
     });
   });
@@ -69,11 +69,11 @@ describe("CoinGeckoClient", () => {
       ];
 
       // @ts-expect-error - Bun test mocking requires global.fetch reassignment
-      global.fetch = mock(() =>
+      global.fetch = mock(async () =>
         Promise.resolve({
           ok: true,
           headers: new Headers({ "content-type": "application/json" }),
-          json: () => Promise.resolve(mockResponse),
+          json: async () => Promise.resolve(mockResponse),
         } as Response),
       );
 
@@ -89,7 +89,7 @@ describe("CoinGeckoClient", () => {
 
   describe("getCoinsMarkets", () => {
     it("should fetch coins markets successfully", async () => {
-      const mockResponse: CoinsMarketsResponse = [
+      const mockResponse = [
         {
           id: "bitcoin",
           symbol: "btc",
@@ -118,15 +118,14 @@ describe("CoinGeckoClient", () => {
           roi: null,
           last_updated: "2025-11-21T00:00:00.000Z",
         },
-        // @ts-expect-error - Casting to avoid strict Date type issues if they exist, trusting runtime
-      ] as GlobalMarketDataResponse;
+      ] satisfies CoinsMarketsResponse;
 
       // @ts-expect-error - Bun test mocking requires global.fetch reassignment
-      global.fetch = mock(() =>
+      global.fetch = mock(async () =>
         Promise.resolve({
           ok: true,
           headers: new Headers({ "content-type": "application/json" }),
-          json: () => Promise.resolve(mockResponse),
+          json: async () => Promise.resolve(mockResponse),
         } as Response),
       );
 
@@ -162,11 +161,11 @@ describe("CoinGeckoClient", () => {
       };
 
       // @ts-expect-error - Bun test mocking requires global.fetch reassignment
-      global.fetch = mock(() =>
+      global.fetch = mock(async () =>
         Promise.resolve({
           ok: true,
           headers: new Headers({ "content-type": "application/json" }),
-          json: () => Promise.resolve(mockResponse),
+          json: async () => Promise.resolve(mockResponse),
         } as Response),
       );
 
@@ -175,9 +174,15 @@ describe("CoinGeckoClient", () => {
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
+        const data = result.value.data;
+        expect(data).toBeDefined();
+        if (!data) {
+          throw new Error("Expected global market data to be defined");
+        }
+
         // Safely access potentially loose types using type assertion
-        expect((result.value.data?.total_market_cap as unknown as { usd: number })?.usd).toBe(2000000000000);
-        expect(result.value.data?.market_cap_percentage?.btc).toBe(50.0);
+        expect((data.total_market_cap as unknown as { usd: number }).usd).toBe(2000000000000);
+        expect(data.market_cap_percentage?.btc).toBe(50.0);
       }
     });
   });

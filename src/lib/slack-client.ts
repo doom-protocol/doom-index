@@ -1,13 +1,14 @@
 import { env, getEnvironmentName } from "@/env";
-import { err, ok, type Result } from "neverthrow";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 
-type SlackAttachmentField = {
+interface SlackAttachmentField {
   title: string;
   value: string;
   short?: boolean;
-};
+}
 
-type SlackAttachment = {
+interface SlackAttachment {
   fallback?: string;
   color?: string;
   pretext?: string;
@@ -24,18 +25,18 @@ type SlackAttachment = {
   footer_icon?: string;
   ts?: number;
   mrkdwn_in?: string[];
-};
+}
 
-type SlackMessage = {
+interface SlackMessage {
   text?: string;
   blocks?: unknown[];
   attachments?: SlackAttachment[];
-};
+}
 
-type SlackError = {
+interface SlackError {
   type: "network" | "config";
   message: string;
-};
+}
 
 /**
  * Send a message to Slack using the configured webhook URL.
@@ -65,7 +66,7 @@ export async function sendSlackMessage(message: SlackMessage): Promise<Result<vo
     if (!response.ok) {
       return err({
         type: "network",
-        message: `Failed to send message to Slack: ${response.status} ${response.statusText}`,
+        message: `Failed to send message to Slack: ${String(response.status)} ${response.statusText}`,
       });
     }
 
@@ -104,7 +105,16 @@ function decodeJsonEscapes(str: string): string | null {
 
   try {
     const wrapped = `"${str}"`;
-    return JSON.parse(wrapped);
+    const parsed: unknown = JSON.parse(wrapped);
+    return typeof parsed === "string" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function safeStringify(value: unknown): string | null {
+  try {
+    return JSON.stringify(value, null, 2);
   } catch {
     return null;
   }
@@ -123,7 +133,7 @@ function tryFormatJson(str: string): { isJson: boolean; formatted: string } {
 
   if (looksLikeObjectOrArray) {
     try {
-      const parsed = JSON.parse(trimmed);
+      const parsed: unknown = JSON.parse(trimmed);
       return { isJson: true, formatted: JSON.stringify(parsed, null, 2) };
     } catch {
       // First parse failed, try decoding escape sequences
@@ -134,7 +144,7 @@ function tryFormatJson(str: string): { isJson: boolean; formatted: string } {
       const decodedTrimmed = decoded.trim();
       if (decodedTrimmed.startsWith("{") || decodedTrimmed.startsWith("[")) {
         try {
-          const reparsed = JSON.parse(decodedTrimmed);
+          const reparsed: unknown = JSON.parse(decodedTrimmed);
           return { isJson: true, formatted: JSON.stringify(reparsed, null, 2) };
         } catch {
           return { isJson: false, formatted: decoded };
@@ -172,24 +182,16 @@ export function formatErrorForSlack(error: unknown, context?: string, source: Er
       errorMessage = inner.message;
       stackTrace = inner.stack;
       // Stringify the wrapper to show other context
-      try {
-        const wrapperCopy = { ...error, error: "[Error Object]" };
-        additionalDetails = JSON.stringify(wrapperCopy, null, 2);
-      } catch {}
+      const wrapperCopy = { ...error, error: "[Error Object]" };
+      additionalDetails = safeStringify(wrapperCopy) ?? undefined;
     } else if ("stack" in error) {
       // Error-like object
-      errorMessage = (error as { message?: string }).message || String(error);
+      errorMessage = (error as { message?: string }).message || safeStringify(error) || "Unknown object error";
       stackTrace = (error as { stack?: string }).stack;
-      try {
-        additionalDetails = JSON.stringify(error, null, 2);
-      } catch {}
+      additionalDetails = safeStringify(error) ?? undefined;
     } else {
       // Generic object
-      try {
-        errorMessage = JSON.stringify(error, null, 2);
-      } catch {
-        errorMessage = String(error);
-      }
+      errorMessage = safeStringify(error) || "Unknown object error";
     }
   } else {
     errorMessage = String(error);
