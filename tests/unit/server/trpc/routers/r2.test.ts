@@ -24,6 +24,8 @@ describe("R2 Router", () => {
         R2_PUBLIC_DOMAIN: undefined,
         NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
       },
+      isDevelopment: () => true,
+      getEnvironmentName: () => "development" as const,
     }));
   });
 

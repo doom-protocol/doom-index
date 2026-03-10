@@ -12,6 +12,8 @@ void mock.module("@/env", () => ({
       return mockR2Url;
     },
   },
+  isDevelopment: () => true,
+  getEnvironmentName: () => "development" as const,
 }));
 
 describe("buildPublicR2Path", () => {
