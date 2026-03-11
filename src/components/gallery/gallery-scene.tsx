@@ -1,7 +1,7 @@
 "use client";
 
 import { useLatestPainting } from "@/hooks/use-latest-painting";
-import { useSolanaWallet } from "@/hooks/use-solana-wallet";
+import type { PaintingMetadata } from "@/types/paintings";
 import { glbExportService } from "@/lib/glb-export-service";
 import { logger } from "@/utils/logger";
 import { Grid, OrbitControls, Stats } from "@react-three/drei";
@@ -39,18 +39,19 @@ const Leva = dynamic(async () => import("leva").then((mod) => ({ default: mod.Le
 
 interface GallerySceneProps {
   cameraPreset?: "dashboard" | "painting";
+  initialPainting?: PaintingMetadata | null;
 }
 
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
 
-export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCameraPreset = "painting" }) => {
+export const GalleryScene: FC<GallerySceneProps> = ({
+  cameraPreset: initialCameraPreset = "painting",
+  initialPainting,
+}) => {
   const isDevMode = isDevelopment();
-  const { data: latestPainting } = useLatestPainting();
+  const { data: latestPainting } = useLatestPainting(initialPainting);
   const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
-
-  // Wallet hooks
-  const { connecting: isWalletConnecting } = useSolanaWallet();
 
   // Export state
   const paintingRef = useRef<Group>(null);
@@ -261,7 +262,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
           onClick={() => {
             void handleExport();
           }}
-          isLoading={isExporting || isWalletConnecting}
+          isLoading={isExporting}
           disabled={!latestPainting}
         />
       </div>
