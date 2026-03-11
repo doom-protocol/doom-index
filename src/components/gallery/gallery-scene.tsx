@@ -269,7 +269,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
           mouseButtons={{ LEFT: 0, MIDDLE: 1, RIGHT: 2 }}
           onChange={handleOrbitControlsChange}
         />
-        <Lights />
+        <Lights disableDevControls />
 
         {isDevMode && (
           <>

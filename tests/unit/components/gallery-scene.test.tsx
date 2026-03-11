@@ -10,6 +10,7 @@ import "../../preload";
 
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { render, waitFor, cleanup } from "@testing-library/react";
+import { useEffect } from "react";
 import type { FC, ReactNode } from "react";
 import { createLoggerMock, createMockPerformance, resetMockTime, advanceMockTime, getMockTime } from "../../mocks";
 
@@ -299,7 +300,15 @@ void mock.module("@/components/gallery/gallery-room", () => ({
 }));
 
 // Create a mock Lights component that we can reference
-const MockLights: FC = () => <div data-testid="full-lights" />;
+let latestLightsProps: Record<string, unknown> | null = null;
+
+const MockLights: FC<Record<string, unknown>> = (props) => {
+  useEffect(() => {
+    latestLightsProps = props;
+  }, [props]);
+
+  return <div data-testid="full-lights" />;
+};
 
 void mock.module("@/components/gallery/lights", () => ({
   Lights: MockLights,
@@ -349,6 +358,7 @@ describe("unit/components/gallery-scene", () => {
     // Clear logger calls
     loggerCalls.length = 0;
     latestOrbitControlsProps = null;
+    latestLightsProps = null;
     orbitControlsState = createOrbitControlsState();
 
     // Override performance with complete mock for React 19
@@ -595,16 +605,16 @@ describe("unit/components/gallery-scene", () => {
   });
 
   describe("performance-guarantees", () => {
-    it("should render the final light rig immediately instead of a temporary fallback rig", async () => {
+    it("should keep the top page on the production light rig from the first render", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 
-      const { getByTestId, queryByTestId } = render(<GalleryScene />);
+      const { getByTestId } = render(<GalleryScene />);
 
       await waitFor(() => {
         expect(getByTestId("full-lights")).toBeDefined();
       });
 
-      expect(queryByTestId("full-lights")).toBeDefined();
+      expect(latestLightsProps?.disableDevControls).toBe(true);
     });
 
     it("should configure OrbitControls with damping for smooth inertial movement", async () => {
