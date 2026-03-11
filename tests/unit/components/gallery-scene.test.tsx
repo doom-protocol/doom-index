@@ -291,9 +291,10 @@ void mock.module("@/components/gallery/camera-rig", () => ({
   CameraRig: () => null,
 }));
 
+const realGalleryRoom = await import("@/components/gallery/gallery-room");
+
 void mock.module("@/components/gallery/gallery-room", () => ({
-  GALLERY_BACK_WALL_Z: 5,
-  GALLERY_FLOOR_Y: -0.02,
+  ...realGalleryRoom,
   GalleryRoom: () => null,
 }));
 
@@ -467,7 +468,7 @@ describe("unit/components/gallery-scene", () => {
       expect(endTime - startTime).toBeLessThanOrEqual(300);
     });
 
-    it("should freeze the rest of the drag after controls exceed the floor boundary", async () => {
+    it("should accept the next valid move after rejecting a floor-overflow move", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 
       render(<GalleryScene />);
@@ -525,9 +526,17 @@ describe("unit/components/gallery-scene", () => {
       orbitControlsState.target.z = 4.5;
       onChange?.({ target: orbitControlsState });
 
-      expect(orbitControlsState.object.position).toEqual(lastValidState.object.position);
-      expect(orbitControlsState.target).toEqual(lastValidState.target);
-      expect(orbitControlsState.update).toHaveBeenCalled();
+      expect(orbitControlsState.object.position).toEqual({
+        x: 0.5,
+        y: 0.18,
+        z: 1.4,
+      });
+      expect(orbitControlsState.target).toEqual({
+        x: 0.55,
+        y: 0.26,
+        z: 4.5,
+      });
+      expect(orbitControlsState.update).not.toHaveBeenCalled();
     });
 
     it("should reject the whole move when controls exceed the back wall boundary", async () => {
@@ -632,6 +641,18 @@ describe("unit/components/gallery-scene", () => {
   });
 
   describe("performance-guarantees", () => {
+    it("should configure OrbitControls without damping to avoid inertial boundary slip", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      render(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(latestOrbitControlsProps).toBeDefined();
+      });
+
+      expect(latestOrbitControlsProps?.enableDamping).toBe(false);
+    });
+
     it("should not add artificial delays to texture loading", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 

@@ -1,5 +1,5 @@
 import { Header } from "@/components/ui/header";
-import { createServerCaller } from "@/server/trpc/server-caller";
+import { createStaticServerCaller } from "@/server/trpc/server-caller";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import { HomeClient } from "./home-client";
@@ -8,7 +8,7 @@ export default async function HomePage() {
   let initialPainting: PaintingMetadata | null = null;
 
   try {
-    const caller = await createServerCaller();
+    const caller = await createStaticServerCaller();
     const result = await caller.paintings.list({ limit: 1 });
     initialPainting = (result.items[0] as PaintingMetadata | undefined) ?? null;
   } catch (error) {

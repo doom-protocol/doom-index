@@ -101,7 +101,7 @@ const mockCallerResult = {
   },
 };
 void mock.module("@/server/trpc/server-caller", () => ({
-  createServerCaller: async () => {
+  createStaticServerCaller: async () => {
     await Promise.resolve();
     return mockCallerResult;
   },

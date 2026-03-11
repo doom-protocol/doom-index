@@ -116,6 +116,6 @@ export default isNextDev ? configWithMDX : withRspack(configWithMDX);
 
 // `initOpenNextCloudflareForDev()` is only for local `next dev`.
 // Tying it to a localhost public URL makes CI/production builds try to open Wrangler dev bindings.
-if (process.env.NODE_ENV === "development") {
+if (isNextDev) {
   void initOpenNextCloudflareForDev({ remoteBindings: true });
 }

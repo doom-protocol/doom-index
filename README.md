@@ -27,7 +27,7 @@ bun install
 Copy `.example.vars` to `.dev.vars` and fill in your local values:
 
 ```bash
-# cp .example.vars .dev.vars
+cp .example.vars .dev.vars
 
 # Base URL (required)
 NEXT_PUBLIC_BASE_URL=http://localhost:8787
