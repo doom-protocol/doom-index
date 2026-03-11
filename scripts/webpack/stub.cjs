@@ -1,8 +1,8 @@
-// Universal stub for excluding heavy/browser-only libraries from the server bundle.
-// This proxy handles any property access, function call, or constructor call.
+// Keep client-only packages out of the OpenNext server handler bundle.
+// The server never executes these modules, but bundling them inflates the worker artifact.
 const proxy = new Proxy(function () {}, {
   get(_target, prop) {
-    if (prop === "then") return undefined; // Prevent promise resolution loops
+    if (prop === "then") return undefined;
     if (prop === "default") return proxy;
     return proxy;
   },

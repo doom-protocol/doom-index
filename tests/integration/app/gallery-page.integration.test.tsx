@@ -91,9 +91,26 @@ void mock.module("@/hooks/use-latest-painting", () => ({
 // Mock useSolanaWallet at module level
 void mock.module("@/hooks/use-solana-wallet", createUseSolanaWalletMock());
 
-const renderGalleryPage = () => {
-  const pageFactory = Page as () => JSX.Element;
-  return pageFactory();
+// Mock server caller to avoid Cloudflare context dependency in tests
+const mockCallerResult = {
+  paintings: {
+    list: async () => {
+      await Promise.resolve();
+      return { items: [], hasMore: false };
+    },
+  },
+};
+void mock.module("@/server/trpc/server-caller", () => ({
+  createServerCaller: async () => {
+    await Promise.resolve();
+    return mockCallerResult;
+  },
+}));
+
+const renderGalleryPage = async () => {
+  const pageFactory = Page as unknown as () => Promise<JSX.Element>;
+  const result = await pageFactory();
+  return result;
 };
 
 const createTestQueryClient = () => {
@@ -165,7 +182,10 @@ interface TimingMetrics {
   totalTime: number;
 }
 
-const measureTimings = (queryClient: QueryClient, _mockUseLatestPainting: ReturnType<typeof mock>): TimingMetrics => {
+const measureTimings = async (
+  queryClient: QueryClient,
+  _mockUseLatestPainting: ReturnType<typeof mock>,
+): Promise<TimingMetrics> => {
   const timings: Partial<TimingMetrics> = {};
   const startTotal = performance.now();
 
@@ -181,7 +201,7 @@ const measureTimings = (queryClient: QueryClient, _mockUseLatestPainting: Return
 
   // Measure page component render
   const pageRenderStart = performance.now();
-  const page = renderGalleryPage();
+  const page = await renderGalleryPage();
   timings.pageComponentRenderTime = performance.now() - pageRenderStart;
 
   // Measure React Testing Library render
@@ -229,7 +249,7 @@ describe("Gallery Page Integration", () => {
     mock.restore();
   });
 
-  it("should render gallery page with header", () => {
+  it("should render gallery page with header", async () => {
     mockUseLatestPainting.mockReturnValue({
       data: null,
       isLoading: false,
@@ -237,11 +257,11 @@ describe("Gallery Page Integration", () => {
       dataUpdatedAt: Date.now(),
     });
 
-    const timings = measureTimings(queryClient, mockUseLatestPainting);
+    const timings = await measureTimings(queryClient, mockUseLatestPainting);
     logTimings("should render gallery page with header", timings);
 
     // Re-render for assertions
-    const page = renderGalleryPage();
+    const page = await renderGalleryPage();
     const { container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);
 
     // Should render main element
@@ -254,7 +274,7 @@ describe("Gallery Page Integration", () => {
     expect(container.textContent).toContain("DOOM INDEX");
   });
 
-  it("should render gallery page with painting data", () => {
+  it("should render gallery page with painting data", async () => {
     const testImageUrl = "/api/r2/images/test-painting.webp";
     const mockPainting = createMockPainting({ imageUrl: testImageUrl });
 
@@ -265,11 +285,11 @@ describe("Gallery Page Integration", () => {
       dataUpdatedAt: Date.now(),
     });
 
-    const timings = measureTimings(queryClient, mockUseLatestPainting);
+    const timings = await measureTimings(queryClient, mockUseLatestPainting);
     logTimings("should render gallery page with painting data", timings);
 
     // Re-render for assertions
-    const page = renderGalleryPage();
+    const page = await renderGalleryPage();
     const { container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);
 
     // Should render main element
@@ -283,7 +303,7 @@ describe("Gallery Page Integration", () => {
     expect(timings.totalTime).toBeLessThan(1000);
   });
 
-  it("should handle loading state", () => {
+  it("should handle loading state", async () => {
     mockUseLatestPainting.mockReturnValue({
       data: null,
       isLoading: true,
@@ -291,11 +311,11 @@ describe("Gallery Page Integration", () => {
       dataUpdatedAt: Date.now(),
     });
 
-    const timings = measureTimings(queryClient, mockUseLatestPainting);
+    const timings = await measureTimings(queryClient, mockUseLatestPainting);
     logTimings("should render gallery page with painting data", timings);
 
     // Re-render for assertions
-    const page = renderGalleryPage();
+    const page = await renderGalleryPage();
     const { container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);
 
     // Should render even when loading
@@ -305,7 +325,7 @@ describe("Gallery Page Integration", () => {
     expect(timings.totalTime).toBeLessThan(1000);
   });
 
-  it("should render with different image URLs", () => {
+  it("should render with different image URLs", async () => {
     const testCases = ["/api/r2/images/painting1.webp", "/api/r2/images/painting2.webp", "/placeholder-painting.webp"];
 
     for (const imageUrl of testCases) {
@@ -317,11 +337,11 @@ describe("Gallery Page Integration", () => {
         dataUpdatedAt: Date.now(),
       });
 
-      const timings = measureTimings(queryClient, mockUseLatestPainting);
+      const timings = await measureTimings(queryClient, mockUseLatestPainting);
       logTimings(`should render with different image URLs (${imageUrl})`, timings);
 
       // Re-render for assertions
-      const page = renderGalleryPage();
+      const page = await renderGalleryPage();
       const { container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);
 
       const main = container.querySelector("main");
@@ -330,7 +350,7 @@ describe("Gallery Page Integration", () => {
     }
   });
 
-  it("should measure time for multiple renders", () => {
+  it("should measure time for multiple renders", async () => {
     const mockPainting = createMockPainting();
     mockUseLatestPainting.mockReturnValue({
       data: mockPainting,
@@ -343,7 +363,7 @@ describe("Gallery Page Integration", () => {
     const iterations = 5;
 
     for (let i = 0; i < iterations; i++) {
-      const timings = measureTimings(queryClient, mockUseLatestPainting);
+      const timings = await measureTimings(queryClient, mockUseLatestPainting);
       allTimings.push(timings);
       logTimings(`should measure time for multiple renders (iteration ${String(i + 1)})`, timings);
     }
@@ -373,7 +393,7 @@ describe("Gallery Page Integration", () => {
     expect(maxTotal).toBeLessThan(2000);
   });
 
-  it("should render navigation links in header", () => {
+  it("should render navigation links in header", async () => {
     mockUseLatestPainting.mockReturnValue({
       data: null,
       isLoading: false,
@@ -381,7 +401,7 @@ describe("Gallery Page Integration", () => {
       dataUpdatedAt: Date.now(),
     });
 
-    const page = renderGalleryPage();
+    const page = await renderGalleryPage();
     const { container: _container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);
 
     // Should have navigation links
@@ -392,7 +412,7 @@ describe("Gallery Page Integration", () => {
     expect(archiveLink).toBeDefined();
   });
 
-  it("should handle error state gracefully", () => {
+  it("should handle error state gracefully", async () => {
     mockUseLatestPainting.mockReturnValue({
       data: null,
       isLoading: false,
@@ -400,11 +420,11 @@ describe("Gallery Page Integration", () => {
       dataUpdatedAt: Date.now(),
     });
 
-    const timings = measureTimings(queryClient, mockUseLatestPainting);
+    const timings = await measureTimings(queryClient, mockUseLatestPainting);
     logTimings("should render gallery page with painting data", timings);
 
     // Re-render for assertions
-    const page = renderGalleryPage();
+    const page = await renderGalleryPage();
     const { container } = render(<QueryClientProvider client={queryClient}>{page}</QueryClientProvider>);
 
     // Should still render page even with error

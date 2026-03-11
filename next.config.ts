@@ -53,36 +53,42 @@ function mergeResolve(
   };
 }
 
+const appAliases = {
+  "@": resolvePath(process.cwd(), "src"),
+} as const;
+
 const serverBundleStubbedModules = [
   "three",
   "three-stdlib",
   "@react-three/fiber",
   "@react-three/drei",
+  "leva",
+  "sonner",
+  "use-sound",
+  "use-haptic",
   "@solana/web3.js",
   "@solana/wallet-adapter-base",
   "@solana/wallet-adapter-react",
   "@solana/wallet-adapter-react-ui",
   "@solana/wallet-adapter-wallets",
-  "use-sound",
-  "use-haptic",
-  "sonner",
-  "js-tiktoken",
-  "leva",
+  "@metaplex-foundation/mpl-token-metadata",
+  "@metaplex-foundation/umi",
+  "@metaplex-foundation/umi-bundle-defaults",
+  "@metaplex-foundation/umi-signer-wallet-adapters",
 ] as const;
 
-const appAliases = {
-  "@": resolvePath(process.cwd(), "src"),
-} as const;
-
+// OpenNext wraps `next build` inside `bun run build:cf`.
+// Only that worker bundle needs client-library stubs; normal SSR builds must keep the real modules.
 function shouldStubServerBundle(): boolean {
-  const value = process.env.DOOM_ENABLE_SERVER_BUNDLE_STUBS;
-  return value === "1" || value === "true";
+  return process.env.npm_lifecycle_event === "build:cf";
 }
 
 function customizeWebpack(config: MutableWebpackConfig, { isServer }: WebpackOptions): MutableWebpackConfig {
   config.resolve = mergeResolve(config, appAliases);
 
   if (isServer && shouldStubServerBundle()) {
+    // Only the OpenNext worker build needs these stubs.
+    // Normal Next.js server renders must keep the real modules available for SSR.
     const stub = resolvePath(process.cwd(), "scripts/webpack/stub.cjs");
     const stubAliases = Object.fromEntries(serverBundleStubbedModules.map((name) => [name, stub])) as WebpackAliasMap;
 
@@ -154,7 +160,8 @@ const withPlugins = composePlugins(withRspack, createMDX());
 
 export default withPlugins(nextConfig);
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-if (typeof baseUrl === "string" && baseUrl.includes("localhost")) {
+// `initOpenNextCloudflareForDev()` is only for local `next dev`.
+// Tying it to a localhost public URL makes CI/production builds try to open Wrangler dev bindings.
+if (process.env.NODE_ENV === "development") {
   void initOpenNextCloudflareForDev({ remoteBindings: true });
 }

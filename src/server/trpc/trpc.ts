@@ -35,3 +35,6 @@ export const publicProcedure = t.procedure.use(loggingMiddleware);
 
 // Router creation helper
 export const router = t.router;
+
+// Server-side caller factory for Server Components
+export const createCallerFactory = t.createCallerFactory;

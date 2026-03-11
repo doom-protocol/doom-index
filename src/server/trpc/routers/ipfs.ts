@@ -5,6 +5,7 @@
  * Follows existing tRPC patterns with neverthrow Result types
  */
 
+import { env } from "@/env";
 import { createPinataClient } from "@/lib/pinata-client";
 import type { PinataClient } from "@/lib/pinata-client";
 import { TRPCError } from "@trpc/server";
@@ -29,7 +30,7 @@ export const ipfsRouter = router({
     .input((val) => v.parse(createSignedUploadUrlSchema, val))
     .mutation(async ({ input, ctx }) => {
       // Get Pinata client from context (for testing) or create new one
-      const pinataClient: PinataClient = ctx.pinataClient ?? createPinataClient();
+      const pinataClient: PinataClient = ctx.pinataClient ?? createPinataClient({ apiKey: env.PINATA_JWT });
 
       // Create signed URL with 30 second expiration
       const result = await pinataClient.createSignedUploadUrl({
