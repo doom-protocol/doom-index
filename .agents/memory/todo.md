@@ -72,3 +72,17 @@ Review:
 - Combined the server-layout refactor commit with the previously separated dependency-and-analysis commit so the PR reflects the user's latest "include everything" instruction.
 - Verified that the transient `baseline-browser-mapping` warning no longer reproduces after Bun re-resolved the lockfile, so no lint-script env var suppression is needed.
 - Final verification passed with `bun run format`, `bun run lint`, `bun run typecheck`, and `bun run test` (`477 pass / 13 skip / 0 fail`).
+
+Strict env simplification pass:
+
+- [x] Remove workaround-style build env/script toggles from package.json and workflow
+- [x] Find remaining build-time Cloudflare context access causing analyzer failure
+- [x] Fix root cause with minimal code changes and comments
+- [x] Re-run build/lint/typecheck/targeted tests
+
+Review:
+
+- `next.config.ts` no longer treats a localhost public URL as a signal to initialize OpenNext dev bindings. The dev-only Cloudflare bootstrap is now limited to development mode, with an inline comment explaining why CI/build must not hit Wrangler remote bindings.
+- Removed the `DOOM_ENABLE_SERVER_BUNDLE_STUBS` toggle and the global webpack stub aliasing. The current import graph already keeps those heavy/browser packages behind client boundaries, so the env-driven workaround was just obscuring the real build bug.
+- Cleaned the last dead reference to the deleted stub file from `knip.json`.
+- Verification passed with `bun run build:cf`, `bun run lint`, and `bun run typecheck`.

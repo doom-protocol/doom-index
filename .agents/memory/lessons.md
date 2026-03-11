@@ -19,3 +19,11 @@
 - 外部依存の warning を env var で suppress する前に、lockfile と `node_modules` の再解決で根本解消するかを先に確認する。warning が自然に消えるなら script の環境変数は追加しない。
 
 - PR 用に代替ブランチを切った場合は、作業完了前に 1 本へ統合して余分な branch を消す。似た名前の branch を並行で残したまま PR 作成フェーズへ進めない。
+
+- npm script や workflow に直接 env var を差し込む workaround は避ける。Cloudflare/Next/OpenNext の build 問題は build-time 実行経路を正して解決し、必要なら理由をコメントで残す。
+
+- workaround を消すときは CI pass だけでなく bundle size の副作用も確認する。server bundle を軽くしていた仕組みを外すなら、何が代わりに入るのかを計測してから最小の境界修正に置き換える。
+
+- ユーザーが source を simple に保ちたいと言ったときは、dynamic import や境界変更を source に散らさず、可能なら `next.config.ts` など build/bundle 設定に最適化を集約する。
+
+- `force-dynamic` や `typeof window` ガードは source の workaround になりやすい。入れる前に本当にその route が dynamic である必要があるか、client が server-only code を参照していないかを先に正す。
