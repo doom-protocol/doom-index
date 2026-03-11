@@ -53,41 +53,12 @@ function mergeResolve(
   };
 }
 
-const serverBundleStubbedModules = [
-  "three",
-  "three-stdlib",
-  "@react-three/fiber",
-  "@react-three/drei",
-  "@solana/web3.js",
-  "@solana/wallet-adapter-base",
-  "@solana/wallet-adapter-react",
-  "@solana/wallet-adapter-react-ui",
-  "@solana/wallet-adapter-wallets",
-  "use-sound",
-  "use-haptic",
-  "sonner",
-  "js-tiktoken",
-  "leva",
-] as const;
-
 const appAliases = {
   "@": resolvePath(process.cwd(), "src"),
 } as const;
 
-function shouldStubServerBundle(): boolean {
-  const value = process.env.DOOM_ENABLE_SERVER_BUNDLE_STUBS;
-  return value === "1" || value === "true";
-}
-
 function customizeWebpack(config: MutableWebpackConfig, { isServer }: WebpackOptions): MutableWebpackConfig {
   config.resolve = mergeResolve(config, appAliases);
-
-  if (isServer && shouldStubServerBundle()) {
-    const stub = resolvePath(process.cwd(), "scripts/webpack/stub.cjs");
-    const stubAliases = Object.fromEntries(serverBundleStubbedModules.map((name) => [name, stub])) as WebpackAliasMap;
-
-    config.resolve = mergeResolve(config, stubAliases);
-  }
 
   if (!isServer) {
     config.resolve = mergeResolve(config, {
@@ -154,7 +125,8 @@ const withPlugins = composePlugins(withRspack, createMDX());
 
 export default withPlugins(nextConfig);
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-if (typeof baseUrl === "string" && baseUrl.includes("localhost")) {
+// `initOpenNextCloudflareForDev()` is only for local `next dev`.
+// Tying it to a localhost public URL makes CI/production builds try to open Wrangler dev bindings.
+if (process.env.NODE_ENV === "development") {
   void initOpenNextCloudflareForDev({ remoteBindings: true });
 }
