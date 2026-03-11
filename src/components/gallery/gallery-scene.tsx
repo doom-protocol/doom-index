@@ -2,11 +2,11 @@
 
 import { useLatestPainting } from "@/hooks/use-latest-painting";
 import {
-  createOrbitControlsSnapshot,
+  constrainOrbitControlsSnapshot,
   isOrbitControlsWithinBounds,
   restoreOrbitControlsSnapshot,
 } from "@/lib/pure/gallery-orbit-bounds";
-import type { OrbitControlsBounds, OrbitControlsSnapshot } from "@/lib/pure/gallery-orbit-bounds";
+import type { OrbitControlsBounds } from "@/lib/pure/gallery-orbit-bounds";
 import type { PaintingMetadata } from "@/types/paintings";
 import { glbExportService } from "@/lib/glb-export-service";
 import { logger } from "@/utils/logger";
@@ -55,6 +55,9 @@ const CAMERA_FLOOR_CLEARANCE = 0.02;
 const CAMERA_BACK_WALL_CLEARANCE = 0.02;
 const MIN_CAMERA_Y = GALLERY_FLOOR_Y + CAMERA_FLOOR_CLEARANCE;
 const MAX_CAMERA_Z = GALLERY_BACK_WALL_Z - CAMERA_BACK_WALL_CLEARANCE;
+const MAX_POLAR_ANGLE = Math.PI / 2;
+const MIN_AZIMUTH_ANGLE = Math.PI / 2;
+const MAX_AZIMUTH_ANGLE = (Math.PI * 3) / 2;
 
 interface OrbitControlsEvent {
   target?: unknown;
@@ -90,7 +93,6 @@ export const GalleryScene: FC<GallerySceneProps> = ({
   // Export state
   const paintingRef = useRef<Group>(null);
   const isClampingCameraRef = useRef(false);
-  const lastValidOrbitControlsStateRef = useRef<OrbitControlsSnapshot | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportedGlbFile, setExportedGlbFile] = useState<File | null>(null);
   const [isMintModalOpen, setIsMintModalOpen] = useState(false);
@@ -177,17 +179,6 @@ export const GalleryScene: FC<GallerySceneProps> = ({
     }
   }, [thumbnailUrl, latestPainting?.timestamp]);
 
-  const handleOrbitControlsStart = (event?: OrbitControlsEvent) => {
-    const controls = readOrbitControls(event);
-    lastValidOrbitControlsStateRef.current = null;
-
-    if (!controls || !isOrbitControlsWithinBounds(controls, ORBIT_CONTROLS_BOUNDS)) {
-      return;
-    }
-
-    lastValidOrbitControlsStateRef.current = createOrbitControlsSnapshot(controls);
-  };
-
   const handleOrbitControlsChange = (event?: OrbitControlsEvent) => {
     const controls = readOrbitControls(event);
     if (!controls || isClampingCameraRef.current) {
@@ -195,18 +186,14 @@ export const GalleryScene: FC<GallerySceneProps> = ({
     }
 
     if (isOrbitControlsWithinBounds(controls, ORBIT_CONTROLS_BOUNDS)) {
-      lastValidOrbitControlsStateRef.current = createOrbitControlsSnapshot(controls);
       return;
     }
 
-    const lastValidOrbitControlsState = lastValidOrbitControlsStateRef.current;
-    if (!lastValidOrbitControlsState) {
-      return;
-    }
+    const constrainedOrbitControlsState = constrainOrbitControlsSnapshot(controls, ORBIT_CONTROLS_BOUNDS);
 
     isClampingCameraRef.current = true;
     try {
-      restoreOrbitControlsSnapshot(controls, lastValidOrbitControlsState);
+      restoreOrbitControlsSnapshot(controls, constrainedOrbitControlsState);
       controls.update();
     } finally {
       isClampingCameraRef.current = false;
@@ -274,19 +261,22 @@ export const GalleryScene: FC<GallerySceneProps> = ({
       >
         <CameraRig preset={initialCameraPreset} />
         <OrbitControls
-          enableDamping={false}
+          enableDamping
+          dampingFactor={0.05}
           touches={{ ONE: 0, TWO: 2 }}
           enableZoom
           enablePan
           minDistance={0.5}
           maxDistance={5}
+          maxPolarAngle={MAX_POLAR_ANGLE}
+          minAzimuthAngle={MIN_AZIMUTH_ANGLE}
+          maxAzimuthAngle={MAX_AZIMUTH_ANGLE}
           target={[0, 0.8, 4.0]}
           rotateSpeed={0.5}
           zoomSpeed={0.5}
           panSpeed={0.25}
           enableRotate
           mouseButtons={{ LEFT: 0, MIDDLE: 1, RIGHT: 2 }}
-          onStart={handleOrbitControlsStart}
           onChange={handleOrbitControlsChange}
         />
         <Lights />

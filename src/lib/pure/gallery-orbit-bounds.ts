@@ -46,7 +46,26 @@ export const restoreOrbitControlsSnapshot = (
   restoreOrbitControlsPoint(controls.target, snapshot.targetPosition);
 };
 
+export const constrainOrbitControlsSnapshot = (
+  controls: OrbitControlsStateLike,
+  bounds: OrbitControlsBounds,
+): OrbitControlsSnapshot => {
+  const snapshot = createOrbitControlsSnapshot(controls);
+  const floorOverflow = bounds.minY - snapshot.targetPosition.y;
+
+  if (floorOverflow > 0) {
+    snapshot.cameraPosition.y += floorOverflow;
+    snapshot.targetPosition.y = bounds.minY;
+  }
+
+  const backWallOverflow = snapshot.targetPosition.z - bounds.maxZ;
+  if (backWallOverflow > 0) {
+    snapshot.cameraPosition.z -= backWallOverflow;
+    snapshot.targetPosition.z = bounds.maxZ;
+  }
+
+  return snapshot;
+};
+
 export const isOrbitControlsWithinBounds = (controls: OrbitControlsStateLike, bounds: OrbitControlsBounds): boolean =>
-  Math.min(controls.object.position.y, controls.target.y) >= bounds.minY &&
-  Math.max(controls.object.position.z, controls.target.z) <= bounds.maxZ &&
-  controls.object.position.z <= controls.target.z;
+  controls.target.y >= bounds.minY && controls.target.z <= bounds.maxZ;
