@@ -7,7 +7,6 @@
  * @see https://docs.pinata.cloud/files/uploading-files#client-side-uploads
  */
 
-import { env } from "@/env";
 import type { AppError } from "@/types/app-error";
 import { err, ok } from "neverthrow";
 import type { Result } from "neverthrow";
@@ -74,10 +73,7 @@ export function createPinataClient(deps: CreatePinataClientDeps = {}): PinataCli
 
   return {
     async createSignedUploadUrl(options: CreateSignedUrlOptions): Promise<Result<SignedUrl, AppError>> {
-      // Validate API key
-      // `createPinataClient()` is also used by client hooks, so server-only env access must stay behind a server check.
-      const key = apiKey ?? (typeof window === "undefined" ? env.PINATA_JWT : undefined);
-      if (!key) {
+      if (!apiKey) {
         return err({
           type: "ConfigurationError",
           message: "PINATA_JWT environment variable is not set",
@@ -86,7 +82,7 @@ export function createPinataClient(deps: CreatePinataClientDeps = {}): PinataCli
 
       try {
         // Use mock client for testing, or create real client
-        const client = mockClient ?? new PinataSDK({ pinataJwt: key });
+        const client = mockClient ?? new PinataSDK({ pinataJwt: apiKey });
 
         // Calculate expiration timestamp (current time + expires seconds)
         const expiresAt = Math.floor(Date.now() / 1000) + options.expires;
@@ -113,10 +109,7 @@ export function createPinataClient(deps: CreatePinataClientDeps = {}): PinataCli
     },
 
     async convertToGatewayUrl(cid: string): Promise<Result<string, AppError>> {
-      // Validate API key
-      // `createPinataClient()` is also used by client hooks, so server-only env access must stay behind a server check.
-      const key = apiKey ?? (typeof window === "undefined" ? env.PINATA_JWT : undefined);
-      if (!key) {
+      if (!apiKey) {
         return err({
           type: "ConfigurationError",
           message: "PINATA_JWT environment variable is not set",
@@ -125,7 +118,7 @@ export function createPinataClient(deps: CreatePinataClientDeps = {}): PinataCli
 
       try {
         // Use mock client for testing, or create real client
-        const client = mockClient ?? new PinataSDK({ pinataJwt: key });
+        const client = mockClient ?? new PinataSDK({ pinataJwt: apiKey });
 
         // Call Pinata SDK - convert IPFS URL to gateway URL
         const ipfsUrl = `ipfs://${cid}`;
