@@ -191,12 +191,22 @@ describe("unit/hooks/use-latest-painting", () => {
     });
 
     it("should return clamped STALE_POLL_INTERVAL_MS for old timestamps", () => {
-      // Timestamp from 1 hour ago (older than GENERATION_INTERVAL_MS)
-      const oldTimestamp = new Date(Date.now() - 3600000).toISOString();
+      const oldTimestamp = "2025-01-01T00:00:00.000Z";
       const result = computeRefetchDelay(oldTimestamp);
 
       // Should be clamped to at least MIN_REFETCH_INTERVAL_MS
       expect(result).toBeGreaterThanOrEqual(MIN_REFETCH_INTERVAL_MS);
+    });
+
+    it("should fall back to stale polling when Date.now is not finite", () => {
+      const originalDateNow = Date.now;
+      Date.now = () => Number.NaN;
+
+      try {
+        expect(computeRefetchDelay("2025-01-01T00:00:00.000Z")).toBe(STALE_POLL_INTERVAL_MS);
+      } finally {
+        Date.now = originalDateNow;
+      }
     });
   });
 
