@@ -14,19 +14,19 @@
  */
 
 import type { Result } from "neverthrow";
-import { getDB } from "./db";
+import { getDB } from "./server/db";
 import { env as runtimeEnv } from "./env";
 import { AlternativeMeClient } from "./lib/alternative-me-client";
 import { CoinGeckoClient } from "./lib/coingecko-client";
 import { reportError } from "./lib/error-reporter";
-import { MarketSnapshotsRepository } from "./repositories/market-snapshots-repository";
-import { TokensRepository } from "./repositories/tokens-repository";
-import { MarketDataService } from "./services/paintings/market-data";
-import { PaintingContextBuilder } from "./services/paintings/painting-context-builder";
-import type { PaintingGenerationResult } from "./services/paintings/painting-generation-orchestrator";
-import { PaintingGenerationOrchestrator } from "./services/paintings/painting-generation-orchestrator";
-import { TokenDataFetchService } from "./services/paintings/token-data-fetch";
-import { TokenSelectionService } from "./services/paintings/token-selection";
+import { MarketSnapshotsRepository } from "./server/repositories/market-snapshots-repository";
+import { TokensRepository } from "./server/repositories/tokens-repository";
+import { MarketDataService } from "./server/services/paintings/market-data";
+import { PaintingContextBuilder } from "./server/services/paintings/painting-context-builder";
+import type { PaintingGenerationResult } from "./server/services/paintings/painting-generation-orchestrator";
+import { PaintingGenerationOrchestrator } from "./server/services/paintings/painting-generation-orchestrator";
+import { TokenDataFetchService } from "./server/services/paintings/token-data-fetch";
+import { TokenSelectionService } from "./server/services/paintings/token-selection";
 import type { AppError } from "./types/app-error";
 import { getErrorMessage, getErrorStack } from "./utils/error";
 import { logger } from "./utils/logger";

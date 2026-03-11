@@ -27,21 +27,21 @@ updated: 2025-12-02
 
 - `src/app` App Router 構成（API/OGP/アーカイブ含む, Edge 前提）
 - `src/server/trpc` tRPC ルーター・スキーマ・コンテキスト（型安全 API）
-- `src/services` ビジネスロジック（市場データ、生成、状態、収益等）
-  - `src/services/paintings/` 絵画生成オーケストレーターと関連サービス
-  - `src/services/token-analysis-service.ts` トークン分析サービス
+- `src/server/services` サーバー専用ビジネスロジック（市場データ、生成、状態、収益等）
+  - `src/server/services/paintings/` 絵画生成オーケストレーターと関連サービス
+  - `src/server/services/token-analysis-service.ts` トークン分析サービス
 - `src/lib` 外部統合（R2, Provider, tRPC クライアント, 時刻, ハッシュ, 純関数群）
 - `src/lib/cache` Cloudflare Cache API ヘルパー（開発中）
-- `src/repositories` データアクセス層（D1）
+- `src/server/repositories` データアクセス層（D1）
   - `paintings-repository.ts`
   - `tokens-repository.ts`
   - `market-snapshots-repository.ts`
-- `src/db` データベーススキーマ（Drizzle ORM）
-  - `src/db/schema/archive.ts` アーカイブインデックステーブル
-  - `src/db/schema/token-contexts.ts` トークンコンテキストキャッシュテーブル
+- `src/server/db` データベーススキーマ（Drizzle ORM）
+  - `src/server/db/schema/*.ts` D1 テーブル定義
 - `src/components` UI/3D/ユーティリティ
   - `src/components/archive` アーカイブページコンポーネント
 - `src/constants` プロンプト・トークン定数
+- `src/types` クライアント共有型（API 応答 DTO、ドメイン型、OpenNext、エラー、ワーカー設定 等）
 - `src/workers` Worker エントリ・処理
 - `tests/` unit/integration テスト
 
@@ -135,6 +135,7 @@ bun run deploy         # Cloudflare へデプロイ
 
 - TypeScript: `strict: true`, `noEmit: true`
 - パスエイリアス: `@/* -> ./src/*`
+- サーバー実装 import: `@/server/*`
 - 追加 types: `src/types/worker-configuration.d.ts`, `bun-types`, `node`, `@testing-library/jest-dom`
 
 ## テスト

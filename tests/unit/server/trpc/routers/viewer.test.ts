@@ -14,7 +14,7 @@ describe("Viewer Router", () => {
     it("should register viewer successfully", async () => {
       const mockKvNamespace = {} as KVNamespace;
 
-      void mock.module("@/services/viewer", () => ({
+      void mock.module("@/server/services/viewer", () => ({
         createViewerService: () => ({
           registerViewer: async () => Promise.resolve(ok(undefined)),
           removeViewer: async () => Promise.resolve(ok(undefined)),
@@ -119,7 +119,7 @@ describe("Viewer Router", () => {
         message: "KV error",
       };
 
-      void mock.module("@/services/viewer", () => ({
+      void mock.module("@/server/services/viewer", () => ({
         createViewerService: () => ({
           registerViewer: async () => Promise.resolve(err(serviceError)),
           removeViewer: async () => Promise.resolve(ok(undefined)),
@@ -175,7 +175,7 @@ describe("Viewer Router", () => {
     it("should remove viewer successfully", async () => {
       const mockKvNamespace = {} as KVNamespace;
 
-      void mock.module("@/services/viewer", () => ({
+      void mock.module("@/server/services/viewer", () => ({
         createViewerService: () => ({
           registerViewer: async () => Promise.resolve(ok(undefined)),
           removeViewer: async () => Promise.resolve(ok(undefined)),
@@ -222,7 +222,7 @@ describe("Viewer Router", () => {
         message: "KV error",
       };
 
-      void mock.module("@/services/viewer", () => ({
+      void mock.module("@/server/services/viewer", () => ({
         createViewerService: () => ({
           registerViewer: async () => Promise.resolve(ok(undefined)),
           removeViewer: async () => Promise.resolve(err(serviceError)),
@@ -253,7 +253,7 @@ describe("Viewer Router", () => {
     it("should return active viewer count successfully", async () => {
       const mockKvNamespace = {} as KVNamespace;
 
-      void mock.module("@/services/viewer", () => ({
+      void mock.module("@/server/services/viewer", () => ({
         createViewerService: () => ({
           registerViewer: async () => Promise.resolve(ok(undefined)),
           removeViewer: async () => Promise.resolve(ok(undefined)),
@@ -298,7 +298,7 @@ describe("Viewer Router", () => {
         message: "KV error",
       };
 
-      void mock.module("@/services/viewer", () => ({
+      void mock.module("@/server/services/viewer", () => ({
         createViewerService: () => ({
           registerViewer: async () => Promise.resolve(ok(undefined)),
           removeViewer: async () => Promise.resolve(ok(undefined)),

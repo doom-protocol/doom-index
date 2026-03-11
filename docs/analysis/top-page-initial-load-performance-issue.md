@@ -49,7 +49,7 @@
 
 - `src/hooks/use-latest-painting.ts`
 - `src/server/trpc/routers/paintings.ts`
-- `src/services/paintings/list.ts`
+- `src/server/services/paintings/list.ts`
 
 ### 4. 最新絵画メタデータ取得がクライアント hydration 後まで遅延している
 

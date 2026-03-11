@@ -26,7 +26,7 @@ const isProduction = !baseUrl.includes("localhost");
 
 export default isProduction
   ? defineConfig({
-      schema: "./src/db/schema/index.ts",
+      schema: "./src/server/db/schema/index.ts",
       out: "./migrations",
       dialect: "sqlite",
       driver: "d1-http",
@@ -37,7 +37,7 @@ export default isProduction
       },
     })
   : defineConfig({
-      schema: "./src/db/schema/index.ts",
+      schema: "./src/server/db/schema/index.ts",
       dialect: "sqlite",
       out: "./migrations",
       dbCredentials: {

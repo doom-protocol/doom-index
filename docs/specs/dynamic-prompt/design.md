@@ -5,9 +5,9 @@
 dynamic-prompt は、DOOM INDEX の自動生成パイプラインの一部として動作する内部サービスであり、トークン固有のナラティブ・性質・象徴性を付与するためのテキストコンテキスト生成を担当する。  
 このサービスは Cloudflare Workers AI に対する汎用的かつ型安全なテキスト生成クライアントと、Tavily Search を利用したトークン情報の検索・要約ロジックを提供し、dynamic-draw フローから主役トークンのコンテキストを取得するために利用される。
 
-dynamic-prompt は dynamic-draw 要件で定義された PromptService を置き換える形で導入され、PaintingContext とトークンコンテキストを統合した最終プロンプト生成を担う。既存のコードベースでは `src/services/prompt.ts` がプロンプト組み立てを担当しているが、将来的には dynamic-prompt ベースの PromptService 実装に差し替えることを前提とする。
+dynamic-prompt は dynamic-draw 要件で定義された PromptService を置き換える形で導入され、PaintingContext とトークンコンテキストを統合した最終プロンプト生成を担う。既存のコードベースでは `src/server/services/prompt.ts` がプロンプト組み立てを担当しているが、将来的には dynamic-prompt ベースの PromptService 実装に差し替えることを前提とする。
 
-dynamic-prompt 自体は HTTP API エンドポイントを公開せず、`src/services` レイヤーの一サービスとして、cron ジョブやバックグラウンド処理からのみ呼び出される。D1 へのコンテキスト保存は上位レイヤーに委ねるが、Tavily 呼び出しの前に D1 上の token_contexts テーブルを参照し、既知トークンについては D1 に保存済みの short_context を優先利用する。
+dynamic-prompt 自体は HTTP API エンドポイントを公開せず、`src/server/services` レイヤーの一サービスとして、cron ジョブやバックグラウンド処理からのみ呼び出される。D1 へのコンテキスト保存は上位レイヤーに委ねるが、Tavily 呼び出しの前に D1 上の token_contexts テーブルを参照し、既知トークンについては D1 に保存済みの short_context を優先利用する。
 
 ### Goals
 
@@ -26,12 +26,12 @@ dynamic-prompt 自体は HTTP API エンドポイントを公開せず、`src/se
 
 ### Existing Architecture Analysis
 
-- DOOM INDEX は `src/services` にビジネスロジックを集約しており、`market-cap`, `prompt`, `image-generation`, `state`, `archive` といったサービスが、`cron.ts` から組み合わされる構造になっている。
+- DOOM INDEX は `src/server/services` にビジネスロジックを集約しており、`market-cap`, `prompt`, `image-generation`, `state`, `archive` といったサービスが、`cron.ts` から組み合わされる構造になっている。
 - 各サービスは `createXxxService` ファクトリ関数で生成され、`neverthrow` の `Result` 型でエラーを伝播し、`utils/logger` による構造化ログを共通利用している。
 - 外部 API の呼び出しは `market-cap` サービス内の Dexscreener 呼び出しのように、バインドされた `fetch` と `logger` を明示的に依存として注入するパターンが採用されている。
 - dynamic-draw は別 spec として、Cron トリガでのトークン選定・市場データ取得・PaintingContext 構築・PromptService 連携・画像生成・永続化を司る。dynamic-prompt はこのフローの一部として「トークンの短い英語コンテキスト」を提供するサブモジュールと位置づける。
 
-この前提から、dynamic-prompt も `src/services/dynamic-prompt.ts`（もしくはこれに準ずる構成）として、「サービスパターン＋neverthrow＋logger」を踏襲する。
+この前提から、dynamic-prompt も `src/server/services/dynamic-prompt.ts`（もしくはこれに準ずる構成）として、「サービスパターン＋neverthrow＋logger」を踏襲する。
 
 ### High-Level Architecture
 

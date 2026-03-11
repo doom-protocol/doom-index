@@ -43,7 +43,7 @@ export const setupLocalDb = (dbPath: string = "local-test.db"): BunSQLiteDatabas
     );
   `);
 
-  // Create paintings table (matching src/db/schema/paintings.ts)
+  // Create paintings table (matching src/server/db/schema/paintings.ts)
   sqlite.run(`
     CREATE TABLE IF NOT EXISTS paintings (
       id TEXT PRIMARY KEY NOT NULL,

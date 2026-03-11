@@ -1,7 +1,7 @@
 import type { VisualParams } from "@/lib/pure/mapping";
-import { createImageGenerationService } from "@/services/image-generation";
-import type { TokenMetaInput } from "@/services/token-analysis-service";
-import type { PromptComposition, WorldPromptService } from "@/services/world-prompt-service";
+import { createImageGenerationService } from "@/server/services/image-generation";
+import type { TokenMetaInput } from "@/server/services/token-analysis-service";
+import type { PromptComposition, WorldPromptService } from "@/server/services/world-prompt-service";
 import type { AppError } from "@/types/app-error";
 import type { ImageProvider, ImageRequest } from "@/types/domain";
 import type { PaintingContext } from "@/types/painting-context";

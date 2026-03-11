@@ -1,5 +1,5 @@
-import { getDB } from "@/db";
-import { paintings } from "@/db/schema/paintings";
+import { getDB } from "@/server/db";
+import { paintings } from "@/server/db/schema/paintings";
 import type { VisualParams } from "@/lib/pure/mapping";
 import type { AppError } from "@/types/app-error";
 import type { PaintingMetadata } from "@/types/paintings";

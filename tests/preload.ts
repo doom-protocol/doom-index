@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, mock } from "bun:test";
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import * as dbSchema from "@/db/schema";
+import * as dbSchema from "@/server/db/schema";
 
 // Note: NEXT_PUBLIC_R2_URL is handled by individual tests that mock @/env
 

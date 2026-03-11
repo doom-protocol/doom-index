@@ -1,6 +1,6 @@
 import type { TavilyClient } from "@/lib/tavily-client";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
-import type { TokensRepository } from "@/repositories/tokens-repository";
+import type { TokensRepository } from "@/server/repositories/tokens-repository";
 import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
 import { logger } from "@/utils/logger";

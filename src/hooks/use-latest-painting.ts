@@ -2,7 +2,7 @@ import { GENERATION_INTERVAL_MS } from "@/constants";
 import { isDevelopment } from "@/env";
 import { getTimestampMs } from "@/lib/cloudflare-image";
 import { useTRPCClient } from "@/lib/trpc/client";
-import type { ArchiveListResponse } from "@/services/paintings";
+import type { ArchiveListResponse } from "@/types/archive-list-response";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

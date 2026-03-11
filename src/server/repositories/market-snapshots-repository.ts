@@ -1,6 +1,6 @@
-import type * as schema from "@/db/schema";
-import { marketSnapshots } from "@/db/schema/market-snapshots";
-import type { MarketSnapshot, NewMarketSnapshot } from "@/db/schema/market-snapshots";
+import type * as schema from "@/server/db/schema";
+import { marketSnapshots } from "@/server/db/schema/market-snapshots";
+import type { MarketSnapshot, NewMarketSnapshot } from "@/server/db/schema/market-snapshots";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 import { eq } from "drizzle-orm";

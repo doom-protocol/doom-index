@@ -1,7 +1,7 @@
 import type { AlternativeMeClient } from "@/lib/alternative-me-client";
 import type { CoinGeckoClient, GlobalMarketDataResponse } from "@/lib/coingecko-client";
-import type { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
-import { MarketDataService } from "@/services/paintings/market-data";
+import type { MarketSnapshotsRepository } from "@/server/repositories/market-snapshots-repository";
+import { MarketDataService } from "@/server/services/paintings/market-data";
 import type { AppError } from "@/types/app-error";
 import { describe, expect, it } from "bun:test";
 import { err, ok } from "neverthrow";

@@ -43,8 +43,8 @@
   - _Requirements: 3, 8, 9, 10_
 
 - [x] 2.3 データベーススキーマのエクスポートと接続ファクトリの更新
-  - src/db/schema/index.ts に新しいテーブルスキーマをエクスポート
-  - src/db/index.ts の DB 接続ファクトリを更新し、新しいスキーマを含める
+  - src/server/db/schema/index.ts に新しいテーブルスキーマをエクスポート
+  - src/server/db/index.ts の DB 接続ファクトリを更新し、新しいスキーマを含める
   - _Requirements: 8_
 
 - [x] 3. リポジトリ層の実装
@@ -176,7 +176,7 @@
   - _Requirements: 10_
 
 - [x] 8.3 既存の market-cap サービスの削除
-  - src/services/market-cap.ts を削除
+  - src/server/services/market-cap.ts を削除
   - DexScreener ベースのデータ取得フローを CoinGecko ベースのフローに置き換え
   - _Requirements: 1A, 1C, 3_
 

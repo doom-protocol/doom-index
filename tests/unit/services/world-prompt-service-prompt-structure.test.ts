@@ -3,8 +3,8 @@ import {
   MEDIEVAL_ALLEGORICAL_STYLE_DESCRIPTION,
 } from "@/constants/prompts/world-painting";
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
-import type { TokenAnalysisService } from "@/services/token-analysis-service";
-import { createWorldPromptService } from "@/services/world-prompt-service";
+import type { TokenAnalysisService } from "@/server/services/token-analysis-service";
+import { createWorldPromptService } from "@/server/services/world-prompt-service";
 import type { PaintingContext } from "@/types/painting-context";
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { ok } from "neverthrow";

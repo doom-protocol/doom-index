@@ -112,7 +112,7 @@
 - **Dependencies**: Task 1.1
 - **Estimated Effort**: 2h
 - **Files**:
-  - `src/services/state.ts` (修正)
+  - `src/server/services/state.ts` (修正)
 
 ### Task 2.2: services/market-cap.ts の確認
 
@@ -124,7 +124,7 @@
 - **Dependencies**: Task 1.2
 - **Estimated Effort**: 0.5h
 - **Files**:
-  - `src/services/market-cap.ts` (確認・修正)
+  - `src/server/services/market-cap.ts` (確認・修正)
 
 ### Task 2.3: services/prompt.ts の R2 対応
 
@@ -137,7 +137,7 @@
 - **Dependencies**: Task 1.1, Task 1.4
 - **Estimated Effort**: 2h
 - **Files**:
-  - `src/services/prompt.ts` (修正)
+  - `src/server/services/prompt.ts` (修正)
 
 ### Task 2.4: services/generation.ts の R2 対応
 
@@ -151,7 +151,7 @@
 - **Dependencies**: Task 2.1, Task 2.2, Task 2.3, Task 1.3
 - **Estimated Effort**: 3h
 - **Files**:
-  - `src/services/generation.ts` (修正)
+  - `src/server/services/generation.ts` (修正)
 
 ## Phase 3: Cloudflare Workers Cron 実装
 

@@ -40,7 +40,7 @@
 - **1 時間ごとの生成 cron に切り替え**: `wrangler.toml` の cron トリガを `0 * * * *`（毎時 0 分）に変更
 - **CoinGecko API への移行**: DexScreener から CoinGecko に切り替え、トレンドトークン選定とグローバル市場データ取得を実現
 - **D1 データベースへの移行**: JSON ファイルベースの state 管理を廃止し、`tokens` テーブルと新規 `market_snapshots` テーブルで管理
-- **既存の market-cap service を削除**: `src/services/market-cap.ts` を削除し、新しい CoinGecko ベースのデータ取得フローに置き換え
+- **既存の market-cap service を削除**: `src/server/services/market-cap.ts` を削除し、新しい CoinGecko ベースのデータ取得フローに置き換え
 
 ### High-Level Architecture
 
@@ -886,7 +886,7 @@ function deriveNarrativeHints(climate: MarketClimate, event: { k: EventKind; i: 
 
 **Contract Definition**
 
-既存の `WorldPromptService.composeTokenPrompt()` メソッドを使用します（`src/services/world-prompt-service.ts` 参照）。
+既存の `WorldPromptService.composeTokenPrompt()` メソッドを使用します（`src/server/services/world-prompt-service.ts` 参照）。
 
 **Integration Strategy**
 
@@ -911,7 +911,7 @@ function deriveNarrativeHints(climate: MarketClimate, event: { k: EventKind; i: 
 
 **Contract Definition**
 
-既存の `ImageGenerationService.generateImage()` メソッドを使用します（`src/services/image-generation.ts` 参照）。
+既存の `ImageGenerationService.generateImage()` メソッドを使用します（`src/server/services/image-generation.ts` 参照）。
 
 **Integration Strategy**
 
@@ -980,7 +980,7 @@ interface TokensRepository {
   findRecentlySelected(windowHours: number): Promise<Result<Token[], AppError>>;
 }
 
-// Token types are defined in src/db/schema/tokens.ts (to be created)
+// Token types are defined in src/server/db/schema/tokens.ts (to be created)
 ```
 
 - **Preconditions**: D1 バインディングが提供される
@@ -1039,7 +1039,7 @@ interface MarketSnapshotsRepository {
 
 **Contract Definition**
 
-既存の `PaintingsRepository` インターフェースを使用します（`src/repositories/paintings-repository.ts` 参照）。
+既存の `PaintingsRepository` インターフェースを使用します（`src/server/repositories/paintings-repository.ts` 参照）。
 
 **Integration Strategy**
 
@@ -1137,7 +1137,7 @@ CREATE INDEX idx_tokens_symbol ON tokens(symbol);
 CREATE INDEX idx_tokens_coingecko_id ON tokens(coingecko_id);
 ```
 
-**Drizzle ORM Schema** (`src/db/schema/tokens.ts`):
+**Drizzle ORM Schema** (`src/server/db/schema/tokens.ts`):
 
 ```typescript
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
@@ -1168,7 +1168,7 @@ export type NewToken = typeof tokens.$inferInsert;
 
 **Migration Strategy**:
 
-- 既存の `tokens` テーブル（`src/db/schema/tokens.ts`）を削除し、新しいスキーマで置き換え
+- 既存の `tokens` テーブル（`src/server/db/schema/tokens.ts`）を削除し、新しいスキーマで置き換え
 - Drizzle Kit で新しいマイグレーションを生成: `bun run db:generate`
 - ローカル D1 でマイグレーション実行: `bun run db:migrate`
 - 本番 D1 でマイグレーション実行: `bun run db:migrate:prod`
@@ -1192,7 +1192,7 @@ CREATE TABLE market_snapshots (
 CREATE INDEX idx_market_snapshots_created_at ON market_snapshots(created_at);
 ```
 
-**Drizzle ORM Schema** (`src/db/schema/market-snapshots.ts`):
+**Drizzle ORM Schema** (`src/server/db/schema/market-snapshots.ts`):
 
 ```typescript
 import { sqliteTable, text, real, integer, index } from "drizzle-orm/sqlite-core";
@@ -1231,7 +1231,7 @@ export type NewMarketSnapshot = typeof marketSnapshots.$inferInsert;
 
 #### paintings テーブル（既存）
 
-既存の `paintings` テーブル（`src/db/schema/paintings.ts`）をそのまま使用します。変更は不要です。
+既存の `paintings` テーブル（`src/server/db/schema/paintings.ts`）をそのまま使用します。変更は不要です。
 
 ### Data Contracts & Integration
 
@@ -1546,9 +1546,9 @@ flowchart TD
    - `lib/alternative-me-client.ts` の実装
    - ユニットテストの作成
 2. D1 データベーススキーマの作成
-   - `src/db/schema/tokens.ts` の作成（既存を削除して置き換え）
-   - `src/db/schema/market-snapshots.ts` の作成
-   - `src/db/schema/index.ts` の更新
+   - `src/server/db/schema/tokens.ts` の作成（既存を削除して置き換え）
+   - `src/server/db/schema/market-snapshots.ts` の作成
+   - `src/server/db/schema/index.ts` の更新
    - Drizzle Kit でマイグレーション生成: `bun run db:generate`
    - ローカル D1 でマイグレーション実行: `bun run db:migrate`
 3. リポジトリ層の実装

@@ -34,7 +34,7 @@
 
 DOOM INDEXの既存アーキテクチャは以下の構造を持つ：
 
-- **サービス層**: `src/services/`にビジネスロジックが集約され、`neverthrow`の`Result`型でエラーハンドリングを行う
+- **サービス層**: `src/server/services/`にビジネスロジックが集約され、`neverthrow`の`Result`型でエラーハンドリングを行う
 - **ストレージ層**: `src/lib/r2.ts`でR2操作を抽象化し、Workers環境とNext.js環境の差を吸収
 - **状態管理**: `StateService`がR2への読み書きを担当し、`storeImage()`メソッドで画像を保存
 - **画像生成**: `GenerationService`が`PromptService`と`ImageProvider`を使用して画像を生成し、`StateService.storeImage()`で保存

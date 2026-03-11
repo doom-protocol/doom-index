@@ -12,7 +12,7 @@ import {
   STALE_POLL_INTERVAL_MS,
   POST_GENERATION_DELAY_MS,
 } from "@/hooks/use-latest-painting";
-import type { ArchiveListResponse } from "@/services/paintings";
+import type { ArchiveListResponse } from "@/types/archive-list-response";
 import type { PaintingMetadata } from "@/types/paintings";
 
 // Mock painting data for tests
