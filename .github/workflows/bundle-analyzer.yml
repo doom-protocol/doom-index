@@ -38,6 +38,9 @@ jobs:
         if: steps.bun-cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
+      - name: Prepare build env
+        run: cp .env.example .env.local
+
       - name: Build with opennextjs-cloudflare
         run: bun run build:cf
 

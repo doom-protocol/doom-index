@@ -12,14 +12,6 @@ void mock.module("@/env", () => ({
       return mockR2Url;
     },
   },
-  requirePositiveNumberEnv: (name: string, value: unknown) => {
-    const parsed =
-      typeof value === "number" ? value : typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      throw new Error(`${name} must be a positive number`);
-    }
-    return parsed;
-  },
   isDevelopment: () => true,
   getEnvironmentName: () => "development" as const,
 }));

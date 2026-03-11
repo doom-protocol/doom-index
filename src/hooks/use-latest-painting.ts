@@ -16,10 +16,6 @@ export const POST_GENERATION_DELAY_MS = 15_000;
 export const clampInterval = (value: number): number => Math.max(MIN_REFETCH_INTERVAL_MS, value);
 
 export const computeRefetchDelay = (lastTimestamp?: string | null): number => {
-  if (!GENERATION_INTERVAL_MS || GENERATION_INTERVAL_MS <= 0) {
-    return STALE_POLL_INTERVAL_MS;
-  }
-
   if (!lastTimestamp) {
     return MIN_REFETCH_INTERVAL_MS;
   }

@@ -8,17 +8,6 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import * as v from "valibot";
 
-export function requirePositiveNumberEnv(name: string, value: unknown): number {
-  const parsed =
-    typeof value === "number" ? value : typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
-
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    throw new Error(`${name} must be a positive number`);
-  }
-
-  return parsed;
-}
-
 export const env = createEnv({
   /**
    * Server-side environment variables
@@ -46,10 +35,10 @@ export const env = createEnv({
    * These must be prefixed with NEXT_PUBLIC_ and will be bundled to the client
    */
   client: {
-    NEXT_PUBLIC_BASE_URL: v.pipe(v.string(), v.minLength(1)),
+    NEXT_PUBLIC_BASE_URL: v.pipe(v.string(), v.url()),
     // R2 Public URL (e.g., "https://storage.doomindex.fun" or "http://localhost:8787/api/r2")
     // If set, images will be served directly from this URL instead of /api/r2 endpoint
-    NEXT_PUBLIC_R2_URL: v.pipe(v.string(), v.minLength(1)),
+    NEXT_PUBLIC_R2_URL: v.optional(v.pipe(v.string(), v.minLength(1)), "/api/r2"),
     // Solana RPC URL for client-side transactions
     NEXT_PUBLIC_SOLANA_RPC_URL: v.optional(v.pipe(v.string(), v.url()), "https://api.devnet.solana.com"),
   },
@@ -66,7 +55,7 @@ export const env = createEnv({
     IMAGE_MODEL: v.optional(v.string()),
     LOG_LEVEL: v.optional(v.picklist(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]), "DEBUG"),
     NODE_ENV: v.optional(v.picklist(["development", "test", "production"]), "development"),
-    NEXT_PUBLIC_GENERATION_INTERVAL_MS: v.optional(v.pipe(v.unknown(), v.transform(Number)), 600000), // 10 minutes
+    NEXT_PUBLIC_GENERATION_INTERVAL_MS: v.pipe(v.string(), v.transform(Number), v.number(), v.integer(), v.minValue(1)),
   },
 
   /**
@@ -97,16 +86,6 @@ export const env = createEnv({
   },
 
   /**
-   * Skip validation during build if set to "1"
-   * Useful for Docker builds or CI where env vars are not available
-   *
-   * IMPORTANT: For Cloudflare Workers deployment, validation is always skipped
-   * because environment variables are passed via the `env` object at runtime,
-   * not through process.env at build/load time.
-   */
-  skipValidation: true,
-
-  /**
    * Makes it so that empty strings are treated as undefined
    * Useful for optional environment variables
    */
@@ -121,8 +100,7 @@ export const env = createEnv({
  * due to Next.js build optimizations setting it to "production" at build time.
  */
 export function isDevelopment(): boolean {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-  return typeof baseUrl === "string" && baseUrl.includes("localhost");
+  return env.NEXT_PUBLIC_BASE_URL.includes("localhost");
 }
 
 /**
