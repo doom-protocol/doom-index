@@ -9,6 +9,10 @@ import type { Metadata, NextPage } from "next";
 
 const metadataBase = new URL(getBaseUrl());
 
+// This page reads Cloudflare bindings at request time.
+// Forcing dynamic rendering keeps Next.js from trying to resolve those bindings during `next build`.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Archive - DOOM INDEX",
   description: "Browse the archive of generative art pieces created by DOOM INDEX",

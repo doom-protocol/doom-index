@@ -75,6 +75,7 @@ export function createPinataClient(deps: CreatePinataClientDeps = {}): PinataCli
   return {
     async createSignedUploadUrl(options: CreateSignedUrlOptions): Promise<Result<SignedUrl, AppError>> {
       // Validate API key
+      // `createPinataClient()` is also used by client hooks, so server-only env access must stay behind a server check.
       const key = apiKey ?? (typeof window === "undefined" ? env.PINATA_JWT : undefined);
       if (!key) {
         return err({
@@ -113,6 +114,7 @@ export function createPinataClient(deps: CreatePinataClientDeps = {}): PinataCli
 
     async convertToGatewayUrl(cid: string): Promise<Result<string, AppError>> {
       // Validate API key
+      // `createPinataClient()` is also used by client hooks, so server-only env access must stay behind a server check.
       const key = apiKey ?? (typeof window === "undefined" ? env.PINATA_JWT : undefined);
       if (!key) {
         return err({
