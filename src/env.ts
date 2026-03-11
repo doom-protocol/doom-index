@@ -8,6 +8,17 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import * as v from "valibot";
 
+export function requirePositiveNumberEnv(name: string, value: unknown): number {
+  const parsed =
+    typeof value === "number" ? value : typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`${name} must be a positive number`);
+  }
+
+  return parsed;
+}
+
 export const env = createEnv({
   /**
    * Server-side environment variables

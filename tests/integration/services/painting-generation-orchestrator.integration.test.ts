@@ -21,7 +21,15 @@ import { err, ok } from "neverthrow";
 
 // Mock env module - use NEXT_PUBLIC_BASE_URL to determine development environment
 void mock.module("@/env", () => ({
-  env: { NEXT_PUBLIC_BASE_URL: "http://localhost:8787" },
+  env: { NEXT_PUBLIC_BASE_URL: "http://localhost:8787", NEXT_PUBLIC_GENERATION_INTERVAL_MS: "600000" },
+  requirePositiveNumberEnv: (name: string, value: unknown) => {
+    const parsed =
+      typeof value === "number" ? value : typeof value === "string" && value.trim() !== "" ? Number(value) : Number.NaN;
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      throw new Error(`${name} must be a positive number`);
+    }
+    return parsed;
+  },
   isDevelopment: () => true,
   getEnvironmentName: () => "development" as const,
 }));
@@ -146,6 +154,19 @@ describe("PaintingGenerationOrchestrator Integration", () => {
       void mock.module("@/env", () => ({
         env: {
           NEXT_PUBLIC_BASE_URL: "https://doomindex.fun",
+          NEXT_PUBLIC_GENERATION_INTERVAL_MS: "3600000",
+        },
+        requirePositiveNumberEnv: (name: string, value: unknown) => {
+          const parsed =
+            typeof value === "number"
+              ? value
+              : typeof value === "string" && value.trim() !== ""
+                ? Number(value)
+                : Number.NaN;
+          if (!Number.isFinite(parsed) || parsed <= 0) {
+            throw new Error(`${name} must be a positive number`);
+          }
+          return parsed;
         },
         isDevelopment: () => false,
         getEnvironmentName: () => "production" as const,

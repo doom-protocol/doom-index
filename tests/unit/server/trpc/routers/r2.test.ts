@@ -23,6 +23,19 @@ describe("R2 Router", () => {
       env: {
         R2_PUBLIC_DOMAIN: undefined,
         NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
+        NEXT_PUBLIC_GENERATION_INTERVAL_MS: "600000",
+      },
+      requirePositiveNumberEnv: (name: string, value: unknown) => {
+        const parsed =
+          typeof value === "number"
+            ? value
+            : typeof value === "string" && value.trim() !== ""
+              ? Number(value)
+              : Number.NaN;
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+          throw new Error(`${name} must be a positive number`);
+        }
+        return parsed;
       },
       isDevelopment: () => true,
       getEnvironmentName: () => "development" as const,
