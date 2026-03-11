@@ -299,7 +299,7 @@ void mock.module("@/components/gallery/gallery-room", () => ({
 }));
 
 // Create a mock Lights component that we can reference
-const MockLights: FC = () => null;
+const MockLights: FC = () => <div data-testid="full-lights" />;
 
 void mock.module("@/components/gallery/lights", () => ({
   Lights: MockLights,
@@ -312,10 +312,18 @@ void mock.module("leva", () => ({
   useControls: readLevaControls,
 }));
 
-// Mock next/dynamic to return the mocked Lights component directly
-// Since Lights is already mocked above, we can return it synchronously
+// Mock next/dynamic so a component with a loading fallback behaves like the
+// preloaded placeholder path. This lets us catch regressions where GalleryScene
+// renders a temporary light rig before the final Lights component is ready.
 void mock.module("next/dynamic", () => ({
-  default: () => MockLights,
+  default: (_loader: unknown, options?: { loading?: FC }) => {
+    if (options?.loading) {
+      const LoadingComponent = options.loading;
+      return LoadingComponent;
+    }
+
+    return () => null;
+  },
 }));
 
 // Mock utils
@@ -587,6 +595,18 @@ describe("unit/components/gallery-scene", () => {
   });
 
   describe("performance-guarantees", () => {
+    it("should render the final light rig immediately instead of a temporary fallback rig", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      const { getByTestId, queryByTestId } = render(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(getByTestId("full-lights")).toBeDefined();
+      });
+
+      expect(queryByTestId("full-lights")).toBeDefined();
+    });
+
     it("should configure OrbitControls with damping for smooth inertial movement", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 

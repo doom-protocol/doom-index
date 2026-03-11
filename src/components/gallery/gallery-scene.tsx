@@ -26,18 +26,8 @@ import { ThreeErrorBoundary } from "../ui/three-error-boundary";
 import { CameraRig } from "./camera-rig";
 import { FramedPainting } from "./framed-painting";
 import { GALLERY_BACK_WALL_Z, GALLERY_FLOOR_Y, GalleryRoom } from "./gallery-room";
+import { Lights } from "./lights";
 import { isDevelopment } from "@/env";
-
-// Dynamic import for Lights to avoid hydration issues with dev controls
-const Lights = dynamic(async () => import("./lights").then((mod) => ({ default: mod.Lights })), {
-  ssr: false,
-  loading: () => (
-    <>
-      <ambientLight intensity={0.5} color="#323248" />
-      <directionalLight position={[-1.5, 2.5, 3]} intensity={0.8} color="#f6e3c4" />
-    </>
-  ),
-});
 
 // Dynamic import for Leva to avoid SSR/document issues in test environment
 const Leva = dynamic(async () => import("leva").then((mod) => ({ default: mod.Leva })), {
