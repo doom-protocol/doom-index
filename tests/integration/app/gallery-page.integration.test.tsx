@@ -92,7 +92,7 @@ void mock.module("@/hooks/use-latest-painting", () => ({
 void mock.module("@/hooks/use-solana-wallet", createUseSolanaWalletMock());
 
 const renderGalleryPage = () => {
-  const pageFactory = Page as () => JSX.Element;
+  const pageFactory = Page as unknown as () => JSX.Element;
   return pageFactory();
 };
 

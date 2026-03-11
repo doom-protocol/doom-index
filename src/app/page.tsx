@@ -10,7 +10,7 @@ export default async function HomePage() {
   try {
     const caller = await createServerCaller();
     const result = await caller.paintings.list({ limit: 1 });
-    initialPainting = result.items[0] ?? null;
+    initialPainting = (result.items[0] as PaintingMetadata | undefined) ?? null;
   } catch (error) {
     logger.warn("page.prefetch-painting-failed", {
       error: error instanceof Error ? error.message : String(error),
