@@ -314,3 +314,19 @@ Review:
 - Moved the camera bounds snapshot/restore/validation logic into `src/lib/pure/gallery-orbit-bounds.ts`, which removes the ad-hoc math from `GalleryScene` and makes the bounds behavior testable without R3F mocks.
 - Added `tests/unit/lib/pure/gallery-orbit-bounds.test.ts` to lock down the floor, back-wall, behind-target, and snapshot-restore cases directly at the pure-function layer.
 - Verification: `bun test --env-file=.example.vars --preload=./tests/preload.ts tests/unit/lib/pure/gallery-orbit-bounds.test.ts tests/unit/components/gallery-scene.test.tsx tests/unit/hooks/use-latest-painting.test.ts`, `bunx eslint src/lib/pure/gallery-orbit-bounds.ts src/components/gallery/gallery-scene.tsx src/hooks/use-latest-painting.ts src/components/ui/header-progress.tsx`, `bunx oxfmt --check src/lib/pure/gallery-orbit-bounds.ts tests/unit/lib/pure/gallery-orbit-bounds.test.ts src/components/gallery/gallery-scene.tsx src/hooks/use-latest-painting.ts src/components/ui/header-progress.tsx`
+
+---
+
+Cloudflare deploy env validation fix:
+
+- [x] Confirm the deploy failure comes from missing worker runtime vars rather than the D1 fallback warning
+- [x] Add the required non-secret runtime vars to `wrangler.toml` for production and `env.dev`
+- [x] Re-run local verification for build/lint/typecheck/format
+- [ ] Commit, push, and monitor PR #45 checks
+
+Review:
+
+- The failing Cloudflare step was `wrangler versions upload`, not `next build`. The worker had resource bindings, but the runtime text vars required by `src/env.ts` were missing, so strict env validation aborted during version validation.
+- Added explicit worker runtime `[vars]` for production and `[env.dev.vars]` for local preview in `wrangler.toml`, covering `NEXT_PUBLIC_BASE_URL`, `NEXT_PUBLIC_GENERATION_INTERVAL_MS`, `NEXT_PUBLIC_R2_URL`, `LOG_LEVEL`, and `NODE_ENV`.
+- Kept `NEXT_PUBLIC_R2_URL` on the existing `"/api/r2"` route after the user correction instead of switching production traffic to the storage domain.
+- Verification: `bun run build:cf`, `bun run lint`, `bun run typecheck`, `bun run format`

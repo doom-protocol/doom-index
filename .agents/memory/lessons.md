@@ -51,3 +51,5 @@
 - 1 秒ごとの countdown や progress 表示は React state で持たない。見た目の数字や width だけを変える用途なら ref と DOM 更新に落として、重い scene と同じ画面で 1Hz の React rerender を作らない。
 
 - ギャラリーの「壁」要件は OrbitControls の可動域だけで満たしていると決めつけない。ユーザーが不要と言った壁が残っていたら、まず `GalleryRoom` の mesh 構成も確認して、境界ロジックと部屋ジオメトリのどちらの話かを切り分ける。
+
+- `NEXT_PUBLIC_R2_URL` の本番値は、ユーザー指定があるまで `"/api/r2"` を既定として扱う。R2 公開ドメインが使えそうでも、runtime env の修正で勝手に `storage.doomindex.fun` へ変えない。
