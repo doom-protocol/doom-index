@@ -57,8 +57,37 @@ const appAliases = {
   "@": resolvePath(process.cwd(), "src"),
 } as const;
 
+const serverBundleStubbedModules = [
+  "three",
+  "three-stdlib",
+  "@react-three/fiber",
+  "@react-three/drei",
+  "leva",
+  "sonner",
+  "use-sound",
+  "use-haptic",
+  "@solana/web3.js",
+  "@solana/wallet-adapter-base",
+  "@solana/wallet-adapter-react",
+  "@solana/wallet-adapter-react-ui",
+  "@solana/wallet-adapter-wallets",
+  "@metaplex-foundation/mpl-token-metadata",
+  "@metaplex-foundation/umi",
+  "@metaplex-foundation/umi-bundle-defaults",
+  "@metaplex-foundation/umi-signer-wallet-adapters",
+] as const;
+
 function customizeWebpack(config: MutableWebpackConfig, { isServer }: WebpackOptions): MutableWebpackConfig {
   config.resolve = mergeResolve(config, appAliases);
+
+  if (isServer) {
+    // OpenNext bundles client references into a single server handler.
+    // These packages are only used behind `use client` boundaries, so stubbing them here keeps the server bundle lean.
+    const stub = resolvePath(process.cwd(), "scripts/webpack/stub.cjs");
+    const stubAliases = Object.fromEntries(serverBundleStubbedModules.map((name) => [name, stub])) as WebpackAliasMap;
+
+    config.resolve = mergeResolve(config, stubAliases);
+  }
 
   if (!isServer) {
     config.resolve = mergeResolve(config, {
