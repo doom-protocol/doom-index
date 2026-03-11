@@ -31,10 +31,6 @@ import type { AppError } from "./types/app-error";
 import { getErrorMessage, getErrorStack } from "./utils/error";
 import { logger } from "./utils/logger";
 
-// Generation interval from environment variable (default: 10 minutes = 600000ms)
-// This is used for logging purposes only. The actual execution frequency is controlled by the cron trigger.
-const GENERATION_INTERVAL_MINUTES = runtimeEnv.NEXT_PUBLIC_GENERATION_INTERVAL_MS / 60000;
-
 // ============================================================================
 // Hourly Generation Pipeline
 // ============================================================================
@@ -83,7 +79,7 @@ export async function handleScheduledEvent(
   logger.debug("cron.started", {
     scheduledTime: new Date(event.scheduledTime).toISOString(),
     cron: event.cron,
-    generationIntervalMinutes: GENERATION_INTERVAL_MINUTES,
+    generationIntervalMinutes: runtimeEnv.NEXT_PUBLIC_GENERATION_INTERVAL_MS / 60000,
   });
 
   try {

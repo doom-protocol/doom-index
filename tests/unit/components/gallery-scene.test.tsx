@@ -30,6 +30,7 @@ void mock.module("@/env", () => ({
     NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
     LOG_LEVEL: "DEBUG",
     NEXT_PUBLIC_R2_URL: "/api/r2",
+    NEXT_PUBLIC_GENERATION_INTERVAL_MS: 600000,
   },
   isDevelopment: () => true,
   getEnvironmentName: () => "development" as const,

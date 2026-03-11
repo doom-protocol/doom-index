@@ -21,7 +21,7 @@ import { err, ok } from "neverthrow";
 
 // Mock env module - use NEXT_PUBLIC_BASE_URL to determine development environment
 void mock.module("@/env", () => ({
-  env: { NEXT_PUBLIC_BASE_URL: "http://localhost:8787" },
+  env: { NEXT_PUBLIC_BASE_URL: "http://localhost:8787", NEXT_PUBLIC_GENERATION_INTERVAL_MS: 600000 },
   isDevelopment: () => true,
   getEnvironmentName: () => "development" as const,
 }));
@@ -146,6 +146,7 @@ describe("PaintingGenerationOrchestrator Integration", () => {
       void mock.module("@/env", () => ({
         env: {
           NEXT_PUBLIC_BASE_URL: "https://doomindex.fun",
+          NEXT_PUBLIC_GENERATION_INTERVAL_MS: 3600000,
         },
         isDevelopment: () => false,
         getEnvironmentName: () => "production" as const,

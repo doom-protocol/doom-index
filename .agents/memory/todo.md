@@ -72,3 +72,35 @@ Review:
 - Combined the server-layout refactor commit with the previously separated dependency-and-analysis commit so the PR reflects the user's latest "include everything" instruction.
 - Verified that the transient `baseline-browser-mapping` warning no longer reproduces after Bun re-resolved the lockfile, so no lint-script env var suppression is needed.
 - Final verification passed with `bun run format`, `bun run lint`, `bun run typecheck`, and `bun run test` (`477 pass / 13 skip / 0 fail`).
+
+Strict env simplification pass:
+
+- [x] Remove workaround-style build env/script toggles from package.json and workflow
+- [x] Find remaining build-time Cloudflare context access causing analyzer failure
+- [x] Fix root cause with minimal code changes and comments
+- [x] Re-run build/lint/typecheck/targeted tests
+
+Review:
+
+- `next.config.ts` no longer treats a localhost public URL as a signal to initialize OpenNext dev bindings. The dev-only Cloudflare bootstrap is now limited to development mode, with an inline comment explaining why CI/build must not hit Wrangler remote bindings.
+- Removed the `DOOM_ENABLE_SERVER_BUNDLE_STUBS` toggle and the global webpack stub aliasing. The current import graph already keeps those heavy/browser packages behind client boundaries, so the env-driven workaround was just obscuring the real build bug.
+- Cleaned the last dead reference to the deleted stub file from `knip.json`.
+- Verification passed with `bun run build:cf`, `bun run lint`, and `bun run typecheck`.
+
+---
+
+Next generation env cleanup:
+
+- [x] Re-check the branch after learning the CI build failure was missing build-time env configuration
+- [x] Remove issue-unrelated branch noise and keep strict env validation
+- [x] Scope OpenNext bundle stubs so normal SSR builds keep real modules
+- [x] Re-run local `build`, `build:cf`, `lint`, `typecheck`, targeted tests, and bundle analysis
+- [ ] Commit, push, and watch PR #44 checks
+
+Review:
+
+- Kept `src/env.ts` strict and removed the temptation to reintroduce `skipValidation`; the confirmed failure mode was CI/build config, not runtime code.
+- Kept the `Pinata` cleanup that moves `PINATA_JWT` access back to the server router and leaves the client helper free of server-only env access.
+- Scoped the webpack stubs back to the OpenNext worker build path in `next.config.ts`, with comments explaining that normal Next SSR must use the real modules.
+- Dropped the extra `tests/unit/env.test.ts` addition and reverted the unrelated `.oxfmtrc` branch change so the PR stays focused.
+- Verification passed with `bun run build`, `bun run build:cf`, `bun run lint`, `bun run typecheck`, `bun test --env-file=.env.example --preload=./tests/preload.ts tests/integration/services/painting-generation-orchestrator.integration.test.ts tests/unit/components/gallery-scene.test.tsx tests/unit/server/trpc/routers/r2.test.ts tests/integration/app/gallery-page.integration.test.tsx tests/unit/lib/pinata-client.test.ts tests/unit/server/trpc/routers/ipfs.test.ts`, and `bun run analyze:bundle`.
