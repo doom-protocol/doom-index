@@ -41,6 +41,10 @@ export const computeRefetchDelay = (lastTimestamp?: string | null): number => {
   }
 
   const now = Date.now();
+  if (!Number.isFinite(now) || !Number.isFinite(GENERATION_INTERVAL_MS) || GENERATION_INTERVAL_MS <= 0) {
+    return clampInterval(STALE_POLL_INTERVAL_MS);
+  }
+
   const age = now - lastUpdated;
 
   if (age >= GENERATION_INTERVAL_MS) {

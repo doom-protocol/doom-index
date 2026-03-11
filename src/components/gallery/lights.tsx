@@ -1,14 +1,13 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
+import dynamic from "next/dynamic";
 import { useMemo, useRef } from "react";
 import type { FC } from "react";
 import { CircleGeometry, DoubleSide, Float32BufferAttribute } from "three";
 import type { Mesh, Object3D, SpotLight } from "three";
 
 import { isDevelopment } from "@/env";
-
-import { LightsWithControls } from "./lights-controls";
 
 interface LightsProps {
   variant?: "simple" | "full";
@@ -142,6 +141,17 @@ const FullLights: FC = () => {
     </>
   );
 };
+
+const LightsWithControls = dynamic(
+  async () =>
+    import("./lights-controls").then((mod) => ({
+      default: mod.LightsWithControls,
+    })),
+  {
+    ssr: false,
+    loading: () => <FullLights />,
+  },
+);
 
 // Exported component that switches between simple, full, or dev-controlled lights
 export const Lights: FC<LightsProps> = ({ variant = "full", disableDevControls = false }) => {

@@ -10,6 +10,7 @@ import "../../preload";
 
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { render, waitFor, cleanup } from "@testing-library/react";
+import { useEffect } from "react";
 import type { FC, ReactNode } from "react";
 import { createLoggerMock, createMockPerformance, resetMockTime, advanceMockTime, getMockTime } from "../../mocks";
 
@@ -299,7 +300,15 @@ void mock.module("@/components/gallery/gallery-room", () => ({
 }));
 
 // Create a mock Lights component that we can reference
-const MockLights: FC = () => null;
+let latestLightsProps: Record<string, unknown> | null = null;
+
+const MockLights: FC<Record<string, unknown>> = (props) => {
+  useEffect(() => {
+    latestLightsProps = props;
+  }, [props]);
+
+  return <div data-testid="full-lights" />;
+};
 
 void mock.module("@/components/gallery/lights", () => ({
   Lights: MockLights,
@@ -312,10 +321,18 @@ void mock.module("leva", () => ({
   useControls: readLevaControls,
 }));
 
-// Mock next/dynamic to return the mocked Lights component directly
-// Since Lights is already mocked above, we can return it synchronously
+// Mock next/dynamic so a component with a loading fallback behaves like the
+// preloaded placeholder path. This lets us catch regressions where GalleryScene
+// renders a temporary light rig before the final Lights component is ready.
 void mock.module("next/dynamic", () => ({
-  default: () => MockLights,
+  default: (_loader: unknown, options?: { loading?: FC }) => {
+    if (options?.loading) {
+      const LoadingComponent = options.loading;
+      return LoadingComponent;
+    }
+
+    return () => null;
+  },
 }));
 
 // Mock utils
@@ -341,6 +358,7 @@ describe("unit/components/gallery-scene", () => {
     // Clear logger calls
     loggerCalls.length = 0;
     latestOrbitControlsProps = null;
+    latestLightsProps = null;
     orbitControlsState = createOrbitControlsState();
 
     // Override performance with complete mock for React 19
@@ -587,6 +605,18 @@ describe("unit/components/gallery-scene", () => {
   });
 
   describe("performance-guarantees", () => {
+    it("should keep the top page on the production light rig from the first render", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      const { getByTestId } = render(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(getByTestId("full-lights")).toBeDefined();
+      });
+
+      expect(latestLightsProps?.disableDevControls).toBe(true);
+    });
+
     it("should configure OrbitControls with damping for smooth inertial movement", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 
