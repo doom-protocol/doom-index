@@ -156,6 +156,19 @@ interface CreatePaintingsRepositoryDeps {
   log?: typeof logger;
 }
 
+function isMissingPaintingsTableError(error: unknown): boolean {
+  let current: unknown = error;
+
+  while (current instanceof Error) {
+    if (current.message.includes("no such table: paintings")) {
+      return true;
+    }
+    current = current.cause;
+  }
+
+  return false;
+}
+
 /**
  * Create paintings repository
  *
@@ -281,7 +294,13 @@ export function createPaintingsRepository({
         hasMore,
       });
     } catch (error) {
-      log.error("archive-repo.list.error", { error });
+      if (isMissingPaintingsTableError(error)) {
+        log.debug("archive-repo.list.missing-table", {
+          message: error instanceof Error ? error.message : String(error),
+        });
+      } else {
+        log.error("archive-repo.list.error", { error });
+      }
       return err({
         type: "StorageError" as const,
         op: "list" as const,
