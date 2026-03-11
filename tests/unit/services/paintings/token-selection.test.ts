@@ -1,7 +1,7 @@
-import type { TokensRepository } from "@/repositories/tokens-repository";
-import type { MarketDataService } from "@/services/paintings/market-data";
-import type { TokenDataFetchService } from "@/services/paintings/token-data-fetch";
-import { TokenSelectionService } from "@/services/paintings/token-selection";
+import type { TokensRepository } from "@/server/repositories/tokens-repository";
+import type { MarketDataService } from "@/server/services/paintings/market-data";
+import type { TokenDataFetchService } from "@/server/services/paintings/token-data-fetch";
+import { TokenSelectionService } from "@/server/services/paintings/token-selection";
 import type { AppError } from "@/types/app-error";
 import type { MarketSnapshot, TokenCandidate } from "@/types/paintings";
 import { describe, expect, it } from "bun:test";

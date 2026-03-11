@@ -1,4 +1,4 @@
-import { ScoringEngine } from "@/services/paintings/scoring-engine";
+import { ScoringEngine } from "@/server/services/paintings/scoring-engine";
 import type { TokenCandidate } from "@/types/paintings";
 import { describe, expect, it } from "bun:test";
 

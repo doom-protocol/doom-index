@@ -1,6 +1,6 @@
-import type * as schema from "@/db/schema";
-import { tokens } from "@/db/schema/tokens";
-import type { NewToken, Token } from "@/db/schema/tokens";
+import type * as schema from "@/server/db/schema";
+import { tokens } from "@/server/db/schema/tokens";
+import type { NewToken, Token } from "@/server/db/schema/tokens";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 import { desc, eq, gte } from "drizzle-orm";

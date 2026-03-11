@@ -1,7 +1,7 @@
-import * as dbSchema from "@/db/schema";
-import { marketSnapshots } from "@/db/schema/market-snapshots";
-import type { NewMarketSnapshot } from "@/db/schema/market-snapshots";
-import { MarketSnapshotsRepository } from "@/repositories/market-snapshots-repository";
+import * as dbSchema from "@/server/db/schema";
+import { marketSnapshots } from "@/server/db/schema/market-snapshots";
+import type { NewMarketSnapshot } from "@/server/db/schema/market-snapshots";
+import { MarketSnapshotsRepository } from "@/server/repositories/market-snapshots-repository";
 import { Database } from "bun:sqlite";
 import { beforeEach, describe, expect, it } from "bun:test";
 import type { BatchItem, BatchResponse } from "drizzle-orm/batch";

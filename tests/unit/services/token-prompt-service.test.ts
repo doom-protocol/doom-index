@@ -1,6 +1,6 @@
 import type { WorkersAiClient } from "@/lib/workers-ai-client";
-import type { TokenAnalysisService, TokenMetaInput } from "@/services/token-analysis-service";
-import { createWorldPromptService } from "@/services/world-prompt-service";
+import type { TokenAnalysisService, TokenMetaInput } from "@/server/services/token-analysis-service";
+import { createWorldPromptService } from "@/server/services/world-prompt-service";
 import type { AppError } from "@/types/app-error";
 import type { PaintingContext } from "@/types/painting-context";
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";

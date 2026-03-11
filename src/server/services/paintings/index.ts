@@ -11,9 +11,10 @@
  */
 
 import { resolveBucketOrThrow } from "@/lib/r2";
-import type { PaintingsRepository } from "@/repositories/paintings-repository";
-import { createPaintingsRepository } from "@/repositories/paintings-repository";
+import type { PaintingsRepository } from "@/server/repositories/paintings-repository";
+import { createPaintingsRepository } from "@/server/repositories/paintings-repository";
 import type { AppError } from "@/types/app-error";
+import type { ArchiveListResponse } from "@/types/archive-list-response";
 import type { PaginationOptions } from "@/types/domain";
 import type { PaintingMetadata } from "@/types/paintings";
 import type { Result } from "neverthrow";
@@ -35,8 +36,6 @@ type ArchiveListOptions = PaginationOptions & {
   prefix?: string;
   startAfter?: string;
 };
-
-export type ArchiveListResponse = list.ListImagesResponse;
 
 export interface PaintingsService {
   /**

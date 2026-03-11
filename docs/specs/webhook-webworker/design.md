@@ -209,7 +209,7 @@ interface SolanaEvent {
 }
 ```
 
-#### Blockchain Service (`src/services/blockchain.ts`)
+#### Blockchain Service (`src/server/services/blockchain.ts`)
 
 **Responsibility & Boundaries**
 

@@ -1,4 +1,4 @@
-import { createViewerService } from "@/services/viewer";
+import { createViewerService } from "@/server/services/viewer";
 import { CACHE_TTL_SECONDS } from "@/constants";
 import { isBotUserAgent } from "@/utils/user-agent";
 import { TRPCError } from "@trpc/server";

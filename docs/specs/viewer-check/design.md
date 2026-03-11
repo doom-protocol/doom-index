@@ -33,7 +33,7 @@ Viewer Check 機能は、既存のDOOM Indexシステムにリアルタイム閲
 既存のDOOM Indexシステムは以下の構造を持つ：
 
 - **Cron処理**: `src/cron.ts` の `handleScheduledEvent` がCloudflare Workers Cron Triggersで1分間隔で実行される
-- **サービス層**: `src/services/container.ts` の `createServicesForWorkers` でサービスコンテナを作成
+- **サービス層**: `src/server/services/container.ts` の `createServicesForWorkers` でサービスコンテナを作成
 - **生成サービス**: `GenerationService.evaluateMinute()` が画像生成を実行
 - **ストレージ**: Cloudflare R2を使用して画像と状態を保存
 - **API層**: Next.js App RouterのAPI Routes（`src/app/api/`）でRESTful APIを提供
@@ -572,7 +572,7 @@ interface ViewerResponse {
 import { NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { logger } from "@/utils/logger";
-import { createViewerService } from "@/services/viewer";
+import { createViewerService } from "@/server/services/viewer";
 
 interface ViewerRequest {
   sessionId: string;
@@ -680,7 +680,7 @@ interface ViewerService {
 
 **Implementation Details**
 
-**File**: `src/services/viewer.ts`
+**File**: `src/server/services/viewer.ts`
 
 ```typescript
 import { err, ok, Result } from "neverthrow";

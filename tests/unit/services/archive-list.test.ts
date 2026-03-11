@@ -1,5 +1,5 @@
-import { encodeCursor } from "@/repositories/paintings-repository";
-import { createPaintingsService } from "@/services/paintings";
+import { encodeCursor } from "@/server/repositories/paintings-repository";
+import { createPaintingsService } from "@/server/services/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { createTestR2Bucket } from "../../lib/memory-r2";

@@ -1,4 +1,4 @@
-import { createPaintingsService } from "@/services/paintings";
+import { createPaintingsService } from "@/server/services/paintings";
 import type { PaintingMetadata } from "@/types/paintings";
 import { beforeEach, describe, expect, it } from "bun:test";
 import { createTestR2Bucket } from "../../lib/memory-r2";

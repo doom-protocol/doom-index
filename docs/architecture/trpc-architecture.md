@@ -61,7 +61,7 @@ src/
 
 ### 2. Service Layer Reuse
 
-- 既存のサービス層（`src/services/*`）をそのまま再利用
+- 既存のサービス層（`src/server/services/*`）をそのまま再利用
 - tRPCプロシージャはサービス層のラッパーとして機能
 - neverthrowのResult型をtRPCErrorに変換
 

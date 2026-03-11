@@ -1,6 +1,6 @@
 import { ArchiveContent } from "@/components/archive/archive-content";
 import { Header } from "@/components/ui/header";
-import { listImages } from "@/services/paintings/list";
+import { listImages } from "@/server/services/paintings/list";
 import type { Painting } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import { getBaseUrl } from "@/utils/url";

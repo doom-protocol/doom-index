@@ -11,8 +11,8 @@
  */
 
 import { env } from "@/env";
-import type { TokenOperationInput } from "@/services/token-analysis-service";
-import type { PromptComposition, WorldPromptService } from "@/services/world-prompt-service";
+import type { TokenOperationInput } from "@/server/services/token-analysis-service";
+import type { PromptComposition, WorldPromptService } from "@/server/services/world-prompt-service";
 import type { AppError } from "@/types/app-error";
 import type { ImageProvider } from "@/types/domain";
 import { logger } from "@/utils/logger";
