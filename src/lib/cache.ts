@@ -53,14 +53,14 @@ export interface CachedBinaryResponse {
 export function resolveCache(): Cache | null {
   try {
     if (typeof caches === "undefined") {
-      logger.warn("cache.unavailable", {
+      logger.debug("cache.unavailable", {
         reason: "Cache is not available",
       });
       return null;
     }
     return "default" in caches ? caches.default : null;
   } catch {
-    logger.warn("cache.unavailable", {
+    logger.debug("cache.unavailable", {
       reason: "Failed to resolve cache",
     });
     return null;
@@ -128,7 +128,7 @@ export async function set(key: string, value: unknown, options: CacheOptions): P
   const log = options.logger || logger;
   const cache = resolveCache();
   if (!cache) {
-    log.warn("cache.unavailable", {
+    log.debug("cache.unavailable", {
       key,
       namespace: options.namespace,
       reason: "Cloudflare context not available",

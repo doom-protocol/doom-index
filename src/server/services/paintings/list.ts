@@ -228,6 +228,15 @@ export interface ListImagesOptions {
   to?: string;
 }
 
+function isMissingPaintingsTableStorageError(error: AppError): boolean {
+  return (
+    error.type === "StorageError" &&
+    error.op === "list" &&
+    error.key === "paintings" &&
+    error.message.includes("no such table: paintings")
+  );
+}
+
 /**
  * List images from archive with pagination
  * Uses D1 for efficient listing with DESC sorting
@@ -309,7 +318,13 @@ export async function listImages(
       });
     }
 
-    logger.warn("archive.list.d1-fallback", { error: d1Result.error });
+    if (isMissingPaintingsTableStorageError(d1Result.error)) {
+      logger.debug("archive.list.d1-fallback.missing-table", {
+        message: d1Result.error.message,
+      });
+    } else {
+      logger.warn("archive.list.d1-fallback", { error: d1Result.error });
+    }
 
     if (options.from && options.to) {
       const datePrefixes = generateDatePrefixes(options.from, options.to);
