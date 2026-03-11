@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import type { FC } from "react";
 import { DoubleSide, MeshStandardMaterial, PlaneGeometry } from "three";
 
+export const GALLERY_FLOOR_Y = -0.02;
+
 export const GalleryRoom: FC = () => {
   // Shared geometries
   const floorGeometry = useMemo(() => new PlaneGeometry(10, 10), []);
@@ -56,7 +58,7 @@ export const GalleryRoom: FC = () => {
     <group>
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.02, 0]}
+        position={[0, GALLERY_FLOOR_Y, 0]}
         receiveShadow
         geometry={floorGeometry}
         material={floorMaterial}

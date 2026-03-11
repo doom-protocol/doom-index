@@ -192,6 +192,43 @@ void mock.module("@react-three/fiber", () => ({
 }));
 
 // Mock @react-three/drei
+interface MockOrbitControlsState {
+  object: {
+    position: {
+      y: number;
+    };
+  };
+  target: {
+    y: number;
+  };
+  update: ReturnType<typeof mock>;
+}
+
+interface MockOrbitControlsChangeEvent {
+  target: MockOrbitControlsState;
+}
+
+const createOrbitControlsState = (): MockOrbitControlsState => ({
+  object: {
+    position: {
+      y: 0.8,
+    },
+  },
+  target: {
+    y: 0.8,
+  },
+  update: mock(() => {}),
+});
+
+let orbitControlsState = createOrbitControlsState();
+let latestOrbitControlsProps: Record<string, unknown> | null = null;
+
+const MockOrbitControls = (props: Record<string, unknown>) => {
+  latestOrbitControlsProps = props;
+
+  return null;
+};
+
 const readGltf = () => ({
   scene: { clone: () => ({}) },
   nodes: {},
@@ -199,7 +236,7 @@ const readGltf = () => ({
 });
 void mock.module("@react-three/drei", () => ({
   Grid: () => null,
-  OrbitControls: () => null,
+  OrbitControls: MockOrbitControls,
   Stats: () => null,
   useGLTF: readGltf,
 }));
@@ -214,7 +251,7 @@ readGltfWithPreload.preload = mock(() => {});
 
 void mock.module("@react-three/drei", () => ({
   Grid: () => null,
-  OrbitControls: () => null,
+  OrbitControls: MockOrbitControls,
   Stats: () => null,
   useGLTF: readGltfWithPreload,
 }));
@@ -247,6 +284,7 @@ void mock.module("@/components/gallery/camera-rig", () => ({
 }));
 
 void mock.module("@/components/gallery/gallery-room", () => ({
+  GALLERY_FLOOR_Y: -0.02,
   GalleryRoom: () => null,
 }));
 
@@ -292,6 +330,8 @@ describe("unit/components/gallery-scene", () => {
     resetMockTime();
     // Clear logger calls
     loggerCalls.length = 0;
+    latestOrbitControlsProps = null;
+    orbitControlsState = createOrbitControlsState();
 
     // Override performance with complete mock for React 19
     globalThis.performance = createMockPerformance();
@@ -416,6 +456,29 @@ describe("unit/components/gallery-scene", () => {
       // Note: dynamic imports may add some overhead, so we allow up to 300ms
       const endTime = getMockTime();
       expect(endTime - startTime).toBeLessThanOrEqual(300);
+    });
+
+    it("should clamp the camera and target above the floor on controls change", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      render(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(latestOrbitControlsProps).toBeDefined();
+      });
+
+      orbitControlsState.object.position.y = -0.5;
+      orbitControlsState.target.y = -0.25;
+
+      const onChange = latestOrbitControlsProps?.onChange as
+        | ((event: MockOrbitControlsChangeEvent) => void)
+        | undefined;
+      expect(onChange).toBeDefined();
+      onChange?.({ target: orbitControlsState });
+
+      expect(orbitControlsState.object.position.y).toBe(0);
+      expect(orbitControlsState.target.y).toBe(0);
+      expect(orbitControlsState.update).toHaveBeenCalled();
     });
   });
 

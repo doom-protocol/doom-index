@@ -12,13 +12,14 @@ import type { FC } from "react";
 import { toast } from "sonner";
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
 import type { Group } from "three";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { MintButton } from "../ui/mint-button";
 import { MintModal } from "../ui/mint-modal";
 import { ThreeErrorBoundary } from "../ui/three-error-boundary";
 
 import { CameraRig } from "./camera-rig";
 import { FramedPainting } from "./framed-painting";
-import { GalleryRoom } from "./gallery-room";
+import { GALLERY_FLOOR_Y, GalleryRoom } from "./gallery-room";
 import { isDevelopment } from "@/env";
 
 // Dynamic import for Lights to avoid hydration issues with dev controls
@@ -43,6 +44,12 @@ interface GallerySceneProps {
 
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
+const CAMERA_FLOOR_CLEARANCE = 0.02;
+const MIN_CAMERA_Y = GALLERY_FLOOR_Y + CAMERA_FLOOR_CLEARANCE;
+
+interface OrbitControlsChangeEvent {
+  target: OrbitControlsImpl;
+}
 
 export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCameraPreset = "painting" }) => {
   const isDevMode = isDevelopment();
@@ -54,6 +61,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
 
   // Export state
   const paintingRef = useRef<Group>(null);
+  const isClampingCameraRef = useRef(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportedGlbFile, setExportedGlbFile] = useState<File | null>(null);
   const [isMintModalOpen, setIsMintModalOpen] = useState(false);
@@ -140,6 +148,27 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
     }
   }, [thumbnailUrl, latestPainting?.timestamp]);
 
+  const handleOrbitControlsChange = (event?: OrbitControlsChangeEvent) => {
+    const controls = event?.target;
+    if (!controls || isClampingCameraRef.current) {
+      return;
+    }
+
+    const nextCameraY = Math.max(controls.object.position.y, MIN_CAMERA_Y);
+    const nextTargetY = Math.max(controls.target.y, MIN_CAMERA_Y);
+    const shouldClamp = nextCameraY !== controls.object.position.y || nextTargetY !== controls.target.y;
+
+    if (!shouldClamp) {
+      return;
+    }
+
+    isClampingCameraRef.current = true;
+    controls.object.position.y = nextCameraY;
+    controls.target.y = nextTargetY;
+    controls.update();
+    isClampingCameraRef.current = false;
+  };
+
   return (
     <>
       {/* Leva GUI Panel - only visible in development mode */}
@@ -214,6 +243,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({ cameraPreset: initialCamer
           panSpeed={0.25}
           enableRotate
           mouseButtons={{ LEFT: 0, MIDDLE: 1, RIGHT: 2 }}
+          onChange={handleOrbitControlsChange}
         />
         <Lights />
 
