@@ -90,12 +90,15 @@ export async function fetchLatestPainting(
  * It fetches the most recent painting from the archive
  * and refreshes periodically to match the cron generation schedule.
  */
-export const useLatestPainting = (): UseQueryResult<PaintingMetadata | null, unknown> => {
+export const useLatestPainting = (
+  initialData?: PaintingMetadata | null,
+): UseQueryResult<PaintingMetadata | null, unknown> => {
   const previousImageUrlRef = useRef<string | null | undefined>(undefined);
   const client = useTRPCClient();
 
   const queryResult = useQuery({
     queryKey: ["paintings", "latest"],
+    initialData: initialData ?? undefined,
     queryFn: async (): Promise<PaintingMetadata | null> => {
       const start = getTimestampMs();
       try {

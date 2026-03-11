@@ -1,20 +1,22 @@
-"use client";
-
 import { Header } from "@/components/ui/header";
-import dynamic from "next/dynamic";
-import type { NextPage } from "next";
+import { createServerCaller } from "@/server/trpc/server-caller";
+import type { PaintingMetadata } from "@/types/paintings";
+import { logger } from "@/utils/logger";
+import { HomeClient } from "./home-client";
 
-const GalleryScene = dynamic(
-  async () =>
-    import("@/components/gallery/gallery-scene").then((mod) => ({
-      default: mod.GalleryScene,
-    })),
-  {
-    ssr: false,
-  },
-);
+export default async function HomePage() {
+  let initialPainting: PaintingMetadata | null = null;
 
-const HomePage: NextPage = () => {
+  try {
+    const caller = await createServerCaller();
+    const result = await caller.paintings.list({ limit: 1 });
+    initialPainting = result.items[0] ?? null;
+  } catch (error) {
+    logger.warn("page.prefetch-painting-failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
   return (
     <main
       style={{
@@ -26,9 +28,7 @@ const HomePage: NextPage = () => {
       }}
     >
       <Header />
-      <GalleryScene />
+      <HomeClient initialPainting={initialPainting} />
     </main>
   );
-};
-
-export default HomePage;
+}
