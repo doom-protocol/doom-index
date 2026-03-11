@@ -195,11 +195,15 @@ void mock.module("@react-three/fiber", () => ({
 interface MockOrbitControlsState {
   object: {
     position: {
+      x: number;
       y: number;
+      z: number;
     };
   };
   target: {
+    x: number;
     y: number;
+    z: number;
   };
   update: ReturnType<typeof mock>;
 }
@@ -211,11 +215,15 @@ interface MockOrbitControlsChangeEvent {
 const createOrbitControlsState = (): MockOrbitControlsState => ({
   object: {
     position: {
+      x: 0,
       y: 0.8,
+      z: 0.8,
     },
   },
   target: {
+    x: 0,
     y: 0.8,
+    z: 4.0,
   },
   update: mock(() => {}),
 });
@@ -284,6 +292,7 @@ void mock.module("@/components/gallery/camera-rig", () => ({
 }));
 
 void mock.module("@/components/gallery/gallery-room", () => ({
+  GALLERY_BACK_WALL_Z: 5,
   GALLERY_FLOOR_Y: -0.02,
   GalleryRoom: () => null,
 }));
@@ -458,7 +467,7 @@ describe("unit/components/gallery-scene", () => {
       expect(endTime - startTime).toBeLessThanOrEqual(300);
     });
 
-    it("should clamp the camera and target above the floor on controls change", async () => {
+    it("should freeze the rest of the drag after controls exceed the floor boundary", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 
       render(<GalleryScene />);
@@ -467,17 +476,157 @@ describe("unit/components/gallery-scene", () => {
         expect(latestOrbitControlsProps).toBeDefined();
       });
 
-      orbitControlsState.object.position.y = -0.5;
-      orbitControlsState.target.y = -0.25;
-
+      const onStart = latestOrbitControlsProps?.onStart as ((event: MockOrbitControlsChangeEvent) => void) | undefined;
       const onChange = latestOrbitControlsProps?.onChange as
         | ((event: MockOrbitControlsChangeEvent) => void)
         | undefined;
+      expect(onStart).toBeDefined();
       expect(onChange).toBeDefined();
+
+      onStart?.({ target: orbitControlsState });
+
+      orbitControlsState.object.position.x = 0.35;
+      orbitControlsState.object.position.y = 0.12;
+      orbitControlsState.object.position.z = 1.1;
+      orbitControlsState.target.x = 0.35;
+      orbitControlsState.target.y = 0.2;
+      orbitControlsState.target.z = 4.3;
       onChange?.({ target: orbitControlsState });
 
-      expect(orbitControlsState.object.position.y).toBe(0);
-      expect(orbitControlsState.target.y).toBe(0);
+      const lastValidState = {
+        object: {
+          position: {
+            ...orbitControlsState.object.position,
+          },
+        },
+        target: {
+          ...orbitControlsState.target,
+        },
+      };
+
+      orbitControlsState.object.position.x = 0.6;
+      orbitControlsState.object.position.y = -0.5;
+      orbitControlsState.object.position.z = 1.6;
+      orbitControlsState.target.x = 0.65;
+      orbitControlsState.target.y = -0.25;
+      orbitControlsState.target.z = 4.7;
+      onChange?.({ target: orbitControlsState });
+
+      expect(orbitControlsState.object.position).toEqual(lastValidState.object.position);
+      expect(orbitControlsState.target).toEqual(lastValidState.target);
+      expect(orbitControlsState.update).toHaveBeenCalled();
+
+      orbitControlsState.update.mockClear();
+      orbitControlsState.object.position.x = 0.5;
+      orbitControlsState.object.position.y = 0.18;
+      orbitControlsState.object.position.z = 1.4;
+      orbitControlsState.target.x = 0.55;
+      orbitControlsState.target.y = 0.26;
+      orbitControlsState.target.z = 4.5;
+      onChange?.({ target: orbitControlsState });
+
+      expect(orbitControlsState.object.position).toEqual(lastValidState.object.position);
+      expect(orbitControlsState.target).toEqual(lastValidState.target);
+      expect(orbitControlsState.update).toHaveBeenCalled();
+    });
+
+    it("should reject the whole move when controls exceed the back wall boundary", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      render(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(latestOrbitControlsProps).toBeDefined();
+      });
+
+      const onStart = latestOrbitControlsProps?.onStart as ((event: MockOrbitControlsChangeEvent) => void) | undefined;
+      const onChange = latestOrbitControlsProps?.onChange as
+        | ((event: MockOrbitControlsChangeEvent) => void)
+        | undefined;
+      expect(onStart).toBeDefined();
+      expect(onChange).toBeDefined();
+
+      onStart?.({ target: orbitControlsState });
+
+      orbitControlsState.object.position.x = 0.15;
+      orbitControlsState.object.position.y = 0.25;
+      orbitControlsState.object.position.z = 1.8;
+      orbitControlsState.target.x = 0.2;
+      orbitControlsState.target.y = 0.4;
+      orbitControlsState.target.z = 4.7;
+      onChange?.({ target: orbitControlsState });
+
+      const lastValidState = {
+        object: {
+          position: {
+            ...orbitControlsState.object.position,
+          },
+        },
+        target: {
+          ...orbitControlsState.target,
+        },
+      };
+
+      orbitControlsState.object.position.x = 0.25;
+      orbitControlsState.object.position.y = 0.3;
+      orbitControlsState.object.position.z = 5.2;
+      orbitControlsState.target.x = 0.3;
+      orbitControlsState.target.y = 0.45;
+      orbitControlsState.target.z = 5.3;
+      onChange?.({ target: orbitControlsState });
+
+      expect(orbitControlsState.object.position).toEqual(lastValidState.object.position);
+      expect(orbitControlsState.target).toEqual(lastValidState.target);
+      expect(orbitControlsState.update).toHaveBeenCalled();
+    });
+
+    it("should reject the whole move when the camera turns behind the target", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      render(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(latestOrbitControlsProps).toBeDefined();
+      });
+
+      const onStart = latestOrbitControlsProps?.onStart as ((event: MockOrbitControlsChangeEvent) => void) | undefined;
+      const onChange = latestOrbitControlsProps?.onChange as
+        | ((event: MockOrbitControlsChangeEvent) => void)
+        | undefined;
+      expect(onStart).toBeDefined();
+      expect(onChange).toBeDefined();
+
+      onStart?.({ target: orbitControlsState });
+
+      orbitControlsState.object.position.x = 0.05;
+      orbitControlsState.object.position.y = 0.3;
+      orbitControlsState.object.position.z = 1.4;
+      orbitControlsState.target.x = 0.1;
+      orbitControlsState.target.y = 0.45;
+      orbitControlsState.target.z = 4.4;
+      onChange?.({ target: orbitControlsState });
+
+      const lastValidState = {
+        object: {
+          position: {
+            ...orbitControlsState.object.position,
+          },
+        },
+        target: {
+          ...orbitControlsState.target,
+        },
+      };
+
+      orbitControlsState.object.position.x = 0.2;
+      orbitControlsState.object.position.y = 0.35;
+      orbitControlsState.object.position.z = 4.6;
+      orbitControlsState.target.x = 0.15;
+      orbitControlsState.target.y = 0.5;
+      orbitControlsState.target.z = 4.2;
+      onChange?.({ target: orbitControlsState });
+
+      expect(orbitControlsState.object.position).toEqual(lastValidState.object.position);
+      expect(orbitControlsState.target).toEqual(lastValidState.target);
       expect(orbitControlsState.update).toHaveBeenCalled();
     });
   });

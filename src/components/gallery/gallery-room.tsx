@@ -5,6 +5,7 @@ import type { FC } from "react";
 import { DoubleSide, MeshStandardMaterial, PlaneGeometry } from "three";
 
 export const GALLERY_FLOOR_Y = -0.02;
+export const GALLERY_BACK_WALL_Z = 5;
 
 export const GalleryRoom: FC = () => {
   // Shared geometries

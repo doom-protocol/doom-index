@@ -19,7 +19,7 @@ import { ThreeErrorBoundary } from "../ui/three-error-boundary";
 
 import { CameraRig } from "./camera-rig";
 import { FramedPainting } from "./framed-painting";
-import { GALLERY_FLOOR_Y, GalleryRoom } from "./gallery-room";
+import { GALLERY_BACK_WALL_Z, GALLERY_FLOOR_Y, GalleryRoom } from "./gallery-room";
 import { isDevelopment } from "@/env";
 
 // Dynamic import for Lights to avoid hydration issues with dev controls
@@ -46,11 +46,65 @@ interface GallerySceneProps {
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
 const CAMERA_FLOOR_CLEARANCE = 0.02;
+const CAMERA_BACK_WALL_CLEARANCE = 0.02;
 const MIN_CAMERA_Y = GALLERY_FLOOR_Y + CAMERA_FLOOR_CLEARANCE;
+const MAX_CAMERA_Z = GALLERY_BACK_WALL_Z - CAMERA_BACK_WALL_CLEARANCE;
 
-interface OrbitControlsChangeEvent {
-  target: OrbitControlsImpl;
+interface OrbitControlsEvent {
+  target?: unknown;
 }
+
+interface OrbitControlsPoint {
+  x: number;
+  y: number;
+  z: number;
+}
+
+interface OrbitControlsSnapshot {
+  cameraPosition: OrbitControlsPoint;
+  targetPosition: OrbitControlsPoint;
+}
+
+const cloneOrbitControlsPoint = (point: OrbitControlsPoint): OrbitControlsPoint => ({
+  x: point.x,
+  y: point.y,
+  z: point.z,
+});
+
+const restoreOrbitControlsPoint = (target: OrbitControlsPoint, source: OrbitControlsPoint) => {
+  target.x = source.x;
+  target.y = source.y;
+  target.z = source.z;
+};
+
+const restoreOrbitControlsSnapshot = (controls: OrbitControlsImpl, snapshot: OrbitControlsSnapshot) => {
+  restoreOrbitControlsPoint(controls.object.position, snapshot.cameraPosition);
+  restoreOrbitControlsPoint(controls.target, snapshot.targetPosition);
+};
+
+const isOrbitControlsWithinBounds = (controls: OrbitControlsImpl) =>
+  Math.min(controls.object.position.y, controls.target.y) >= MIN_CAMERA_Y &&
+  Math.max(controls.object.position.z, controls.target.z) <= MAX_CAMERA_Z &&
+  controls.object.position.z <= controls.target.z;
+
+const createOrbitControlsSnapshot = (controls: OrbitControlsImpl): OrbitControlsSnapshot => ({
+  cameraPosition: cloneOrbitControlsPoint(controls.object.position),
+  targetPosition: cloneOrbitControlsPoint(controls.target),
+});
+
+const readOrbitControls = (event?: OrbitControlsEvent): OrbitControlsImpl | null => {
+  const controls = event?.target;
+
+  if (!controls || typeof controls !== "object") {
+    return null;
+  }
+
+  if (!("object" in controls) || !("target" in controls)) {
+    return null;
+  }
+
+  return controls as OrbitControlsImpl;
+};
 
 export const GalleryScene: FC<GallerySceneProps> = ({
   cameraPreset: initialCameraPreset = "painting",
@@ -63,6 +117,8 @@ export const GalleryScene: FC<GallerySceneProps> = ({
   // Export state
   const paintingRef = useRef<Group>(null);
   const isClampingCameraRef = useRef(false);
+  const lockedOrbitControlsStateRef = useRef<OrbitControlsSnapshot | null>(null);
+  const lastValidOrbitControlsStateRef = useRef<OrbitControlsSnapshot | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportedGlbFile, setExportedGlbFile] = useState<File | null>(null);
   const [isMintModalOpen, setIsMintModalOpen] = useState(false);
@@ -149,25 +205,59 @@ export const GalleryScene: FC<GallerySceneProps> = ({
     }
   }, [thumbnailUrl, latestPainting?.timestamp]);
 
-  const handleOrbitControlsChange = (event?: OrbitControlsChangeEvent) => {
-    const controls = event?.target;
+  const handleOrbitControlsStart = (event?: OrbitControlsEvent) => {
+    const controls = readOrbitControls(event);
+    lockedOrbitControlsStateRef.current = null;
+    lastValidOrbitControlsStateRef.current = null;
+
+    if (!controls || !isOrbitControlsWithinBounds(controls)) {
+      return;
+    }
+
+    lastValidOrbitControlsStateRef.current = createOrbitControlsSnapshot(controls);
+  };
+
+  const handleOrbitControlsEnd = () => {
+    lockedOrbitControlsStateRef.current = null;
+    lastValidOrbitControlsStateRef.current = null;
+  };
+
+  const handleOrbitControlsChange = (event?: OrbitControlsEvent) => {
+    const controls = readOrbitControls(event);
     if (!controls || isClampingCameraRef.current) {
       return;
     }
 
-    const nextCameraY = Math.max(controls.object.position.y, MIN_CAMERA_Y);
-    const nextTargetY = Math.max(controls.target.y, MIN_CAMERA_Y);
-    const shouldClamp = nextCameraY !== controls.object.position.y || nextTargetY !== controls.target.y;
-
-    if (!shouldClamp) {
+    const lockedOrbitControlsState = lockedOrbitControlsStateRef.current;
+    if (lockedOrbitControlsState) {
+      isClampingCameraRef.current = true;
+      try {
+        restoreOrbitControlsSnapshot(controls, lockedOrbitControlsState);
+        controls.update();
+      } finally {
+        isClampingCameraRef.current = false;
+      }
       return;
     }
 
+    if (isOrbitControlsWithinBounds(controls)) {
+      lastValidOrbitControlsStateRef.current = createOrbitControlsSnapshot(controls);
+      return;
+    }
+
+    const lastValidOrbitControlsState = lastValidOrbitControlsStateRef.current;
+    if (!lastValidOrbitControlsState) {
+      return;
+    }
+
+    lockedOrbitControlsStateRef.current = lastValidOrbitControlsState;
     isClampingCameraRef.current = true;
-    controls.object.position.y = nextCameraY;
-    controls.target.y = nextTargetY;
-    controls.update();
-    isClampingCameraRef.current = false;
+    try {
+      restoreOrbitControlsSnapshot(controls, lastValidOrbitControlsState);
+      controls.update();
+    } finally {
+      isClampingCameraRef.current = false;
+    }
   };
 
   return (
@@ -244,7 +334,9 @@ export const GalleryScene: FC<GallerySceneProps> = ({
           panSpeed={0.25}
           enableRotate
           mouseButtons={{ LEFT: 0, MIDDLE: 1, RIGHT: 2 }}
+          onStart={handleOrbitControlsStart}
           onChange={handleOrbitControlsChange}
+          onEnd={handleOrbitControlsEnd}
         />
         <Lights />
 
