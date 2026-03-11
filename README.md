@@ -24,9 +24,11 @@ bun install
 
 ### Environment Variables
 
-Create a `.env` file:
+Copy `.example.vars` to `.dev.vars` and fill in your local values:
 
 ```bash
+cp .example.vars .dev.vars
+
 # Base URL (required)
 NEXT_PUBLIC_BASE_URL=http://localhost:8787
 
@@ -52,10 +54,18 @@ TAVILY_API_KEY=your_tavily_api_key_here  # Optional, for web search
 # FORCE_TOKEN_LIST=bitcoin,ethereum,solana
 ```
 
-For Cloudflare Workers, create a `.dev.vars` file:
+`bun run dev` uses Next.js' standard `.env.local` loading. Create `.env.local` as a symlink to `.dev.vars` so `next dev` and the Bun helper scripts read the same local values.
 
 ```bash
-# Same as .env but for local Cloudflare Workers development
+ln -s .dev.vars .env.local
+```
+
+`.example.vars` is the committed template for tests and local setup.
+
+For Cloudflare Workers, keep the same values in `.dev.vars`:
+
+```bash
+# Local Cloudflare Workers development
 RUNWARE_API_KEY=your_runware_api_key_here
 COINGECKO_API_KEY=your_coingecko_api_key_here
 TAVILY_API_KEY=your_tavily_api_key_here
@@ -93,7 +103,7 @@ curl "http://localhost:8787/__scheduled?cron=0+*+*+*+*"
 bun run deploy
 ```
 
-> **Note**: When using `bun run preview` with OpenNextJS Cloudflare, environment variable loading behaves differently than direct `wrangler dev`. See [OpenNextJS Environment Variables](./docs/guides/opennextjs-env-vars.md) for details about development environment detection and configuration.
+> **Note**: `bun run preview` uses `.dev.vars` together with `wrangler.toml` `env.dev` bindings. With `.env.local` symlinked to `.dev.vars`, `bun run dev` reads the same values through Next.js' native env loading.
 
 ### Database Management
 

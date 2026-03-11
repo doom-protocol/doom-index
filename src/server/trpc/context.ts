@@ -42,7 +42,14 @@ export async function createContext(opts: FetchCreateContextFnOptions): Promise<
 export async function createServerContext(): Promise<Context> {
   const { headers } = await import("next/headers");
   const headersList = await headers();
+  return createContextFromHeaders(headersList, "server component");
+}
 
+export async function createStaticServerContext(): Promise<Context> {
+  return createContextFromHeaders(new Headers(), "static server component");
+}
+
+async function createContextFromHeaders(headersList: Headers, source: string): Promise<Context> {
   try {
     const { env } = await getCloudflareContext({ async: true });
 
@@ -55,7 +62,7 @@ export async function createServerContext(): Promise<Context> {
     };
   } catch (_error) {
     logger.warn("trpc.context.cloudflare-unavailable", {
-      message: "Cloudflare context not available in server component",
+      message: `Cloudflare context not available in ${source}`,
     });
 
     return {

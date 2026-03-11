@@ -62,18 +62,24 @@ if (process.env.NODE_ENV === "development") { ... }
 if (env.NEXTJS_ENV === "development") { ... }
 ```
 
-### Option 2: Create `.env` File for Local Development
+### Option 2: Keep `.example.vars` as the template and `.dev.vars` as the local source of truth
 
-1. Create `.env` file with same content as `.dev.vars`:
+1. Copy `.example.vars` to `.dev.vars`:
 
 ```bash
-# .env (same as .dev.vars)
-NODE_ENV=development
-NEXTJS_ENV=development
-# ... other variables
+cp .example.vars .dev.vars
 ```
 
-2. **Note**: This `.env` file will be ignored by OpenNextJS Wrangler processes but read by Next.js build process
+2. Run local Bun / preview commands with `--env-file=.dev.vars` when they need Bun-side env injection
+
+3. Symlink `.env.local` to `.dev.vars` so plain `next dev` picks up the same values
+
+```bash
+ln -s .dev.vars .env.local
+bun run dev
+```
+
+This keeps `next dev` aligned with the same `.dev.vars` file the Bun scripts and Wrangler preview use, without adding a custom bootstrap layer.
 
 ### Option 3: Update `wrangler.toml` with Explicit Environment Variables
 

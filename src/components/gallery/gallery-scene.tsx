@@ -1,6 +1,12 @@
 "use client";
 
 import { useLatestPainting } from "@/hooks/use-latest-painting";
+import {
+  constrainOrbitControlsSnapshot,
+  isOrbitControlsWithinBounds,
+  restoreOrbitControlsSnapshot,
+} from "@/lib/pure/gallery-orbit-bounds";
+import type { OrbitControlsBounds } from "@/lib/pure/gallery-orbit-bounds";
 import type { PaintingMetadata } from "@/types/paintings";
 import { glbExportService } from "@/lib/glb-export-service";
 import { logger } from "@/utils/logger";
@@ -12,13 +18,14 @@ import type { FC } from "react";
 import { toast } from "sonner";
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
 import type { Group } from "three";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { MintButton } from "../ui/mint-button";
 import { MintModal } from "../ui/mint-modal";
 import { ThreeErrorBoundary } from "../ui/three-error-boundary";
 
 import { CameraRig } from "./camera-rig";
 import { FramedPainting } from "./framed-painting";
-import { GalleryRoom } from "./gallery-room";
+import { GALLERY_BACK_WALL_Z, GALLERY_FLOOR_Y, GalleryRoom } from "./gallery-room";
 import { isDevelopment } from "@/env";
 
 // Dynamic import for Lights to avoid hydration issues with dev controls
@@ -44,6 +51,36 @@ interface GallerySceneProps {
 
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
+const CAMERA_FLOOR_CLEARANCE = 0.02;
+const CAMERA_BACK_WALL_CLEARANCE = 0.02;
+const MIN_CAMERA_Y = GALLERY_FLOOR_Y + CAMERA_FLOOR_CLEARANCE;
+const MAX_CAMERA_Z = GALLERY_BACK_WALL_Z - CAMERA_BACK_WALL_CLEARANCE;
+const MAX_POLAR_ANGLE = Math.PI / 2;
+const MIN_AZIMUTH_ANGLE = Math.PI / 2;
+const MAX_AZIMUTH_ANGLE = (Math.PI * 3) / 2;
+
+interface OrbitControlsEvent {
+  target?: unknown;
+}
+
+const ORBIT_CONTROLS_BOUNDS: OrbitControlsBounds = {
+  minY: MIN_CAMERA_Y,
+  maxZ: MAX_CAMERA_Z,
+};
+
+const readOrbitControls = (event?: OrbitControlsEvent): OrbitControlsImpl | null => {
+  const controls = event?.target;
+
+  if (!controls || typeof controls !== "object") {
+    return null;
+  }
+
+  if (!("object" in controls) || !("target" in controls)) {
+    return null;
+  }
+
+  return controls as OrbitControlsImpl;
+};
 
 export const GalleryScene: FC<GallerySceneProps> = ({
   cameraPreset: initialCameraPreset = "painting",
@@ -55,6 +92,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
 
   // Export state
   const paintingRef = useRef<Group>(null);
+  const isClampingCameraRef = useRef(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportedGlbFile, setExportedGlbFile] = useState<File | null>(null);
   const [isMintModalOpen, setIsMintModalOpen] = useState(false);
@@ -141,6 +179,27 @@ export const GalleryScene: FC<GallerySceneProps> = ({
     }
   }, [thumbnailUrl, latestPainting?.timestamp]);
 
+  const handleOrbitControlsChange = (event?: OrbitControlsEvent) => {
+    const controls = readOrbitControls(event);
+    if (!controls || isClampingCameraRef.current) {
+      return;
+    }
+
+    if (isOrbitControlsWithinBounds(controls, ORBIT_CONTROLS_BOUNDS)) {
+      return;
+    }
+
+    const constrainedOrbitControlsState = constrainOrbitControlsSnapshot(controls, ORBIT_CONTROLS_BOUNDS);
+
+    isClampingCameraRef.current = true;
+    try {
+      restoreOrbitControlsSnapshot(controls, constrainedOrbitControlsState);
+      controls.update();
+    } finally {
+      isClampingCameraRef.current = false;
+    }
+  };
+
   return (
     <>
       {/* Leva GUI Panel - only visible in development mode */}
@@ -209,12 +268,16 @@ export const GalleryScene: FC<GallerySceneProps> = ({
           enablePan
           minDistance={0.5}
           maxDistance={5}
+          maxPolarAngle={MAX_POLAR_ANGLE}
+          minAzimuthAngle={MIN_AZIMUTH_ANGLE}
+          maxAzimuthAngle={MAX_AZIMUTH_ANGLE}
           target={[0, 0.8, 4.0]}
           rotateSpeed={0.5}
           zoomSpeed={0.5}
           panSpeed={0.25}
           enableRotate
           mouseButtons={{ LEFT: 0, MIDDLE: 1, RIGHT: 2 }}
+          onChange={handleOrbitControlsChange}
         />
         <Lights />
 

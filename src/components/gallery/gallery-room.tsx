@@ -4,11 +4,13 @@ import { useMemo } from "react";
 import type { FC } from "react";
 import { DoubleSide, MeshStandardMaterial, PlaneGeometry } from "three";
 
+export const GALLERY_FLOOR_Y = -0.02;
+export const GALLERY_BACK_WALL_Z = 5;
+
 export const GalleryRoom: FC = () => {
   // Shared geometries
   const floorGeometry = useMemo(() => new PlaneGeometry(10, 10), []);
   const wallGeometry = useMemo(() => new PlaneGeometry(10, 4.5), []);
-  const ceilingGeometry = useMemo(() => new PlaneGeometry(7, 7), []);
 
   // Shared materials
   const floorMaterial = useMemo(
@@ -41,28 +43,18 @@ export const GalleryRoom: FC = () => {
       }),
     [],
   );
-  const ceilingMaterial = useMemo(
-    () =>
-      new MeshStandardMaterial({
-        color: "#2d2d40",
-        roughness: 0.72,
-        metalness: 0.14,
-        side: DoubleSide,
-      }),
-    [],
-  );
 
   return (
     <group>
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.02, 0]}
+        position={[0, GALLERY_FLOOR_Y, 0]}
         receiveShadow
         geometry={floorGeometry}
         material={floorMaterial}
       />
       <mesh
-        position={[0, 1.65, 5]}
+        position={[0, 1.65, GALLERY_BACK_WALL_Z]}
         rotation={[0, Math.PI, 0]}
         receiveShadow={false}
         geometry={wallGeometry}
@@ -83,13 +75,6 @@ export const GalleryRoom: FC = () => {
         material={sideWallMaterial}
       />
       <mesh position={[0, 1.65, -5]} receiveShadow={false} geometry={wallGeometry} material={sideWallMaterial} />
-      <mesh
-        rotation={[Math.PI / 2, 0, 0]}
-        position={[0, 3.3, 0]}
-        receiveShadow={false}
-        geometry={ceilingGeometry}
-        material={ceilingMaterial}
-      />
     </group>
   );
 };

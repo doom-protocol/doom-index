@@ -8,6 +8,7 @@ import {
   fetchLatestPainting,
   computeRefetchDelay,
   clampInterval,
+  shareLatestPaintingIdentity,
   MIN_REFETCH_INTERVAL_MS,
   STALE_POLL_INTERVAL_MS,
   POST_GENERATION_DELAY_MS,
@@ -210,6 +211,35 @@ describe("unit/hooks/use-latest-painting", () => {
       // POST_GENERATION_DELAY_MS should be reasonable (5-30 seconds)
       expect(POST_GENERATION_DELAY_MS).toBeGreaterThanOrEqual(5000);
       expect(POST_GENERATION_DELAY_MS).toBeLessThanOrEqual(30000);
+    });
+  });
+
+  describe("shareLatestPaintingIdentity", () => {
+    it("should preserve the previous reference when painting identity is unchanged", () => {
+      const previous = mockPainting;
+      const next = {
+        ...mockPainting,
+        visualParams: {
+          ...mockPainting.visualParams,
+        },
+      };
+
+      expect(shareLatestPaintingIdentity(previous, next)).toBe(previous);
+    });
+
+    it("should return the next value when the painting changes", () => {
+      const previous = mockPainting;
+      const next = {
+        ...mockPainting,
+        id: "test-painting-2",
+      };
+
+      expect(shareLatestPaintingIdentity(previous, next)).toBe(next);
+    });
+
+    it("should pass through null values", () => {
+      expect(shareLatestPaintingIdentity(mockPainting, null)).toBeNull();
+      expect(shareLatestPaintingIdentity(null, mockPainting)).toBe(mockPainting);
     });
   });
 });

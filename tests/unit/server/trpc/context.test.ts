@@ -1,7 +1,7 @@
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
-import { createContext } from "@/server/trpc/context";
+import { createContext, createStaticServerContext } from "@/server/trpc/context";
 
 // Mock must be set up before importing createContext so getCloudflareContext
 // is replaced when the module is evaluated
@@ -54,5 +54,15 @@ describe("Context Creator", () => {
     expect(TestAppContext.logger).toBeDefined();
     expect(TestAppContext.kvNamespace).toBeUndefined();
     expect(TestAppContext.r2Bucket).toBeUndefined();
+  });
+
+  it("should create static server context without request headers", async () => {
+    const testAppContext = await createStaticServerContext();
+
+    expect(testAppContext.headers).toBeDefined();
+    expect(testAppContext.headers.get("user-agent")).toBeNull();
+    expect(testAppContext.logger).toBeDefined();
+    expect(testAppContext.kvNamespace).toBeUndefined();
+    expect(testAppContext.r2Bucket).toBeUndefined();
   });
 });

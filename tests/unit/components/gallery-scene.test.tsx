@@ -192,6 +192,51 @@ void mock.module("@react-three/fiber", () => ({
 }));
 
 // Mock @react-three/drei
+interface MockOrbitControlsState {
+  object: {
+    position: {
+      x: number;
+      y: number;
+      z: number;
+    };
+  };
+  target: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  update: ReturnType<typeof mock>;
+}
+
+interface MockOrbitControlsChangeEvent {
+  target: MockOrbitControlsState;
+}
+
+const createOrbitControlsState = (): MockOrbitControlsState => ({
+  object: {
+    position: {
+      x: 0,
+      y: 0.8,
+      z: 0.8,
+    },
+  },
+  target: {
+    x: 0,
+    y: 0.8,
+    z: 4.0,
+  },
+  update: mock(() => {}),
+});
+
+let orbitControlsState = createOrbitControlsState();
+let latestOrbitControlsProps: Record<string, unknown> | null = null;
+
+const MockOrbitControls = (props: Record<string, unknown>) => {
+  latestOrbitControlsProps = props;
+
+  return null;
+};
+
 const readGltf = () => ({
   scene: { clone: () => ({}) },
   nodes: {},
@@ -199,7 +244,7 @@ const readGltf = () => ({
 });
 void mock.module("@react-three/drei", () => ({
   Grid: () => null,
-  OrbitControls: () => null,
+  OrbitControls: MockOrbitControls,
   Stats: () => null,
   useGLTF: readGltf,
 }));
@@ -214,7 +259,7 @@ readGltfWithPreload.preload = mock(() => {});
 
 void mock.module("@react-three/drei", () => ({
   Grid: () => null,
-  OrbitControls: () => null,
+  OrbitControls: MockOrbitControls,
   Stats: () => null,
   useGLTF: readGltfWithPreload,
 }));
@@ -246,7 +291,10 @@ void mock.module("@/components/gallery/camera-rig", () => ({
   CameraRig: () => null,
 }));
 
+const realGalleryRoom = await import("@/components/gallery/gallery-room");
+
 void mock.module("@/components/gallery/gallery-room", () => ({
+  ...realGalleryRoom,
   GalleryRoom: () => null,
 }));
 
@@ -292,6 +340,8 @@ describe("unit/components/gallery-scene", () => {
     resetMockTime();
     // Clear logger calls
     loggerCalls.length = 0;
+    latestOrbitControlsProps = null;
+    orbitControlsState = createOrbitControlsState();
 
     // Override performance with complete mock for React 19
     globalThis.performance = createMockPerformance();
@@ -417,9 +467,139 @@ describe("unit/components/gallery-scene", () => {
       const endTime = getMockTime();
       expect(endTime - startTime).toBeLessThanOrEqual(300);
     });
+
+    it("should clamp floor overflow into the allowed volume and keep later moves responsive", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      render(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(latestOrbitControlsProps).toBeDefined();
+      });
+
+      const onChange = latestOrbitControlsProps?.onChange as
+        | ((event: MockOrbitControlsChangeEvent) => void)
+        | undefined;
+      expect(onChange).toBeDefined();
+
+      orbitControlsState.object.position.x = 0.35;
+      orbitControlsState.object.position.y = 0.12;
+      orbitControlsState.object.position.z = 1.1;
+      orbitControlsState.target.x = 0.35;
+      orbitControlsState.target.y = 0.2;
+      orbitControlsState.target.z = 4.3;
+      onChange?.({ target: orbitControlsState });
+
+      orbitControlsState.object.position.x = 0.6;
+      orbitControlsState.object.position.y = 0.05;
+      orbitControlsState.object.position.z = 1.6;
+      orbitControlsState.target.x = 0.65;
+      orbitControlsState.target.y = -0.25;
+      orbitControlsState.target.z = 4.7;
+      onChange?.({ target: orbitControlsState });
+
+      expect(orbitControlsState.object.position).toEqual({
+        x: 0.6,
+        y: 0.3,
+        z: 1.6,
+      });
+      expect(orbitControlsState.target).toEqual({
+        x: 0.65,
+        y: 0,
+        z: 4.7,
+      });
+      expect(orbitControlsState.update).toHaveBeenCalled();
+
+      orbitControlsState.update.mockClear();
+      orbitControlsState.object.position.x = 0.5;
+      orbitControlsState.object.position.y = 0.18;
+      orbitControlsState.object.position.z = 1.4;
+      orbitControlsState.target.x = 0.55;
+      orbitControlsState.target.y = 0.26;
+      orbitControlsState.target.z = 4.5;
+      onChange?.({ target: orbitControlsState });
+
+      expect(orbitControlsState.object.position).toEqual({
+        x: 0.5,
+        y: 0.18,
+        z: 1.4,
+      });
+      expect(orbitControlsState.target).toEqual({
+        x: 0.55,
+        y: 0.26,
+        z: 4.5,
+      });
+      expect(orbitControlsState.update).not.toHaveBeenCalled();
+    });
+
+    it("should clamp back-wall overflow into the allowed volume", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      render(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(latestOrbitControlsProps).toBeDefined();
+      });
+
+      const onChange = latestOrbitControlsProps?.onChange as
+        | ((event: MockOrbitControlsChangeEvent) => void)
+        | undefined;
+      expect(onChange).toBeDefined();
+
+      orbitControlsState.object.position.x = 0.15;
+      orbitControlsState.object.position.y = 0.25;
+      orbitControlsState.object.position.z = 1.8;
+      orbitControlsState.target.x = 0.2;
+      orbitControlsState.target.y = 0.4;
+      orbitControlsState.target.z = 4.7;
+      onChange?.({ target: orbitControlsState });
+
+      orbitControlsState.object.position.x = 0.25;
+      orbitControlsState.object.position.y = 0.3;
+      orbitControlsState.object.position.z = 5.2;
+      orbitControlsState.target.x = 0.3;
+      orbitControlsState.target.y = 0.45;
+      orbitControlsState.target.z = 5.3;
+      onChange?.({ target: orbitControlsState });
+
+      expect(orbitControlsState.object.position.x).toBe(0.25);
+      expect(orbitControlsState.object.position.y).toBe(0.3);
+      expect(orbitControlsState.object.position.z).toBeCloseTo(4.88, 10);
+      expect(orbitControlsState.target.x).toBe(0.3);
+      expect(orbitControlsState.target.y).toBe(0.45);
+      expect(orbitControlsState.target.z).toBeCloseTo(4.98, 10);
+      expect(orbitControlsState.update).toHaveBeenCalled();
+    });
+
+    it("should configure OrbitControls with front-facing angular bounds", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      render(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(latestOrbitControlsProps).toBeDefined();
+      });
+
+      expect(latestOrbitControlsProps?.maxPolarAngle).toBe(Math.PI / 2);
+      expect(latestOrbitControlsProps?.minAzimuthAngle).toBe(Math.PI / 2);
+      expect(latestOrbitControlsProps?.maxAzimuthAngle).toBe((Math.PI * 3) / 2);
+    });
   });
 
   describe("performance-guarantees", () => {
+    it("should configure OrbitControls with damping for smooth inertial movement", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      render(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(latestOrbitControlsProps).toBeDefined();
+      });
+
+      expect(latestOrbitControlsProps?.enableDamping).toBe(true);
+      expect(latestOrbitControlsProps?.dampingFactor).toBe(0.05);
+    });
+
     it("should not add artificial delays to texture loading", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 

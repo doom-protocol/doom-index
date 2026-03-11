@@ -1,5 +1,5 @@
 import { appRouter } from "./routers/_app";
-import { createServerContext } from "./context";
+import { createServerContext, createStaticServerContext } from "./context";
 import { createCallerFactory } from "./trpc";
 
 const createCaller = createCallerFactory(appRouter);
@@ -10,5 +10,10 @@ const createCaller = createCallerFactory(appRouter);
  */
 export async function createServerCaller() {
   const ctx = await createServerContext();
+  return createCaller(ctx);
+}
+
+export async function createStaticServerCaller() {
+  const ctx = await createStaticServerContext();
   return createCaller(ctx);
 }

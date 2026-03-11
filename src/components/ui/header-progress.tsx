@@ -4,7 +4,7 @@ import { GENERATION_INTERVAL_MS } from "@/constants";
 import { useLatestPainting, useLatestPaintingRefetch } from "@/hooks/use-latest-painting";
 import { getTimestampMs } from "@/lib/cloudflare-image";
 import { logger } from "@/utils/logger";
-import { startTransition, useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { FC } from "react";
 import { useHaptic } from "use-haptic";
 import useSound from "use-sound";
@@ -13,8 +13,8 @@ const INTERVAL_MS = GENERATION_INTERVAL_MS;
 const HAPTIC_WINDOW_START_REMAINING_SECOND = 10;
 
 export const HeaderProgress: FC = () => {
-  const [displaySecond, setDisplaySecond] = useState<number>(0);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
+  const timeLabelRef = useRef<HTMLSpanElement | null>(null);
 
   const { triggerHaptic } = useHaptic();
   const [playChime] = useSound("/clock-chime.mp3", { interrupt: true });
@@ -22,6 +22,16 @@ export const HeaderProgress: FC = () => {
   const { dataUpdatedAt } = useLatestPainting();
 
   const intervalLabel = "Next Generation";
+
+  const updateTimeLabel = (displaySecond: number) => {
+    const minutes = Math.floor(displaySecond / 60);
+    const seconds = displaySecond % 60;
+    const timeLabel = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+
+    if (timeLabelRef.current) {
+      timeLabelRef.current.textContent = timeLabel;
+    }
+  };
 
   useEffect(() => {
     let animationFrameId: number | undefined;
@@ -44,9 +54,7 @@ export const HeaderProgress: FC = () => {
 
       updateProgressWidth(initialProgress);
       lastDisplayedSecond = initialRemainingSeconds;
-      startTransition(() => {
-        setDisplaySecond(initialRemainingSeconds);
-      });
+      updateTimeLabel(initialRemainingSeconds);
     };
 
     const handleIntervalBoundary = (previousSecond: number) => {
@@ -102,9 +110,7 @@ export const HeaderProgress: FC = () => {
         if (nextRemainingSeconds <= HAPTIC_WINDOW_START_REMAINING_SECOND && nextRemainingSeconds > 0) {
           triggerHaptic();
         }
-        startTransition(() => {
-          setDisplaySecond(nextRemainingSeconds);
-        });
+        updateTimeLabel(nextRemainingSeconds);
         lastDisplayedSecond = nextRemainingSeconds;
       }
 
@@ -121,14 +127,12 @@ export const HeaderProgress: FC = () => {
     };
   }, [playChime, refetchLatestPainting, triggerHaptic, dataUpdatedAt]);
 
-  const minutes = Math.floor(displaySecond / 60);
-  const seconds = displaySecond % 60;
-  const timeLabel = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-
   return (
     <div className="flex h-[68px] flex-col items-center gap-2">
       <span className="font-cinzel-decorative text-sm tracking-wide text-white/60">{intervalLabel}</span>
-      <span className="font-mono text-sm text-white/70 tabular-nums">{timeLabel}</span>
+      <span ref={timeLabelRef} className="font-mono text-sm text-white/70 tabular-nums">
+        00:00
+      </span>
       <div className="h-1 w-32 overflow-hidden rounded-full bg-white/20">
         <div ref={progressBarRef} className="h-full bg-white" />
       </div>

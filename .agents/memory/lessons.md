@@ -31,3 +31,25 @@
 - ユーザーが「source code は触らずに deployment / platform 設定で解決したい」と明示した場合は、まず Cloudflare / Wrangler / CI の build-time env 設定を確認する。source 側の import 境界修正を先に進めない。
 
 - reviewer が build-time env と runtime env の不整合を指摘しても、ユーザーが CI の設定ミスを特定したなら `skipValidation` のような緩和へ戻らない。まず workflow / dashboard / build settings を正し、その前提で source は strict に保つ。
+
+- OpenNext Cloudflare のローカル開発では、公式 how-to が `next dev` を示しているなら通常の `dev` script を `build + preview` にしない。Workers preview は別用途として残し、日常開発フローを不要に重くしない。
+
+- この repo のローカル env の正は `.dev.vars`、共有テンプレートは `.example.vars`。ユーザーがその運用へ切り替えた後は `.env.local` や `.env.example` を再導入せず、Bun scripts も同じファイル名に揃える。
+
+- ただし Next.js の `dev` 起動だけは例外で、ユーザーが `.env.local -> .dev.vars` の symlink を選ぶなら、その標準機構を優先する。wrapper script や bootstrap を足して同じことを再実装しない。
+
+- `next.config.ts` では shallow helper を増やさない。`isNextDevCommand` や `mergeResolve` のような 1 回しか使わない小さな抽象化より、条件と代入をその場で短く書くほうを優先する。
+
+- `next.config.ts` では小さな helper を量産しない。条件分岐や alias マージが 1 箇所で完結するなら、その場で読める形を優先し、`composePlugins` や `mergeResolve` のような抽象化は入れない。
+
+- カメラやドラッグ境界のバグ修正では、ユーザーが「可動域を超えたらその入力全体を無効化したい」と言った場合、軸ごとの部分 clamp を正解だと決めつけない。まず「直前の合法状態へ丸ごと戻すべきか」を要件として確認し、その仕様で回帰テストを書く。
+
+- カメラ境界の要件で「奥の壁の後ろに行かない」「後ろには向かない」と言われたら、物理壁追加で解決しようとしない。OrbitControls の可動域条件として `position/target` の Z 上限と「camera stays in front of target」を先にモデル化する。
+
+- 定期 polling する query を 3D scene や texture 更新の親にぶら下げるときは、データ内容が同じなら参照も保つ。TanStack Query の `structuralSharing` を使って同一 painting の object identity を固定し、周期 refetch で無駄な scene rerender を起こさない。
+
+- 1 秒ごとの countdown や progress 表示は React state で持たない。見た目の数字や width だけを変える用途なら ref と DOM 更新に落として、重い scene と同じ画面で 1Hz の React rerender を作らない。
+
+- ギャラリーの「壁」要件は OrbitControls の可動域だけで満たしていると決めつけない。ユーザーが不要と言った壁が残っていたら、まず `GalleryRoom` の mesh 構成も確認して、境界ロジックと部屋ジオメトリのどちらの話かを切り分ける。
+
+- `NEXT_PUBLIC_R2_URL` の本番値は、ユーザー指定があるまで `"/api/r2"` を既定として扱う。R2 公開ドメインが使えそうでも、runtime env の修正で勝手に `storage.doomindex.fun` へ変えない。

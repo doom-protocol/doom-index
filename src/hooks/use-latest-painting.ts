@@ -15,6 +15,21 @@ export const POST_GENERATION_DELAY_MS = 15_000;
 
 export const clampInterval = (value: number): number => Math.max(MIN_REFETCH_INTERVAL_MS, value);
 
+export const shareLatestPaintingIdentity = (
+  previous: PaintingMetadata | null | undefined,
+  next: PaintingMetadata | null,
+): PaintingMetadata | null => {
+  if (!previous || !next) {
+    return next;
+  }
+
+  if (previous.id === next.id && previous.timestamp === next.timestamp && previous.imageUrl === next.imageUrl) {
+    return previous;
+  }
+
+  return next;
+};
+
 export const computeRefetchDelay = (lastTimestamp?: string | null): number => {
   if (!lastTimestamp) {
     return MIN_REFETCH_INTERVAL_MS;
@@ -168,6 +183,8 @@ export const useLatestPainting = (
       }
     },
     staleTime: 0, // Always check for updates when the interval hits
+    structuralSharing: (oldData, newData) =>
+      shareLatestPaintingIdentity(oldData as PaintingMetadata | null | undefined, newData as PaintingMetadata | null),
     refetchInterval: (query) => {
       const latest = query.state.data;
       return computeRefetchDelay(latest?.timestamp ?? null);
@@ -195,7 +212,7 @@ export const useLatestPainting = (
       });
       previousImageUrlRef.current = currentImageUrl;
     }
-  }, [queryResult.data]);
+  }, [queryResult.data?.imageUrl, queryResult.data?.timestamp]);
 
   return queryResult;
 };
