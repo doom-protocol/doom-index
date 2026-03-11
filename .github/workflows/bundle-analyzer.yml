@@ -41,7 +41,7 @@ jobs:
       - name: Prepare build env
         run: |
           cat <<'EOF' > .env.local
-          NEXT_PUBLIC_BASE_URL="http://localhost:8787"
+          NEXT_PUBLIC_BASE_URL="https://doomindex.fun"
           NEXT_PUBLIC_R2_URL="/api/r2"
           NEXT_PUBLIC_GENERATION_INTERVAL_MS="600000"
           RUNWARE_API_KEY="dummy_runware_api_key"
