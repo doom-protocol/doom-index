@@ -75,7 +75,7 @@ export function createPinataClient(deps: CreatePinataClientDeps = {}): PinataCli
   return {
     async createSignedUploadUrl(options: CreateSignedUrlOptions): Promise<Result<SignedUrl, AppError>> {
       // Validate API key
-      const key = apiKey ?? env.PINATA_JWT;
+      const key = apiKey ?? (typeof window === "undefined" ? env.PINATA_JWT : undefined);
       if (!key) {
         return err({
           type: "ConfigurationError",
@@ -113,7 +113,7 @@ export function createPinataClient(deps: CreatePinataClientDeps = {}): PinataCli
 
     async convertToGatewayUrl(cid: string): Promise<Result<string, AppError>> {
       // Validate API key
-      const key = apiKey ?? env.PINATA_JWT;
+      const key = apiKey ?? (typeof window === "undefined" ? env.PINATA_JWT : undefined);
       if (!key) {
         return err({
           type: "ConfigurationError",

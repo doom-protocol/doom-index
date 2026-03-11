@@ -50,7 +50,7 @@ jobs:
           perl -0pi -e 's/remote = true/remote = false/g' wrangler.ci.toml
 
       - name: Build with opennextjs-cloudflare
-        run: DOOM_ENABLE_SERVER_BUNDLE_STUBS=1 opennextjs-cloudflare build --config wrangler.ci.toml && bun run patch:setimmediate
+        run: DOOM_ENABLE_SERVER_BUNDLE_STUBS=1 bunx opennextjs-cloudflare build --config wrangler.ci.toml && bun run patch:setimmediate
 
       - name: Analyze esbuild bundle size
         uses: exoego/esbuild-bundle-analyzer@v1
