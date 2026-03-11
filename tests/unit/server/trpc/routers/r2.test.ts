@@ -23,7 +23,7 @@ describe("R2 Router", () => {
       env: {
         R2_PUBLIC_DOMAIN: undefined,
         NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
-        NEXT_PUBLIC_GENERATION_INTERVAL_MS: "600000",
+        NEXT_PUBLIC_GENERATION_INTERVAL_MS: 600000,
       },
       isDevelopment: () => true,
       getEnvironmentName: () => "development" as const,

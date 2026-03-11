@@ -46,7 +46,7 @@ interface EnvMockOptions {
   NEXT_PUBLIC_BASE_URL?: string;
   LOG_LEVEL?: string;
   NEXT_PUBLIC_R2_URL?: string;
-  NEXT_PUBLIC_GENERATION_INTERVAL_MS?: string | number;
+  NEXT_PUBLIC_GENERATION_INTERVAL_MS?: number;
 }
 
 type EnvMock = () => {
@@ -54,7 +54,7 @@ type EnvMock = () => {
     NEXT_PUBLIC_BASE_URL: string;
     LOG_LEVEL: string;
     NEXT_PUBLIC_R2_URL: string;
-    NEXT_PUBLIC_GENERATION_INTERVAL_MS: string | number;
+    NEXT_PUBLIC_GENERATION_INTERVAL_MS: number;
   };
   isDevelopment: () => boolean;
   getEnvironmentName: () => string;
@@ -144,13 +144,14 @@ export function createViewerCountStoreMock(): ViewerCountStoreMock {
  */
 export function createEnvMock(options?: EnvMockOptions): EnvMock {
   const baseUrl = options?.NEXT_PUBLIC_BASE_URL ?? "http://localhost:8787";
+  const generationIntervalMs = options?.NEXT_PUBLIC_GENERATION_INTERVAL_MS ?? 600000;
 
   return () => ({
     env: {
       NEXT_PUBLIC_BASE_URL: baseUrl,
       LOG_LEVEL: options?.LOG_LEVEL ?? "DEBUG",
       NEXT_PUBLIC_R2_URL: options?.NEXT_PUBLIC_R2_URL ?? "/api/r2",
-      NEXT_PUBLIC_GENERATION_INTERVAL_MS: options?.NEXT_PUBLIC_GENERATION_INTERVAL_MS ?? "600000",
+      NEXT_PUBLIC_GENERATION_INTERVAL_MS: generationIntervalMs,
     },
     isDevelopment: () => baseUrl.includes("localhost"),
     getEnvironmentName: () => (baseUrl.includes("localhost") ? "development" : "production"),

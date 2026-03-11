@@ -2,5 +2,5 @@
   "printWidth": 120,
   "sortTailwindcss": {},
   "sortPackageJson": false,
-  "ignorePatterns": [".claude/worktrees/**", "**/.next/**", "**/.open-next/**"]
+  "ignorePatterns": []
 }
