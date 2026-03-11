@@ -27,3 +27,7 @@
 - ユーザーが source を simple に保ちたいと言ったときは、dynamic import や境界変更を source に散らさず、可能なら `next.config.ts` など build/bundle 設定に最適化を集約する。
 
 - `force-dynamic` や `typeof window` ガードは source の workaround になりやすい。入れる前に本当にその route が dynamic である必要があるか、client が server-only code を参照していないかを先に正す。
+
+- ユーザーが「source code は触らずに deployment / platform 設定で解決したい」と明示した場合は、まず Cloudflare / Wrangler / CI の build-time env 設定を確認する。source 側の import 境界修正を先に進めない。
+
+- reviewer が build-time env と runtime env の不整合を指摘しても、ユーザーが CI の設定ミスを特定したなら `skipValidation` のような緩和へ戻らない。まず workflow / dashboard / build settings を正し、その前提で source は strict に保つ。
