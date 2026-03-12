@@ -51,19 +51,27 @@ function toRangeTs(from?: string, to?: string) {
   return { startTs, endExclusiveTs };
 }
 
-interface ArchiveIndexRow {
+export interface ArchiveIndexRow {
   id: string;
   timestamp: string;
   minuteBucket: string;
   paramsHash: string;
   seed: string;
-  r2Key: string;
+  imageTxId: string;
+  glbTxId: string;
   imageUrl: string;
+  glbUrl: string;
   fileSize: number;
   ts: number;
   visualParamsJson: string;
   prompt: string;
   negative: string;
+}
+
+export interface InsertPaintingRecord extends PaintingMetadata {
+  glbUrl: string;
+  glbTxId: string;
+  imageTxId: string;
 }
 
 function isVisualParams(value: unknown): value is VisualParams {
@@ -147,7 +155,7 @@ export interface ListArchiveResult {
  */
 export interface PaintingsRepository {
   list: (options: ListArchiveOptions) => Promise<Result<ListArchiveResult, AppError>>;
-  insert: (metadata: PaintingMetadata, r2Key: string) => Promise<Result<void, AppError>>;
+  insert: (record: InsertPaintingRecord) => Promise<Result<void, AppError>>;
   findById: (id: string) => Promise<Result<PaintingMetadata | null, AppError>>;
 }
 
@@ -227,8 +235,10 @@ export function createPaintingsRepository({
           minuteBucket: paintings.minuteBucket,
           paramsHash: paintings.paramsHash,
           seed: paintings.seed,
-          r2Key: paintings.r2Key,
+          imageTxId: paintings.imageTxId,
+          glbTxId: paintings.glbTxId,
           imageUrl: paintings.imageUrl,
+          glbUrl: paintings.glbUrl,
           fileSize: paintings.fileSize,
           ts: paintings.ts,
           visualParamsJson: paintings.visualParamsJson,
@@ -310,38 +320,40 @@ export function createPaintingsRepository({
     }
   }
 
-  async function insert(metadata: PaintingMetadata, r2Key: string): Promise<Result<void, AppError>> {
+  async function insert(record: InsertPaintingRecord): Promise<Result<void, AppError>> {
     try {
       const db = await getDB(d1Binding);
-      const ts = Math.floor(new Date(metadata.timestamp).getTime() / 1000);
+      const ts = Math.floor(new Date(record.timestamp).getTime() / 1000);
 
       await db
         .insert(paintings)
         .values({
-          id: metadata.id,
+          id: record.id,
           ts,
-          timestamp: metadata.timestamp,
-          minuteBucket: metadata.minuteBucket,
-          paramsHash: metadata.paramsHash,
-          seed: metadata.seed,
-          r2Key,
-          imageUrl: metadata.imageUrl,
-          fileSize: metadata.fileSize,
-          visualParamsJson: JSON.stringify(metadata.visualParams),
-          prompt: metadata.prompt,
-          negative: metadata.negative,
+          timestamp: record.timestamp,
+          minuteBucket: record.minuteBucket,
+          paramsHash: record.paramsHash,
+          seed: record.seed,
+          imageTxId: record.imageTxId,
+          glbTxId: record.glbTxId,
+          imageUrl: record.imageUrl,
+          glbUrl: record.glbUrl,
+          fileSize: record.fileSize,
+          visualParamsJson: JSON.stringify(record.visualParams),
+          prompt: record.prompt,
+          negative: record.negative,
         })
         .onConflictDoNothing(); // id is PK, safe for idempotency
 
-      log.debug("archive-repo.insert", { id: metadata.id, r2Key });
+      log.debug("archive-repo.insert", { id: record.id, imageTxId: record.imageTxId, glbTxId: record.glbTxId });
 
       return ok(undefined);
     } catch (error) {
-      log.error("archive-repo.insert.error", { error, id: metadata.id });
+      log.error("archive-repo.insert.error", { error, id: record.id });
       return err({
         type: "StorageError" as const,
         op: "put" as const,
-        key: metadata.id,
+        key: record.id,
         message: `D1 insert failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       });
     }
@@ -371,6 +383,7 @@ export function createPaintingsRepository({
         seed: row.seed,
         visualParams: parsedVisualParams,
         imageUrl: row.imageUrl,
+        glbUrl: row.glbUrl,
         fileSize: row.fileSize,
         prompt: row.prompt,
         negative: row.negative,

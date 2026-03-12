@@ -37,7 +37,7 @@ const ArchivePage: NextPage<ArchivePageProps> = async ({ searchParams }) => {
     const limit = 24;
     const offset = (page - 1) * limit;
 
-    const result = await listImages(env.R2_BUCKET, env.DB, {
+    const result = await listImages(env.DB, {
       limit,
       offset,
       from,

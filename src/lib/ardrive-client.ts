@@ -7,8 +7,6 @@
 
 import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "@/constants/arweave";
 import type { AppError } from "@/types/app-error";
-import { TurboFactory } from "@ardrive/turbo-sdk";
-import { Readable } from "node:stream";
 import { err, ok } from "neverthrow";
 import type { Result } from "neverthrow";
 
@@ -60,7 +58,7 @@ function buildDefaultTags(contentType: string, extraTags?: Tag[]): Tag[] {
 export function createArdriveClient(deps: CreateArdriveClientDeps = {}): ArdriveClient {
   const { secretKey, turboClient: mockClient } = deps;
 
-  const getClient = (): Result<TurboAuthenticatedClient, AppError> => {
+  const getClient = async (): Promise<Result<TurboAuthenticatedClient, AppError>> => {
     if (mockClient) return ok(mockClient);
 
     if (!secretKey) {
@@ -72,6 +70,7 @@ export function createArdriveClient(deps: CreateArdriveClientDeps = {}): Ardrive
     }
 
     try {
+      const { TurboFactory } = await import("@ardrive/turbo-sdk");
       const jwk = JSON.parse(secretKey) as ArweaveJWK;
       const client = TurboFactory.authenticated({ privateKey: jwk });
       return ok(client);
@@ -85,7 +84,7 @@ export function createArdriveClient(deps: CreateArdriveClientDeps = {}): Ardrive
 
   return {
     async getBalance(): Promise<Result<TurboBalanceResponse, AppError>> {
-      const clientResult = getClient();
+      const clientResult = await getClient();
       if (clientResult.isErr()) return err(clientResult.error);
 
       try {
@@ -101,7 +100,7 @@ export function createArdriveClient(deps: CreateArdriveClientDeps = {}): Ardrive
     },
 
     async getUploadCosts(bytes: number[]): Promise<Result<TurboPriceResponse[], AppError>> {
-      const clientResult = getClient();
+      const clientResult = await getClient();
       if (clientResult.isErr()) return err(clientResult.error);
 
       try {
@@ -117,7 +116,7 @@ export function createArdriveClient(deps: CreateArdriveClientDeps = {}): Ardrive
     },
 
     async topUpWithTokens(params: TurboFundWithTokensParams): Promise<Result<TurboCryptoFundResponse, AppError>> {
-      const clientResult = getClient();
+      const clientResult = await getClient();
       if (clientResult.isErr()) return err(clientResult.error);
 
       try {
@@ -137,13 +136,14 @@ export function createArdriveClient(deps: CreateArdriveClientDeps = {}): Ardrive
       contentType: string,
       tags?: Tag[],
     ): Promise<Result<UploadResult, AppError>> {
-      const clientResult = getClient();
+      const clientResult = await getClient();
       if (clientResult.isErr()) return err(clientResult.error);
 
       try {
         const turbo = clientResult.value;
         const allTags = buildDefaultTags(contentType, tags);
         const fileBytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+        const { Readable } = await import("node:stream");
 
         const response = await turbo.uploadFile({
           fileStreamFactory: () => Readable.from([fileBytes]),

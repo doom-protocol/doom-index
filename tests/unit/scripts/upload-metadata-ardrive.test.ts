@@ -46,6 +46,7 @@ describe("unit/scripts/upload-metadata-ardrive", () => {
       ]),
     ).toEqual({
       dryRun: true,
+      fixture: false,
       gateway: "https://gateway.example/",
       glb: "/tmp/model.glb",
       paintingId: "painting-123",
@@ -217,7 +218,7 @@ describe("unit/scripts/upload-metadata-ardrive", () => {
       notifyThresholdWinc: BigInt(50),
     });
 
-    expect(result).toEqual({
+    expect(result._unsafeUnwrap()).toEqual({
       currentBalanceWinc: BigInt(100),
       didNotify: true,
       didTopUp: true,

@@ -17,6 +17,7 @@ export interface PaintingContentProps {
   onPointerMove: (event: ThreeEvent<PointerEvent>) => void;
   onPointerUp: (event: ThreeEvent<PointerEvent>) => boolean;
   onPointerCancel: (event: ThreeEvent<PointerEvent>) => void;
+  onTextureReady?: () => void;
   paintingId?: string;
 }
 

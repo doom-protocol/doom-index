@@ -2,16 +2,15 @@
  * Archive Service
  *
  * Unified service for managing archive operations:
- * - Storage: Save images and metadata to R2
+ * - Storage: Save generated image / GLB bundles to Arweave
  * - Indexing: Manage D1 database index
  * - Listing: Query and retrieve archive items
  *
  * This service provides a single interface for all archive-related operations,
- * abstracting away the complexity of coordinating R2 and D1 storage.
+ * abstracting away the complexity of coordinating Arweave uploads and D1 indexing.
  */
 
-import { resolveBucketOrThrow } from "@/lib/r2";
-import type { PaintingsRepository } from "@/server/repositories/paintings-repository";
+import type { InsertPaintingRecord, PaintingsRepository } from "@/server/repositories/paintings-repository";
 import { createPaintingsRepository } from "@/server/repositories/paintings-repository";
 import type { AppError } from "@/types/app-error";
 import type { ArchiveListResponse } from "@/types/archive-list-response";
@@ -22,43 +21,40 @@ import * as list from "./list";
 import * as storage from "./storage";
 
 interface PaintingsServiceDeps {
-  r2Bucket?: R2Bucket;
+  assetsFetcher?: Fetcher;
   d1Binding?: D1Database;
   archiveRepository?: PaintingsRepository;
 }
 
-interface ArchiveStorageResult {
-  imageUrl: string;
-  metadataUrl: string;
-}
-
 type ArchiveListOptions = PaginationOptions & {
-  prefix?: string;
-  startAfter?: string;
+  offset?: number;
 };
 
 export interface PaintingsService {
   /**
-   * Store image and metadata atomically to R2
-   * If metadata save fails, image save is rolled back
+   * Store generated image / GLB assets to Arweave
    */
-  storeImageWithMetadata: (
-    minuteBucket: string,
-    filename: string,
-    imageBuffer: ArrayBuffer,
-    metadata: PaintingMetadata,
-  ) => Promise<Result<ArchiveStorageResult, AppError>>;
+  storePaintingAssets: (params: { imageBuffer: ArrayBuffer; imageContentType?: string; paintingId: string }) => Promise<
+    Result<
+      {
+        glbTxId: string;
+        glbUrl: string;
+        imageTxId: string;
+        imageUrl: string;
+      },
+      AppError
+    >
+  >;
 
   /**
    * List images from archive with pagination
-   * Uses D1 for efficient listing, falls back to R2 if needed
    */
   listImages: (options: ArchiveListOptions) => Promise<Result<ArchiveListResponse, AppError>>;
 
   /**
    * Insert archive item metadata into D1 index (idempotent)
    */
-  insertPainting: (metadata: PaintingMetadata, r2Key: string) => Promise<Result<void, AppError>>;
+  insertPainting: (record: InsertPaintingRecord) => Promise<Result<void, AppError>>;
 
   /**
    * Get archive item by ID from D1 index
@@ -69,25 +65,28 @@ export interface PaintingsService {
 /**
  * Create archive service with unified interface
  *
- * @param r2Bucket - Optional R2 bucket. If not provided, resolves from Cloudflare context
  * @param d1Binding - Optional D1 database binding. If not provided, resolves from Cloudflare context
  * @param archiveRepository - Optional archive repository. If not provided, creates a new one
  */
 export function createPaintingsService({
-  r2Bucket,
+  assetsFetcher,
   d1Binding,
   archiveRepository,
 }: PaintingsServiceDeps = {}): PaintingsService {
-  const bucket = resolveBucketOrThrow({ r2Bucket });
   const repo = archiveRepository ?? createPaintingsRepository({ d1Binding });
 
   return {
-    storeImageWithMetadata: async (minuteBucket, filename, imageBuffer, metadata) =>
-      storage.storeImageWithMetadata(bucket, minuteBucket, filename, imageBuffer, metadata),
+    storePaintingAssets: async (params) =>
+      storage.storePaintingAssets({
+        assetsFetcher,
+        imageBuffer: params.imageBuffer,
+        imageContentType: params.imageContentType,
+        paintingId: params.paintingId,
+      }),
 
-    listImages: async (options) => list.listImages(bucket, d1Binding, options, repo),
+    listImages: async (options) => list.listImages(d1Binding, options, repo),
 
-    insertPainting: async (metadata, r2Key) => repo.insert(metadata, r2Key),
+    insertPainting: async (record) => repo.insert(record),
 
     getPaintingById: async (id) => repo.findById(id),
   };

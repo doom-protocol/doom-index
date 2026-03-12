@@ -20,7 +20,6 @@ updated: 2025-12-02
 
 - `app/` Next.js App Router
   - `api/trpc/[trpc]/route.ts` **tRPC HTTP エンドポイント（Edge Runtime）**
-  - `api/r2/[...key]/route.ts` R2 オブジェクト取得（レガシー、tRPC 移行済み）
   - `opengraph-image.tsx` 動的 OGP 画像
   - `layout.tsx`, `page.tsx`, `globals.css`, `providers.tsx`
   - `about/` About ページ（ホワイトペーパー表示）
@@ -34,8 +33,6 @@ updated: 2025-12-02
     - `_app.ts` メインルーター（全サブルーター統合）
     - `mc.ts` マーケットキャップルーター
     - `viewer.ts` Viewer 登録・削除ルーター
-    - `token.ts` トークン状態取得ルーター
-    - `r2.ts` R2 オブジェクト取得ルーター
   - `services/` ビジネスロジック
     - `paintings/` 絵画生成関連サービス
     - `token-analysis-service.ts` トークン分析サービス
@@ -66,7 +63,6 @@ updated: 2025-12-02
     - `server.ts` サーバーサイド tRPC クライアント（Server Components 用）
   - `image-generation-providers/` 画像生成 Provider 実装（runware, mock）
   - `cache.ts` **Cloudflare Cache API ヘルパー**
-  - `r2.ts` R2 クライアント（環境差吸収）
   - `pure/` **純関数・ドメインロジック計算**
     - domain logic に直結する数値計算や、小さく切り出して testability を高める必要がある複雑な検証・計算ロジックを配置
     - プロンプト合成/正規化/量子化/ハッシュ等の純粋関数
@@ -110,8 +106,8 @@ updated: 2025-12-02
 - **D1 データベース統合** - Drizzle ORM による型安全なスキーマ定義、マイグレーション管理、クエリ構築
 - 純関数と状態/副作用の分離でテスト容易性を担保
 - Provider 抽象化でモデル・実行環境差を吸収
-- R2 は Workers では Binding、Next.js では公開 URL を使用
 - **D1 は Workers では Binding、Next.js では HTTP API 経由**（`drizzle-kit` の `d1-http` ドライバ使用）
+- 生成画像と GLB は Arweave に保存し、D1 には Arweave URL / tx id を保存する
 - **動的プロンプト生成** - Tavily 検索結果を Workers AI で要約し、D1 にキャッシュして再利用
 - **環境変数検証: valibot** - `@t3-oss/env-nextjs` による型安全な環境変数管理（`src/env.ts`）
 - **Cloudflare Cache API 統合（開発中）** - Edge キャッシュによる外部 API 呼び出し削減とレイテンシ低減

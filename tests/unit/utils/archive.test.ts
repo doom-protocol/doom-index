@@ -1,31 +1,6 @@
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
-// Import after mocking
-import { buildPaintingKey, buildPublicR2Path, extractIdFromFilename, isValidPaintingFilename } from "@/utils/paintings";
-
-// Mock env module before importing dependent modules
-const mockR2Url: string | undefined = undefined;
-
-void mock.module("@/env", () => ({
-  env: {
-    get NEXT_PUBLIC_R2_URL() {
-      return mockR2Url;
-    },
-  },
-  isDevelopment: () => true,
-  getEnvironmentName: () => "development" as const,
-}));
-
-describe("buildPublicR2Path", () => {
-  it("should build public R2 path from key", () => {
-    expect(buildPublicR2Path("images/2025/11/14/test.webp")).toBe("/api/r2/images/2025/11/14/test.webp");
-  });
-
-  it("should normalize leading slashes", () => {
-    expect(buildPublicR2Path("/images/2025/11/14/test.webp")).toBe("/api/r2/images/2025/11/14/test.webp");
-    expect(buildPublicR2Path("///images/2025/11/14/test.webp")).toBe("/api/r2/images/2025/11/14/test.webp");
-  });
-});
+import { buildPaintingKey, extractIdFromFilename, isValidPaintingFilename } from "@/utils/paintings";
 
 describe("buildPaintingKey", () => {
   it("should build archive key with date prefix", () => {

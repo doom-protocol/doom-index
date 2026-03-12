@@ -78,6 +78,16 @@ const confirmTransactionMock = mock(async () => {
   };
 });
 const setVisibleMock = mock((_visible: boolean) => {});
+const prepareMintMetadataMock = mock(async () => {
+  await Promise.resolve();
+  return {
+    baseMetadataUrl: "https://permagate.io/manifest-tx",
+    manifestTxId: "manifest-tx",
+    metadataTxId: "metadata-tx",
+    resolvedFromProbe: true,
+    tokenMetadataUrl: "https://permagate.io/manifest-tx/7",
+  };
+});
 const useWalletState = {
   wallet: null as { adapter: { name: string } } | null,
   connected: false,
@@ -148,6 +158,18 @@ void mock.module("@/lib/analytics", () => ({
   sendGAEvent: mock(() => {}),
 }));
 
+const readTRPCClient = () => ({
+  paintings: {
+    prepareMintMetadata: {
+      mutate: prepareMintMetadataMock,
+    },
+  },
+});
+
+void mock.module("@/lib/trpc/client", () => ({
+  useTRPCClient: readTRPCClient,
+}));
+
 void mock.module("@/utils/logger", () => ({
   logger: {
     debug: mock(() => {}),
@@ -181,6 +203,7 @@ describe("unit/components/ui/mint-modal", () => {
     getLatestBlockhashMock.mockClear();
     confirmTransactionMock.mockClear();
     setVisibleMock.mockClear();
+    prepareMintMetadataMock.mockClear();
     useWalletState.wallet = null;
     useWalletState.connected = false;
     useWalletState.publicKey = null;
@@ -317,6 +340,7 @@ describe("unit/components/ui/mint-modal", () => {
 
     await waitFor(() => {
       expect(sendTransactionMock).toHaveBeenCalledTimes(1);
+      expect(prepareMintMetadataMock).toHaveBeenCalled();
     });
   });
 });

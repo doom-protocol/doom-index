@@ -3,99 +3,107 @@
 /**
  * ArDrive Asset Upload Script
  *
- * Uploads an explicit thumbnail image and GLB file to Arweave via ArDrive Turbo.
+ * Uploads explicit assets or a locally composed fixture bundle to Arweave.
  *
  * Usage:
  *   bun run --env-file=.dev.vars scripts/upload-metadata-ardrive.ts \
- *     --token-id <n>         # Token ID / number (required)
- *     --thumbnail <path|url>  # Thumbnail image path or URL (required)
- *     --glb <path|url>        # GLB file path or URL (required)
- *     [--painting-id <id>]    # Optional Painting-Id tag value
- *     [--gateway <url>]       # Optional gateway override (default: permagate.io)
- *     [--dry-run]             # Print resolved asset info only, skip uploads
+ *     --token-id <n> \
+ *     --thumbnail <path|url> \
+ *     --glb <path|url> \
+ *     [--painting-id <id>] \
+ *     [--gateway <url>] \
+ *     [--dry-run]
+ *
+ * Fixture mode:
+ *   bun run --env-file=.dev.vars scripts/upload-metadata-ardrive.ts \
+ *     --token-id <n> \
+ *     --fixture \
+ *     [--painting-id <id>] \
+ *     [--gateway <url>] \
+ *     [--dry-run]
  */
 
-import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "@/constants/arweave";
+import { env } from "@/env";
 import { createArdriveClient } from "@/lib/ardrive-client";
-import type { ArdriveClient, Tag } from "@/lib/ardrive-client";
-import { existsSync } from "node:fs";
-import { extname } from "node:path";
+import {
+  inferContentTypeFromPath,
+  loadAssetFromPathOrUrl,
+  loadPublicAsset,
+} from "@/server/services/paintings/asset-loader";
+import type { LoadedAsset } from "@/server/services/paintings/asset-loader";
+import {
+  buildBaseMetadataUrl,
+  buildGatewayBaseUrls,
+  buildManifestJson,
+  buildMetadataJson,
+  buildPreferredAssetUrl,
+  buildTokenMetadataUrl,
+  buildTransactionUrl,
+  ensureTurboUploadFunding,
+  normalizeGatewayBaseUrl,
+  parseOptionalBigInt,
+  resolveTokenMetadataGateway,
+  uploadNftMetadataBundle,
+  uploadPaintingAssetBundle,
+} from "@/server/services/paintings/arweave-services";
+import {
+  buildFramedPaintingGlbFromPublicFrame,
+  copyBytesToArrayBuffer,
+} from "@/server/services/paintings/framed-painting-bundle-service";
+import { storePaintingAssets } from "@/server/services/paintings/storage";
+
+export {
+  buildBaseMetadataUrl,
+  buildGatewayBaseUrls,
+  buildManifestJson,
+  buildMetadataJson,
+  buildPreferredAssetUrl,
+  buildTokenMetadataUrl,
+  buildTransactionUrl,
+  ensureTurboUploadFunding,
+  inferContentTypeFromPath,
+  normalizeGatewayBaseUrl,
+  parseOptionalBigInt,
+  resolveTokenMetadataGateway,
+};
 
 export interface CliArgs {
   dryRun: boolean;
+  fixture: boolean;
   gateway?: string;
-  glb: string;
+  glb?: string;
   paintingId?: string;
-  thumbnail: string;
+  thumbnail?: string;
   tokenId: number;
 }
 
-interface LoadedAsset {
-  bytes: Uint8Array;
-  contentType: string;
-  source: string;
+interface UploadedAssetBundleSummary {
+  baseMetadataUrl: string;
+  glbUrl: string;
+  imageUrl: string;
+  manifestTxId: string;
+  metadataTxId: string;
+  tokenMetadataUrl: string;
 }
 
-interface MetadataJson {
-  animation_url: string;
-  attributes: Array<{
-    trait_type: string;
-    value: number | string;
-  }>;
-  description: string;
-  external_url: string;
-  image: string;
-  name: string;
-  properties: {
-    category: string;
-    files: Array<{
-      type: string;
-      uri: string;
-    }>;
-  };
-  symbol: string;
-}
-
-interface ArweavePathManifest {
-  manifest: "arweave/paths";
-  paths: Record<string, { id: string }>;
-  version: "0.2.0";
-}
-
-interface TurboFundingNotificationPayload {
-  autoTopUpAmountWinston?: bigint;
-  currentBalanceWinc: bigint;
-  estimatedCostWinc: bigint;
-  remainingBalanceWinc: bigint;
-}
-
-interface TurboFundingCheckResult {
-  currentBalanceWinc: bigint;
-  didNotify: boolean;
-  didTopUp: boolean;
-  estimatedCostWinc: bigint;
-  remainingBalanceWinc: bigint;
-  topUpTransactionId?: string;
-}
-
-const THUMBNAIL_FILE_TYPE = "thumbnail";
-const ANIMATION_FILE_TYPE = "animation";
-const METADATA_FILE_TYPE = "metadata";
-const MANIFEST_FILE_TYPE = "manifest";
-const DEFAULT_CONTENT_TYPE = "application/octet-stream";
-const MANIFEST_CONTENT_TYPE = "application/x.arweave-manifest+json";
-const METADATA_DESCRIPTION =
-  "A generative artwork from DOOM INDEX - an AI-powered decentralized archive of financial emotions.";
 const JSON_ENCODER = new TextEncoder();
-const MANIFEST_VERSION = "0.2.0";
-const DEFAULT_GATEWAY_PROBE_TIMEOUT_MS = 1500;
-const CONTENT_TYPES_BY_EXTENSION: Record<string, string> = {
-  ".glb": "model/gltf-binary",
-  ".jpeg": "image/jpeg",
-  ".jpg": "image/jpeg",
-  ".png": "image/png",
-  ".webp": "image/webp",
-};
+
+function printUsage(): void {
+  console.log(`
+ArDrive Asset Upload Script
+
+Explicit assets:
+  --token-id <n>          Token ID / number (required)
+  --thumbnail <path|url>  Thumbnail image path or URL (required unless --fixture)
+  --glb <path|url>        GLB file path or URL (required unless --fixture)
+  --painting-id <id>      Optional Painting-Id tag
+  --gateway <url>         Optional gateway override
+  --dry-run               Print manifest/metadata preview only
+
+Fixture mode:
+  --fixture               Use public/placeholder-painting.webp + public/frame.glb composition
+  `);
+}
 
 export function parseArgs(args: string[] = process.argv.slice(2)): CliArgs {
   let tokenId: number | undefined;
@@ -104,6 +112,7 @@ export function parseArgs(args: string[] = process.argv.slice(2)): CliArgs {
   let gateway: string | undefined;
   let paintingId: string | undefined;
   let dryRun = false;
+  let fixture = false;
 
   for (let index = 0; index < args.length; index++) {
     switch (args[index]) {
@@ -125,6 +134,12 @@ export function parseArgs(args: string[] = process.argv.slice(2)): CliArgs {
       case "--dry-run":
         dryRun = true;
         break;
+      case "--fixture":
+        fixture = true;
+        break;
+      case "--help":
+        printUsage();
+        process.exit(0);
     }
   }
 
@@ -132,16 +147,17 @@ export function parseArgs(args: string[] = process.argv.slice(2)): CliArgs {
     throw new Error("Error: --token-id <n> is required");
   }
 
-  if (!thumbnail) {
+  if (!fixture && !thumbnail) {
     throw new Error("Error: --thumbnail <path|url> is required");
   }
 
-  if (!glb) {
+  if (!fixture && !glb) {
     throw new Error("Error: --glb <path|url> is required");
   }
 
   return {
     dryRun,
+    fixture,
     gateway,
     glb,
     paintingId,
@@ -150,497 +166,297 @@ export function parseArgs(args: string[] = process.argv.slice(2)): CliArgs {
   };
 }
 
-export function normalizeGatewayBaseUrl(gatewayBaseUrl: string): string {
-  const normalized = gatewayBaseUrl.trim().replace(/\/+$/u, "");
-
-  if (!normalized) {
-    throw new Error("Error: --gateway <url> must not be empty");
+async function loadFixtureAssets(): Promise<LoadedAsset[]> {
+  const imageResult = await loadPublicAsset({ path: "/placeholder-painting.webp" });
+  if (imageResult.isErr()) {
+    throw new Error(imageResult.error.message);
   }
 
-  return new URL(normalized).toString().replace(/\/+$/u, "");
-}
-
-export function parseOptionalBigInt(value: string | undefined, envName: string): bigint | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  try {
-    return BigInt(value);
-  } catch {
-    throw new Error(`Error: ${envName} must be an integer string`);
-  }
-}
-
-function appendUrlSegment(baseUrl: string, segment: string): string {
-  return `${normalizeGatewayBaseUrl(baseUrl)}/${segment}`;
-}
-
-export function buildGatewayBaseUrls(params: { explicitGatewayBaseUrl?: string }): string[] {
-  const seen = new Set<string>();
-  const gateways: string[] = [];
-
-  const pushGateway = (value: string | undefined): void => {
-    if (!value) {
-      return;
-    }
-
-    const normalized = normalizeGatewayBaseUrl(value);
-    if (seen.has(normalized)) {
-      return;
-    }
-
-    seen.add(normalized);
-    gateways.push(normalized);
-  };
-
-  pushGateway(params.explicitGatewayBaseUrl);
-  pushGateway(DEFAULT_ARWEAVE_GATEWAY_BASE_URL);
-
-  return gateways;
-}
-
-export function buildTransactionUrl(params: { gatewayBaseUrl?: string; txId: string }): string {
-  return appendUrlSegment(params.gatewayBaseUrl ?? DEFAULT_ARWEAVE_GATEWAY_BASE_URL, params.txId);
-}
-
-export function inferContentTypeFromPath(pathOrUrl: string): string {
-  const extension = extname(new URL(pathOrUrl, "https://doomindex.fun").pathname).toLowerCase();
-  return CONTENT_TYPES_BY_EXTENSION[extension] ?? DEFAULT_CONTENT_TYPE;
-}
-
-export function buildMetadataJson(params: {
-  animationUrl: string;
-  imageContentType: string;
-  imageUrl: string;
-  paintingId?: string;
-  tokenId: number;
-}): MetadataJson {
-  const attributes: MetadataJson["attributes"] = [{ trait_type: "Token ID", value: params.tokenId }];
-
-  if (params.paintingId) {
-    attributes.push({ trait_type: "Painting ID", value: params.paintingId });
-  }
-
-  return {
-    animation_url: params.animationUrl,
-    attributes,
-    description: METADATA_DESCRIPTION,
-    external_url: `https://doomindex.fun/artworks/${String(params.tokenId)}`,
-    image: params.imageUrl,
-    name: `DOOM INDEX #${String(params.tokenId)}`,
-    properties: {
-      category: "vr",
-      files: [
-        { type: params.imageContentType, uri: params.imageUrl },
-        { type: "model/gltf-binary", uri: params.animationUrl },
-      ],
-    },
-    symbol: "DOOM",
-  };
-}
-
-export function buildManifestJson(params: { metadataId: string; tokenId: number }): ArweavePathManifest {
-  const tokenPath = String(params.tokenId);
-
-  return {
-    manifest: "arweave/paths",
-    paths: {
-      [tokenPath]: { id: params.metadataId },
-    },
-    version: MANIFEST_VERSION,
-  };
-}
-
-export function buildTokenMetadataUrl(params: {
-  gatewayBaseUrl?: string;
-  manifestId: string;
-  tokenId: number;
-}): string {
-  return appendUrlSegment(
-    buildTransactionUrl({
-      gatewayBaseUrl: params.gatewayBaseUrl,
-      txId: params.manifestId,
-    }),
-    String(params.tokenId),
-  );
-}
-
-export function buildBaseMetadataUrl(params: { gatewayBaseUrl?: string; manifestId: string }): string {
-  return buildTransactionUrl({
-    gatewayBaseUrl: params.gatewayBaseUrl,
-    txId: params.manifestId,
+  const composedGlbResult = await buildFramedPaintingGlbFromPublicFrame({
+    paintingImageBuffer: copyBytesToArrayBuffer(imageResult.value.bytes),
+    paintingImageContentType: imageResult.value.contentType,
   });
+  if (composedGlbResult.isErr()) {
+    throw new Error(composedGlbResult.error.message);
+  }
+
+  return [
+    imageResult.value,
+    {
+      bytes: new Uint8Array(composedGlbResult.value),
+      contentType: "model/gltf-binary",
+      source: "worker-compatible-direct-composition",
+    },
+  ];
 }
 
-export function buildPreferredAssetUrl(params: {
-  explicitGatewayBaseUrl?: string;
-  uploadResult: { id: string };
-}): string {
-  const [gatewayBaseUrl] = buildGatewayBaseUrls({ explicitGatewayBaseUrl: params.explicitGatewayBaseUrl });
+async function loadExplicitAssets(args: CliArgs): Promise<LoadedAsset[]> {
+  if (!args.thumbnail || !args.glb) {
+    throw new Error("Explicit asset mode requires both thumbnail and glb inputs");
+  }
 
-  return buildTransactionUrl({
-    gatewayBaseUrl,
-    txId: params.uploadResult.id,
+  const thumbnail = await loadAssetFromPathOrUrl(args.thumbnail, inferContentTypeFromPath(args.thumbnail));
+  if (thumbnail.isErr()) {
+    throw new Error(thumbnail.error.message);
+  }
+
+  const glb = await loadAssetFromPathOrUrl(args.glb, "model/gltf-binary");
+  if (glb.isErr()) {
+    throw new Error(glb.error.message);
+  }
+
+  return [thumbnail.value, glb.value];
+}
+
+function buildDryRunSummary(args: CliArgs, explicitGatewayBaseUrl?: string): UploadedAssetBundleSummary {
+  const imageUrl = buildTransactionUrl({
+    gatewayBaseUrl: explicitGatewayBaseUrl,
+    txId: "<image-tx-id>",
   });
-}
-
-async function isUrlReachable(params: { fetchImpl?: typeof fetch; timeoutMs?: number; url: string }): Promise<boolean> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-  }, params.timeoutMs ?? DEFAULT_GATEWAY_PROBE_TIMEOUT_MS);
-
-  try {
-    const response = await (params.fetchImpl ?? fetch)(params.url, {
-      method: "GET",
-      redirect: "follow",
-      signal: controller.signal,
-    });
-    return response.ok;
-  } catch {
-    return false;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
-export async function resolveTokenMetadataGateway(params: {
-  explicitGatewayBaseUrl?: string;
-  fetchImpl?: typeof fetch;
-  manifestUploadResult: { id: string };
-  tokenId: number;
-}): Promise<{ baseMetadataUrl: string; resolvedFromProbe: boolean; tokenMetadataUrl: string }> {
-  const gatewayBaseUrls = buildGatewayBaseUrls({ explicitGatewayBaseUrl: params.explicitGatewayBaseUrl });
-
-  for (const gatewayBaseUrl of gatewayBaseUrls) {
-    const tokenMetadataUrl = buildTokenMetadataUrl({
-      gatewayBaseUrl,
-      manifestId: params.manifestUploadResult.id,
-      tokenId: params.tokenId,
-    });
-
-    if (
-      await isUrlReachable({
-        fetchImpl: params.fetchImpl,
-        url: tokenMetadataUrl,
-      })
-    ) {
-      return {
-        baseMetadataUrl: buildBaseMetadataUrl({
-          gatewayBaseUrl,
-          manifestId: params.manifestUploadResult.id,
-        }),
-        resolvedFromProbe: true,
-        tokenMetadataUrl,
-      };
-    }
-  }
-
-  const fallbackGatewayBaseUrl = gatewayBaseUrls[0] ?? DEFAULT_ARWEAVE_GATEWAY_BASE_URL;
+  const glbUrl = buildTransactionUrl({
+    gatewayBaseUrl: explicitGatewayBaseUrl,
+    txId: "<glb-tx-id>",
+  });
 
   return {
     baseMetadataUrl: buildBaseMetadataUrl({
-      gatewayBaseUrl: fallbackGatewayBaseUrl,
-      manifestId: params.manifestUploadResult.id,
+      gatewayBaseUrl: explicitGatewayBaseUrl,
+      manifestId: "<manifest-tx-id>",
     }),
-    resolvedFromProbe: false,
+    glbUrl,
+    imageUrl,
+    manifestTxId: "<manifest-tx-id>",
+    metadataTxId: "<metadata-tx-id>",
     tokenMetadataUrl: buildTokenMetadataUrl({
-      gatewayBaseUrl: fallbackGatewayBaseUrl,
-      manifestId: params.manifestUploadResult.id,
-      tokenId: params.tokenId,
+      gatewayBaseUrl: explicitGatewayBaseUrl,
+      manifestId: "<manifest-tx-id>",
+      tokenId: args.tokenId,
     }),
   };
 }
 
-function stringifyTurboFundingMessage(payload: TurboFundingNotificationPayload): string {
-  const autoTopUpSuffix =
-    payload.autoTopUpAmountWinston === undefined
-      ? "auto top-up disabled"
-      : `auto top-up ${String(payload.autoTopUpAmountWinston)} winston`;
+function printDryRun(args: CliArgs, assets: LoadedAsset[], explicitGatewayBaseUrl?: string): void {
+  const [thumbnail, glb] = assets;
+  const preview = buildDryRunSummary(args, explicitGatewayBaseUrl);
 
-  return [
-    "DOOM INDEX Turbo balance is low.",
-    `Current balance: ${String(payload.currentBalanceWinc)} winc`,
-    `Estimated upload cost: ${String(payload.estimatedCostWinc)} winc`,
-    `Projected remaining balance: ${String(payload.remainingBalanceWinc)} winc`,
-    autoTopUpSuffix,
-  ].join("\n");
-}
-
-async function notifyTurboFundingStatus(message: string): Promise<void> {
-  console.warn(message);
-
-  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
-  if (!webhookUrl) {
-    return;
-  }
-
-  await fetch(webhookUrl, {
-    body: JSON.stringify({ text: message }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  });
-}
-
-function sumWincStrings(values: string[]): bigint {
-  return values.reduce((sum, value) => sum + BigInt(value), BigInt(0));
-}
-
-export async function ensureTurboUploadFunding(params: {
-  ardrive: Pick<ArdriveClient, "getBalance" | "getUploadCosts" | "topUpWithTokens">;
-  autoTopUpAmountWinston?: bigint;
-  byteCounts: number[];
-  notify?: (message: string) => Promise<void>;
-  notifyThresholdWinc?: bigint;
-}): Promise<TurboFundingCheckResult> {
-  const balanceResult = await params.ardrive.getBalance();
-  if (balanceResult.isErr()) {
-    throw new Error(`Turbo balance check failed: ${balanceResult.error.message}`);
-  }
-
-  const costResult = await params.ardrive.getUploadCosts(params.byteCounts);
-  if (costResult.isErr()) {
-    throw new Error(`Turbo upload cost estimate failed: ${costResult.error.message}`);
-  }
-
-  const currentBalanceWinc = BigInt(balanceResult.value.winc);
-  const estimatedCostWinc = sumWincStrings(costResult.value.map((price) => price.winc));
-  const remainingBalanceWinc = currentBalanceWinc - estimatedCostWinc;
-  const notifyThresholdWinc = params.notifyThresholdWinc ?? BigInt(0);
-  const shouldNotify = remainingBalanceWinc <= notifyThresholdWinc;
-
-  let didNotify = false;
-  let topUpTransactionId: string | undefined;
-
-  if (shouldNotify) {
-    const message = stringifyTurboFundingMessage({
-      autoTopUpAmountWinston: params.autoTopUpAmountWinston,
-      currentBalanceWinc,
-      estimatedCostWinc,
-      remainingBalanceWinc,
-    });
-    didNotify = true;
-    await (params.notify ?? notifyTurboFundingStatus)(message);
-  }
-
-  if (shouldNotify && params.autoTopUpAmountWinston !== undefined) {
-    const topUpResult = await params.ardrive.topUpWithTokens({
-      tokenAmount: params.autoTopUpAmountWinston.toString(),
-    });
-    if (topUpResult.isErr()) {
-      throw new Error(`Turbo top-up failed: ${topUpResult.error.message}`);
-    }
-    topUpTransactionId = topUpResult.value.id;
-  }
-
-  return {
-    currentBalanceWinc,
-    didNotify,
-    didTopUp: topUpTransactionId !== undefined,
-    estimatedCostWinc,
-    remainingBalanceWinc,
-    topUpTransactionId,
-  };
-}
-
-function isRemoteAssetPath(pathOrUrl: string): boolean {
-  return pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://");
-}
-
-async function readResponseBytes(response: Response): Promise<Uint8Array> {
-  return new Uint8Array(await response.arrayBuffer());
-}
-
-async function loadAsset(pathOrUrl: string, fallbackContentType: string): Promise<LoadedAsset> {
-  if (isRemoteAssetPath(pathOrUrl)) {
-    const response = await fetch(pathOrUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${pathOrUrl}: ${String(response.status)} ${response.statusText}`);
-    }
-
-    return {
-      bytes: await readResponseBytes(response),
-      contentType: response.headers.get("content-type") ?? fallbackContentType,
-      source: pathOrUrl,
-    };
-  }
-
-  if (!existsSync(pathOrUrl)) {
-    throw new Error(`File not found: ${pathOrUrl}`);
-  }
-
-  const file = Bun.file(pathOrUrl);
-  return {
-    bytes: await file.bytes(),
-    contentType: file.type || fallbackContentType,
-    source: pathOrUrl,
-  };
-}
-
-function buildBaseTags(paintingId?: string): Tag[] {
-  if (!paintingId) {
-    return [];
-  }
-
-  return [{ name: "Painting-Id", value: paintingId }];
-}
-
-async function main(): Promise<void> {
-  const { tokenId, thumbnail, glb, gateway, paintingId, dryRun } = parseArgs();
-  const explicitGatewayBaseUrl = gateway ?? process.env.ARWEAVE_GATEWAY_BASE_URL;
-
-  console.log("[1/6] Loading thumbnail...");
-  const thumbnailAsset = await loadAsset(thumbnail, inferContentTypeFromPath(thumbnail));
-  console.log(`  Source: ${thumbnailAsset.source}`);
-  console.log(`  Size:   ${String(thumbnailAsset.bytes.byteLength)} bytes`);
-  console.log(`  Type:   ${thumbnailAsset.contentType}`);
-
-  console.log("[2/6] Loading GLB...");
-  const glbAsset = await loadAsset(glb, "model/gltf-binary");
-  console.log(`  Source: ${glbAsset.source}`);
-  console.log(`  Size:   ${String(glbAsset.bytes.byteLength)} bytes`);
-  console.log(`  Type:   ${glbAsset.contentType}`);
-
-  const dryRunMetadata = buildMetadataJson({
-    animationUrl: buildTransactionUrl({ txId: "<animation-tx-id>" }),
-    imageContentType: thumbnailAsset.contentType,
-    imageUrl: buildTransactionUrl({ txId: "<thumbnail-tx-id>" }),
-    paintingId,
-    tokenId,
-  });
-  const dryRunManifest = buildManifestJson({
-    metadataId: "<metadata-tx-id>",
-    tokenId,
-  });
-  const metadataBytes = JSON_ENCODER.encode(JSON.stringify(dryRunMetadata));
-  const manifestBytes = JSON_ENCODER.encode(JSON.stringify(dryRunManifest));
-
-  if (dryRun) {
-    console.log("\n--- metadata.json ---");
-    console.log(JSON.stringify(dryRunMetadata, null, 2));
-    console.log("\n--- path-manifest.json ---");
-    console.log(JSON.stringify(dryRunManifest, null, 2));
-    console.log("\n--- token urls ---");
-    console.log(
-      buildTokenMetadataUrl({
-        gatewayBaseUrl: explicitGatewayBaseUrl,
-        manifestId: "<manifest-tx-id>",
-        tokenId,
+  console.log("Dry run only. No upload was performed.");
+  console.log("");
+  console.log(`Mode: ${args.fixture ? "fixture" : "explicit-assets"}`);
+  console.log(`Thumbnail source: ${thumbnail.source}`);
+  console.log(`Thumbnail bytes: ${String(thumbnail.bytes.byteLength)}`);
+  console.log(`GLB source: ${glb.source}`);
+  console.log(`GLB bytes: ${String(glb.bytes.byteLength)}`);
+  console.log(`Gateway candidates: ${buildGatewayBaseUrls({ explicitGatewayBaseUrl }).join(", ")}`);
+  console.log("");
+  console.log("--- metadata.json ---");
+  console.log(
+    JSON.stringify(
+      buildMetadataJson({
+        animationUrl: preview.glbUrl,
+        imageContentType: thumbnail.contentType,
+        imageUrl: preview.imageUrl,
+        paintingId: args.paintingId,
+        tokenId: args.tokenId,
       }),
-    );
-    console.log("\n[dry-run] Done. No uploads performed.");
-    return;
-  }
+      null,
+      2,
+    ),
+  );
+  console.log("");
+  console.log("--- path-manifest.json ---");
+  console.log(
+    JSON.stringify(
+      buildManifestJson({
+        metadataId: preview.metadataTxId,
+        tokenId: args.tokenId,
+      }),
+      null,
+      2,
+    ),
+  );
+  console.log("");
+  console.log(`Base URL: ${preview.baseMetadataUrl}`);
+  console.log(`Token URL: ${preview.tokenMetadataUrl}`);
+}
 
-  const ardrive = createArdriveClient({ secretKey: process.env.ARDRIVE_TURBO_SECRET_KEY });
-  await ensureTurboUploadFunding({
+async function uploadExplicitAssets(
+  args: CliArgs,
+  explicitGatewayBaseUrl: string | undefined,
+): Promise<{
+  glbUrl: string;
+  imageContentType: string;
+  imageUrl: string;
+}> {
+  const [thumbnail, glb] = await loadExplicitAssets(args);
+  const ardrive = createArdriveClient({
+    secretKey: env.ARDRIVE_TURBO_SECRET_KEY,
+  });
+
+  const fundingResult = await ensureTurboUploadFunding({
     ardrive,
     autoTopUpAmountWinston: parseOptionalBigInt(
-      process.env.ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON,
+      env.ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON,
       "ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON",
     ),
-    byteCounts: [
-      thumbnailAsset.bytes.byteLength,
-      glbAsset.bytes.byteLength,
-      metadataBytes.byteLength,
-      manifestBytes.byteLength,
-    ],
+    byteCounts: [thumbnail.bytes.byteLength, glb.bytes.byteLength],
     notifyThresholdWinc: parseOptionalBigInt(
-      process.env.ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC,
+      env.ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC,
       "ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC",
     ),
   });
-  const baseTags = buildBaseTags(paintingId);
-
-  console.log("[3/6] Uploading thumbnail to Arweave...");
-  const thumbnailResult = await ardrive.uploadFile(thumbnailAsset.bytes, thumbnailAsset.contentType, [
-    ...baseTags,
-    { name: "File-Type", value: THUMBNAIL_FILE_TYPE },
-  ]);
-  if (thumbnailResult.isErr()) {
-    throw new Error(`Thumbnail upload failed: ${thumbnailResult.error.message}`);
+  if (fundingResult.isErr()) {
+    throw new Error(fundingResult.error.message);
   }
-  console.log(`  TX:  ${thumbnailResult.value.id}`);
-  console.log(`  URL: ${thumbnailResult.value.url}`);
 
-  console.log("[4/6] Uploading GLB to Arweave...");
-  const glbResult = await ardrive.uploadFile(glbAsset.bytes, glbAsset.contentType, [
-    ...baseTags,
-    { name: "File-Type", value: ANIMATION_FILE_TYPE },
-  ]);
-  if (glbResult.isErr()) {
-    throw new Error(`GLB upload failed: ${glbResult.error.message}`);
-  }
-  console.log(`  TX:  ${glbResult.value.id}`);
-  console.log(`  URL: ${glbResult.value.url}`);
-
-  const metadataJson = buildMetadataJson({
-    animationUrl: buildPreferredAssetUrl({
-      explicitGatewayBaseUrl,
-      uploadResult: glbResult.value,
-    }),
-    imageContentType: thumbnailAsset.contentType,
-    imageUrl: buildPreferredAssetUrl({
-      explicitGatewayBaseUrl,
-      uploadResult: thumbnailResult.value,
-    }),
-    paintingId,
-    tokenId,
-  });
-
-  console.log("[5/6] Uploading metadata.json to Arweave...");
-  const metadataResult = await ardrive.uploadJson(metadataJson, [
-    ...baseTags,
-    { name: "File-Type", value: METADATA_FILE_TYPE },
-  ]);
-  if (metadataResult.isErr()) {
-    throw new Error(`Metadata upload failed: ${metadataResult.error.message}`);
-  }
-  console.log(`  TX:  ${metadataResult.value.id}`);
-  console.log(`  URL: ${metadataResult.value.url}`);
-
-  const manifestJson = buildManifestJson({
-    metadataId: metadataResult.value.id,
-    tokenId,
-  });
-
-  console.log("[6/6] Uploading path manifest to Arweave...");
-  const manifestResult = await ardrive.uploadFile(
-    JSON_ENCODER.encode(JSON.stringify(manifestJson)),
-    MANIFEST_CONTENT_TYPE,
-    [...baseTags, { name: "File-Type", value: MANIFEST_FILE_TYPE }],
-  );
-  if (manifestResult.isErr()) {
-    throw new Error(`Manifest upload failed: ${manifestResult.error.message}`);
-  }
-  console.log(`  TX:  ${manifestResult.value.id}`);
-  console.log(`  URL: ${manifestResult.value.url}`);
-
-  const gatewayResolution = await resolveTokenMetadataGateway({
+  const uploadResult = await uploadPaintingAssetBundle({
+    ardrive,
     explicitGatewayBaseUrl,
-    manifestUploadResult: manifestResult.value,
-    tokenId,
+    image: {
+      bytes: thumbnail.bytes,
+      contentType: thumbnail.contentType,
+    },
+    glb: {
+      bytes: glb.bytes,
+      contentType: glb.contentType,
+    },
+    paintingId: args.paintingId,
+  });
+  if (uploadResult.isErr()) {
+    throw new Error(uploadResult.error.message);
+  }
+
+  return {
+    glbUrl: uploadResult.value.glbUrl,
+    imageContentType: thumbnail.contentType,
+    imageUrl: uploadResult.value.imageUrl,
+  };
+}
+
+async function uploadFixtureAssets(
+  args: CliArgs,
+  explicitGatewayBaseUrl: string | undefined,
+): Promise<{
+  glbUrl: string;
+  imageContentType: string;
+  imageUrl: string;
+}> {
+  const imageResult = await loadPublicAsset({ path: "/placeholder-painting.webp" });
+  if (imageResult.isErr()) {
+    throw new Error(imageResult.error.message);
+  }
+
+  const uploadResult = await storePaintingAssets({
+    explicitGatewayBaseUrl,
+    imageBuffer: copyBytesToArrayBuffer(imageResult.value.bytes),
+    imageContentType: imageResult.value.contentType,
+    paintingId: args.paintingId ?? `fixture-${String(args.tokenId)}`,
+  });
+  if (uploadResult.isErr()) {
+    throw new Error(uploadResult.error.message);
+  }
+
+  return {
+    glbUrl: uploadResult.value.glbUrl,
+    imageContentType: imageResult.value.contentType,
+    imageUrl: uploadResult.value.imageUrl,
+  };
+}
+
+async function uploadBundle(args: CliArgs): Promise<UploadedAssetBundleSummary> {
+  const explicitGatewayBaseUrl = args.gateway ?? env.ARWEAVE_GATEWAY_BASE_URL;
+
+  const assetUploadResult = args.fixture
+    ? await uploadFixtureAssets(args, explicitGatewayBaseUrl)
+    : await uploadExplicitAssets(args, explicitGatewayBaseUrl);
+
+  const ardrive = createArdriveClient({
+    secretKey: env.ARDRIVE_TURBO_SECRET_KEY,
   });
 
-  console.log("\nUpload complete!");
-  console.log(`  Thumbnail: ${thumbnailResult.value.url}`);
-  console.log(`  GLB:       ${glbResult.value.url}`);
-  console.log(`  Metadata:  ${metadataResult.value.url}`);
-  console.log(`  Base URL:  ${gatewayResolution.baseMetadataUrl}`);
-  console.log(`  Token URI: ${gatewayResolution.tokenMetadataUrl}`);
-  if (!gatewayResolution.resolvedFromProbe) {
-    console.warn(
-      "  Warning: no candidate gateway resolved the manifest path immediately; falling back to the highest-priority gateway.",
-    );
+  const metadataPreviewBytes = JSON_ENCODER.encode(
+    JSON.stringify(
+      buildMetadataJson({
+        animationUrl: assetUploadResult.glbUrl,
+        imageContentType: assetUploadResult.imageContentType,
+        imageUrl: assetUploadResult.imageUrl,
+        paintingId: args.paintingId,
+        tokenId: args.tokenId,
+      }),
+    ),
+  );
+  const manifestPreviewBytes = JSON_ENCODER.encode(
+    JSON.stringify(
+      buildManifestJson({
+        metadataId: "<metadata-tx-id>",
+        tokenId: args.tokenId,
+      }),
+    ),
+  );
+
+  const fundingResult = await ensureTurboUploadFunding({
+    ardrive,
+    autoTopUpAmountWinston: parseOptionalBigInt(
+      env.ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON,
+      "ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON",
+    ),
+    byteCounts: [metadataPreviewBytes.byteLength, manifestPreviewBytes.byteLength],
+    notifyThresholdWinc: parseOptionalBigInt(
+      env.ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC,
+      "ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC",
+    ),
+  });
+  if (fundingResult.isErr()) {
+    throw new Error(fundingResult.error.message);
   }
+
+  const metadataUploadResult = await uploadNftMetadataBundle({
+    ardrive,
+    explicitGatewayBaseUrl,
+    fetchImpl: fetch,
+    glbUrl: assetUploadResult.glbUrl,
+    imageContentType: assetUploadResult.imageContentType,
+    imageUrl: assetUploadResult.imageUrl,
+    paintingId: args.paintingId,
+    tokenId: args.tokenId,
+  });
+  if (metadataUploadResult.isErr()) {
+    throw new Error(metadataUploadResult.error.message);
+  }
+
+  return {
+    baseMetadataUrl: metadataUploadResult.value.baseMetadataUrl,
+    glbUrl: assetUploadResult.glbUrl,
+    imageUrl: assetUploadResult.imageUrl,
+    manifestTxId: metadataUploadResult.value.manifestTxId,
+    metadataTxId: metadataUploadResult.value.metadataTxId,
+    tokenMetadataUrl: metadataUploadResult.value.tokenMetadataUrl,
+  };
+}
+
+async function main(): Promise<void> {
+  const args = parseArgs();
+  const explicitGatewayBaseUrl = args.gateway ?? env.ARWEAVE_GATEWAY_BASE_URL;
+  const normalizedGateway = explicitGatewayBaseUrl ? normalizeGatewayBaseUrl(explicitGatewayBaseUrl) : undefined;
+  const assets = args.fixture ? await loadFixtureAssets() : await loadExplicitAssets(args);
+
+  if (args.dryRun) {
+    printDryRun(args, assets, normalizedGateway);
+    return;
+  }
+
+  const result = await uploadBundle(args);
+  console.log("Arweave upload complete.");
+  console.log(`Image URL: ${result.imageUrl}`);
+  console.log(`GLB URL: ${result.glbUrl}`);
+  console.log(`Metadata TX: ${result.metadataTxId}`);
+  console.log(`Manifest TX: ${result.manifestTxId}`);
+  console.log(`Base metadata URL: ${result.baseMetadataUrl}`);
+  console.log(`Token metadata URL: ${result.tokenMetadataUrl}`);
 }
 
 if (import.meta.main) {
   main().catch((error: unknown) => {
-    console.error("Fatal error:", error);
+    console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   });
 }

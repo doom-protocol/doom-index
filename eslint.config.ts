@@ -25,6 +25,15 @@ const config = defineConfig([
     },
   },
   {
+    files: [
+      "src/server/services/paintings/framed-glb-composition-service.ts",
+      "tests/unit/server/services/paintings/framed-glb-composition-service.test.ts",
+    ],
+    rules: {
+      "unicorn/number-literal-case": "off",
+    },
+  },
+  {
     files: ["**/app/**/page.tsx"],
     rules: {
       "no-restricted-syntax": [

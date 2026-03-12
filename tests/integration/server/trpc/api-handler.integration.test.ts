@@ -84,7 +84,7 @@ describe("API Handler Integration", () => {
       // バッチリクエストのテスト
       const queries = [
         { method: "mc.getMarketCaps", params: {} },
-        { method: "token.getState", params: { ticker: "CO2" } },
+        { method: "paintings.list", params: { limit: 1 } },
       ];
 
       const response = await fetch(`${baseUrl}/api/trpc/batch`, {
@@ -112,12 +112,12 @@ describe("API Handler Integration", () => {
 
     try {
       // 不正なリクエストでエラーフォーマットを確認
-      const response = await fetch(`${baseUrl}/api/trpc/token.getState`, {
+      const response = await fetch(`${baseUrl}/api/trpc/paintings.prepareMintMetadata`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ticker: "INVALID" }),
+        body: JSON.stringify({ paintingId: "", tokenId: -1 }),
       });
 
       // サーバーが起動していない場合はスキップ

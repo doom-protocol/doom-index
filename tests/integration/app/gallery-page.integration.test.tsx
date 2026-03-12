@@ -27,10 +27,8 @@ import {
   createViewerCountStoreMock,
   createUseTransformedTextureUrlMock,
   createUseSafeTextureMock,
-  createGlbExportServiceMock,
   createUseSolanaWalletMock,
 } from "../../mocks";
-import { glbExportService } from "@/lib/glb-export-service";
 
 import Page from "@/app/page";
 
@@ -49,20 +47,6 @@ void mock.module("@/hooks/use-viewer", createUseViewerMock());
 void mock.module("@/lib/viewer-count-store", createViewerCountStoreMock());
 void mock.module("@/hooks/use-transformed-texture-url", createUseTransformedTextureUrlMock());
 void mock.module("@/hooks/use-safe-texture", createUseSafeTextureMock());
-
-const glbExportServiceMockModule = createGlbExportServiceMock()();
-const originalExportPaintingModel = glbExportService.exportPaintingModel;
-const originalOptimizeGlb = glbExportService.optimizeGlb;
-
-beforeAll(() => {
-  glbExportService.exportPaintingModel = glbExportServiceMockModule.glbExportService.exportPaintingModel;
-  glbExportService.optimizeGlb = glbExportServiceMockModule.glbExportService.optimizeGlb;
-});
-
-afterAll(() => {
-  glbExportService.exportPaintingModel = originalExportPaintingModel;
-  glbExportService.optimizeGlb = originalOptimizeGlb;
-});
 
 // Create mock function for use-latest-painting that can be configured per-test
 let mockUseLatestPaintingFn: ReturnType<typeof mock> | null = null;
@@ -137,7 +121,7 @@ const createMockPainting = (options: GalleryPageTestOptions = {}) => {
     minuteBucket: "2025/12/02/01/10",
     paramsHash: "03309aff",
     seed: "5779632aeaa9",
-    imageUrl: options.imageUrl ?? "/api/r2/images/2025/12/02/DOOM_202512020110_03309aff_5779632aeaa9.webp",
+    imageUrl: options.imageUrl ?? "https://permagate.io/painting-image-tx-03309aff5779",
     fileSize: 1024000,
     visualParams: {
       fogDensity: 0.5,
@@ -275,7 +259,7 @@ describe("Gallery Page Integration", () => {
   });
 
   it("should render gallery page with painting data", async () => {
-    const testImageUrl = "/api/r2/images/test-painting.webp";
+    const testImageUrl = "https://permagate.io/test-painting-image-tx";
     const mockPainting = createMockPainting({ imageUrl: testImageUrl });
 
     mockUseLatestPainting.mockReturnValue({
@@ -326,7 +310,11 @@ describe("Gallery Page Integration", () => {
   });
 
   it("should render with different image URLs", async () => {
-    const testCases = ["/api/r2/images/painting1.webp", "/api/r2/images/painting2.webp", "/placeholder-painting.webp"];
+    const testCases = [
+      "https://permagate.io/painting1-tx",
+      "https://permagate.io/painting2-tx",
+      "/placeholder-painting.webp",
+    ];
 
     for (const imageUrl of testCases) {
       const mockPainting = createMockPainting({ imageUrl });

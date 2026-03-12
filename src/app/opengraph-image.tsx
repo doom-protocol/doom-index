@@ -2,11 +2,10 @@
  * Dynamic OGP Image Generator
  *
  * Generates Open Graph Protocol images for social media sharing.
- * - Fetches latest painting from R2 storage
+ * - Fetches latest painting from Arweave-backed storage
  * - Resizes image to 1200×630 with black background
  */
 
-import { getImageR2 } from "@/lib/r2";
 import { CACHE_TTL_SECONDS } from "@/constants";
 import { createPaintingsRepository } from "@/server/repositories/paintings-repository";
 import { arrayBufferToDataUrl, base64ToArrayBuffer } from "@/utils/image";
@@ -219,11 +218,10 @@ async function getFallbackImageDataUrl(assetsFetcher: Fetcher): Promise<string> 
 }
 
 /**
- * Fetch current painting image from R2 and return PNG ArrayBuffer with black background.
+ * Fetch current painting image from Arweave and return PNG ArrayBuffer with black background.
  * Uses Cloudflare Image Transformations to resize and add black background padding.
  */
 async function getCurrentPaintingImageBuffer(
-  bucket: R2Bucket,
   db: D1Database,
   assetsFetcher: Fetcher | undefined,
   imagesBinding: ImagesBinding,
@@ -252,49 +250,28 @@ async function getCurrentPaintingImageBuffer(
     id: latestPainting.id,
   });
 
-  logger.info("ogp.step2-extract-key");
-  // Step 2: Extract R2 key from imageUrl
-  const imageUrl = latestPainting.imageUrl;
-  let imageKey: string;
-  if (imageUrl.startsWith("/api/r2/")) {
-    imageKey = imageUrl.slice("/api/r2/".length);
-  } else if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    const url = new URL(imageUrl);
-    if (url.pathname.startsWith("/api/r2/")) {
-      imageKey = url.pathname.slice("/api/r2/".length);
-    } else {
-      // Assume it's a direct R2 key if it doesn't match our API route pattern
-      imageKey = url.pathname.replace(/^\//, "");
-    }
-  } else {
-    // Assume it's a direct R2 key
-    imageKey = imageUrl.replace(/^\//, "");
-  }
-
-  logger.info("ogp.step2-key-extracted", { imageKey });
-
-  logger.info("ogp.step3-fetch-image");
-  // Step 3: Fetch image from R2
-  const imageResult = await getImageR2(bucket, imageKey);
-  if (imageResult.isErr() || !imageResult.value) {
-    const reason = imageResult.isErr()
-      ? `R2 getImageR2() failed: ${imageResult.error.message}`
-      : "R2 returned null/empty image data";
-    logger.error("ogp.step3-image-failed", {
-      reason,
-      imageKey,
-      error: imageResult.isErr() ? imageResult.error.message : "No image data",
-      willFallback: true,
-    });
-    throw new Error(`Failed to fetch image from R2: ${reason}`);
-  }
-
-  logger.info("ogp.step3-image-success", {
-    imageSizeBytes: imageResult.value.byteLength,
-    imageSizeKB: (imageResult.value.byteLength / 1024).toFixed(2),
+  logger.info("ogp.step2-fetch-image", {
+    imageUrl: latestPainting.imageUrl,
   });
 
-  logger.info("ogp.step4-transform-image");
+  const imageResponse = await fetch(latestPainting.imageUrl);
+  if (!imageResponse.ok) {
+    const reason = `fetch failed with status ${String(imageResponse.status)}`;
+    logger.error("ogp.step2-image-failed", {
+      reason,
+      error: reason,
+      willFallback: true,
+    });
+    throw new Error(`Failed to fetch image: ${reason}`);
+  }
+  const imageBuffer = await imageResponse.arrayBuffer();
+
+  logger.info("ogp.step2-image-success", {
+    imageSizeBytes: imageBuffer.byteLength,
+    imageSizeKB: (imageBuffer.byteLength / 1024).toFixed(2),
+  });
+
+  logger.info("ogp.step3-transform-image");
   let frameBuffer: ArrayBuffer | null = null;
   let backgroundBuffer: ArrayBuffer | null = null;
   if (assetsFetcher) {
@@ -305,10 +282,10 @@ async function getCurrentPaintingImageBuffer(
   }
 
   try {
-    return await renderPaintingOnCanvas(imageResult.value, imagesBinding, frameBuffer, backgroundBuffer);
+    return await renderPaintingOnCanvas(imageBuffer, imagesBinding, frameBuffer, backgroundBuffer);
   } catch (transformError) {
     const transformErrorMessage = transformError instanceof Error ? transformError.message : String(transformError);
-    logger.error("ogp.step4-transform-error", {
+    logger.error("ogp.step3-transform-error", {
       reason: `IMAGES binding transformation failed: ${transformErrorMessage}`,
       error: transformErrorMessage,
       errorStack: transformError instanceof Error ? transformError.stack : undefined,
@@ -325,7 +302,7 @@ async function getCurrentPaintingImageBuffer(
     }
 
     const noFallbackReason = "ASSETS fetcher not available for fallback";
-    logger.error("ogp.step5-no-fallback-available", {
+    logger.error("ogp.step4-no-fallback-available", {
       reason: noFallbackReason,
       willThrow: true,
     });
@@ -349,21 +326,20 @@ export async function getPlaceholderDataUrl(assetsFetcher: Fetcher): Promise<str
 }
 
 /**
- * Test-facing helper: Read state and image from R2, return WEBP data URL, or fallback to placeholder via ASSETS.
+ * Test-facing helper: Read a painting image URL and return WEBP data URL, or fallback to placeholder via ASSETS.
  */
 export async function getCurrentPaintingDataUrl(
   assetsFetcher: Fetcher,
-  bucket: R2Bucket,
-  imageKey: string,
+  imageUrl: string,
 ): Promise<{ dataUrl: string; fallbackUsed: boolean }> {
   try {
-    const imageResult = await getImageR2(bucket, imageKey);
-    if (imageResult.isErr() || !imageResult.value) {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
       const dataUrl = await getPlaceholderDataUrl(assetsFetcher);
       return { dataUrl, fallbackUsed: true };
     }
 
-    const dataUrl = arrayBufferToDataUrl(imageResult.value, "image/webp");
+    const dataUrl = arrayBufferToDataUrl(await response.arrayBuffer(), "image/webp");
     return { dataUrl, fallbackUsed: false };
   } catch {
     const dataUrl = await getPlaceholderDataUrl(assetsFetcher);
@@ -398,7 +374,6 @@ export default async function Image(): Promise<Response> {
     logger.info("ogp.step-init-context");
     // Get Cloudflare context
     const { env } = await getCloudflareContext({ async: true });
-    const r2Bucket = env.R2_BUCKET;
     const db = env.DB;
     const assetsFetcher = env.ASSETS;
     const imagesBinding = env.IMAGES;
@@ -414,7 +389,7 @@ export default async function Image(): Promise<Response> {
 
     logger.info("ogp.step-fetch-current-painting");
     // Fetch current painting image (already transformed to PNG with black background)
-    const imageBuffer = await getCurrentPaintingImageBuffer(r2Bucket, db, assetsFetcher, imagesBinding);
+    const imageBuffer = await getCurrentPaintingImageBuffer(db, assetsFetcher, imagesBinding);
     logger.info("ogp.step-fetch-current-painting-success", {
       bufferSizeBytes: imageBuffer.byteLength,
       bufferSizeKB: (imageBuffer.byteLength / 1024).toFixed(2),

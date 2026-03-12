@@ -33,7 +33,11 @@ describe("useImagePreload", () => {
   });
 
   it("should preload images when URLs are provided", async () => {
-    const imageUrls = ["/api/r2/image1.webp", "/api/r2/image2.webp", "/api/r2/image3.webp"];
+    const imageUrls = [
+      "https://permagate.io/image1-tx",
+      "https://permagate.io/image2-tx",
+      "https://permagate.io/image3-tx",
+    ];
 
     const { result } = renderHook(() => useImagePreload(imageUrls));
 
@@ -52,7 +56,11 @@ describe("useImagePreload", () => {
   });
 
   it("should handle image load errors gracefully", async () => {
-    const imageUrls = ["/api/r2/image1.webp", "/api/r2/error.webp", "/api/r2/image3.webp"];
+    const imageUrls = [
+      "https://permagate.io/image1-tx",
+      "https://permagate.io/error.webp",
+      "https://permagate.io/image3-tx",
+    ];
 
     const { result } = renderHook(() => useImagePreload(imageUrls));
 
@@ -66,7 +74,7 @@ describe("useImagePreload", () => {
   });
 
   it("should update loadedCount as images load", async () => {
-    const imageUrls = ["/api/r2/image1.webp", "/api/r2/image2.webp"];
+    const imageUrls = ["https://permagate.io/image1-tx", "https://permagate.io/image2-tx"];
 
     const { result } = renderHook(() => useImagePreload(imageUrls));
 
@@ -83,7 +91,7 @@ describe("useImagePreload", () => {
 
   it("should handle URL changes", async () => {
     const { result, rerender } = renderHook(({ urls }: { urls: string[] }) => useImagePreload(urls), {
-      initialProps: { urls: ["/api/r2/image1.webp"] },
+      initialProps: { urls: ["https://permagate.io/image1-tx"] },
     });
 
     await waitFor(() => {
@@ -91,7 +99,7 @@ describe("useImagePreload", () => {
     });
 
     // Change URLs
-    rerender({ urls: ["/api/r2/image2.webp", "/api/r2/image3.webp"] });
+    rerender({ urls: ["https://permagate.io/image2-tx", "https://permagate.io/image3-tx"] });
 
     // Should reset and start loading new images
     expect(result.current.loadedCount).toBe(0);

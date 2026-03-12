@@ -8,8 +8,8 @@ updated: 2025-12-02
 
 - フロントエンド: Next.js 16（App Router, Edge Runtime, React Compiler）
 - バンドラー: **next-rspack** - Rust ベース高速バンドラー
-- 実行/配信: Cloudflare Pages + Workers（Cron Triggers: 10分ごと, R2 Bindings）
-- ストレージ: Cloudflare R2（S3 互換, 公開ドメイン読み取り）
+- 実行/配信: Cloudflare Pages + Workers（Cron Triggers: 10分ごと）
+- ストレージ: Arweave（ArDrive Turbo 経由アップロード、gateway 読み取り）
 - **データベース: Cloudflare D1（SQLite 互換）** - アーカイブインデックスとトークンコンテキストキャッシュ
 - ランタイム: ローカル Bun / 本番 workerd
 - 画像生成: Runware（本番）/ Mock（テスト用）
@@ -30,7 +30,7 @@ updated: 2025-12-02
 - `src/server/services` サーバー専用ビジネスロジック（市場データ、生成、状態、収益等）
   - `src/server/services/paintings/` 絵画生成オーケストレーターと関連サービス
   - `src/server/services/token-analysis-service.ts` トークン分析サービス
-- `src/lib` 外部統合（R2, Provider, tRPC クライアント, 時刻, ハッシュ, 純関数群）
+- `src/lib` 外部統合（ArDrive, Provider, tRPC クライアント, 時刻, ハッシュ, 純関数群）
 - `src/lib/cache` Cloudflare Cache API ヘルパー（開発中）
 - `src/server/repositories` データアクセス層（D1）
   - `paintings-repository.ts`
@@ -55,7 +55,7 @@ updated: 2025-12-02
 ## バックエンド/エッジ
 
 - Cloudflare Workers（Cron: 10分ごとトリガ - `*/10 * * * *`）
-- R2 連携（Bindings or 公開ドメイン）
+- ArDrive Turbo / Arweave gateway 連携
 - OpenNext for Cloudflare によるビルド/デプロイ（`@opennextjs/cloudflare@^1.17.1`）
 
 ## 依存関係（主要）
@@ -82,13 +82,13 @@ updated: 2025-12-02
 - **ログレベル: `LOG_LEVEL`**（任意: ERROR/WARN/INFO/DEBUG/LOG、クライアント公開可）
 - **Node 環境: `NODE_ENV`**（development/test/production、クライアント公開可）
 - **ベース URL: `NEXT_PUBLIC_BASE_URL`**（必須、クライアント公開）
-- **R2 URL: `NEXT_PUBLIC_R2_URL`**（必須、R2 パブリック URL または API プロキシ）
 - Provider キー
   - `RUNWARE_API_KEY`（必須）
 - **Tavily API キー: `TAVILY_API_KEY`**（dynamic-prompt 用、任意）
 - **CoinGecko API キー: `COINGECKO_API_KEY`**（任意、レート制限緩和用）
 - **Solana RPC: `NEXT_PUBLIC_SOLANA_RPC_URL`**（任意、デフォルト: devnet）
 - **Arweave: `ARDRIVE_TURBO_SECRET_KEY`**（ArDrive JWK secret, NFT metadata upload 用）
+- **Arweave Gateway: `ARWEAVE_GATEWAY_BASE_URL`**（任意、既定: `https://permagate.io`）
 - D1 データベース設定（Cloudflare Dashboard で設定）
   - `CLOUDFLARE_ACCOUNT_ID`（本番マイグレーション用）
   - `CLOUDFLARE_DATABASE_ID`（本番マイグレーション用）

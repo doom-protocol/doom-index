@@ -20,5 +20,5 @@ export const CACHE_TTL_SECONDS = {
   ONE_DAY: 86400,
 } as const;
 
-// R2 image cache TTL (1 day)
-export const R2_IMAGE_CACHE_TTL_SECONDS = CACHE_TTL_SECONDS.ONE_DAY;
+// Public image cache TTL (1 day)
+export const IMAGE_CACHE_TTL_SECONDS = CACHE_TTL_SECONDS.ONE_DAY;

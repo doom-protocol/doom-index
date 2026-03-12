@@ -35,6 +35,7 @@ import type { MeshStandardMaterial, Group, LineSegments, Mesh, Texture } from "t
 import { useHaptic } from "use-haptic";
 
 interface FramedPaintingProps {
+  onTextureReady?: () => void;
   thumbnailUrl: string;
   framePosition?: [number, number, number];
   paintingId?: string;
@@ -59,6 +60,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
   onPointerMove,
   onPointerUp,
   onPointerCancel,
+  onTextureReady,
   paintingId,
 }) => {
   const paintingMeshRef = useRef<Mesh>(null);
@@ -115,6 +117,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
   );
 
   const currentTextureRef = useRef<Texture | null>(null);
+  const lastReadyTextureRef = useRef<Texture | null>(null);
   const previousTextureRef = useRef<Texture | null>(null);
   const transitionElapsedRef = useRef(0);
   const isTransitionActiveRef = useRef(false);
@@ -180,6 +183,10 @@ const PaintingContent: FC<PaintingContentProps> = ({
     if (nextTexture?.image) {
       if (!currentTextureRef.current) {
         currentTextureRef.current = nextTexture;
+        if (lastReadyTextureRef.current !== nextTexture) {
+          lastReadyTextureRef.current = nextTexture;
+          onTextureReady?.();
+        }
         const [w, h] = calculatePlaneDimensions(nextTexture, innerWidth, innerHeight);
         currentPlaneRef.current = { width: w, height: h };
 
@@ -202,6 +209,10 @@ const PaintingContent: FC<PaintingContentProps> = ({
         const oldTexture = currentTextureRef.current;
         previousTextureRef.current = oldTexture;
         currentTextureRef.current = nextTexture;
+        if (lastReadyTextureRef.current !== nextTexture) {
+          lastReadyTextureRef.current = nextTexture;
+          onTextureReady?.();
+        }
 
         const [currentW, currentH] = calculatePlaneDimensions(nextTexture, innerWidth, innerHeight);
         const [previousW, previousH] = calculatePlaneDimensions(oldTexture, innerWidth, innerHeight);
@@ -400,6 +411,7 @@ export const FramedPainting = ({
   ref,
   thumbnailUrl,
   framePosition = DEFAULT_FRAME_POSITION,
+  onTextureReady,
   paintingId,
 }: FramedPaintingProps & { ref?: RefObject<Group | null> }) => {
   const pointerDownPositionRef = useRef<{ x: number; y: number } | null>(null);
@@ -471,6 +483,7 @@ export const FramedPainting = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
+        onTextureReady={onTextureReady}
         paintingId={paintingId}
       />
     </PaintingGroup>

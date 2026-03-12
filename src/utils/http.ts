@@ -2,7 +2,7 @@
  * HTTP utilities for caching, conditional requests, and binary data handling
  */
 
-import { R2_IMAGE_CACHE_TTL_SECONDS } from "@/constants";
+import { IMAGE_CACHE_TTL_SECONDS } from "@/constants";
 
 /**
  * Cache control configuration for different use cases
@@ -22,9 +22,9 @@ export interface CacheControlConfig {
  * Default cache control config for immutable images
  */
 export const IMMUTABLE_IMAGE_CACHE_CONFIG: CacheControlConfig = {
-  browserMaxAge: R2_IMAGE_CACHE_TTL_SECONDS, // 1 day
-  cdnMaxAge: R2_IMAGE_CACHE_TTL_SECONDS * 7, // 7 days for CDN
-  staleWhileRevalidate: R2_IMAGE_CACHE_TTL_SECONDS, // 1 day
+  browserMaxAge: IMAGE_CACHE_TTL_SECONDS, // 1 day
+  cdnMaxAge: IMAGE_CACHE_TTL_SECONDS * 7, // 7 days for CDN
+  staleWhileRevalidate: IMAGE_CACHE_TTL_SECONDS, // 1 day
   immutable: true,
 };
 

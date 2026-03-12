@@ -19,6 +19,9 @@ const serverSchema = {
   SLACK_WEBHOOK_URL: v.optional(v.string()),
   // ArDrive / Arweave
   ARDRIVE_TURBO_SECRET_KEY: v.optional(v.string()),
+  ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON: v.optional(v.string()),
+  ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC: v.optional(v.string()),
+  ARWEAVE_GATEWAY_BASE_URL: v.optional(v.pipe(v.string(), v.url()), "https://permagate.io"),
   // Admin Tools
   ADMIN_SECRET: v.optional(v.string()),
   CACHE_PURGE_API_TOKEN: v.optional(v.string()),
@@ -27,7 +30,6 @@ const serverSchema = {
 
 const clientSchema = {
   NEXT_PUBLIC_BASE_URL: v.pipe(v.string(), v.url()),
-  NEXT_PUBLIC_R2_URL: v.optional(v.pipe(v.string(), v.minLength(1)), "/api/r2"),
   NEXT_PUBLIC_SOLANA_RPC_URL: v.optional(v.pipe(v.string(), v.url()), "https://api.devnet.solana.com"),
 };
 
@@ -46,11 +48,13 @@ const readServerRuntimeEnv = () => ({
   FORCE_TOKEN_LIST: process.env.FORCE_TOKEN_LIST,
   SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL,
   ARDRIVE_TURBO_SECRET_KEY: process.env.ARDRIVE_TURBO_SECRET_KEY,
+  ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON: process.env.ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON,
+  ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC: process.env.ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC,
+  ARWEAVE_GATEWAY_BASE_URL: process.env.ARWEAVE_GATEWAY_BASE_URL,
   ADMIN_SECRET: process.env.ADMIN_SECRET,
   CACHE_PURGE_API_TOKEN: process.env.CACHE_PURGE_API_TOKEN,
   CACHE_PURGE_ZONE_ID: process.env.CACHE_PURGE_ZONE_ID,
   NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
-  NEXT_PUBLIC_R2_URL: process.env.NEXT_PUBLIC_R2_URL,
   NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
   IMAGE_MODEL: process.env.IMAGE_MODEL,
   NODE_ENV: process.env.NODE_ENV,
@@ -60,7 +64,6 @@ const readServerRuntimeEnv = () => ({
 
 const readPublicRuntimeEnv = () => ({
   NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
-  NEXT_PUBLIC_R2_URL: process.env.NEXT_PUBLIC_R2_URL,
   NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
   IMAGE_MODEL: process.env.IMAGE_MODEL,
   NODE_ENV: process.env.NODE_ENV,

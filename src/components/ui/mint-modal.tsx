@@ -6,21 +6,18 @@
  * Simple, conversion-focused minting UI with 3D preview, price, and mint button
  */
 
-import { FramedPainting } from "@/components/gallery/framed-painting";
-import { Lights } from "@/components/gallery/lights";
+import { MintPaintingPreviewScene } from "@/components/ui/mint-painting-preview-scene";
 import { useSolanaMint } from "@/hooks/use-solana-mint";
 import { useSolanaWallet } from "@/hooks/use-solana-wallet";
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
+import { useTRPCClient } from "@/lib/trpc/client";
 import { getErrorMessage } from "@/utils/error";
 import { logger } from "@/utils/logger";
-import { OrbitControls } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { Suspense, useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
 import { toast } from "sonner";
-import { ACESFilmicToneMapping } from "three";
 import type { Group } from "three";
 import { useHaptic } from "use-haptic";
 
@@ -44,10 +41,90 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
   const { connectWallet, connected, connecting: isWalletConnecting, publicKey } = useSolanaWallet();
   const { setVisible } = useWalletModal();
   const { mint, isMinting, nextTokenId } = useSolanaMint();
+  const trpcClient = useTRPCClient();
   const { triggerHaptic } = useHaptic();
+  const mintPreparationPromiseRef = useRef<Promise<void> | null>(null);
+  const [mintPreparationState, setMintPreparationState] = useState<{
+    status: "idle" | "pending" | "success" | "error";
+    tokenId?: bigint;
+    tokenMetadataUrl?: string;
+  }>({
+    status: "idle",
+  });
+  const mintPreparationStateRef = useRef(mintPreparationState);
 
   // Mock price (in SOL)
   const MINT_PRICE = 0.1;
+
+  useEffect(() => {
+    mintPreparationStateRef.current = mintPreparationState;
+  }, [mintPreparationState]);
+
+  const prepareMintMetadata = useCallback(
+    async (tokenId: bigint): Promise<void> => {
+      const currentPreparation = mintPreparationStateRef.current;
+      if (currentPreparation.tokenId === tokenId && currentPreparation.status === "success") {
+        return;
+      }
+
+      setMintPreparationState({
+        status: "pending",
+        tokenId,
+      });
+
+      try {
+        const preparationPromise = trpcClient.paintings.prepareMintMetadata.mutate({
+          paintingId: paintingMetadata.paintingHash,
+          tokenId: Number(tokenId),
+        });
+        mintPreparationPromiseRef.current = preparationPromise.then(() => undefined);
+        const result = await preparationPromise;
+
+        logger.info("mint.metadata-preparation.ready", {
+          paintingId: paintingMetadata.paintingHash,
+          tokenId: tokenId.toString(),
+          tokenMetadataUrl: result.tokenMetadataUrl,
+        });
+
+        setMintPreparationState({
+          status: "success",
+          tokenId,
+          tokenMetadataUrl: result.tokenMetadataUrl,
+        });
+      } catch (error: unknown) {
+        logger.warn("mint.metadata-preparation.failed", {
+          error: getErrorMessage(error),
+          paintingId: paintingMetadata.paintingHash,
+          tokenId: tokenId.toString(),
+        });
+
+        setMintPreparationState({
+          status: "error",
+          tokenId,
+        });
+
+        throw error;
+      }
+    },
+    [paintingMetadata.paintingHash, trpcClient.paintings.prepareMintMetadata],
+  );
+
+  useEffect(() => {
+    if (!isOpen || typeof nextTokenId !== "bigint") {
+      return;
+    }
+
+    const currentPreparation = mintPreparationStateRef.current;
+    if (currentPreparation.tokenId === nextTokenId && currentPreparation.status !== "error") {
+      return;
+    }
+
+    void prepareMintMetadata(nextTokenId).catch(() => undefined);
+
+    return () => {
+      mintPreparationPromiseRef.current = null;
+    };
+  }, [isOpen, nextTokenId, prepareMintMetadata]);
 
   // Handle wallet connection
   const handleConnectWallet = useCallback(async () => {
@@ -70,6 +147,13 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
 
     try {
       sendGAEvent(GA_EVENTS.MINT_TRANSACTION_START);
+      const tokenId = typeof nextTokenId === "bigint" ? nextTokenId : null;
+      if (tokenId !== null && (mintPreparationState.tokenId !== tokenId || mintPreparationState.status !== "success")) {
+        const preparationPromise = prepareMintMetadata(tokenId);
+        mintPreparationPromiseRef.current = preparationPromise.then(() => undefined);
+      }
+
+      await mintPreparationPromiseRef.current;
       const result = await mint();
 
       logger.info("mint.success", {
@@ -96,7 +180,17 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
     } finally {
       setIsProcessing(false);
     }
-  }, [connected, setVisible, mint, onClose, publicKey]);
+  }, [
+    connected,
+    setVisible,
+    mint,
+    mintPreparationState.status,
+    mintPreparationState.tokenId,
+    nextTokenId,
+    onClose,
+    prepareMintMetadata,
+    publicKey,
+  ]);
 
   // Handle modal close
   const handleClose = useCallback(() => {
@@ -107,6 +201,14 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
 
   const isLoading = isMinting || isWalletConnecting || isProcessing;
   const displayTokenId = mintedTokenId ?? (typeof nextTokenId === "bigint" ? nextTokenId : null);
+  const metadataStatusLabel =
+    mintPreparationState.status === "pending"
+      ? "Preparing metadata on Arweave..."
+      : mintPreparationState.status === "success"
+        ? "Metadata ready on gateway"
+        : mintPreparationState.status === "error"
+          ? "Metadata retry required"
+          : "Waiting for token id";
 
   const collectionName = displayTokenId === null ? "DOOM INDEX NFT" : `DOOM INDEX #${displayTokenId.toString()}`;
 
@@ -138,48 +240,12 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
             touchAction: isOpen ? "auto" : "none",
           }}
         >
-          <Canvas
-            className="r3f-gallery-canvas"
-            frameloop={isOpen ? "demand" : "never"}
-            shadows={false}
-            dpr={[1, 1.5]}
-            camera={{
-              fov: 50,
-              position: [0, 0.8, 0.8],
-              near: 0.1,
-              far: 100,
-            }}
-            gl={{
-              antialias: true,
-              stencil: false,
-              powerPreference: "high-performance",
-            }}
-            onCreated={({ gl }) => {
-              gl.toneMapping = ACESFilmicToneMapping;
-              gl.setClearColor("#050505");
-            }}
-            style={{
-              width: "100%",
-              height: "100%",
-              pointerEvents: isOpen ? "auto" : "none",
-              touchAction: isOpen ? "auto" : "none",
-            }}
-          >
-            <Lights />
-            <OrbitControls
-              enableDamping
-              dampingFactor={0.05}
-              minDistance={2}
-              maxDistance={6}
-              target={[0, 0.8, 4.0]}
-              rotateSpeed={0.5}
-              zoomSpeed={0.5}
-              enabled={isOpen && !isLoading}
-            />
-            <Suspense fallback={null}>
-              <FramedPainting ref={paintingRef} thumbnailUrl={paintingMetadata.thumbnailUrl} />
-            </Suspense>
-          </Canvas>
+          <MintPaintingPreviewScene
+            isOpen={isOpen}
+            isLoading={isLoading}
+            paintingRef={paintingRef}
+            thumbnailUrl={paintingMetadata.thumbnailUrl}
+          />
         </div>
 
         {/* Content Panel */}
@@ -191,6 +257,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
               <span className="text-2xl font-bold text-white/90 sm:text-3xl">{MINT_PRICE}</span>
               <span className="text-base text-white/60 sm:text-lg">SOL</span>
             </div>
+            <p className="text-sm text-white/55">{metadataStatusLabel}</p>
           </div>
 
           {/* Action Button */}

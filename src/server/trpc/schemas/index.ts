@@ -1,10 +1,5 @@
 import * as v from "valibot";
 
-/**
- * Legacy Token Ticker Schema kept for backward compatibility.
- */
-export const tokenTickerInputSchema = v.string();
-
 // Viewer Schemas
 export const viewerRegisterSchema = v.object({
   sessionId: v.pipe(v.string(), v.minLength(1, "Session ID is required")),
@@ -13,19 +8,6 @@ export const viewerRegisterSchema = v.object({
 
 export const viewerRemoveSchema = v.object({
   sessionId: v.pipe(v.string(), v.minLength(1, "Session ID is required")),
-});
-
-// Token Schemas
-/**
- * Legacy token state schema kept for backward compatibility.
- */
-export const tokenStateInputSchema = v.object({
-  ticker: tokenTickerInputSchema,
-});
-
-// R2 Schemas
-export const r2GetObjectSchema = v.object({
-  key: v.pipe(v.array(v.pipe(v.string(), v.minLength(1))), v.minLength(1, "At least one key segment is required")),
 });
 
 // Paintings Schemas
@@ -48,3 +30,8 @@ export const paintingsListSchema = v.pipe(
     ["from"],
   ),
 );
+
+export const prepareMintMetadataSchema = v.object({
+  paintingId: v.pipe(v.string(), v.minLength(1, "paintingId is required")),
+  tokenId: v.pipe(v.number(), v.integer(), v.minValue(0, "tokenId must be positive")),
+});

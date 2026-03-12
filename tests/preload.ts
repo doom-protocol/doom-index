@@ -7,8 +7,6 @@ import { drizzle } from "drizzle-orm/bun-sqlite";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import * as dbSchema from "@/server/db/schema";
 
-// Note: NEXT_PUBLIC_R2_URL is handled by individual tests that mock @/env
-
 // Create in-memory SQLite database for D1 tests
 let testD1Db: BunSQLiteDatabase<typeof dbSchema> & {
   batch?: (operations: unknown[]) => Promise<unknown[]>;
@@ -28,21 +26,26 @@ beforeEach(() => {
   runStatements(sqlite, [
     `CREATE TABLE paintings (
       id TEXT PRIMARY KEY NOT NULL,
+      ts INTEGER NOT NULL,
       timestamp TEXT NOT NULL,
       minute_bucket TEXT NOT NULL,
       params_hash TEXT NOT NULL,
       seed TEXT NOT NULL,
-      visual_params TEXT NOT NULL,
+      image_tx_id TEXT NOT NULL,
+      glb_tx_id TEXT NOT NULL,
       image_url TEXT NOT NULL,
+      glb_url TEXT NOT NULL,
       file_size INTEGER NOT NULL,
+      visual_params_json TEXT NOT NULL,
       prompt TEXT NOT NULL,
-      negative TEXT,
-      r2_key TEXT NOT NULL,
-      created_at INTEGER NOT NULL
+      negative TEXT NOT NULL
     )`,
-    "CREATE INDEX idx_paintings_minute_bucket ON paintings(minute_bucket)",
-    "CREATE INDEX idx_paintings_timestamp ON paintings(timestamp)",
-    "CREATE INDEX idx_paintings_created_at ON paintings(created_at)",
+    "CREATE INDEX idx_paintings_ts_id ON paintings(ts, id)",
+    "CREATE INDEX idx_paintings_ts ON paintings(ts)",
+    "CREATE INDEX idx_paintings_params_hash ON paintings(params_hash)",
+    "CREATE INDEX idx_paintings_seed ON paintings(seed)",
+    "CREATE UNIQUE INDEX idx_paintings_image_tx_id ON paintings(image_tx_id)",
+    "CREATE UNIQUE INDEX idx_paintings_glb_tx_id ON paintings(glb_tx_id)",
   ]);
 
   runStatements(sqlite, [
@@ -115,7 +118,6 @@ void mock.module("@opennextjs/cloudflare", () => ({
   getCloudflareContext: () => ({
     env: {
       DB: testD1Db,
-      R2_BUCKET: {} as R2Bucket,
       ASSETS: {} as Fetcher,
       VIEWER_KV: {} as KVNamespace,
       AI: {} as Ai,

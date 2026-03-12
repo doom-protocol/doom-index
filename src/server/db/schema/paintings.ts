@@ -16,8 +16,10 @@ export const paintings = sqliteTable(
     paramsHash: text("params_hash").notNull(), // 8-character hex hash of visual parameters
     seed: text("seed").notNull(), // 12-character hex seed for reproducibility
 
-    r2Key: text("r2_key").notNull(), // Full R2 object key: images/YYYY/MM/DD/DOOM_...
-    imageUrl: text("image_url").notNull(), // Public CDN URL for the image
+    imageTxId: text("image_tx_id").notNull(), // Arweave transaction id for the image asset
+    glbTxId: text("glb_tx_id").notNull(), // Arweave transaction id for the GLB asset
+    imageUrl: text("image_url").notNull(), // Public Arweave gateway URL for the image
+    glbUrl: text("glb_url").notNull(), // Public Arweave gateway URL for the GLB
     fileSize: integer("file_size").notNull(), // Image file size in bytes
 
     visualParamsJson: text("visual_params_json").notNull(), // JSON: { fogDensity: number, skyTint: number, ... }
@@ -30,7 +32,8 @@ export const paintings = sqliteTable(
     index("idx_paintings_ts").on(table.ts),
     index("idx_paintings_params_hash").on(table.paramsHash),
     index("idx_paintings_seed").on(table.seed),
-    uniqueIndex("idx_paintings_r2_key").on(table.r2Key),
+    uniqueIndex("idx_paintings_image_tx_id").on(table.imageTxId),
+    uniqueIndex("idx_paintings_glb_tx_id").on(table.glbTxId),
   ],
 );
 

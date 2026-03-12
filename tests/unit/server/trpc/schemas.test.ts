@@ -1,27 +1,8 @@
-import {
-  paintingsListSchema,
-  r2GetObjectSchema,
-  tokenStateInputSchema,
-  tokenTickerInputSchema,
-  viewerRegisterSchema,
-  viewerRemoveSchema,
-} from "@/server/trpc/schemas";
+import { paintingsListSchema, viewerRegisterSchema, viewerRemoveSchema } from "@/server/trpc/schemas";
 import { describe, expect, it } from "bun:test";
 import * as v from "valibot";
 
 describe("Valibot Schemas", () => {
-  describe("tokenTickerInputSchema", () => {
-    it("should validate valid token tickers", () => {
-      expect(() => v.parse(tokenTickerInputSchema, "CO2")).not.toThrow();
-      expect(() => v.parse(tokenTickerInputSchema, "ICE")).not.toThrow();
-      expect(() => v.parse(tokenTickerInputSchema, "any-string")).not.toThrow();
-    });
-
-    it("should reject non-strings", () => {
-      expect(() => v.parse(tokenTickerInputSchema, 123)).toThrow();
-    });
-  });
-
   describe("viewerRegisterSchema", () => {
     it("should validate valid register input", () => {
       const valid = { sessionId: "test-session-id" };
@@ -47,28 +28,6 @@ describe("Valibot Schemas", () => {
 
     it("should reject empty sessionId", () => {
       expect(() => v.parse(viewerRemoveSchema, { sessionId: "" })).toThrow();
-    });
-  });
-
-  describe("tokenStateInputSchema", () => {
-    it("should validate valid token state input", () => {
-      const valid = { ticker: "CO2" };
-      expect(() => v.parse(tokenStateInputSchema, valid)).not.toThrow();
-    });
-  });
-
-  describe("r2GetObjectSchema", () => {
-    it("should validate valid R2 object input", () => {
-      const valid = { key: ["path", "to", "object"] };
-      expect(() => v.parse(r2GetObjectSchema, valid)).not.toThrow();
-    });
-
-    it("should reject empty key array", () => {
-      expect(() => v.parse(r2GetObjectSchema, { key: [] })).toThrow();
-    });
-
-    it("should reject empty strings in key array", () => {
-      expect(() => v.parse(r2GetObjectSchema, { key: [""] })).toThrow();
     });
   });
 

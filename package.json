@@ -22,6 +22,7 @@
     "typecheck": "tsgo --noEmit --incremental --tsBuildInfoFile .cache/tsgo/typecheck.tsbuildinfo",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "generate": "bun --env-file=.dev.vars scripts/generate.ts",
+    "generate:framed-glb": "bun scripts/generate-framed-glb.ts",
     "watch-cron": "bun scripts/watch-cron.ts",
     "truncate-r2": "bun --env-file=.dev.vars scripts/truncate-r2.ts",
     "truncate-r2:dry-run": "bun --env-file=.dev.vars scripts/truncate-r2.ts --dry-run",

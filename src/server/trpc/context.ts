@@ -7,7 +7,6 @@ export interface Context {
   logger: typeof logger;
   env?: CloudflareEnv;
   kvNamespace?: KVNamespace;
-  r2Bucket?: R2Bucket;
 }
 
 // Context creation for API Handler
@@ -22,7 +21,6 @@ export async function createContext(opts: FetchCreateContextFnOptions): Promise<
       logger,
       env,
       kvNamespace: env.VIEWER_KV,
-      r2Bucket: env.R2_BUCKET,
     };
   } catch (_error) {
     logger.warn("trpc.context.cloudflare-unavailable", {
@@ -56,7 +54,6 @@ async function createContextFromHeaders(headersList: Headers, source: string): P
       logger,
       env,
       kvNamespace: env.VIEWER_KV,
-      r2Bucket: env.R2_BUCKET,
     };
   } catch (_error) {
     logger.warn("trpc.context.cloudflare-unavailable", {

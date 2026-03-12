@@ -8,7 +8,7 @@
  * 4. Build painting context
  * 5. Generate prompt
  * 6. Generate image
- * 7. Store painting to R2 and D1
+ * 7. Store painting to Arweave and D1
  *
  * NOTE: The cron trigger in wrangler.toml must match NEXT_PUBLIC_GENERATION_INTERVAL_MS
  */
@@ -55,8 +55,8 @@ async function createOrchestrator(env: Cloudflare.Env): Promise<PaintingGenerati
     paintingContextBuilder,
     marketSnapshotsRepository,
     tokensRepository,
-    r2Bucket: env.R2_BUCKET,
     d1Binding: env.DB,
+    assetsFetcher: env.ASSETS,
   });
 }
 
@@ -76,7 +76,7 @@ export async function handleScheduledEvent(
 ): Promise<void> {
   const startTime = Date.now();
 
-  logger.debug("cron.started", {
+  logger.info("cron.started", {
     scheduledTime: new Date(event.scheduledTime).toISOString(),
     cron: event.cron,
     generationIntervalMinutes: runtimeEnv.NEXT_PUBLIC_GENERATION_INTERVAL_MS / 60000,
@@ -99,7 +99,7 @@ export async function handleScheduledEvent(
 
     const { status, hourBucket, imageUrl, selectedToken } = result.value;
 
-    logger.debug("cron.success", {
+    logger.info("cron.success", {
       status,
       hourBucket,
       imageUrl,

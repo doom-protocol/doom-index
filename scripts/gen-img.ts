@@ -4,9 +4,9 @@
  * Image Generation Script (Production Flow Simulation)
  *
  * This script executes the full painting generation pipeline using local resources:
- * - Local SQLite database (instead of D1)
+ * - Local Wrangler D1 SQLite state
  * - Cloudflare REST API (instead of Workers AI binding)
- * - Local file system (instead of R2)
+ * - Local file system writeout (instead of Arweave upload)
  *
  * Usage:
  *   bun run --env-file=.dev.vars scripts/gen-img.ts
@@ -26,7 +26,8 @@ import { MarketSnapshotsRepository } from "@/server/repositories/market-snapshot
 import type { PaintingsRepository } from "@/server/repositories/paintings-repository";
 import { TokensRepository } from "@/server/repositories/tokens-repository";
 import { createImageGenerationService } from "@/server/services/image-generation";
-import { createPaintingsService } from "@/server/services/paintings";
+import type { PaintingsService } from "@/server/services/paintings";
+import { buildFramedPaintingGlbFromPublicFrame } from "@/server/services/paintings/framed-painting-bundle-service";
 import { MarketDataService } from "@/server/services/paintings/market-data";
 import { PaintingContextBuilder } from "@/server/services/paintings/painting-context-builder";
 import { PaintingGenerationOrchestrator } from "@/server/services/paintings/painting-generation-orchestrator";
@@ -37,9 +38,10 @@ import { createWorldPromptService } from "@/server/services/world-prompt-service
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
-import { ok } from "neverthrow";
+import { err, ok } from "neverthrow";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 interface Args {
   seed?: string;
@@ -122,58 +124,31 @@ Options:
   return parsed as Args;
 };
 
-// Mock R2 Bucket for local storage
-const createLocalBucket = (outputDir: string): R2Bucket => {
-  return {
-    put: async (key: string, value: unknown) => {
-      const filePath = join(outputDir, key);
-      // Ensure directory exists
-      const dir = filePath.split("/").slice(0, -1).join("/");
-      await mkdir(dir, { recursive: true });
-
-      let buffer: Uint8Array;
-      if (value instanceof ArrayBuffer) {
-        buffer = new Uint8Array(value);
-      } else if (ArrayBuffer.isView(value)) {
-        buffer = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
-      } else if (typeof value === "string") {
-        buffer = new TextEncoder().encode(value);
-      } else {
-        // Fallback for other types (e.g. Blob which is not easily handled in sync context without await, but R2 put expects body)
-        // Here we assume it's stringifiable
-        buffer = new TextEncoder().encode(String(value));
-      }
-
-      await Bun.write(filePath, buffer);
-      return null;
-    },
-    get: async () => Promise.resolve(null),
-  } as unknown as R2Bucket;
-};
-
 // Create local paintings repository adapter
 const createLocalPaintingsRepository = (db: BunSQLiteDatabase<typeof schema>): PaintingsRepository => {
   return {
     list: async () => Promise.resolve(ok({ items: [], hasMore: false })),
-    insert: async (metadata: PaintingMetadata, r2Key: string) => {
+    insert: async (record) => {
       try {
-        const ts = Math.floor(new Date(metadata.timestamp).getTime() / 1000);
+        const ts = Math.floor(new Date(record.timestamp).getTime() / 1000);
 
         await db
           .insert(paintings)
           .values({
-            id: metadata.id,
+            id: record.id,
             ts,
-            timestamp: metadata.timestamp,
-            minuteBucket: metadata.minuteBucket,
-            paramsHash: metadata.paramsHash,
-            seed: metadata.seed,
-            r2Key,
-            imageUrl: metadata.imageUrl,
-            fileSize: metadata.fileSize,
-            visualParamsJson: JSON.stringify(metadata.visualParams),
-            prompt: metadata.prompt,
-            negative: metadata.negative,
+            timestamp: record.timestamp,
+            minuteBucket: record.minuteBucket,
+            paramsHash: record.paramsHash,
+            seed: record.seed,
+            imageTxId: record.imageTxId,
+            glbTxId: record.glbTxId,
+            imageUrl: record.imageUrl,
+            glbUrl: record.glbUrl,
+            fileSize: record.fileSize,
+            visualParamsJson: JSON.stringify(record.visualParams),
+            prompt: record.prompt,
+            negative: record.negative,
           })
           .onConflictDoNothing();
 
@@ -186,6 +161,39 @@ const createLocalPaintingsRepository = (db: BunSQLiteDatabase<typeof schema>): P
     findById: async () => Promise.resolve(ok(null)),
   };
 };
+
+const createLocalPaintingsService = (outputDir: string, archiveRepository: PaintingsRepository): PaintingsService => ({
+  getPaintingById: archiveRepository.findById,
+  insertPainting: archiveRepository.insert,
+  listImages: async () => {
+    await Promise.resolve();
+    return ok({ items: [], hasMore: false });
+  },
+  storePaintingAssets: async (params) => {
+    await mkdir(outputDir, { recursive: true });
+
+    const imagePath = join(outputDir, `${params.paintingId}.webp`);
+    const glbPath = join(outputDir, `${params.paintingId}.glb`);
+    await Bun.write(imagePath, params.imageBuffer);
+
+    const glbResult = await buildFramedPaintingGlbFromPublicFrame({
+      paintingImageBuffer: params.imageBuffer,
+      paintingImageContentType: params.imageContentType ?? "image/webp",
+    });
+    if (glbResult.isErr()) {
+      return err(glbResult.error);
+    }
+
+    await Bun.write(glbPath, glbResult.value);
+
+    return ok({
+      glbTxId: `local-${params.paintingId}-glb`,
+      glbUrl: pathToFileURL(glbPath).toString(),
+      imageTxId: `local-${params.paintingId}-image`,
+      imageUrl: pathToFileURL(imagePath).toString(),
+    });
+  },
+});
 
 const main = async () => {
   const args = parseArgs();
@@ -208,9 +216,7 @@ const main = async () => {
   const db = setupLocalDb(dbPath);
   logger.info(`Using local Wrangler D1 DB: ${dbPath}`);
 
-  // Output directory for "R2"
-  const outputDir = join(args.output, "r2-storage");
-  const bucket = createLocalBucket(outputDir);
+  const outputDir = join(args.output, "arweave-fixture");
 
   // Initialize Clients
   const workersAiClient = createWorkersAiClient();
@@ -253,10 +259,7 @@ const main = async () => {
 
   const paintingContextBuilder = new PaintingContextBuilder(tokensRepository);
 
-  const paintingsService = createPaintingsService({
-    r2Bucket: bucket,
-    archiveRepository: paintingsRepository,
-  });
+  const paintingsService = createLocalPaintingsService(outputDir, paintingsRepository);
 
   // Initialize Orchestrator
   const orchestrator = new PaintingGenerationOrchestrator({
@@ -266,7 +269,6 @@ const main = async () => {
     marketSnapshotsRepository,
     tokensRepository,
     paintingsService,
-    r2Bucket: bucket,
   });
 
   // Run Orchestrator
@@ -274,7 +276,6 @@ const main = async () => {
   const mockEnv = {
     AI: undefined, // Will trigger REST API fallback
     DB: undefined,
-    R2_BUCKET: bucket,
   } as unknown as Cloudflare.Env;
 
   console.log("\n=== Starting Generation Pipeline (Local Simulation) ===\n");

@@ -2,7 +2,7 @@
  * Unit tests for GalleryScene texture loading and rendering
  * Tests the time from texture request to texture loaded callback
  *
- * Uses real image URLs from /api/r2/ endpoint to test actual image loading behavior
+ * Uses direct Arweave image URLs to test actual image loading behavior
  */
 
 // Import preload to ensure happy-dom globals are registered before any imports
@@ -23,6 +23,27 @@ void mock.module("@/utils/logger", () => ({
   logger: mockLogger,
 }));
 
+const readMockTRPCClient = () => ({
+  paintings: {
+    prepareMintMetadata: {
+      mutate: async () => {
+        await Promise.resolve();
+        return {
+          baseMetadataUrl: "https://permagate.io/manifest-tx",
+          manifestTxId: "manifest-tx",
+          metadataTxId: "metadata-tx",
+          resolvedFromProbe: true,
+          tokenMetadataUrl: "https://permagate.io/manifest-tx/1",
+        };
+      },
+    },
+  },
+});
+
+void mock.module("@/lib/trpc/client", () => ({
+  useTRPCClient: readMockTRPCClient,
+}));
+
 // Store original performance for restoration
 const originalPerformance = globalThis.performance;
 
@@ -31,22 +52,19 @@ void mock.module("@/env", () => ({
   env: {
     NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
     LOG_LEVEL: "DEBUG",
-    NEXT_PUBLIC_R2_URL: "/api/r2",
     NEXT_PUBLIC_GENERATION_INTERVAL_MS: 600000,
   },
   publicEnv: {
     NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
     LOG_LEVEL: "DEBUG",
-    NEXT_PUBLIC_R2_URL: "/api/r2",
     NEXT_PUBLIC_GENERATION_INTERVAL_MS: 600000,
   },
   isDevelopment: () => true,
   getEnvironmentName: () => "development" as const,
 }));
 
-// Real image URL from /api/r2/ endpoint for realistic testing
-// This URL format matches production image paths
-const REAL_IMAGE_URL = "/api/r2/images/2025/12/02/DOOM_202512020110_03309aff_5779632aeaa9.webp";
+// Realistic Arweave gateway URL for production-like testing
+const REAL_IMAGE_URL = "https://permagate.io/painting-image-tx-03309aff5779";
 
 // Mock use-latest-painting hook
 // IMPORTANT: We spread the real module's exports to avoid breaking
@@ -98,7 +116,7 @@ const nextMockPainting = {
   timestamp: "2025-12-02T01:20:00.000Z",
   paramsHash: "abcdef12",
   seed: "999999999999",
-  imageUrl: "/api/r2/images/2025/12/02/DOOM_202512020120_abcdef12_999999999999.webp",
+  imageUrl: "https://permagate.io/painting-image-tx-abcdef129999",
 };
 
 // Import the real module to spread its exports
@@ -173,9 +191,8 @@ void mock.module("@solana/wallet-adapter-react-ui", () => ({
   useWalletModal: readWalletModalState,
 }));
 
-// Note: We don't mock @/lib/glb-export-service globally as it interferes with
-// glb-export-service.test.ts. The gallery-scene component doesn't directly use
-// glbExportService during render, so we don't need to mock it here.
+// Gallery scene no longer depends on the old client-side GLB export service.
+// The R3F mocks below are enough for this render path.
 
 // Mock analytics
 void mock.module("@/lib/analytics", () => ({
@@ -327,7 +344,7 @@ void mock.module("@react-three/drei", () => ({
 }));
 
 // Note: We don't mock "three" module globally as it interferes with other tests
-// (e.g., glb-export-service.test.ts). The R3F mocks above handle WebGL-specific bits.
+// The R3F mocks above handle the WebGL-specific bits for this suite.
 
 // Mock framed-painting-base
 void mock.module("@/components/ui/framed-painting-base", () => ({
@@ -522,7 +539,7 @@ describe("unit/components/gallery-scene", () => {
             paintingId?: string;
           };
           // URL should contain the real image path with transformation params
-          expect(payload.url).toContain("/api/r2/images/2025/12/02/DOOM_202512020110_03309aff_5779632aeaa9.webp");
+          expect(payload.url).toContain("https://permagate.io/painting-image-tx-03309aff5779");
         }
       });
     });
