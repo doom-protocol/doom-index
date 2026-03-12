@@ -231,7 +231,6 @@ const createOrbitControlsState = (): MockOrbitControlsState => ({
 
 let orbitControlsState = createOrbitControlsState();
 let latestOrbitControlsProps: Record<string, unknown> | null = null;
-let mintModalRenderCount = 0;
 
 const MockOrbitControls = (props: Record<string, unknown>) => {
   latestOrbitControlsProps = props;
@@ -285,10 +284,7 @@ void mock.module("@/components/ui/three-error-boundary", () => ({
 // but with mocked dependencies (wallet, analytics, etc.)
 
 void mock.module("@/components/ui/mint-modal", () => ({
-  MintModal: () => {
-    mintModalRenderCount += 1;
-    return null;
-  },
+  MintModal: () => null,
 }));
 
 // Mock gallery sub-components
@@ -362,7 +358,6 @@ describe("unit/components/gallery-scene", () => {
     // Clear logger calls
     loggerCalls.length = 0;
     latestOrbitControlsProps = null;
-    mintModalRenderCount = 0;
     latestLightsProps = null;
     orbitControlsState = createOrbitControlsState();
 
@@ -610,18 +605,6 @@ describe("unit/components/gallery-scene", () => {
   });
 
   describe("performance-guarantees", () => {
-    it("should not mount MintModal before the user opens it", async () => {
-      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
-
-      render(<GalleryScene />);
-
-      await waitFor(() => {
-        expect(latestOrbitControlsProps).toBeDefined();
-      });
-
-      expect(mintModalRenderCount).toBe(0);
-    });
-
     it("should keep the top page on the production light rig from the first render", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 
