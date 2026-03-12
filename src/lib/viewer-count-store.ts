@@ -5,6 +5,8 @@
  * This store receives updates from the viewer worker and provides them to React components.
  */
 
+import { logger } from "@/utils/logger";
+
 interface ViewerCountState {
   count: number | null;
   updatedAt: number | null;
@@ -38,9 +40,11 @@ class ViewerCountStore {
       updatedAt,
     };
 
-    console.log(
-      `[ViewerCountStore] Updated: ${String(previousCount)} -> ${String(count)} (listeners: ${String(this.listeners.size)})`,
-    );
+    logger.debug("viewer-count-store.updated", {
+      previousCount,
+      count,
+      listeners: this.listeners.size,
+    });
 
     // Notify all listeners
     this.listeners.forEach((listener) => {

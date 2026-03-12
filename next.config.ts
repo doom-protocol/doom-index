@@ -89,6 +89,7 @@ function customizeWebpack(config: MutableWebpackConfig, { isServer }: { isServer
 const nextConfig: NextConfig = {
   reactCompiler: true,
   output: "standalone",
+  transpilePackages: ["@t3-oss/env-nextjs", "@t3-oss/env-core"],
   experimental: {
     viewTransition: true,
     scrollRestoration: true,

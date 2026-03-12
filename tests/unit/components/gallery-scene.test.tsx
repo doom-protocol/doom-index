@@ -9,7 +9,7 @@
 import "../../preload";
 
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-import { render, waitFor, cleanup } from "@testing-library/react";
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import type { FC, ReactNode } from "react";
 import { createLoggerMock, createMockPerformance, resetMockTime, advanceMockTime, getMockTime } from "../../mocks";
@@ -28,6 +28,12 @@ const originalPerformance = globalThis.performance;
 // Mock env - use NEXT_PUBLIC_BASE_URL to determine development environment
 void mock.module("@/env", () => ({
   env: {
+    NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
+    LOG_LEVEL: "DEBUG",
+    NEXT_PUBLIC_R2_URL: "/api/r2",
+    NEXT_PUBLIC_GENERATION_INTERVAL_MS: 600000,
+  },
+  publicEnv: {
     NEXT_PUBLIC_BASE_URL: "http://localhost:8787",
     LOG_LEVEL: "DEBUG",
     NEXT_PUBLIC_R2_URL: "/api/r2",
@@ -85,10 +91,20 @@ const mockPainting = {
   negative: "",
 };
 
+const nextMockPainting = {
+  ...mockPainting,
+  id: "DOOM_202512020120_abcdef12_999999999999",
+  timestamp: "2025-12-02T01:20:00.000Z",
+  paramsHash: "abcdef12",
+  seed: "999999999999",
+  imageUrl: "/api/r2/images/2025/12/02/DOOM_202512020120_abcdef12_999999999999.webp",
+};
+
 // Import the real module to spread its exports
 const realUseLatestPainting = await import("@/hooks/use-latest-painting");
+let currentLatestPainting: typeof mockPainting | null = mockPainting;
 const latestPaintingHook = () => ({
-  data: mockPainting,
+  data: currentLatestPainting,
   isLoading: false,
   error: null,
 });
@@ -104,12 +120,53 @@ void mock.module("@/hooks/use-latest-painting", () => ({
 
 // Mock Solana wallet hook
 const solanaWalletHook = () => ({
+  connectWallet: async () => {
+    await Promise.resolve();
+    return {};
+  },
   connecting: false,
   connected: false,
   publicKey: null,
 });
 void mock.module("@/hooks/use-solana-wallet", () => ({
   useSolanaWallet: solanaWalletHook,
+}));
+
+const walletHook = () => ({
+  wallet: null,
+});
+void mock.module("@solana/wallet-adapter-react", () => ({
+  useWallet: walletHook,
+}));
+
+const walletModalState = {
+  setVisible: mock((_visible: boolean) => {}),
+};
+const readWalletModalState = () => walletModalState;
+void mock.module("@solana/wallet-adapter-react-ui", () => ({
+  useWalletModal: readWalletModalState,
+}));
+
+const readSolanaMintState = () => ({
+  mint: async () => {
+    await Promise.resolve();
+    return { mintAddress: "mint", signature: "signature" };
+  },
+  isMinting: false,
+});
+void mock.module("@/hooks/use-solana-mint", () => ({
+  useSolanaMint: readSolanaMintState,
+}));
+
+const readIpfsUploadState = () => ({
+  uploadGlbAndMetadata: async () => {
+    await Promise.resolve();
+    return { cidGlb: "cid-glb", cidMetadata: "cid-metadata" };
+  },
+  isUploading: false,
+});
+void mock.module("@/hooks/use-ipfs-upload", () => ({
+  useIpfsUpload: readIpfsUploadState,
 }));
 
 // Note: We don't mock @/lib/glb-export-service globally as it interferes with
@@ -283,10 +340,6 @@ void mock.module("@/components/ui/three-error-boundary", () => ({
 // mint-button.test.tsx. The MintButton component will use its real implementation
 // but with mocked dependencies (wallet, analytics, etc.)
 
-void mock.module("@/components/ui/mint-modal", () => ({
-  MintModal: () => null,
-}));
-
 // Mock gallery sub-components
 void mock.module("@/components/gallery/camera-rig", () => ({
   CameraRig: () => null,
@@ -360,6 +413,7 @@ describe("unit/components/gallery-scene", () => {
     latestOrbitControlsProps = null;
     latestLightsProps = null;
     orbitControlsState = createOrbitControlsState();
+    currentLatestPainting = mockPainting;
 
     // Override performance with complete mock for React 19
     globalThis.performance = createMockPerformance();
@@ -484,6 +538,63 @@ describe("unit/components/gallery-scene", () => {
       // Note: dynamic imports may add some overhead, so we allow up to 300ms
       const endTime = getMockTime();
       expect(endTime - startTime).toBeLessThanOrEqual(300);
+    });
+
+    it("should not mount MintModal until the mint flow is opened", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      const { getByRole, queryByRole, queryByTestId } = render(<GalleryScene />);
+
+      expect(queryByTestId("mint-modal-shell")).toBeNull();
+      expect(queryByRole("button", { name: /connect wallet/i })).toBeNull();
+
+      fireEvent.click(getByRole("button", { name: /mint/i }));
+
+      await waitFor(() => {
+        expect(queryByTestId("mint-modal-shell")).toBeInTheDocument();
+        expect(queryByRole("button", { name: /connect wallet/i })).toBeInTheDocument();
+      });
+    });
+
+    it("should keep MintModal mounted across a transient latest painting refetch gap", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      const { getByRole, queryByRole, queryByTestId, rerender } = render(<GalleryScene />);
+
+      fireEvent.click(getByRole("button", { name: /mint/i }));
+
+      await waitFor(() => {
+        expect(queryByTestId("mint-modal-shell")).toBeInTheDocument();
+        expect(queryByRole("button", { name: /connect wallet/i })).toBeInTheDocument();
+      });
+
+      currentLatestPainting = null;
+      rerender(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(queryByTestId("mint-modal-shell")).toBeInTheDocument();
+        expect(queryByRole("button", { name: /connect wallet/i })).toBeInTheDocument();
+      });
+    });
+
+    it("should close MintModal when a newer painting arrives", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      const { getByRole, queryByRole, queryByTestId, rerender } = render(<GalleryScene />);
+
+      fireEvent.click(getByRole("button", { name: /mint/i }));
+
+      await waitFor(() => {
+        expect(queryByTestId("mint-modal-shell")).toBeInTheDocument();
+      });
+
+      currentLatestPainting = nextMockPainting;
+      rerender(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(queryByTestId("mint-modal-shell")).toBeNull();
+        expect(queryByRole("button", { name: /connect wallet/i })).toBeNull();
+      });
     });
 
     it("should clamp floor overflow into the allowed volume and keep later moves responsive", async () => {

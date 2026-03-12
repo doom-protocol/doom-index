@@ -2,6 +2,16 @@ import type { MDXComponents } from "mdx/types";
 import Image from "next/image";
 import type { ReactNode } from "react";
 
+/**
+ * Strip whitespace-only text nodes from children.
+ * MDX generates newline characters between table elements (tr, thead, tbody)
+ * which violate the HTML spec and cause React hydration errors.
+ */
+function stripWhitespace(children: ReactNode): ReactNode[] {
+  const arr: ReactNode[] = Array.isArray(children) ? (children as ReactNode[]) : [children];
+  return arr.filter((child) => !(typeof child === "string" && child.trim() === ""));
+}
+
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
     h1: ({ children }: { children?: ReactNode }) => (
@@ -70,12 +80,18 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     table: ({ children }: { children?: ReactNode }) => (
       <div className="overflow-x-auto">
-        <table className="w-fit border-collapse border border-gray-300 bg-white text-xs md:text-sm">{children}</table>
+        <table className="w-fit border-collapse border border-gray-300 bg-white text-xs md:text-sm">
+          {stripWhitespace(children)}
+        </table>
       </div>
     ),
-    thead: ({ children }: { children?: ReactNode }) => <thead className="bg-gray-50">{children}</thead>,
-    tbody: ({ children }: { children?: ReactNode }) => <tbody>{children}</tbody>,
-    tr: ({ children }: { children?: ReactNode }) => <tr className="border-b border-gray-200">{children}</tr>,
+    thead: ({ children }: { children?: ReactNode }) => (
+      <thead className="bg-gray-50">{stripWhitespace(children)}</thead>
+    ),
+    tbody: ({ children }: { children?: ReactNode }) => <tbody>{stripWhitespace(children)}</tbody>,
+    tr: ({ children }: { children?: ReactNode }) => (
+      <tr className="border-b border-gray-200">{stripWhitespace(children)}</tr>
+    ),
     th: ({ children }: { children?: ReactNode }) => (
       <th className="border border-gray-300 px-2 py-2 text-left text-xs font-semibold text-gray-900 md:px-4 md:py-3 md:text-sm">
         {children}

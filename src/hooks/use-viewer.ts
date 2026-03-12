@@ -47,7 +47,7 @@ export function useViewer(): null {
       const data = event.data;
 
       if (isViewerCountMessage(data)) {
-        console.log("[useViewer] Received count update from worker:", data.count);
+        logger.debug("viewer.count-update", { count: data.count });
         viewerCountStore.update(data.count, data.updatedAt);
       }
     };

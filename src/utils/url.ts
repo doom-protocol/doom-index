@@ -1,4 +1,4 @@
-import { isDevelopment } from "@/env";
+import { isDevelopment, publicEnv } from "@/env";
 
 /**
  * Get base URL for static asset access
@@ -12,15 +12,14 @@ export function getBaseUrl(): string {
   // This ensures requests go to the same origin as the page
   if (typeof window !== "undefined") {
     const origin = window.location.origin;
-    // Fallback if origin is empty or invalid (e.g., in test environments)
     if (origin && origin !== "null" && origin !== "undefined") {
       return origin;
     }
   }
 
-  // On server side, use env variable or fallback
-  if (process.env.NEXT_PUBLIC_BASE_URL) {
-    return process.env.NEXT_PUBLIC_BASE_URL;
+  const runtimeBaseUrl = publicEnv.NEXT_PUBLIC_BASE_URL;
+  if (runtimeBaseUrl) {
+    return runtimeBaseUrl;
   }
 
   // Fallback for server-side rendering

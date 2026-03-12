@@ -1,4 +1,4 @@
-import { env } from "@/env";
+import { publicEnv } from "@/env";
 
 enum LogLevel {
   ERROR = "ERROR",
@@ -24,7 +24,7 @@ const getTimestamp = () => {
 };
 
 const getCurrentLogLevel = (): LogLevel => {
-  const envLevel = env.LOG_LEVEL;
+  const envLevel = publicEnv.LOG_LEVEL;
   if (LOG_LEVELS.includes(envLevel as LogLevel)) {
     return envLevel as LogLevel;
   }

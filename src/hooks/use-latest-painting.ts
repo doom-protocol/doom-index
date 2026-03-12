@@ -1,10 +1,10 @@
 import { GENERATION_INTERVAL_MS } from "@/constants";
-import { isDevelopment } from "@/env";
 import { getTimestampMs } from "@/lib/cloudflare-image";
 import { useTRPCClient } from "@/lib/trpc/client";
 import type { ArchiveListResponse } from "@/types/archive-list-response";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
+import { isDevelopment } from "@/env";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
@@ -115,24 +115,11 @@ export const useLatestPainting = (
     queryKey: ["paintings", "latest"],
     initialData: initialData ?? undefined,
     queryFn: async (): Promise<PaintingMetadata | null> => {
-      const start = getTimestampMs();
       try {
-        logger.debug("use-latest-painting.fetch.start");
-        const result = (await client.paintings.list.query({
-          limit: 1,
-        })) as ArchiveListResponse;
-        const durationMs = getTimestampMs() - start;
-
-        if (result.items.length === 0) {
-          logger.debug("use-latest-painting.no-paintings", { durationMs });
-          return null;
-        }
-
-        logger.debug("use-latest-painting.fetch.success", {
-          durationMs,
-          paintingId: result.items[0].id,
-        });
-        return result.items[0];
+        const { painting } = await fetchLatestPainting(
+          async () => client.paintings.list.query({ limit: 1 }) as Promise<ArchiveListResponse>,
+        );
+        return painting;
       } catch (error) {
         logger.error("use-latest-painting.fetch-failed", {
           error: error instanceof Error ? error.message : String(error),

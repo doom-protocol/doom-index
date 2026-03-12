@@ -1,6 +1,7 @@
 "use client";
 
 import { getSolanaRpcUrl } from "@/constants/solana";
+import { logger } from "@/utils/logger";
 import { mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import type { Umi } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
@@ -54,7 +55,7 @@ export const UmiProvider: FC<UmiProviderProps> = ({ children }) => {
 
       return umiInstance;
     } catch (error) {
-      console.error("Failed to initialize Umi:", error);
+      logger.error("umi-provider.init-failed", { error });
       // Return null to prevent app crash, but this should be handled by useUmi hook
       return null;
     }
