@@ -41,6 +41,7 @@ interface GallerySceneProps {
 
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
+const MODAL_TRANSITION_MS = 500;
 const CAMERA_FLOOR_CLEARANCE = 0.02;
 const CAMERA_BACK_WALL_CLEARANCE = 0.02;
 const MIN_CAMERA_Y = GALLERY_FLOOR_Y + CAMERA_FLOOR_CLEARANCE;
@@ -83,14 +84,33 @@ export const GalleryScene: FC<GallerySceneProps> = ({
   // Export state
   const paintingRef = useRef<Group>(null);
   const isClampingCameraRef = useRef(false);
+  const mintModalCloseTimeoutRef = useRef<number | null>(null);
+  const mintModalOpenFrameRef = useRef<number | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportedGlbFile, setExportedGlbFile] = useState<File | null>(null);
+  const [isMintModalMounted, setIsMintModalMounted] = useState(false);
   const [isMintModalOpen, setIsMintModalOpen] = useState(false);
+  const [mintPainting, setMintPainting] = useState<PaintingMetadata | null>(null);
 
   const handleExport = async () => {
     // Open mint modal immediately (wallet connection and export will be handled in modal)
     if (latestPainting) {
-      setIsMintModalOpen(true);
+      if (mintModalCloseTimeoutRef.current !== null) {
+        window.clearTimeout(mintModalCloseTimeoutRef.current);
+        mintModalCloseTimeoutRef.current = null;
+      }
+
+      setMintPainting(latestPainting);
+      setIsMintModalMounted(true);
+
+      if (mintModalOpenFrameRef.current !== null) {
+        window.cancelAnimationFrame(mintModalOpenFrameRef.current);
+      }
+
+      mintModalOpenFrameRef.current = window.requestAnimationFrame(() => {
+        setIsMintModalOpen(true);
+        mintModalOpenFrameRef.current = null;
+      });
     }
 
     // If GLB is already exported, no need to export again
@@ -146,28 +166,66 @@ export const GalleryScene: FC<GallerySceneProps> = ({
     }
   };
 
-  const previousThumbnailUrlRef = useRef<string | undefined>(undefined);
+  const previousPaintingKeyRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
-    if (previousThumbnailUrlRef.current === undefined) {
-      previousThumbnailUrlRef.current = thumbnailUrl;
-      logger.debug("gallery-scene.thumbnailUrl.initialized", { thumbnailUrl });
+    const currentPainting = latestPainting ?? null;
+    const currentPaintingKey = currentPainting
+      ? `${currentPainting.id}:${currentPainting.timestamp}:${currentPainting.imageUrl}`
+      : null;
+
+    if (previousPaintingKeyRef.current === undefined) {
+      previousPaintingKeyRef.current = currentPaintingKey;
+      logger.debug("gallery-scene.latest-painting.initialized", {
+        paintingId: currentPainting?.id ?? null,
+        thumbnailUrl,
+      });
       return;
     }
 
-    if (previousThumbnailUrlRef.current !== thumbnailUrl) {
-      logger.debug("gallery-scene.thumbnailUrl.changed", {
-        previousThumbnailUrl: previousThumbnailUrlRef.current,
+    if (currentPaintingKey === null || currentPainting === null) {
+      return;
+    }
+
+    if (previousPaintingKeyRef.current === null) {
+      previousPaintingKeyRef.current = currentPaintingKey;
+      return;
+    }
+
+    if (previousPaintingKeyRef.current !== currentPaintingKey) {
+      logger.debug("gallery-scene.latest-painting.changed", {
         currentThumbnailUrl: thumbnailUrl,
-        lastTs: latestPainting?.timestamp ?? null,
+        paintingId: currentPainting.id,
+        lastTs: currentPainting.timestamp,
       });
-      previousThumbnailUrlRef.current = thumbnailUrl;
+      previousPaintingKeyRef.current = currentPaintingKey;
+      if (mintModalCloseTimeoutRef.current !== null) {
+        window.clearTimeout(mintModalCloseTimeoutRef.current);
+        mintModalCloseTimeoutRef.current = null;
+      }
+      if (mintModalOpenFrameRef.current !== null) {
+        window.cancelAnimationFrame(mintModalOpenFrameRef.current);
+        mintModalOpenFrameRef.current = null;
+      }
       startTransition(() => {
         setExportedGlbFile(null);
         setIsMintModalOpen(false);
+        setIsMintModalMounted(false);
+        setMintPainting(null);
       });
     }
-  }, [thumbnailUrl, latestPainting?.timestamp]);
+  }, [latestPainting, thumbnailUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (mintModalCloseTimeoutRef.current !== null) {
+        window.clearTimeout(mintModalCloseTimeoutRef.current);
+      }
+      if (mintModalOpenFrameRef.current !== null) {
+        window.cancelAnimationFrame(mintModalOpenFrameRef.current);
+      }
+    };
+  }, []);
 
   const handleOrbitControlsChange = (event?: OrbitControlsEvent) => {
     const controls = readOrbitControls(event);
@@ -320,21 +378,30 @@ export const GalleryScene: FC<GallerySceneProps> = ({
         />
       </div>
 
-      {/* Mint Modal */}
-      <MintModal
-        isOpen={isMintModalOpen && !!latestPainting}
-        onClose={() => {
-          setIsMintModalOpen(false);
-          // Do not clear exportedGlbFile here to allow exit animation
-          // It will be cleared when painting changes or manually if needed
-        }}
-        paintingMetadata={{
-          timestamp: latestPainting?.timestamp ?? new Date().toISOString(),
-          paintingHash: latestPainting?.id ?? `painting-${String(Date.now())}`,
-          thumbnailUrl: latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL,
-        }}
-        glbFile={exportedGlbFile}
-      />
+      {isMintModalMounted && mintPainting ? (
+        <MintModal
+          isOpen={isMintModalOpen}
+          onClose={() => {
+            setIsMintModalOpen(false);
+            if (mintModalCloseTimeoutRef.current !== null) {
+              window.clearTimeout(mintModalCloseTimeoutRef.current);
+            }
+            mintModalCloseTimeoutRef.current = window.setTimeout(() => {
+              setIsMintModalMounted(false);
+              setMintPainting(null);
+              mintModalCloseTimeoutRef.current = null;
+            }, MODAL_TRANSITION_MS);
+            // Do not clear exportedGlbFile here to allow exit animation
+            // It will be cleared when painting changes or manually if needed
+          }}
+          paintingMetadata={{
+            timestamp: mintPainting.timestamp,
+            paintingHash: mintPainting.id,
+            thumbnailUrl: mintPainting.imageUrl,
+          }}
+          glbFile={exportedGlbFile}
+        />
+      ) : null}
     </>
   );
 };
