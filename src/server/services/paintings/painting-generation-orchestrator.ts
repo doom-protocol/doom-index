@@ -276,7 +276,7 @@ export class PaintingGenerationOrchestrator {
 
       const imageUrl = storeResult.value.imageUrl;
       const glbUrl = storeResult.value.glbUrl;
-      const finalMetadata: PaintingMetadata = {
+      const finalMetadata: PaintingMetadata & { glbUrl: string } = {
         ...metadata,
         glbUrl,
         imageUrl,
@@ -285,7 +285,6 @@ export class PaintingGenerationOrchestrator {
       // Step 9: Index in D1
       const insertRecord: InsertPaintingRecord = {
         ...finalMetadata,
-        glbUrl,
         glbTxId: storeResult.value.glbTxId,
         imageTxId: storeResult.value.imageTxId,
       };

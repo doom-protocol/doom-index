@@ -7,6 +7,9 @@
 
 import { createEnv } from "@t3-oss/env-nextjs";
 import * as v from "valibot";
+import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "@/constants/arweave";
+
+const unsignedIntegerStringSchema = v.pipe(v.string(), v.regex(/^\d+$/, "Expected an unsigned integer string"));
 
 const serverSchema = {
   // Image Provider API Keys
@@ -19,9 +22,9 @@ const serverSchema = {
   SLACK_WEBHOOK_URL: v.optional(v.string()),
   // ArDrive / Arweave
   ARDRIVE_TURBO_SECRET_KEY: v.optional(v.string()),
-  ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON: v.optional(v.string()),
-  ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC: v.optional(v.string()),
-  ARWEAVE_GATEWAY_BASE_URL: v.optional(v.pipe(v.string(), v.url()), "https://permagate.io"),
+  ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON: v.optional(unsignedIntegerStringSchema),
+  ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC: v.optional(unsignedIntegerStringSchema),
+  ARWEAVE_GATEWAY_BASE_URL: v.optional(v.pipe(v.string(), v.url()), DEFAULT_ARWEAVE_GATEWAY_BASE_URL),
   // Admin Tools
   ADMIN_SECRET: v.optional(v.string()),
   CACHE_PURGE_API_TOKEN: v.optional(v.string()),

@@ -65,7 +65,14 @@ export const MintPaintingPreviewScene: FC<MintPaintingPreviewSceneProps> = ({
         zoomSpeed={0.5}
         enabled={isOpen && !isLoading}
       />
-      <Suspense fallback={null}>
+      <Suspense
+        fallback={
+          <mesh position={[0, 0.8, 4]}>
+            <planeGeometry args={[1.2, 1.6]} />
+            <meshBasicMaterial color="#1f2937" opacity={0.65} transparent />
+          </mesh>
+        }
+      >
         <FramedPainting ref={paintingRef} thumbnailUrl={thumbnailUrl} onTextureReady={onTextureReady} />
       </Suspense>
       {canvasChildren}

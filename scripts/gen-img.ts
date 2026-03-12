@@ -35,6 +35,7 @@ import { TokenDataFetchService } from "@/server/services/paintings/token-data-fe
 import { TokenSelectionService } from "@/server/services/paintings/token-selection";
 import { createTokenAnalysisService } from "@/server/services/token-analysis-service";
 import { createWorldPromptService } from "@/server/services/world-prompt-service";
+import type { AppError } from "@/types/app-error";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
@@ -155,7 +156,12 @@ const createLocalPaintingsRepository = (db: BunSQLiteDatabase<typeof schema>): P
         return ok(undefined);
       } catch (e) {
         console.error("Failed to insert painting locally:", e);
-        return ok(undefined);
+        return err({
+          type: "StorageError",
+          op: "put",
+          key: record.id,
+          message: `Failed to insert painting locally: ${e instanceof Error ? e.message : String(e)}`,
+        } satisfies AppError);
       }
     },
     findById: async () => Promise.resolve(ok(null)),

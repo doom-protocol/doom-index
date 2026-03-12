@@ -34,9 +34,9 @@ describe("useImagePreload", () => {
 
   it("should preload images when URLs are provided", async () => {
     const imageUrls = [
-      "https://permagate.io/image1-tx",
-      "https://permagate.io/image2-tx",
-      "https://permagate.io/image3-tx",
+      "https://example.test/image1-tx",
+      "https://example.test/image2-tx",
+      "https://example.test/image3-tx",
     ];
 
     const { result } = renderHook(() => useImagePreload(imageUrls));
@@ -57,9 +57,9 @@ describe("useImagePreload", () => {
 
   it("should handle image load errors gracefully", async () => {
     const imageUrls = [
-      "https://permagate.io/image1-tx",
-      "https://permagate.io/error.webp",
-      "https://permagate.io/image3-tx",
+      "https://example.test/image1-tx",
+      "https://example.test/error.webp",
+      "https://example.test/image3-tx",
     ];
 
     const { result } = renderHook(() => useImagePreload(imageUrls));
@@ -74,7 +74,7 @@ describe("useImagePreload", () => {
   });
 
   it("should update loadedCount as images load", async () => {
-    const imageUrls = ["https://permagate.io/image1-tx", "https://permagate.io/image2-tx"];
+    const imageUrls = ["https://example.test/image1-tx", "https://example.test/image2-tx"];
 
     const { result } = renderHook(() => useImagePreload(imageUrls));
 
@@ -91,7 +91,7 @@ describe("useImagePreload", () => {
 
   it("should handle URL changes", async () => {
     const { result, rerender } = renderHook(({ urls }: { urls: string[] }) => useImagePreload(urls), {
-      initialProps: { urls: ["https://permagate.io/image1-tx"] },
+      initialProps: { urls: ["https://example.test/image1-tx"] },
     });
 
     await waitFor(() => {
@@ -99,7 +99,7 @@ describe("useImagePreload", () => {
     });
 
     // Change URLs
-    rerender({ urls: ["https://permagate.io/image2-tx", "https://permagate.io/image3-tx"] });
+    rerender({ urls: ["https://example.test/image2-tx", "https://example.test/image3-tx"] });
 
     // Should reset and start loading new images
     expect(result.current.loadedCount).toBe(0);

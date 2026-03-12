@@ -10,6 +10,24 @@ import type { Result } from "neverthrow";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
+const DEFAULT_VISUAL_PARAMS: VisualParams = {
+  bioluminescence: 0,
+  blueBalance: 0,
+  debrisIntensity: 0,
+  fogDensity: 0,
+  fractalDensity: 0,
+  lightIntensity: 0,
+  mechanicalPattern: 0,
+  metallicRatio: 0,
+  organicPattern: 0,
+  radiationGlow: 0,
+  redHighlight: 0,
+  reflectivity: 0,
+  shadowDepth: 0,
+  skyTint: 0,
+  vegetationDensity: 0,
+  warmHue: 0,
+};
 
 export interface ListImagesOptions {
   limit?: number;
@@ -17,6 +35,36 @@ export interface ListImagesOptions {
   offset?: number;
   from?: string;
   to?: string;
+}
+
+function isVisualParams(value: unknown): value is VisualParams {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const visualParams = value as Record<string, unknown>;
+  return Object.keys(DEFAULT_VISUAL_PARAMS).every((key) => typeof visualParams[key] === "number");
+}
+
+function parseVisualParams(item: ArchiveIndexRow): VisualParams {
+  try {
+    const parsed = JSON.parse(item.visualParamsJson) as unknown;
+    if (isVisualParams(parsed)) {
+      return parsed;
+    }
+
+    logger.warn("archive.list.visual-params-invalid", {
+      itemId: item.id,
+      visualParamsJson: item.visualParamsJson,
+    });
+  } catch (error) {
+    logger.warn("archive.list.visual-params-parse-failed", {
+      error: error instanceof Error ? error.message : String(error),
+      itemId: item.id,
+    });
+  }
+
+  return DEFAULT_VISUAL_PARAMS;
 }
 
 function toPaintings(items: ArchiveIndexRow[]): Painting[] {
@@ -31,7 +79,7 @@ function toPaintings(items: ArchiveIndexRow[]): Painting[] {
     prompt: item.prompt,
     seed: item.seed,
     timestamp: item.timestamp,
-    visualParams: JSON.parse(item.visualParamsJson) as VisualParams,
+    visualParams: parseVisualParams(item),
   }));
 }
 

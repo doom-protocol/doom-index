@@ -14,14 +14,14 @@ DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場�
 - 動的 OGP 画像生成（OpenGraph 連携）
 - 3D ギャラリー表示（React Three Fiber）
 - **アーカイブページ** - 過去の生成作品を閲覧・検索可能なアーカイブ機能
-- ストレージ永続化（Arweave / ArDrive Turbo）
+- ストレージ永続化（Arweave / Turbo SDK）
 - **データベース統合（Cloudflare D1）** - アーカイブインデックス、トークン情報、市場スナップショット
 - 動的トークン選択（CoinGecko トレンド API + 強制リスト対応）
 - 画像生成（Runware／モック）- Runware が本番プロバイダ
 - **動的プロンプト生成（dynamic-prompt）** - Tavily Search + Workers AI によるトークン固有のナラティブコンテキスト生成
 - 市場心理分析（Fear & Greed Index 統合）
 - **型安全な API 通信（tRPC v11）** - エンドツーエンドの型安全性を実現
-- **Solana NFT ミント機能** - Metaplex + Arweave によるオンチェーン NFT 発行
+- **Solana NFT ミント機能** - Doom NFT program と Arweave メタデータ/GLB ストレージによるオンチェーン NFT 発行
 - CLI ツールによるローカル生成・検証（`scripts/generate.ts`）
 - ローカル開発用のスケジュール実行・プレビュー（Workers Preview + Cron）
 - **Cloudflare Cache API 統合** - Edge キャッシュによるレイテンシ低減とコスト最適化
@@ -47,7 +47,7 @@ DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場�
 - 型安全（TypeScript）と結果型（neverthrow）で堅牢なエラーハンドリング
 - **tRPC によるエンドツーエンド型安全性** - 開発時の型補完と実行時エラー削減
 - **Edge キャッシュによる最適化** - 外部 API 呼び出し削減と UX 向上
-- **Solana NFT ミント** - Metaplex による分散型所有権証明
+- **Solana NFT ミント** - Doom NFT program と Arweave パスマニフェストによる分散型所有権証明
 
 ## 主要制約・前提
 

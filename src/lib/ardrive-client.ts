@@ -57,9 +57,11 @@ function buildDefaultTags(contentType: string, extraTags?: Tag[]): Tag[] {
 
 export function createArdriveClient(deps: CreateArdriveClientDeps = {}): ArdriveClient {
   const { secretKey, turboClient: mockClient } = deps;
+  let cachedClient: TurboAuthenticatedClient | null = mockClient ?? null;
 
   const getClient = async (): Promise<Result<TurboAuthenticatedClient, AppError>> => {
     if (mockClient) return ok(mockClient);
+    if (cachedClient) return ok(cachedClient);
 
     if (!secretKey) {
       return err({
@@ -72,8 +74,8 @@ export function createArdriveClient(deps: CreateArdriveClientDeps = {}): Ardrive
     try {
       const { TurboFactory } = await import("@ardrive/turbo-sdk");
       const jwk = JSON.parse(secretKey) as ArweaveJWK;
-      const client = TurboFactory.authenticated({ privateKey: jwk });
-      return ok(client);
+      cachedClient = TurboFactory.authenticated({ privateKey: jwk });
+      return ok(cachedClient);
     } catch (error) {
       return err({
         type: "ConfigurationError",
@@ -149,7 +151,7 @@ export function createArdriveClient(deps: CreateArdriveClientDeps = {}): Ardrive
           fileStreamFactory: () => Readable.from([fileBytes]),
           fileSizeFactory: () => fileBytes.byteLength,
           dataItemOpts: {
-            tags: allTags.map((t) => ({ name: t.name, value: t.value })),
+            tags: allTags,
           },
         });
 

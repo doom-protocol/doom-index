@@ -152,6 +152,43 @@ describe("unit/lib/ardrive-client", () => {
     ]);
   });
 
+  it("reuses the authenticated Turbo client across calls", async () => {
+    const authenticatedClient = {
+      getBalance: mock(async () => {
+        await Promise.resolve();
+        return {
+          controlledWinc: "1",
+          effectiveBalance: "1",
+          givenApprovals: [],
+          receivedApprovals: [],
+          winc: "1",
+        };
+      }),
+      getUploadCosts: mock(async () => {
+        await Promise.resolve();
+        return [{ adjustments: [], fees: [], winc: "2" }];
+      }),
+    };
+    const authenticatedMock = mock(() => authenticatedClient);
+
+    void mock.module("@ardrive/turbo-sdk", () => ({
+      TurboFactory: {
+        authenticated: authenticatedMock,
+      },
+    }));
+
+    const client = createArdriveClient({
+      secretKey: JSON.stringify({ kty: "RSA" }),
+    });
+
+    const balanceResult = await client.getBalance();
+    const costResult = await client.getUploadCosts([1024]);
+
+    expect(balanceResult.isOk()).toBe(true);
+    expect(costResult.isOk()).toBe(true);
+    expect(authenticatedMock).toHaveBeenCalledTimes(1);
+  });
+
   it("reads Turbo balance and upload costs through the wrapper", async () => {
     const getBalance = mock(async () =>
       Promise.resolve({

@@ -226,6 +226,7 @@ async function getCurrentPaintingImageBuffer(
   assetsFetcher: Fetcher | undefined,
   imagesBinding: ImagesBinding,
 ): Promise<ArrayBuffer> {
+  const ogpImageFetchTimeoutMs = 5_000;
   logger.info("ogp.step1-fetch-state");
   // Step 1: Fetch latest painting from D1
   const repo = createPaintingsRepository({ d1Binding: db });
@@ -254,7 +255,33 @@ async function getCurrentPaintingImageBuffer(
     imageUrl: latestPainting.imageUrl,
   });
 
-  const imageResponse = await fetch(latestPainting.imageUrl);
+  const imageFetchController = new AbortController();
+  const imageFetchTimeout = setTimeout(() => {
+    imageFetchController.abort();
+  }, ogpImageFetchTimeoutMs);
+
+  let imageResponse: Response;
+  try {
+    imageResponse = await fetch(latestPainting.imageUrl, {
+      signal: imageFetchController.signal,
+    });
+  } catch (error) {
+    clearTimeout(imageFetchTimeout);
+    const reason =
+      error instanceof DOMException && error.name === "AbortError"
+        ? "fetch timeout"
+        : error instanceof Error
+          ? error.message
+          : String(error);
+    logger.error("ogp.step2-image-failed", {
+      reason,
+      error: reason,
+      willFallback: true,
+    });
+    throw new Error(`Failed to fetch image: ${reason}`);
+  }
+  clearTimeout(imageFetchTimeout);
+
   if (!imageResponse.ok) {
     const reason = `fetch failed with status ${String(imageResponse.status)}`;
     logger.error("ogp.step2-image-failed", {

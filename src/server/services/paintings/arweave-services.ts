@@ -64,6 +64,8 @@ interface UploadedNftMetadataBundle {
   tokenMetadataUrl: string;
 }
 
+type TokenId = bigint | number | string;
+
 const DEFAULT_GATEWAY_PROBE_TIMEOUT_MS = 1500;
 const MANIFEST_CONTENT_TYPE = "application/x.arweave-manifest+json";
 const MANIFEST_VERSION = "0.2.0";
@@ -129,9 +131,15 @@ export function buildMetadataJson(params: {
   imageContentType: string;
   imageUrl: string;
   paintingId?: string;
-  tokenId: number;
+  tokenId: TokenId;
 }): MetadataJson {
-  const attributes: MetadataJson["attributes"] = [{ trait_type: "Token ID", value: params.tokenId }];
+  const normalizedTokenId = String(params.tokenId);
+  const attributes: MetadataJson["attributes"] = [
+    {
+      trait_type: "Token ID",
+      value: typeof params.tokenId === "number" ? params.tokenId : normalizedTokenId,
+    },
+  ];
 
   if (params.paintingId) {
     attributes.push({ trait_type: "Painting ID", value: params.paintingId });
@@ -141,9 +149,9 @@ export function buildMetadataJson(params: {
     animation_url: params.animationUrl,
     attributes,
     description: METADATA_DESCRIPTION,
-    external_url: `https://doomindex.fun/artworks/${String(params.tokenId)}`,
+    external_url: `https://doomindex.fun/artworks/${normalizedTokenId}`,
     image: params.imageUrl,
-    name: `DOOM INDEX #${String(params.tokenId)}`,
+    name: `DOOM INDEX #${normalizedTokenId}`,
     properties: {
       category: "vr",
       files: [
@@ -155,7 +163,7 @@ export function buildMetadataJson(params: {
   };
 }
 
-export function buildManifestJson(params: { metadataId: string; tokenId: number }): ArweavePathManifest {
+export function buildManifestJson(params: { metadataId: string; tokenId: TokenId }): ArweavePathManifest {
   return {
     manifest: "arweave/paths",
     paths: {
@@ -168,7 +176,7 @@ export function buildManifestJson(params: { metadataId: string; tokenId: number 
 export function buildTokenMetadataUrl(params: {
   gatewayBaseUrl?: string;
   manifestId: string;
-  tokenId: number;
+  tokenId: TokenId;
 }): string {
   return appendUrlSegment(
     buildTransactionUrl({
@@ -222,7 +230,7 @@ export async function resolveTokenMetadataGateway(params: {
   explicitGatewayBaseUrl?: string;
   fetchImpl?: typeof fetch;
   manifestUploadResult: { id: string };
-  tokenId: number;
+  tokenId: TokenId;
 }): Promise<{ baseMetadataUrl: string; resolvedFromProbe: boolean; tokenMetadataUrl: string }> {
   const gatewayBaseUrls = buildGatewayBaseUrls({ explicitGatewayBaseUrl: params.explicitGatewayBaseUrl });
 
@@ -309,14 +317,23 @@ export async function ensureTurboUploadFunding(params: {
   notify?: (message: string) => Promise<void>;
   notifyThresholdWinc?: bigint;
 }): Promise<Result<TurboFundingCheckResult, AppError>> {
-  const balanceResult = await params.ardrive.getBalance();
+  const getBalance = async (): Promise<Result<bigint, AppError>> => {
+    const balanceResult = await params.ardrive.getBalance();
+    if (balanceResult.isErr()) {
+      return err({
+        type: "ExternalApiError",
+        provider: "ardrive",
+        message: `Turbo balance check failed: ${balanceResult.error.message}`,
+        details: balanceResult.error,
+      });
+    }
+
+    return ok(BigInt(balanceResult.value.winc));
+  };
+
+  const balanceResult = await getBalance();
   if (balanceResult.isErr()) {
-    return err({
-      type: "ExternalApiError",
-      provider: "ardrive",
-      message: `Turbo balance check failed: ${balanceResult.error.message}`,
-      details: balanceResult.error,
-    });
+    return err(balanceResult.error);
   }
 
   const costResult = await params.ardrive.getUploadCosts(params.byteCounts);
@@ -329,9 +346,9 @@ export async function ensureTurboUploadFunding(params: {
     });
   }
 
-  const currentBalanceWinc = BigInt(balanceResult.value.winc);
+  const currentBalanceWinc = balanceResult.value;
   const estimatedCostWinc = sumWincStrings(costResult.value.map((price) => price.winc));
-  const remainingBalanceWinc = currentBalanceWinc - estimatedCostWinc;
+  let remainingBalanceWinc = currentBalanceWinc - estimatedCostWinc;
   const notifyThresholdWinc = params.notifyThresholdWinc ?? BigInt(0);
   const shouldNotify = remainingBalanceWinc <= notifyThresholdWinc;
 
@@ -363,6 +380,21 @@ export async function ensureTurboUploadFunding(params: {
       });
     }
     topUpTransactionId = topUpResult.value.id;
+
+    const postTopUpBalanceResult = await getBalance();
+    if (postTopUpBalanceResult.isErr()) {
+      return err(postTopUpBalanceResult.error);
+    }
+
+    remainingBalanceWinc = postTopUpBalanceResult.value - estimatedCostWinc;
+  }
+
+  if (remainingBalanceWinc < BigInt(0)) {
+    return err({
+      type: "ExternalApiError",
+      provider: "ardrive",
+      message: `Turbo balance is insufficient for upload: need ${String(estimatedCostWinc)} winc, projected remaining ${String(remainingBalanceWinc)} winc`,
+    });
   }
 
   return ok({
@@ -453,7 +485,7 @@ export async function uploadNftMetadataBundle(params: {
   imageContentType: string;
   imageUrl: string;
   paintingId?: string;
-  tokenId: number;
+  tokenId: TokenId;
 }): Promise<Result<UploadedNftMetadataBundle, AppError>> {
   const metadataJson = buildMetadataJson({
     animationUrl: params.glbUrl,

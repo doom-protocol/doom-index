@@ -169,6 +169,10 @@ const connectionHook = () => ({
         value: { err: null },
       };
     }),
+    getAccountInfo: mock(async () => {
+      await Promise.resolve();
+      return null;
+    }),
     getLatestBlockhash: mock(async () => {
       await Promise.resolve();
       return {

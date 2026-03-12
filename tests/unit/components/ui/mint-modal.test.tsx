@@ -342,5 +342,13 @@ describe("unit/components/ui/mint-modal", () => {
       expect(sendTransactionMock).toHaveBeenCalledTimes(1);
       expect(prepareMintMetadataMock).toHaveBeenCalled();
     });
+
+    const preparationPayloads = (
+      prepareMintMetadataMock.mock.calls as unknown as Array<[{ paintingId: string; tokenId: string }]>
+    ).map(([payload]) => payload);
+
+    expect(preparationPayloads.length).toBeGreaterThan(0);
+    expect(preparationPayloads.every((payload) => payload.paintingId === "abcd1234")).toBe(true);
+    expect(preparationPayloads.every((payload) => typeof payload.tokenId === "string")).toBe(true);
   });
 });

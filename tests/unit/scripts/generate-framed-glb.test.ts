@@ -16,4 +16,10 @@ describe("unit/scripts/generate-framed-glb", () => {
       output: "/tmp/output.glb",
     });
   });
+
+  it("rejects missing values for required flag arguments", () => {
+    expect(() => parseArgs(["--image"])).toThrow("Missing value for --image");
+    expect(() => parseArgs(["--out"])).toThrow("Missing value for --out");
+    expect(() => parseArgs(["--image", "--out", "out/test.glb"])).toThrow("Missing value for --image");
+  });
 });

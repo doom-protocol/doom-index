@@ -9,7 +9,7 @@ updated: 2025-12-02
 - フロントエンド: Next.js 16（App Router, Edge Runtime, React Compiler）
 - バンドラー: **next-rspack** - Rust ベース高速バンドラー
 - 実行/配信: Cloudflare Pages + Workers（Cron Triggers: 10分ごと）
-- ストレージ: Arweave（ArDrive Turbo 経由アップロード、gateway 読み取り）
+- ストレージ: Arweave（Turbo SDK 経由アップロード、gateway 読み取り）
 - **データベース: Cloudflare D1（SQLite 互換）** - アーカイブインデックスとトークンコンテキストキャッシュ
 - ランタイム: ローカル Bun / 本番 workerd
 - 画像生成: Runware（本番）/ Mock（テスト用）
@@ -21,7 +21,7 @@ updated: 2025-12-02
 - エラー処理: neverthrow（Result 型）
 - **バリデーション: valibot** - 型安全な環境変数とスキーマ検証
 - **キャッシュ: Cloudflare Cache API** - Edge キャッシュによる最適化
-- **NFT ミント: Metaplex + ArDrive Turbo** - Solana NFT 発行と Arweave ストレージ
+- **NFT ミント: Doom NFT program + Arweave ストレージ** - カスタム Solana ミントプログラムと Arweave メタデータ配信
 
 ## リポジトリ主要構成
 
@@ -55,7 +55,7 @@ updated: 2025-12-02
 ## バックエンド/エッジ
 
 - Cloudflare Workers（Cron: 10分ごとトリガ - `*/10 * * * *`）
-- ArDrive Turbo / Arweave gateway 連携
+- Turbo SDK / Arweave gateway 連携
 - OpenNext for Cloudflare によるビルド/デプロイ（`@opennextjs/cloudflare@^1.17.1`）
 
 ## 依存関係（主要）
@@ -69,7 +69,7 @@ updated: 2025-12-02
 - **マイグレーション: `drizzle-kit@^0.31.7`** - Drizzle マイグレーション管理
 - 状態/バリデーション: `@tanstack/react-query@^5.90.11`, `valibot@^1.2.0`, `neverthrow@^7.2.0`
 - **NFT/ブロックチェーン: `@metaplex-foundation/*`, `@solana/web3.js@^1.98.4`, `@solana/wallet-adapter-*`**
-- **Arweave: `@ardrive/turbo-sdk`** - ArDrive Turbo SDK for Arweave uploads
+- **Arweave: `@ardrive/turbo-sdk`** - Turbo SDK for Arweave uploads
 - **環境変数管理: `@t3-oss/env-nextjs@^0.13.8`** - valibot ベースの型安全な環境変数検証
 - 開発/CF: `wrangler@^4.71.0`, `@cloudflare/workers-types@^4.20260310.1`, `@opennextjs/cloudflare@^1.17.1`
 - 品質: `eslint@^9.39.1`, `eslint-config-next@16.1.6`, `oxfmt`
@@ -163,4 +163,4 @@ bun run deploy         # Cloudflare へデプロイ
 - **動的プロンプト生成** - Tavily + Workers AI によるトークンコンテキストの自動生成とキャッシュ
 - **環境変数検証: valibot** - `@t3-oss/env-nextjs` による型安全な環境変数管理
 - **Cloudflare Cache API 統合** - Edge キャッシュによる最適化
-- **Solana NFT ミント** - Metaplex + Arweave による分散型所有権証明
+- **Solana NFT ミント** - Doom NFT program + Arweave パスマニフェストによる分散型所有権証明

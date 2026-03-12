@@ -2,6 +2,7 @@ import type { AppError } from "@/types/app-error";
 import { getBaseUrl } from "@/utils/url";
 import { err, ok } from "neverthrow";
 import type { Result } from "neverthrow";
+import * as path from "node:path";
 
 export interface LoadedAsset {
   bytes: Uint8Array;
@@ -54,18 +55,34 @@ async function readLocalAsset(path: string): Promise<Uint8Array> {
   return new Uint8Array(file);
 }
 
-function resolveLocalPublicAssetPath(path: `/${string}`): Result<string, AppError> {
+function resolveLocalPublicAssetPath(assetPath: `/${string}`): Result<string, AppError> {
   if (typeof process === "undefined" || typeof process.cwd !== "function") {
     return err({
       type: "StorageError",
-      key: path,
-      message: `Cannot resolve local public asset ${path} outside a Node-compatible runtime`,
+      key: assetPath,
+      message: `Cannot resolve local public asset ${assetPath} outside a Node-compatible runtime`,
       op: "get",
     });
   }
 
-  const normalizedPath = path.replace(/^\/+/, "");
-  return ok(`${process.cwd()}/public/${normalizedPath}`);
+  const trimmedPath = assetPath.replace(/^\/+/, "").replaceAll("\\", "/");
+  const normalizedPath = path.posix.normalize(trimmedPath);
+  if (
+    normalizedPath === "" ||
+    normalizedPath === "." ||
+    normalizedPath.startsWith("..") ||
+    normalizedPath.includes("/..") ||
+    normalizedPath.includes("\\..")
+  ) {
+    return err({
+      type: "StorageError",
+      key: assetPath,
+      message: `Cannot resolve public asset ${assetPath}: path escapes or is outside the public directory`,
+      op: "get",
+    });
+  }
+
+  return ok(path.join(process.cwd(), "public", normalizedPath));
 }
 
 export async function loadAssetFromPathOrUrl(

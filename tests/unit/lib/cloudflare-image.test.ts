@@ -372,8 +372,8 @@ describe("cloudflare-image", () => {
 
       const { getImageUrlWithDpr, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
 
-      // Even with DPR of 3, the effective DPR should be clamped to 1.5
-      // Use /api/r2/ path since public directory images are not transformed
+      // Legacy /api/r2/ paths bypass IMAGE_PRESETS-driven DPR transforms and are returned as-is.
+      // This assertion locks the passthrough behavior in getImageUrlWithDpr for that path family.
       const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 3);
       expect(result).toBe("/api/r2/paintings/test.jpg");
     });

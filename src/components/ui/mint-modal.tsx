@@ -75,7 +75,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
       try {
         const preparationPromise = trpcClient.paintings.prepareMintMetadata.mutate({
           paintingId: paintingMetadata.paintingHash,
-          tokenId: Number(tokenId),
+          tokenId: tokenId.toString(),
         });
         mintPreparationPromiseRef.current = preparationPromise.then(() => undefined);
         const result = await preparationPromise;

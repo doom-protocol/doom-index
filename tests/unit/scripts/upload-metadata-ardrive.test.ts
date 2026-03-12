@@ -3,18 +3,18 @@ import { ok } from "neverthrow";
 
 import {
   buildGatewayBaseUrls,
+  buildMetadataJson,
   buildManifestJson,
   buildPreferredAssetUrl,
   buildTransactionUrl,
   buildTokenMetadataUrl,
-  buildMetadataJson,
   ensureTurboUploadFunding,
   normalizeGatewayBaseUrl,
-  inferContentTypeFromPath,
-  parseArgs,
   parseOptionalBigInt,
   resolveTokenMetadataGateway,
-} from "../../../scripts/upload-metadata-ardrive";
+} from "@/server/services/paintings/arweave-services";
+import { inferContentTypeFromPath } from "@/server/services/paintings/asset-loader";
+import { parseArgs } from "../../../scripts/upload-metadata-ardrive";
 
 describe("unit/scripts/upload-metadata-ardrive", () => {
   it("requires token id, thumbnail, and glb inputs", () => {
@@ -53,6 +53,30 @@ describe("unit/scripts/upload-metadata-ardrive", () => {
       thumbnail: "https://example.com/thumb.webp",
       tokenId: 1,
     });
+  });
+
+  it("accepts token id zero", () => {
+    expect(
+      parseArgs(["--token-id", "0", "--thumbnail", "https://example.com/thumb.webp", "--glb", "/tmp/model.glb"]),
+    ).toEqual({
+      dryRun: false,
+      fixture: false,
+      gateway: undefined,
+      glb: "/tmp/model.glb",
+      paintingId: undefined,
+      thumbnail: "https://example.com/thumb.webp",
+      tokenId: 0,
+    });
+  });
+
+  it("rejects missing option values instead of consuming the next flag", () => {
+    expect(() => parseArgs(["--token-id", "1", "--thumbnail", "--glb", "model.glb"])).toThrow(
+      "Error: --thumbnail requires a value",
+    );
+    expect(() => parseArgs(["--token-id"])).toThrow("Error: --token-id requires a value");
+    expect(() => parseArgs(["--token-id", "1", "--thumbnail", "thumb.webp", "--glb", "--dry-run"])).toThrow(
+      "Error: --glb requires a value",
+    );
   });
 
   it("normalizes gateway base urls and keeps explicit gateways first", () => {
@@ -182,17 +206,19 @@ describe("unit/scripts/upload-metadata-ardrive", () => {
 
   it("notifies and auto tops up when projected balance falls below the threshold", async () => {
     const notify = mock(async (_message: string) => Promise.resolve());
+    let balanceCalls = 0;
 
     const result = await ensureTurboUploadFunding({
       ardrive: {
         getBalance: async () => {
           await Promise.resolve();
+          balanceCalls += 1;
           return ok({
-            controlledWinc: "100",
-            effectiveBalance: "100",
+            controlledWinc: balanceCalls === 1 ? "100" : "300",
+            effectiveBalance: balanceCalls === 1 ? "100" : "300",
             givenApprovals: [],
             receivedApprovals: [],
-            winc: "100",
+            winc: balanceCalls === 1 ? "100" : "300",
           });
         },
         getUploadCosts: async () => {
@@ -223,9 +249,50 @@ describe("unit/scripts/upload-metadata-ardrive", () => {
       didNotify: true,
       didTopUp: true,
       estimatedCostWinc: BigInt(80),
-      remainingBalanceWinc: BigInt(20),
+      remainingBalanceWinc: BigInt(220),
       topUpTransactionId: "fund-1",
     });
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails when the projected balance stays negative without auto top-up", async () => {
+    const notify = mock(async (_message: string) => Promise.resolve());
+
+    const result = await ensureTurboUploadFunding({
+      ardrive: {
+        getBalance: async () => {
+          await Promise.resolve();
+          return ok({
+            controlledWinc: "50",
+            effectiveBalance: "50",
+            givenApprovals: [],
+            receivedApprovals: [],
+            winc: "50",
+          });
+        },
+        getUploadCosts: async () => {
+          await Promise.resolve();
+          return ok([{ adjustments: [], fees: [], winc: "80" }]);
+        },
+        topUpWithTokens: async () => {
+          await Promise.resolve();
+          return ok({
+            id: "fund-1",
+            owner: "owner",
+            quantity: "1000",
+            status: "confirmed",
+            target: "target",
+            token: "arweave",
+            winc: "900",
+          });
+        },
+      },
+      byteCounts: [1024],
+      notify,
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().message).toContain("Turbo balance is insufficient for upload");
     expect(notify).toHaveBeenCalledTimes(1);
   });
 });

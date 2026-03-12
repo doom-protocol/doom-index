@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
-import { ok } from "neverthrow";
+import { err, ok } from "neverthrow";
 
 import {
   buildBaseMetadataUrl,
@@ -160,17 +160,19 @@ describe("unit/server/services/paintings/arweave-services", () => {
 
   it("checks Turbo funding before upload when a threshold is configured", async () => {
     const notify = mock(async (_message: string) => Promise.resolve());
+    let balanceCalls = 0;
 
     const result = await ensureTurboUploadFunding({
       ardrive: {
         getBalance: async () => {
           await Promise.resolve();
+          balanceCalls += 1;
           return ok({
-            controlledWinc: "100",
-            effectiveBalance: "100",
+            controlledWinc: balanceCalls === 1 ? "100" : "300",
+            effectiveBalance: balanceCalls === 1 ? "100" : "300",
             givenApprovals: [],
             receivedApprovals: [],
-            winc: "100",
+            winc: balanceCalls === 1 ? "100" : "300",
           });
         },
         getUploadCosts: async () => {
@@ -202,7 +204,7 @@ describe("unit/server/services/paintings/arweave-services", () => {
       didNotify: true,
       didTopUp: true,
       estimatedCostWinc: BigInt(80),
-      remainingBalanceWinc: BigInt(20),
+      remainingBalanceWinc: BigInt(220),
       topUpTransactionId: "fund-1",
     });
   });
@@ -245,5 +247,77 @@ describe("unit/server/services/paintings/arweave-services", () => {
 
     expect(notify).toHaveBeenCalledTimes(1);
     expect(notify.mock.calls[0]?.[0]).toContain("likely insufficient");
+  });
+
+  it("fails when projected balance is insufficient and auto top-up is not configured", async () => {
+    const result = await ensureTurboUploadFunding({
+      ardrive: {
+        getBalance: async () => {
+          await Promise.resolve();
+          return ok({
+            controlledWinc: "50",
+            effectiveBalance: "50",
+            givenApprovals: [],
+            receivedApprovals: [],
+            winc: "50",
+          });
+        },
+        getUploadCosts: async () => {
+          await Promise.resolve();
+          return ok([{ adjustments: [], fees: [], winc: "80" }]);
+        },
+        topUpWithTokens: async () => {
+          await Promise.resolve();
+          return err({
+            type: "InternalError",
+            message: "top-up should not run",
+          });
+        },
+      },
+      byteCounts: [1024],
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().message).toContain("insufficient");
+  });
+
+  it("fails when projected balance is still insufficient after auto top-up", async () => {
+    let balanceCalls = 0;
+    const result = await ensureTurboUploadFunding({
+      ardrive: {
+        getBalance: async () => {
+          await Promise.resolve();
+          balanceCalls += 1;
+          return ok({
+            controlledWinc: balanceCalls === 1 ? "50" : "60",
+            effectiveBalance: balanceCalls === 1 ? "50" : "60",
+            givenApprovals: [],
+            receivedApprovals: [],
+            winc: balanceCalls === 1 ? "50" : "60",
+          });
+        },
+        getUploadCosts: async () => {
+          await Promise.resolve();
+          return ok([{ adjustments: [], fees: [], winc: "80" }]);
+        },
+        topUpWithTokens: async () => {
+          await Promise.resolve();
+          return ok({
+            id: "fund-1",
+            owner: "owner",
+            quantity: "1000",
+            status: "confirmed",
+            target: "target",
+            token: "arweave",
+            winc: "10",
+          });
+        },
+      },
+      autoTopUpAmountWinston: BigInt(1000),
+      byteCounts: [1024],
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr().message).toContain("insufficient");
   });
 });

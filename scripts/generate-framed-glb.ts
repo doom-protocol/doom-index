@@ -10,11 +10,21 @@ import {
   copyBytesToArrayBuffer,
 } from "@/server/services/paintings/framed-painting-bundle-service";
 import { mkdir, stat } from "node:fs/promises";
-import { dirname, isAbsolute } from "node:path";
+import { dirname } from "node:path";
 
 interface GenerateFramedGlbArgs {
   image: string;
   output: string;
+}
+
+function readRequiredFlagValue(args: string[], index: number, flag: "--image" | "--out"): string {
+  const value = args[index + 1];
+  if (!value || value.startsWith("-")) {
+    printUsage();
+    throw new Error(`Missing value for ${flag}`);
+  }
+
+  return value;
 }
 
 function printUsage(): void {
@@ -44,10 +54,12 @@ export function parseArgs(args: string[] = process.argv.slice(2)): GenerateFrame
   for (let index = 0; index < args.length; index++) {
     switch (args[index]) {
       case "--image":
-        parsed.image = args[++index] ?? parsed.image;
+        parsed.image = readRequiredFlagValue(args, index, "--image");
+        index += 1;
         break;
       case "--out":
-        parsed.output = args[++index] ?? parsed.output;
+        parsed.output = readRequiredFlagValue(args, index, "--out");
+        index += 1;
         break;
       case "--help":
         printUsage();
@@ -68,7 +80,7 @@ async function pathExists(path: string): Promise<boolean> {
 }
 
 async function loadInputAsset(pathOrUrl: string) {
-  if (pathOrUrl.startsWith("/") && !(isAbsolute(pathOrUrl) && (await pathExists(pathOrUrl)))) {
+  if (pathOrUrl.startsWith("/") && !(await pathExists(pathOrUrl))) {
     const asset = await loadPublicAsset({ path: pathOrUrl as `/${string}` });
     if (asset.isErr()) {
       throw new Error(asset.error.message);

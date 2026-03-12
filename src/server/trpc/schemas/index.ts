@@ -33,5 +33,11 @@ export const paintingsListSchema = v.pipe(
 
 export const prepareMintMetadataSchema = v.object({
   paintingId: v.pipe(v.string(), v.minLength(1, "paintingId is required")),
-  tokenId: v.pipe(v.number(), v.integer(), v.minValue(0, "tokenId must be positive")),
+  tokenId: v.pipe(
+    v.union([
+      v.pipe(v.number(), v.integer(), v.minValue(0, "tokenId must be non-negative")),
+      v.pipe(v.string(), v.regex(/^\d+$/, "tokenId must be a non-negative integer")),
+    ]),
+    v.transform((value) => String(value)),
+  ),
 });

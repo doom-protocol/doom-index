@@ -63,7 +63,11 @@ describe("unit/server/services/paintings/framed-glb-composition-service", () => 
     });
 
     expect(result.isOk()).toBe(true);
-    const glb = result._unsafeUnwrap();
+    if (result.isErr()) {
+      throw new Error(result.error.message);
+    }
+
+    const glb = result.value;
     const json = readGlbJson(glb);
 
     expect(glb.byteLength).toBeGreaterThan(500_000);
