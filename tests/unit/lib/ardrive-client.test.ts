@@ -75,7 +75,7 @@ describe("unit/lib/ardrive-client", () => {
         dataCaches: [],
         fastFinalityIndexes: [],
         id: "tx-123",
-        url: "https://arweave.net/tx-123",
+        url: "https://permagate.io/tx-123",
       });
     }
 
@@ -128,7 +128,7 @@ describe("unit/lib/ardrive-client", () => {
         dataCaches: [],
         fastFinalityIndexes: [],
         id: "tx-json",
-        url: "https://arweave.net/tx-json",
+        url: "https://permagate.io/tx-json",
       });
     }
 
@@ -150,5 +150,66 @@ describe("unit/lib/ardrive-client", () => {
       { name: "Content-Type", value: "application/json" },
       { name: "File-Type", value: "metadata" },
     ]);
+  });
+
+  it("reads Turbo balance and upload costs through the wrapper", async () => {
+    const getBalance = mock(async () =>
+      Promise.resolve({
+        controlledWinc: "200",
+        effectiveBalance: "200",
+        givenApprovals: [],
+        receivedApprovals: [],
+        winc: "200",
+      }),
+    );
+    const getUploadCosts = mock(async () => Promise.resolve([{ adjustments: [], fees: [], winc: "25" }]));
+
+    const client = createArdriveClient({
+      turboClient: {
+        getBalance,
+        getUploadCosts,
+      } as never,
+    });
+
+    const balanceResult = await client.getBalance();
+    expect(balanceResult.isOk()).toBe(true);
+    if (balanceResult.isOk()) {
+      expect(balanceResult.value.winc).toBe("200");
+    }
+
+    const costResult = await client.getUploadCosts([1024]);
+    expect(costResult.isOk()).toBe(true);
+    if (costResult.isOk()) {
+      expect(costResult.value).toEqual([{ adjustments: [], fees: [], winc: "25" }]);
+    }
+  });
+
+  it("tops up Turbo balance with the configured token amount", async () => {
+    const topUpWithTokens = mock(async (_params: unknown) =>
+      Promise.resolve({
+        id: "fund-1",
+        quantity: "5000",
+        owner: "owner",
+        status: "confirmed",
+        target: "target-wallet",
+        token: "arweave",
+        winc: "900",
+      }),
+    );
+
+    const client = createArdriveClient({
+      turboClient: {
+        topUpWithTokens,
+      } as never,
+    });
+
+    const result = await client.topUpWithTokens({ tokenAmount: "5000" });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value.id).toBe("fund-1");
+      expect(result.value.winc).toBe("900");
+    }
+    expect(topUpWithTokens).toHaveBeenCalledWith({ tokenAmount: "5000" });
   });
 });

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
+import { ok } from "neverthrow";
 
 import {
   buildGatewayBaseUrls,
@@ -7,9 +8,11 @@ import {
   buildTransactionUrl,
   buildTokenMetadataUrl,
   buildMetadataJson,
+  ensureTurboUploadFunding,
   normalizeGatewayBaseUrl,
   inferContentTypeFromPath,
   parseArgs,
+  parseOptionalBigInt,
   resolveTokenMetadataGateway,
 } from "../../../scripts/upload-metadata-ardrive";
 
@@ -57,7 +60,7 @@ describe("unit/scripts/upload-metadata-ardrive", () => {
       buildGatewayBaseUrls({
         explicitGatewayBaseUrl: "https://preferred.example/",
       }),
-    ).toEqual(["https://preferred.example", "https://arweave.net"]);
+    ).toEqual(["https://preferred.example", "https://permagate.io"]);
   });
 
   it("infers content types from file extensions", () => {
@@ -150,7 +153,7 @@ describe("unit/scripts/upload-metadata-ardrive", () => {
               ? input.url
               : "";
       return new Response(null, {
-        status: url === "https://arweave.net/manifest-tx/1" ? 200 : 404,
+        status: url === "https://permagate.io/manifest-tx/1" ? 200 : 404,
       });
     }) as typeof fetch;
 
@@ -164,9 +167,64 @@ describe("unit/scripts/upload-metadata-ardrive", () => {
     });
 
     expect(resolvedGateway).toEqual({
-      baseMetadataUrl: "https://arweave.net/manifest-tx",
+      baseMetadataUrl: "https://permagate.io/manifest-tx",
       resolvedFromProbe: true,
-      tokenMetadataUrl: "https://arweave.net/manifest-tx/1",
+      tokenMetadataUrl: "https://permagate.io/manifest-tx/1",
     });
+  });
+
+  it("parses optional bigint env values", () => {
+    expect(parseOptionalBigInt("5000", "TEST_VAR")).toBe(BigInt(5000));
+    expect(parseOptionalBigInt(undefined, "TEST_VAR")).toBeUndefined();
+    expect(() => parseOptionalBigInt("abc", "TEST_VAR")).toThrow("TEST_VAR");
+  });
+
+  it("notifies and auto tops up when projected balance falls below the threshold", async () => {
+    const notify = mock(async (_message: string) => Promise.resolve());
+
+    const result = await ensureTurboUploadFunding({
+      ardrive: {
+        getBalance: async () => {
+          await Promise.resolve();
+          return ok({
+            controlledWinc: "100",
+            effectiveBalance: "100",
+            givenApprovals: [],
+            receivedApprovals: [],
+            winc: "100",
+          });
+        },
+        getUploadCosts: async () => {
+          await Promise.resolve();
+          return ok([{ adjustments: [], fees: [], winc: "80" }]);
+        },
+        topUpWithTokens: async () => {
+          await Promise.resolve();
+          return ok({
+            id: "fund-1",
+            owner: "owner",
+            quantity: "1000",
+            status: "confirmed",
+            target: "target",
+            token: "arweave",
+            winc: "900",
+          });
+        },
+      },
+      autoTopUpAmountWinston: BigInt(1000),
+      byteCounts: [1024],
+      notify,
+      notifyThresholdWinc: BigInt(50),
+    });
+
+    expect(result).toEqual({
+      currentBalanceWinc: BigInt(100),
+      didNotify: true,
+      didTopUp: true,
+      estimatedCostWinc: BigInt(80),
+      remainingBalanceWinc: BigInt(20),
+      topUpTransactionId: "fund-1",
+    });
+    expect(notify).toHaveBeenCalledTimes(1);
   });
 });

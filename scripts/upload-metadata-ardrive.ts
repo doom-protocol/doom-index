@@ -11,11 +11,13 @@
  *     --thumbnail <path|url>  # Thumbnail image path or URL (required)
  *     --glb <path|url>        # GLB file path or URL (required)
  *     [--painting-id <id>]    # Optional Painting-Id tag value
+ *     [--gateway <url>]       # Optional gateway override (default: permagate.io)
  *     [--dry-run]             # Print resolved asset info only, skip uploads
  */
 
+import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "@/constants/arweave";
 import { createArdriveClient } from "@/lib/ardrive-client";
-import type { Tag } from "@/lib/ardrive-client";
+import type { ArdriveClient, Tag } from "@/lib/ardrive-client";
 import { existsSync } from "node:fs";
 import { extname } from "node:path";
 
@@ -60,6 +62,22 @@ interface ArweavePathManifest {
   version: "0.2.0";
 }
 
+interface TurboFundingNotificationPayload {
+  autoTopUpAmountWinston?: bigint;
+  currentBalanceWinc: bigint;
+  estimatedCostWinc: bigint;
+  remainingBalanceWinc: bigint;
+}
+
+interface TurboFundingCheckResult {
+  currentBalanceWinc: bigint;
+  didNotify: boolean;
+  didTopUp: boolean;
+  estimatedCostWinc: bigint;
+  remainingBalanceWinc: bigint;
+  topUpTransactionId?: string;
+}
+
 const THUMBNAIL_FILE_TYPE = "thumbnail";
 const ANIMATION_FILE_TYPE = "animation";
 const METADATA_FILE_TYPE = "metadata";
@@ -70,7 +88,6 @@ const METADATA_DESCRIPTION =
   "A generative artwork from DOOM INDEX - an AI-powered decentralized archive of financial emotions.";
 const JSON_ENCODER = new TextEncoder();
 const MANIFEST_VERSION = "0.2.0";
-const DEFAULT_ARWEAVE_GATEWAY_BASE_URL = "https://arweave.net";
 const DEFAULT_GATEWAY_PROBE_TIMEOUT_MS = 1500;
 const CONTENT_TYPES_BY_EXTENSION: Record<string, string> = {
   ".glb": "model/gltf-binary",
@@ -141,6 +158,18 @@ export function normalizeGatewayBaseUrl(gatewayBaseUrl: string): string {
   }
 
   return new URL(normalized).toString().replace(/\/+$/u, "");
+}
+
+export function parseOptionalBigInt(value: string | undefined, envName: string): bigint | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  try {
+    return BigInt(value);
+  } catch {
+    throw new Error(`Error: ${envName} must be an integer string`);
+  }
 }
 
 function appendUrlSegment(baseUrl: string, segment: string): string {
@@ -324,6 +353,99 @@ export async function resolveTokenMetadataGateway(params: {
   };
 }
 
+function stringifyTurboFundingMessage(payload: TurboFundingNotificationPayload): string {
+  const autoTopUpSuffix =
+    payload.autoTopUpAmountWinston === undefined
+      ? "auto top-up disabled"
+      : `auto top-up ${String(payload.autoTopUpAmountWinston)} winston`;
+
+  return [
+    "DOOM INDEX Turbo balance is low.",
+    `Current balance: ${String(payload.currentBalanceWinc)} winc`,
+    `Estimated upload cost: ${String(payload.estimatedCostWinc)} winc`,
+    `Projected remaining balance: ${String(payload.remainingBalanceWinc)} winc`,
+    autoTopUpSuffix,
+  ].join("\n");
+}
+
+async function notifyTurboFundingStatus(message: string): Promise<void> {
+  console.warn(message);
+
+  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+  if (!webhookUrl) {
+    return;
+  }
+
+  await fetch(webhookUrl, {
+    body: JSON.stringify({ text: message }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+}
+
+function sumWincStrings(values: string[]): bigint {
+  return values.reduce((sum, value) => sum + BigInt(value), BigInt(0));
+}
+
+export async function ensureTurboUploadFunding(params: {
+  ardrive: Pick<ArdriveClient, "getBalance" | "getUploadCosts" | "topUpWithTokens">;
+  autoTopUpAmountWinston?: bigint;
+  byteCounts: number[];
+  notify?: (message: string) => Promise<void>;
+  notifyThresholdWinc?: bigint;
+}): Promise<TurboFundingCheckResult> {
+  const balanceResult = await params.ardrive.getBalance();
+  if (balanceResult.isErr()) {
+    throw new Error(`Turbo balance check failed: ${balanceResult.error.message}`);
+  }
+
+  const costResult = await params.ardrive.getUploadCosts(params.byteCounts);
+  if (costResult.isErr()) {
+    throw new Error(`Turbo upload cost estimate failed: ${costResult.error.message}`);
+  }
+
+  const currentBalanceWinc = BigInt(balanceResult.value.winc);
+  const estimatedCostWinc = sumWincStrings(costResult.value.map((price) => price.winc));
+  const remainingBalanceWinc = currentBalanceWinc - estimatedCostWinc;
+  const notifyThresholdWinc = params.notifyThresholdWinc ?? BigInt(0);
+  const shouldNotify = remainingBalanceWinc <= notifyThresholdWinc;
+
+  let didNotify = false;
+  let topUpTransactionId: string | undefined;
+
+  if (shouldNotify) {
+    const message = stringifyTurboFundingMessage({
+      autoTopUpAmountWinston: params.autoTopUpAmountWinston,
+      currentBalanceWinc,
+      estimatedCostWinc,
+      remainingBalanceWinc,
+    });
+    didNotify = true;
+    await (params.notify ?? notifyTurboFundingStatus)(message);
+  }
+
+  if (shouldNotify && params.autoTopUpAmountWinston !== undefined) {
+    const topUpResult = await params.ardrive.topUpWithTokens({
+      tokenAmount: params.autoTopUpAmountWinston.toString(),
+    });
+    if (topUpResult.isErr()) {
+      throw new Error(`Turbo top-up failed: ${topUpResult.error.message}`);
+    }
+    topUpTransactionId = topUpResult.value.id;
+  }
+
+  return {
+    currentBalanceWinc,
+    didNotify,
+    didTopUp: topUpTransactionId !== undefined,
+    estimatedCostWinc,
+    remainingBalanceWinc,
+    topUpTransactionId,
+  };
+}
+
 function isRemoteAssetPath(pathOrUrl: string): boolean {
   return pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://");
 }
@@ -383,9 +505,9 @@ async function main(): Promise<void> {
   console.log(`  Type:   ${glbAsset.contentType}`);
 
   const dryRunMetadata = buildMetadataJson({
-    animationUrl: "https://arweave.net/<animation-tx-id>",
+    animationUrl: buildTransactionUrl({ txId: "<animation-tx-id>" }),
     imageContentType: thumbnailAsset.contentType,
-    imageUrl: "https://arweave.net/<thumbnail-tx-id>",
+    imageUrl: buildTransactionUrl({ txId: "<thumbnail-tx-id>" }),
     paintingId,
     tokenId,
   });
@@ -393,6 +515,8 @@ async function main(): Promise<void> {
     metadataId: "<metadata-tx-id>",
     tokenId,
   });
+  const metadataBytes = JSON_ENCODER.encode(JSON.stringify(dryRunMetadata));
+  const manifestBytes = JSON_ENCODER.encode(JSON.stringify(dryRunManifest));
 
   if (dryRun) {
     console.log("\n--- metadata.json ---");
@@ -412,6 +536,23 @@ async function main(): Promise<void> {
   }
 
   const ardrive = createArdriveClient({ secretKey: process.env.ARDRIVE_TURBO_SECRET_KEY });
+  await ensureTurboUploadFunding({
+    ardrive,
+    autoTopUpAmountWinston: parseOptionalBigInt(
+      process.env.ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON,
+      "ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON",
+    ),
+    byteCounts: [
+      thumbnailAsset.bytes.byteLength,
+      glbAsset.bytes.byteLength,
+      metadataBytes.byteLength,
+      manifestBytes.byteLength,
+    ],
+    notifyThresholdWinc: parseOptionalBigInt(
+      process.env.ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC,
+      "ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC",
+    ),
+  });
   const baseTags = buildBaseTags(paintingId);
 
   console.log("[3/6] Uploading thumbnail to Arweave...");

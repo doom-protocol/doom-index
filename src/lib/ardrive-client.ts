@@ -5,6 +5,7 @@
  * Follows the same neverthrow Result<T, AppError> pattern as the rest of the codebase
  */
 
+import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "@/constants/arweave";
 import type { AppError } from "@/types/app-error";
 import { TurboFactory } from "@ardrive/turbo-sdk";
 import { Readable } from "node:stream";
@@ -13,6 +14,10 @@ import type { Result } from "neverthrow";
 
 type ArweaveJWK = import("@ardrive/turbo-sdk").ArweaveJWK;
 type TurboAuthenticatedClient = import("@ardrive/turbo-sdk").TurboAuthenticatedClient;
+type TurboBalanceResponse = import("@ardrive/turbo-sdk").TurboBalanceResponse;
+type TurboCryptoFundResponse = import("@ardrive/turbo-sdk").TurboCryptoFundResponse;
+type TurboFundWithTokensParams = import("@ardrive/turbo-sdk").TurboFundWithTokensParams;
+type TurboPriceResponse = import("@ardrive/turbo-sdk").TurboPriceResponse;
 
 export interface UploadResult {
   dataCaches: string[];
@@ -27,6 +32,9 @@ export interface Tag {
 }
 
 export interface ArdriveClient {
+  getBalance: () => Promise<Result<TurboBalanceResponse, AppError>>;
+  getUploadCosts: (bytes: number[]) => Promise<Result<TurboPriceResponse[], AppError>>;
+  topUpWithTokens: (params: TurboFundWithTokensParams) => Promise<Result<TurboCryptoFundResponse, AppError>>;
   uploadFile: (data: Buffer | Uint8Array, contentType: string, tags?: Tag[]) => Promise<Result<UploadResult, AppError>>;
   uploadJson: (json: object, tags?: Tag[]) => Promise<Result<UploadResult, AppError>>;
 }
@@ -36,7 +44,6 @@ export interface CreateArdriveClientDeps {
   turboClient?: TurboAuthenticatedClient;
 }
 
-const ARWEAVE_GATEWAY = "https://arweave.net";
 const JSON_ENCODER = new TextEncoder();
 
 function buildDefaultTags(contentType: string, extraTags?: Tag[]): Tag[] {
@@ -77,6 +84,54 @@ export function createArdriveClient(deps: CreateArdriveClientDeps = {}): Ardrive
   };
 
   return {
+    async getBalance(): Promise<Result<TurboBalanceResponse, AppError>> {
+      const clientResult = getClient();
+      if (clientResult.isErr()) return err(clientResult.error);
+
+      try {
+        return ok(await clientResult.value.getBalance());
+      } catch (error) {
+        return err({
+          type: "ExternalApiError",
+          provider: "ardrive",
+          message: `Failed to read Turbo balance: ${error instanceof Error ? error.message : "Unknown error"}`,
+          details: error,
+        });
+      }
+    },
+
+    async getUploadCosts(bytes: number[]): Promise<Result<TurboPriceResponse[], AppError>> {
+      const clientResult = getClient();
+      if (clientResult.isErr()) return err(clientResult.error);
+
+      try {
+        return ok(await clientResult.value.getUploadCosts({ bytes }));
+      } catch (error) {
+        return err({
+          type: "ExternalApiError",
+          provider: "ardrive",
+          message: `Failed to estimate Turbo upload costs: ${error instanceof Error ? error.message : "Unknown error"}`,
+          details: error,
+        });
+      }
+    },
+
+    async topUpWithTokens(params: TurboFundWithTokensParams): Promise<Result<TurboCryptoFundResponse, AppError>> {
+      const clientResult = getClient();
+      if (clientResult.isErr()) return err(clientResult.error);
+
+      try {
+        return ok(await clientResult.value.topUpWithTokens(params));
+      } catch (error) {
+        return err({
+          type: "ExternalApiError",
+          provider: "ardrive",
+          message: `Failed to top up Turbo balance: ${error instanceof Error ? error.message : "Unknown error"}`,
+          details: error,
+        });
+      }
+    },
+
     async uploadFile(
       data: Buffer | Uint8Array,
       contentType: string,
@@ -102,7 +157,7 @@ export function createArdriveClient(deps: CreateArdriveClientDeps = {}): Ardrive
           dataCaches: response.dataCaches,
           fastFinalityIndexes: response.fastFinalityIndexes,
           id: response.id,
-          url: `${ARWEAVE_GATEWAY}/${response.id}`,
+          url: `${DEFAULT_ARWEAVE_GATEWAY_BASE_URL}/${response.id}`,
         });
       } catch (error) {
         return err({
