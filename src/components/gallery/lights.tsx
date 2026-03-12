@@ -7,7 +7,7 @@ import type { FC } from "react";
 import { CircleGeometry, DoubleSide, Float32BufferAttribute } from "three";
 import type { Mesh, Object3D, SpotLight } from "three";
 
-import { isPublicDevelopment } from "@/utils/public-env";
+import { isDevelopment } from "@/env";
 
 interface LightsProps {
   variant?: "simple" | "full";
@@ -155,7 +155,7 @@ const LightsWithControls = dynamic(
 
 // Exported component that switches between simple, full, or dev-controlled lights
 export const Lights: FC<LightsProps> = ({ variant = "full", disableDevControls = false }) => {
-  const isDevMode = isPublicDevelopment();
+  const isDevMode = isDevelopment();
 
   if (variant === "simple") {
     return <SimpleLights />;

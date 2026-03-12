@@ -1,10 +1,10 @@
 import { GENERATION_INTERVAL_MS } from "@/constants";
+import { isDevelopment } from "@/env";
 import { getTimestampMs } from "@/lib/cloudflare-image";
 import { useTRPCClient } from "@/lib/trpc/client";
 import type { ArchiveListResponse } from "@/types/archive-list-response";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { isPublicDevelopment } from "@/utils/public-env";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
@@ -139,7 +139,7 @@ export const useLatestPainting = (
         });
 
         // Development fallback: Return a mock painting if tRPC fails
-        if (isPublicDevelopment()) {
+        if (isDevelopment()) {
           logger.info("use-latest-painting.development-fallback");
           return {
             id: "mock-painting-1",

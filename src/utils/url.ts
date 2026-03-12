@@ -1,4 +1,4 @@
-import { isPublicDevelopment } from "@/utils/public-env";
+import { isDevelopment } from "@/env";
 
 /**
  * Get base URL for static asset access
@@ -24,5 +24,5 @@ export function getBaseUrl(): string {
   }
 
   // Fallback for server-side rendering
-  return isPublicDevelopment() ? "http://localhost:8787" : "https://doomindex.fun";
+  return isDevelopment() ? "http://localhost:8787" : "https://doomindex.fun";
 }
