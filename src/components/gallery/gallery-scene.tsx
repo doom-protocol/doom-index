@@ -10,6 +10,7 @@ import type { OrbitControlsBounds } from "@/lib/pure/gallery-orbit-bounds";
 import type { PaintingMetadata } from "@/types/paintings";
 import { glbExportService } from "@/lib/glb-export-service";
 import { logger } from "@/utils/logger";
+import { isPublicDevelopment } from "@/utils/public-env";
 import { Grid, OrbitControls, Stats } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import dynamic from "next/dynamic";
@@ -27,7 +28,6 @@ import { CameraRig } from "./camera-rig";
 import { FramedPainting } from "./framed-painting";
 import { GALLERY_BACK_WALL_Z, GALLERY_FLOOR_Y, GalleryRoom } from "./gallery-room";
 import { Lights } from "./lights";
-import { isDevelopment } from "@/env";
 
 // Dynamic import for Leva to avoid SSR/document issues in test environment
 const Leva = dynamic(async () => import("leva").then((mod) => ({ default: mod.Leva })), {
@@ -76,7 +76,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
   cameraPreset: initialCameraPreset = "painting",
   initialPainting,
 }) => {
-  const isDevMode = isDevelopment();
+  const isDevMode = isPublicDevelopment();
   const { data: latestPainting } = useLatestPainting(initialPainting);
   const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 
@@ -321,20 +321,22 @@ export const GalleryScene: FC<GallerySceneProps> = ({
       </div>
 
       {/* Mint Modal */}
-      <MintModal
-        isOpen={isMintModalOpen && !!latestPainting}
-        onClose={() => {
-          setIsMintModalOpen(false);
-          // Do not clear exportedGlbFile here to allow exit animation
-          // It will be cleared when painting changes or manually if needed
-        }}
-        paintingMetadata={{
-          timestamp: latestPainting?.timestamp ?? new Date().toISOString(),
-          paintingHash: latestPainting?.id ?? `painting-${String(Date.now())}`,
-          thumbnailUrl: latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL,
-        }}
-        glbFile={exportedGlbFile}
-      />
+      {isMintModalOpen && latestPainting ? (
+        <MintModal
+          isOpen
+          onClose={() => {
+            setIsMintModalOpen(false);
+            // Do not clear exportedGlbFile here to allow exit animation
+            // It will be cleared when painting changes or manually if needed
+          }}
+          paintingMetadata={{
+            timestamp: latestPainting.timestamp,
+            paintingHash: latestPainting.id,
+            thumbnailUrl: latestPainting.imageUrl,
+          }}
+          glbFile={exportedGlbFile}
+        />
+      ) : null}
     </>
   );
 };

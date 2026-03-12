@@ -283,8 +283,13 @@ void mock.module("@/components/ui/three-error-boundary", () => ({
 // mint-button.test.tsx. The MintButton component will use its real implementation
 // but with mocked dependencies (wallet, analytics, etc.)
 
+let mintModalRenderCount = 0;
+
 void mock.module("@/components/ui/mint-modal", () => ({
-  MintModal: () => null,
+  MintModal: () => {
+    mintModalRenderCount += 1;
+    return null;
+  },
 }));
 
 // Mock gallery sub-components
@@ -359,6 +364,7 @@ describe("unit/components/gallery-scene", () => {
     loggerCalls.length = 0;
     latestOrbitControlsProps = null;
     latestLightsProps = null;
+    mintModalRenderCount = 0;
     orbitControlsState = createOrbitControlsState();
 
     // Override performance with complete mock for React 19
@@ -615,6 +621,18 @@ describe("unit/components/gallery-scene", () => {
       });
 
       expect(latestLightsProps?.disableDevControls).toBe(true);
+    });
+
+    it("should not mount the mint modal before the user opens it", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      render(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(latestOrbitControlsProps).toBeDefined();
+      });
+
+      expect(mintModalRenderCount).toBe(0);
     });
 
     it("should configure OrbitControls with damping for smooth inertial movement", async () => {
