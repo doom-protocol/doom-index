@@ -1,65 +1,50 @@
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { existsSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import * as schema from "./schema";
 
+export const DEFAULT_LOCAL_D1_STATE_DIR = ".wrangler/state/v3/d1/miniflare-D1DatabaseObject";
+
 /**
- * Setup local database with schema tables
- * Creates tables if they don't exist
+ * Resolve the Wrangler-managed local D1 SQLite file.
  */
-export const setupLocalDb = (dbPath: string = "local-test.db"): BunSQLiteDatabase<typeof schema> => {
-  const sqlite = new Database(dbPath);
-  const db = drizzle(sqlite, { schema });
+export function resolveLocalD1SqlitePath(explicitPath?: string, stateDir: string = DEFAULT_LOCAL_D1_STATE_DIR): string {
+  if (explicitPath) {
+    return explicitPath;
+  }
 
-  // Create tokens table
-  sqlite.run(`
-    CREATE TABLE IF NOT EXISTS tokens (
-      id TEXT PRIMARY KEY NOT NULL,
-      symbol TEXT NOT NULL,
-      name TEXT NOT NULL,
-      coingecko_id TEXT NOT NULL,
-      logo_url TEXT,
-      short_context TEXT,
-      categories TEXT NOT NULL,
-      created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
+  if (!existsSync(stateDir)) {
+    throw new Error(
+      `Wrangler local D1 database not found. Expected local state directory at ${stateDir}. Run Wrangler local dev/migrations first or pass --db.`,
     );
-  `);
+  }
 
-  // Create market_snapshots table
-  sqlite.run(`
-    CREATE TABLE IF NOT EXISTS market_snapshots (
-      hour_bucket TEXT PRIMARY KEY NOT NULL,
-      total_market_cap_usd REAL NOT NULL,
-      total_volume_usd REAL NOT NULL,
-      market_cap_change_percentage_24h_usd REAL NOT NULL,
-      btc_dominance REAL NOT NULL,
-      eth_dominance REAL NOT NULL,
-      active_cryptocurrencies INTEGER NOT NULL,
-      markets INTEGER NOT NULL,
-      fear_greed_index INTEGER,
-      updated_at INTEGER NOT NULL,
-      created_at INTEGER NOT NULL
+  const candidatePaths = readdirSync(stateDir)
+    .filter((entry) => entry.endsWith(".sqlite") || entry.endsWith(".db"))
+    .map((entry) => join(stateDir, entry))
+    .sort((left, right) => statSync(right).mtimeMs - statSync(left).mtimeMs);
+
+  const databasePath = candidatePaths[0];
+  if (!databasePath) {
+    throw new Error(
+      `Wrangler local D1 database not found. No .sqlite files were present in ${stateDir}. Run Wrangler local dev/migrations first or pass --db.`,
     );
-  `);
+  }
 
-  // Create paintings table (matching src/server/db/schema/paintings.ts)
-  sqlite.run(`
-    CREATE TABLE IF NOT EXISTS paintings (
-      id TEXT PRIMARY KEY NOT NULL,
-      ts INTEGER NOT NULL,
-      timestamp TEXT NOT NULL,
-      minute_bucket TEXT NOT NULL,
-      params_hash TEXT NOT NULL,
-      seed TEXT NOT NULL,
-      r2_key TEXT NOT NULL,
-      image_url TEXT NOT NULL,
-      file_size INTEGER NOT NULL,
-      visual_params_json TEXT NOT NULL,
-      prompt TEXT NOT NULL,
-      negative TEXT NOT NULL
-    );
-  `);
+  return databasePath;
+}
 
-  return db;
+/**
+ * Open the local Wrangler D1 SQLite state through Drizzle.
+ */
+export const setupLocalDb = (dbPath?: string): BunSQLiteDatabase<typeof schema> => {
+  const resolvedDbPath = resolveLocalD1SqlitePath(dbPath);
+  const sqlite = new Database(resolvedDbPath, {
+    create: false,
+    readwrite: true,
+  });
+
+  return drizzle(sqlite, { schema });
 };

@@ -21,7 +21,7 @@ updated: 2025-12-02
 - エラー処理: neverthrow（Result 型）
 - **バリデーション: valibot** - 型安全な環境変数とスキーマ検証
 - **キャッシュ: Cloudflare Cache API** - Edge キャッシュによる最適化
-- **NFT ミント: Metaplex + Irys** - Solana NFT 発行と IPFS ストレージ
+- **NFT ミント: Metaplex + ArDrive Turbo** - Solana NFT 発行と Arweave ストレージ
 
 ## リポジトリ主要構成
 
@@ -69,7 +69,7 @@ updated: 2025-12-02
 - **マイグレーション: `drizzle-kit@^0.31.7`** - Drizzle マイグレーション管理
 - 状態/バリデーション: `@tanstack/react-query@^5.90.11`, `valibot@^1.2.0`, `neverthrow@^7.2.0`
 - **NFT/ブロックチェーン: `@metaplex-foundation/*`, `@solana/web3.js@^1.98.4`, `@solana/wallet-adapter-*`**
-- **IPFS: `pinata@^2.5.1`** - Pinata SDK for IPFS uploads
+- **Arweave: `@ardrive/turbo-sdk`** - ArDrive Turbo SDK for Arweave uploads
 - **環境変数管理: `@t3-oss/env-nextjs@^0.13.8`** - valibot ベースの型安全な環境変数検証
 - 開発/CF: `wrangler@^4.71.0`, `@cloudflare/workers-types@^4.20260310.1`, `@opennextjs/cloudflare@^1.17.1`
 - 品質: `eslint@^9.39.1`, `eslint-config-next@16.1.6`, `oxfmt`
@@ -88,7 +88,7 @@ updated: 2025-12-02
 - **Tavily API キー: `TAVILY_API_KEY`**（dynamic-prompt 用、任意）
 - **CoinGecko API キー: `COINGECKO_API_KEY`**（任意、レート制限緩和用）
 - **Solana RPC: `NEXT_PUBLIC_SOLANA_RPC_URL`**（任意、デフォルト: devnet）
-- **IPFS: `PINATA_JWT`**（NFT メタデータアップロード用、任意）
+- **Arweave: `ARDRIVE_TURBO_SECRET_KEY`**（ArDrive JWK secret, NFT metadata upload 用）
 - D1 データベース設定（Cloudflare Dashboard で設定）
   - `CLOUDFLARE_ACCOUNT_ID`（本番マイグレーション用）
   - `CLOUDFLARE_DATABASE_ID`（本番マイグレーション用）
@@ -163,4 +163,4 @@ bun run deploy         # Cloudflare へデプロイ
 - **動的プロンプト生成** - Tavily + Workers AI によるトークンコンテキストの自動生成とキャッシュ
 - **環境変数検証: valibot** - `@t3-oss/env-nextjs` による型安全な環境変数管理
 - **Cloudflare Cache API 統合** - Edge キャッシュによる最適化
-- **Solana NFT ミント** - Metaplex + Irys による分散型所有権証明
+- **Solana NFT ミント** - Metaplex + Arweave による分散型所有権証明

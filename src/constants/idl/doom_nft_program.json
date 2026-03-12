@@ -1,0 +1,636 @@
+{
+  "address": "u929SRVcCFcGM2iyYkMykDRq7xW4N9ozEMU3Vo1hgfP",
+  "metadata": {
+    "name": "doom_nft_program",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "initialize_collection",
+      "discriminator": [112, 62, 53, 139, 173, 152, 98, 93],
+      "accounts": [
+        {
+          "name": "global_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": ["global_config"]
+        },
+        {
+          "name": "collection",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "collection_update_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99, 111, 108, 108, 101, 99, 116, 105, 111, 110, 95, 97, 117, 116, 104, 111, 114, 105, 116, 121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "global_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mpl_core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_global_config",
+      "discriminator": [113, 216, 122, 131, 225, 209, 22, 55],
+      "accounts": [
+        {
+          "name": "global_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "base_metadata_url",
+          "type": "string"
+        },
+        {
+          "name": "upgrade_authority",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "mint_doom_index_nft",
+      "discriminator": [155, 84, 20, 249, 126, 6, 85, 218],
+      "accounts": [
+        {
+          "name": "global_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reservation",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [114, 101, 115, 101, 114, 118, 97, 116, 105, 111, 110]
+              },
+              {
+                "kind": "arg",
+                "path": "token_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "asset",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "collection_update_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99, 111, 108, 108, 101, 99, 116, 105, 111, 110, 95, 97, 117, 116, 104, 111, 114, 105, 116, 121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "global_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "collection",
+          "docs": ["Existing Core collection account."],
+          "writable": true
+        },
+        {
+          "name": "mpl_core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "token_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "reserve_token_id",
+      "discriminator": [7, 8, 207, 40, 48, 69, 156, 194],
+      "accounts": [
+        {
+          "name": "global_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reservation",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [114, 101, 115, 101, 114, 118, 97, 116, 105, 111, 110]
+              },
+              {
+                "kind": "account",
+                "path": "global_config.next_token_id",
+                "account": "GlobalConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "set_mint_paused",
+      "discriminator": [122, 112, 56, 49, 172, 101, 49, 228],
+      "accounts": [
+        {
+          "name": "global_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": ["global_config"]
+        }
+      ],
+      "args": [
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "set_upgrade_authority",
+      "discriminator": [114, 238, 86, 218, 10, 127, 45, 73],
+      "accounts": [
+        {
+          "name": "global_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "upgrade_authority",
+          "signer": true,
+          "relations": ["global_config"]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_upgrade_authority",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "transfer_admin",
+      "discriminator": [42, 242, 66, 106, 228, 10, 111, 156],
+      "accounts": [
+        {
+          "name": "global_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": ["global_config"]
+        },
+        {
+          "name": "upgrade_authority",
+          "signer": true,
+          "relations": ["global_config"]
+        },
+        {
+          "name": "new_admin",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_base_metadata_url",
+      "discriminator": [6, 133, 217, 104, 240, 241, 114, 88],
+      "accounts": [
+        {
+          "name": "global_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": ["global_config"]
+        }
+      ],
+      "args": [
+        {
+          "name": "base_metadata_url",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BaseCollectionV1",
+      "discriminator": [5]
+    },
+    {
+      "name": "GlobalConfig",
+      "discriminator": [149, 8, 156, 202, 160, 252, 176, 217]
+    },
+    {
+      "name": "MintReservation",
+      "discriminator": [242, 105, 180, 100, 40, 241, 149, 198]
+    }
+  ],
+  "events": [
+    {
+      "name": "AssetMinted",
+      "discriminator": [103, 66, 89, 42, 62, 44, 211, 1]
+    },
+    {
+      "name": "BaseMetadataUrlUpdated",
+      "discriminator": [133, 53, 246, 62, 192, 105, 25, 1]
+    },
+    {
+      "name": "TokenReserved",
+      "discriminator": [11, 183, 67, 38, 218, 42, 142, 149]
+    },
+    {
+      "name": "UpgradeAuthorityUpdated",
+      "discriminator": [196, 209, 84, 227, 51, 120, 139, 163]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "The caller is not authorized to perform this action."
+    },
+    {
+      "code": 6001,
+      "name": "MintPaused",
+      "msg": "Minting is currently paused."
+    },
+    {
+      "code": 6002,
+      "name": "CollectionNotInitialized",
+      "msg": "The collection has not been initialized."
+    },
+    {
+      "code": 6003,
+      "name": "CollectionMismatch",
+      "msg": "The provided collection account does not match the configured collection."
+    },
+    {
+      "code": 6004,
+      "name": "CollectionAlreadyInitialized",
+      "msg": "The collection has already been initialized."
+    },
+    {
+      "code": 6005,
+      "name": "ReservationAlreadyMinted",
+      "msg": "The reservation has already been used to mint an asset."
+    },
+    {
+      "code": 6006,
+      "name": "ReservationOwnerMismatch",
+      "msg": "The reservation belongs to a different user."
+    },
+    {
+      "code": 6007,
+      "name": "ReservationTokenMismatch",
+      "msg": "The reservation token id does not match the instruction token id."
+    },
+    {
+      "code": 6008,
+      "name": "CollectionAuthorityMismatch",
+      "msg": "The configured collection authority does not match the derived PDA."
+    },
+    {
+      "code": 6009,
+      "name": "BaseMetadataUrlInvalid",
+      "msg": "The base metadata url is invalid."
+    },
+    {
+      "code": 6010,
+      "name": "TokenIdOverflow",
+      "msg": "The token id counter overflowed."
+    }
+  ],
+  "types": [
+    {
+      "name": "AssetMinted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "token_id",
+            "type": "u64"
+          },
+          {
+            "name": "asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BaseCollectionV1",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "defined": {
+                "name": "Key"
+              }
+            }
+          },
+          {
+            "name": "update_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "num_minted",
+            "type": "u32"
+          },
+          {
+            "name": "current_size",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BaseMetadataUrlUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "old_base_url",
+            "type": "string"
+          },
+          {
+            "name": "new_base_url",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GlobalConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "upgrade_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "next_token_id",
+            "type": "u64"
+          },
+          {
+            "name": "mint_paused",
+            "type": "bool"
+          },
+          {
+            "name": "base_metadata_url",
+            "type": "string"
+          },
+          {
+            "name": "collection",
+            "type": "pubkey"
+          },
+          {
+            "name": "collection_update_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Key",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Uninitialized"
+          },
+          {
+            "name": "AssetV1"
+          },
+          {
+            "name": "HashedAssetV1"
+          },
+          {
+            "name": "PluginHeaderV1"
+          },
+          {
+            "name": "PluginRegistryV1"
+          },
+          {
+            "name": "CollectionV1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MintReservation",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "token_id",
+            "type": "u64"
+          },
+          {
+            "name": "reserver",
+            "type": "pubkey"
+          },
+          {
+            "name": "minted",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenReserved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "token_id",
+            "type": "u64"
+          },
+          {
+            "name": "reserver",
+            "type": "pubkey"
+          },
+          {
+            "name": "reservation",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpgradeAuthorityUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "old_upgrade_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_upgrade_authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    }
+  ]
+}

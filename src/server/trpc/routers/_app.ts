@@ -1,5 +1,4 @@
 import { router } from "../trpc";
-import { ipfsRouter } from "./ipfs";
 import { paintingsRouter } from "./paintings";
 import { r2Router } from "./r2";
 import { tokenRouter } from "./token";
@@ -10,7 +9,6 @@ export const appRouter = router({
   token: tokenRouter,
   r2: r2Router,
   paintings: paintingsRouter,
-  ipfs: ipfsRouter,
 });
 
 // Export for client-side type inference

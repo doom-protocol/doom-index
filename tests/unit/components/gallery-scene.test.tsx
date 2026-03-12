@@ -8,10 +8,11 @@
 // Import preload to ensure happy-dom globals are registered before any imports
 import "../../preload";
 
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import type { FC, ReactNode } from "react";
+import type { PublicKey } from "@solana/web3.js";
 import { createLoggerMock, createMockPerformance, resetMockTime, advanceMockTime, getMockTime } from "../../mocks";
 
 // Store captured logger calls for assertions using shared helper
@@ -133,9 +134,34 @@ void mock.module("@/hooks/use-solana-wallet", () => ({
 }));
 
 const walletHook = () => ({
+  connected: false,
+  publicKey: null as PublicKey | null,
+  sendTransaction: mock(async () => {
+    await Promise.resolve();
+    return "sig";
+  }),
   wallet: null,
 });
+const connectionHook = () => ({
+  connection: {
+    confirmTransaction: mock(async () => {
+      await Promise.resolve();
+      return {
+        context: { slot: 1 },
+        value: { err: null },
+      };
+    }),
+    getLatestBlockhash: mock(async () => {
+      await Promise.resolve();
+      return {
+        blockhash: "9Wzyd8M5LE8P6J4s3FCq8nP4C5sVuk94suBT76cKiDH6",
+        lastValidBlockHeight: 123,
+      };
+    }),
+  },
+});
 void mock.module("@solana/wallet-adapter-react", () => ({
+  useConnection: connectionHook,
   useWallet: walletHook,
 }));
 
@@ -145,28 +171,6 @@ const walletModalState = {
 const readWalletModalState = () => walletModalState;
 void mock.module("@solana/wallet-adapter-react-ui", () => ({
   useWalletModal: readWalletModalState,
-}));
-
-const readSolanaMintState = () => ({
-  mint: async () => {
-    await Promise.resolve();
-    return { mintAddress: "mint", signature: "signature" };
-  },
-  isMinting: false,
-});
-void mock.module("@/hooks/use-solana-mint", () => ({
-  useSolanaMint: readSolanaMintState,
-}));
-
-const readIpfsUploadState = () => ({
-  uploadGlbAndMetadata: async () => {
-    await Promise.resolve();
-    return { cidGlb: "cid-glb", cidMetadata: "cid-metadata" };
-  },
-  isUploading: false,
-});
-void mock.module("@/hooks/use-ipfs-upload", () => ({
-  useIpfsUpload: readIpfsUploadState,
 }));
 
 // Note: We don't mock @/lib/glb-export-service globally as it interferes with
@@ -423,6 +427,10 @@ describe("unit/components/gallery-scene", () => {
     cleanup();
     // Restore original performance
     globalThis.performance = originalPerformance;
+  });
+
+  afterAll(() => {
+    mock.restore();
   });
 
   describe("texture-loading-timing", () => {

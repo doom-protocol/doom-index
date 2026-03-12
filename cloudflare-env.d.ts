@@ -26,9 +26,7 @@ declare namespace Cloudflare {
     CACHE_PURGE_API_TOKEN: string;
     CACHE_PURGE_ZONE_ID: string;
     ADMIN_SECRET: string;
-    PINATA_API_KEY: string;
-    PINATA_API_SECRET: string;
-    PINATA_JWT: string;
+    ARDRIVE_TURBO_SECRET_KEY: string;
     R2_BUCKET: R2Bucket;
     NEXT_INC_CACHE_R2_BUCKET: R2Bucket;
     DB: D1Database;
@@ -66,9 +64,7 @@ declare namespace NodeJS {
       | "CACHE_PURGE_API_TOKEN"
       | "CACHE_PURGE_ZONE_ID"
       | "ADMIN_SECRET"
-      | "PINATA_API_KEY"
-      | "PINATA_API_SECRET"
-      | "PINATA_JWT"
+      | "ARDRIVE_TURBO_SECRET_KEY"
     >
   > {}
 }

@@ -8,14 +8,12 @@ import {
 } from "@/lib/pure/gallery-orbit-bounds";
 import type { OrbitControlsBounds } from "@/lib/pure/gallery-orbit-bounds";
 import type { PaintingMetadata } from "@/types/paintings";
-import { glbExportService } from "@/lib/glb-export-service";
 import { logger } from "@/utils/logger";
 import { Grid, OrbitControls, Stats } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import dynamic from "next/dynamic";
 import { Suspense, startTransition, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
-import { toast } from "sonner";
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
 import type { Group } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -81,89 +79,33 @@ export const GalleryScene: FC<GallerySceneProps> = ({
   const { data: latestPainting } = useLatestPainting(initialPainting);
   const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 
-  // Export state
   const paintingRef = useRef<Group>(null);
   const isClampingCameraRef = useRef(false);
   const mintModalCloseTimeoutRef = useRef<number | null>(null);
   const mintModalOpenFrameRef = useRef<number | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportedGlbFile, setExportedGlbFile] = useState<File | null>(null);
   const [isMintModalMounted, setIsMintModalMounted] = useState(false);
   const [isMintModalOpen, setIsMintModalOpen] = useState(false);
   const [mintPainting, setMintPainting] = useState<PaintingMetadata | null>(null);
 
-  const handleExport = async () => {
-    // Open mint modal immediately (wallet connection and export will be handled in modal)
-    if (latestPainting) {
-      if (mintModalCloseTimeoutRef.current !== null) {
-        window.clearTimeout(mintModalCloseTimeoutRef.current);
-        mintModalCloseTimeoutRef.current = null;
-      }
+  const handleMintClick = () => {
+    if (!latestPainting) return;
 
-      setMintPainting(latestPainting);
-      setIsMintModalMounted(true);
-
-      if (mintModalOpenFrameRef.current !== null) {
-        window.cancelAnimationFrame(mintModalOpenFrameRef.current);
-      }
-
-      mintModalOpenFrameRef.current = window.requestAnimationFrame(() => {
-        setIsMintModalOpen(true);
-        mintModalOpenFrameRef.current = null;
-      });
+    if (mintModalCloseTimeoutRef.current !== null) {
+      window.clearTimeout(mintModalCloseTimeoutRef.current);
+      mintModalCloseTimeoutRef.current = null;
     }
 
-    // If GLB is already exported, no need to export again
-    if (exportedGlbFile) {
-      return;
+    setMintPainting(latestPainting);
+    setIsMintModalMounted(true);
+
+    if (mintModalOpenFrameRef.current !== null) {
+      window.cancelAnimationFrame(mintModalOpenFrameRef.current);
     }
 
-    // Export GLB and upload to IPFS in background
-    if (isExporting || !paintingRef.current) return;
-
-    setIsExporting(true);
-    try {
-      logger.info("gallery-scene.glb-export.start");
-      const result = await glbExportService.exportPaintingModel(paintingRef);
-      if (result.isOk()) {
-        const file = result.value;
-
-        // Try to optimize if size > 32MB
-        let finalFile = file;
-        const MAX_SIZE_MB = 32;
-        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-          const arrayBuffer = await file.arrayBuffer();
-          const optimizedResult = await glbExportService.optimizeGlb(arrayBuffer, MAX_SIZE_MB);
-          if (optimizedResult.isOk()) {
-            finalFile = new File([optimizedResult.value], file.name, {
-              type: "application/octet-stream",
-            });
-          } else {
-            logger.warn("gallery-scene.optimizeFailed", {
-              error: optimizedResult.error,
-            });
-            // Continue with original file if optimization fails
-          }
-        }
-
-        setExportedGlbFile(finalFile);
-        logger.info("gallery-scene.glb-export.success", {
-          fileName: finalFile.name,
-          size: finalFile.size,
-        });
-      } else {
-        logger.error("gallery-scene.glb-export.failed", {
-          error: result.error,
-        });
-        toast.error(`Export failed: ${result.error.message}`);
-      }
-    } catch (e) {
-      logger.error("gallery-scene.exportException", { error: e });
-      const errorMessage = e instanceof Error ? e.message : "Export failed";
-      toast.error(`Export error: ${errorMessage}`);
-    } finally {
-      setIsExporting(false);
-    }
+    mintModalOpenFrameRef.current = window.requestAnimationFrame(() => {
+      setIsMintModalOpen(true);
+      mintModalOpenFrameRef.current = null;
+    });
   };
 
   const previousPaintingKeyRef = useRef<string | null | undefined>(undefined);
@@ -208,7 +150,6 @@ export const GalleryScene: FC<GallerySceneProps> = ({
         mintModalOpenFrameRef.current = null;
       }
       startTransition(() => {
-        setExportedGlbFile(null);
         setIsMintModalOpen(false);
         setIsMintModalMounted(false);
         setMintPainting(null);
@@ -369,13 +310,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
           pointerEvents: "none",
         }}
       >
-        <MintButton
-          onClick={() => {
-            void handleExport();
-          }}
-          isLoading={isExporting}
-          disabled={!latestPainting}
-        />
+        <MintButton onClick={handleMintClick} isLoading={false} disabled={!latestPainting} />
       </div>
 
       {isMintModalMounted && mintPainting ? (
@@ -391,15 +326,12 @@ export const GalleryScene: FC<GallerySceneProps> = ({
               setMintPainting(null);
               mintModalCloseTimeoutRef.current = null;
             }, MODAL_TRANSITION_MS);
-            // Do not clear exportedGlbFile here to allow exit animation
-            // It will be cleared when painting changes or manually if needed
           }}
           paintingMetadata={{
             timestamp: mintPainting.timestamp,
             paintingHash: mintPainting.id,
             thumbnailUrl: mintPainting.imageUrl,
           }}
-          glbFile={exportedGlbFile}
         />
       ) : null}
     </>

@@ -1,0 +1,10 @@
+{
+  "_note": "Placeholder IDL for doom_nft_program. Replace with actual IDL from Anchor build.",
+  "address": "u929SRVcCFcGM2iyYkMykDRq7xW4N9ozEMU3Vo1hgfP",
+  "metadata": {
+    "name": "doom_nft_program",
+    "version": "0.1.0",
+    "spec": "0.1.0"
+  },
+  "instructions": []
+}

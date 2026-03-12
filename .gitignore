@@ -63,3 +63,5 @@ local-test-*.db
 .env.development
 
 .agents/memory/
+
+ArDrive Wallet.json

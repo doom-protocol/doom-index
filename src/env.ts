@@ -17,8 +17,8 @@ const serverSchema = {
   COINGECKO_API_KEY: v.optional(v.string()),
   FORCE_TOKEN_LIST: v.optional(v.string()),
   SLACK_WEBHOOK_URL: v.optional(v.string()),
-  // IPFS / Pinata
-  PINATA_JWT: v.optional(v.string()),
+  // ArDrive / Arweave
+  ARDRIVE_TURBO_SECRET_KEY: v.optional(v.string()),
   // Admin Tools
   ADMIN_SECRET: v.optional(v.string()),
   CACHE_PURGE_API_TOKEN: v.optional(v.string()),
@@ -45,7 +45,7 @@ const readServerRuntimeEnv = () => ({
   COINGECKO_API_KEY: process.env.COINGECKO_API_KEY,
   FORCE_TOKEN_LIST: process.env.FORCE_TOKEN_LIST,
   SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL,
-  PINATA_JWT: process.env.PINATA_JWT,
+  ARDRIVE_TURBO_SECRET_KEY: process.env.ARDRIVE_TURBO_SECRET_KEY,
   ADMIN_SECRET: process.env.ADMIN_SECRET,
   CACHE_PURGE_API_TOKEN: process.env.CACHE_PURGE_API_TOKEN,
   CACHE_PURGE_ZONE_ID: process.env.CACHE_PURGE_ZONE_ID,

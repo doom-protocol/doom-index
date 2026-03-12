@@ -1,6 +1,6 @@
 "use client";
 
-import { getSolanaRpcUrl } from "@/constants/solana";
+import { getDefaultSolanaNetwork, getSolanaRpcUrl } from "@/constants/solana";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
@@ -23,11 +23,25 @@ interface Props {
   children?: ReactNode;
 }
 
-export const WalletAdapterProvider: FC<Props> = ({ children }) => {
-  // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
-  const network = WalletAdapterNetwork.Devnet;
+function getWalletAdapterNetwork(): WalletAdapterNetwork {
+  const configuredNetwork = getDefaultSolanaNetwork();
 
-  // You can also provide a custom RPC endpoint.
+  switch (configuredNetwork) {
+    case "mainnet": {
+      return WalletAdapterNetwork.Mainnet;
+    }
+    case "devnet": {
+      return WalletAdapterNetwork.Devnet;
+    }
+    case "testnet": {
+      return WalletAdapterNetwork.Testnet;
+    }
+  }
+}
+
+export const WalletAdapterProvider: FC<Props> = ({ children }) => {
+  const network = getWalletAdapterNetwork();
+
   const endpoint = useMemo(() => getSolanaRpcUrl(), []);
 
   const wallets = useMemo(

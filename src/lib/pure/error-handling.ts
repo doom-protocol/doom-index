@@ -16,7 +16,7 @@ export type ApiProvider =
   | "coingecko"
   | "alternative.me"
   | "runware"
-  | "pinata";
+  | "ardrive";
 
 /**
  * Standard error context for API error logging

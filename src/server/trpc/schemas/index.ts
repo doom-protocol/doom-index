@@ -48,17 +48,3 @@ export const paintingsListSchema = v.pipe(
     ["from"],
   ),
 );
-
-// IPFS Schemas
-export const createSignedUploadUrlSchema = v.object({
-  filename: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
-  contentType: v.picklist(["application/octet-stream", "application/json"]),
-  keyvalues: v.optional(
-    v.object({
-      walletAddress: v.optional(v.string()),
-      timestamp: v.string(),
-      paintingHash: v.string(),
-      network: v.picklist(["devnet", "mainnet-beta"]),
-    }),
-  ),
-});

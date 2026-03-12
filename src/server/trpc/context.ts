@@ -1,4 +1,3 @@
-import type { PinataClient } from "@/lib/pinata-client";
 import { logger } from "@/utils/logger";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
@@ -9,7 +8,6 @@ export interface Context {
   env?: CloudflareEnv;
   kvNamespace?: KVNamespace;
   r2Bucket?: R2Bucket;
-  pinataClient?: PinataClient;
 }
 
 // Context creation for API Handler

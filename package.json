@@ -38,6 +38,7 @@
     "knip": "knip"
   },
   "dependencies": {
+    "@ardrive/turbo-sdk": "^1.41.0",
     "@coingecko/coingecko-typescript": "^2.5.0",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
@@ -45,7 +46,6 @@
     "@metaplex-foundation/umi": "^1.5.1",
     "@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
     "@metaplex-foundation/umi-signer-wallet-adapters": "^1.5.1",
-    "@metaplex-foundation/umi-uploader-irys": "^1.5.0",
     "@metaplex-foundation/umi-web3js-adapters": "^1.5.1",
     "@next/mdx": "^16.1.6",
     "@next/third-parties": "^16.1.6",
@@ -68,7 +68,6 @@
     "drizzle-orm": "^0.44.7",
     "neverthrow": "^7.2.0",
     "next": "^16.1.6",
-    "pinata": "^2.5.5",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "sonner": "^2.0.7",

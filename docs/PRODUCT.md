@@ -21,7 +21,7 @@ DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場�
 - **動的プロンプト生成（dynamic-prompt）** - Tavily Search + Workers AI によるトークン固有のナラティブコンテキスト生成
 - 市場心理分析（Fear & Greed Index 統合）
 - **型安全な API 通信（tRPC v11）** - エンドツーエンドの型安全性を実現
-- **Solana NFT ミント機能** - Metaplex + Irys によるオンチェーン NFT 発行
+- **Solana NFT ミント機能** - Metaplex + Arweave によるオンチェーン NFT 発行
 - CLI ツールによるローカル生成・検証（`scripts/generate.ts`）
 - ローカル開発用のスケジュール実行・プレビュー（Workers Preview + Cron）
 - **Cloudflare Cache API 統合** - Edge キャッシュによるレイテンシ低減とコスト最適化

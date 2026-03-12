@@ -19,7 +19,7 @@ import { CoinGeckoClient } from "@/lib/coingecko-client";
 import { createRunwareProvider } from "@/lib/image-generation-providers/runware";
 import { createTavilyClient } from "@/lib/tavily-client";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import { setupLocalDb } from "@/server/db/helper";
+import { resolveLocalD1SqlitePath, setupLocalDb } from "@/server/db/helper";
 import type * as schema from "@/server/db/schema";
 import { paintings } from "@/server/db/schema/paintings";
 import { MarketSnapshotsRepository } from "@/server/repositories/market-snapshots-repository";
@@ -203,10 +203,10 @@ const main = async () => {
     hasTavilyKey: !!env.TAVILY_API_KEY,
   });
 
-  // Setup Local DB (reuse existing file if present)
-  const dbPath = "local-test.db";
+  // Setup local Wrangler D1 state
+  const dbPath = resolveLocalD1SqlitePath();
   const db = setupLocalDb(dbPath);
-  logger.info(`Using local DB: ${dbPath}`);
+  logger.info(`Using local Wrangler D1 DB: ${dbPath}`);
 
   // Output directory for "R2"
   const outputDir = join(args.output, "r2-storage");

@@ -58,16 +58,15 @@ updated: 2025-12-02
 - `constants/` 固定値・プロンプト・トークン定義
 - `hooks/` React hooks（グローバル状態、MC、画像、viewer、tRPC 統合、Solana Wallet）
   - `use-solana-wallet.ts`, `use-solana-mint.ts` - NFT ミント関連
-  - `use-ipfs-upload.ts` - IPFS アップロード
 - `lib/` **外部統合・腐敗防止層・独自モジュール**
   - 外部 API の wrapper、lib の腐敗防止層、独自モジュールなどを基本的に配置
+  - `ardrive-client.ts` ArDrive Turbo SDK の腐敗防止層
   - `trpc/` **tRPC クライアント実装**
     - `client.ts` クライアントサイド tRPC クライアント（TanStack Query 統合）
     - `server.ts` サーバーサイド tRPC クライアント（Server Components 用）
   - `image-generation-providers/` 画像生成 Provider 実装（runware, mock）
   - `cache.ts` **Cloudflare Cache API ヘルパー**
   - `r2.ts` R2 クライアント（環境差吸収）
-  - `pinata-client.ts` **Pinata IPFS クライアント**
   - `pure/` **純関数・ドメインロジック計算**
     - domain logic に直結する数値計算や、小さく切り出して testability を高める必要がある複雑な検証・計算ロジックを配置
     - プロンプト合成/正規化/量子化/ハッシュ等の純粋関数
