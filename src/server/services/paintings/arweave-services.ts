@@ -1,5 +1,6 @@
 import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "@/constants/arweave";
 import type { ArdriveClient, Tag } from "@/lib/ardrive-client";
+import { sendSlackMessage } from "@/lib/slack-client";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 import { err, ok } from "neverthrow";
@@ -35,6 +36,7 @@ interface TurboFundingNotificationPayload {
   autoTopUpAmountWinston?: bigint;
   currentBalanceWinc: bigint;
   estimatedCostWinc: bigint;
+  notifyThresholdWinc: bigint;
   remainingBalanceWinc: bigint;
 }
 
@@ -265,37 +267,33 @@ export async function resolveTokenMetadataGateway(params: {
 }
 
 function stringifyTurboFundingMessage(payload: TurboFundingNotificationPayload): string {
+  const headline =
+    payload.remainingBalanceWinc < BigInt(0)
+      ? "DOOM INDEX Turbo balance is likely insufficient for the pending upload."
+      : payload.remainingBalanceWinc === BigInt(0)
+        ? "DOOM INDEX Turbo balance will be fully consumed by the pending upload."
+        : "DOOM INDEX Turbo balance is low.";
   const autoTopUpSuffix =
     payload.autoTopUpAmountWinston === undefined
       ? "auto top-up disabled"
       : `auto top-up ${String(payload.autoTopUpAmountWinston)} winston`;
 
   return [
-    "DOOM INDEX Turbo balance is low.",
+    headline,
     `Current balance: ${String(payload.currentBalanceWinc)} winc`,
     `Estimated upload cost: ${String(payload.estimatedCostWinc)} winc`,
     `Projected remaining balance: ${String(payload.remainingBalanceWinc)} winc`,
+    `Notify threshold: ${String(payload.notifyThresholdWinc)} winc`,
     autoTopUpSuffix,
   ].join("\n");
 }
 
 async function notifyTurboFundingStatus(message: string): Promise<void> {
-  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
-  if (!webhookUrl) {
-    return;
-  }
-
-  try {
-    await fetch(webhookUrl, {
-      body: JSON.stringify({ text: message }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-    });
-  } catch (error) {
+  const result = await sendSlackMessage({ text: message });
+  if (result.isErr()) {
     logger.warn("[notifyTurboFundingStatus] Slack notification failed", {
-      error: error instanceof Error ? error.message : String(error),
+      error: result.error.message,
+      type: result.error.type,
     });
   }
 }
@@ -345,6 +343,7 @@ export async function ensureTurboUploadFunding(params: {
       autoTopUpAmountWinston: params.autoTopUpAmountWinston,
       currentBalanceWinc,
       estimatedCostWinc,
+      notifyThresholdWinc,
       remainingBalanceWinc,
     });
     didNotify = true;

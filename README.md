@@ -6,6 +6,13 @@ A decentralized archive of financial emotions. AI generates one painting every h
 
 DOOM INDEX dynamically selects trending tokens from CoinGecko and generates a unique artwork every hour based on their market data, fear & greed index, and contextual analysis.
 
+## Arweave History
+
+Historical items uploaded from the current DOOM INDEX Arweave address can be browsed here:
+
+- Address: `w-0BSqoDiZoct2ISCa1uSCgjm374kFE9hJwKMzAKJ-s`
+- ViewBlock: <https://viewblock.io/arweave/address/w-0BSqoDiZoct2ISCa1uSCgjm374kFE9hJwKMzAKJ-s?tab=items>
+
 ## Tools
 
 - [Tavily](https://app.tavily.com/home)

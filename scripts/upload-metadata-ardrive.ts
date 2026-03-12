@@ -433,6 +433,84 @@ async function uploadBundle(args: CliArgs): Promise<UploadedAssetBundleSummary> 
   };
 }
 
+const BENCHMARK_GATEWAYS = [
+  { label: "permagate.io", url: "https://permagate.io" },
+  { label: "arweave.net (US/AWS)", url: "https://arweave.net" },
+  { label: "ar-node.megastake.org (VN)", url: "https://ar-node.megastake.org" },
+  { label: "deknow.top (CA/Cloudflare)", url: "https://deknow.top" },
+] as const;
+
+const BENCHMARK_POLL_INTERVAL_MS = 3_000;
+const BENCHMARK_TIMEOUT_MS = 600_000;
+
+function extractTxIdFromUrl(arweaveUrl: string): string {
+  return new URL(arweaveUrl).pathname.replace(/^\/+/u, "").split("/")[0];
+}
+
+interface GatewayBenchmarkResult {
+  elapsedMs: number | null;
+  gateway: string;
+  httpStatus: number | null;
+  label: string;
+}
+
+async function pollGateway(params: {
+  gatewayUrl: string;
+  label: string;
+  startTime: number;
+  txId: string;
+}): Promise<GatewayBenchmarkResult> {
+  const url = `${params.gatewayUrl}/${params.txId}`;
+  const deadline = params.startTime + BENCHMARK_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(10_000) });
+      if (response.ok) {
+        const elapsed = Date.now() - params.startTime;
+        return { elapsedMs: elapsed, gateway: params.gatewayUrl, httpStatus: response.status, label: params.label };
+      }
+    } catch {
+      // network error or timeout — retry
+    }
+    await Bun.sleep(BENCHMARK_POLL_INTERVAL_MS);
+  }
+
+  return { elapsedMs: null, gateway: params.gatewayUrl, httpStatus: null, label: params.label };
+}
+
+async function benchmarkGatewayPropagation(txId: string): Promise<void> {
+  console.log("");
+  console.log("=== Gateway Propagation Benchmark ===");
+  console.log(`TX: ${txId}`);
+  console.log(
+    `Polling interval: ${String(BENCHMARK_POLL_INTERVAL_MS / 1000)}s | Timeout: ${String(BENCHMARK_TIMEOUT_MS / 60_000)}min`,
+  );
+  console.log("Waiting for gateways...\n");
+
+  const startTime = Date.now();
+  const results = await Promise.all(
+    BENCHMARK_GATEWAYS.map(async (gw) => pollGateway({ gatewayUrl: gw.url, label: gw.label, startTime, txId })),
+  );
+
+  const sorted = [...results].sort(
+    (a, b) => (a.elapsedMs ?? Number.POSITIVE_INFINITY) - (b.elapsedMs ?? Number.POSITIVE_INFINITY),
+  );
+
+  console.log("--- Results (sorted by speed) ---");
+  console.log("");
+
+  const labelWidth = Math.max(...sorted.map((r) => r.label.length));
+  for (const [rank, r] of sorted.entries()) {
+    const label = r.label.padEnd(labelWidth);
+    const time = r.elapsedMs !== null ? `${(r.elapsedMs / 1000).toFixed(1)}s` : "TIMEOUT";
+    const medal = rank === 0 && r.elapsedMs !== null ? " ★" : "";
+    console.log(`  ${String(rank + 1)}. ${label}  ${time}${medal}`);
+  }
+
+  console.log("");
+}
+
 async function main(): Promise<void> {
   const args = parseArgs();
   const explicitGatewayBaseUrl = args.gateway ?? env.ARWEAVE_GATEWAY_BASE_URL;
@@ -452,6 +530,9 @@ async function main(): Promise<void> {
   console.log(`Manifest TX: ${result.manifestTxId}`);
   console.log(`Base metadata URL: ${result.baseMetadataUrl}`);
   console.log(`Token metadata URL: ${result.tokenMetadataUrl}`);
+
+  const imageTxId = extractTxIdFromUrl(result.imageUrl);
+  await benchmarkGatewayPropagation(imageTxId);
 }
 
 if (import.meta.main) {

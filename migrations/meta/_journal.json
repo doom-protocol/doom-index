@@ -8,6 +8,13 @@
       "when": 1763807904866,
       "tag": "0000_clammy_omega_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1773353279317,
+      "tag": "0001_yielding_sir_ram",
+      "breakpoints": true
     }
   ]
 }

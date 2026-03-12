@@ -206,4 +206,44 @@ describe("unit/server/services/paintings/arweave-services", () => {
       topUpTransactionId: "fund-1",
     });
   });
+
+  it("reports that the pending upload is likely insufficient when projected balance goes negative", async () => {
+    const notify = mock(async (_message: string) => Promise.resolve());
+
+    await ensureTurboUploadFunding({
+      ardrive: {
+        getBalance: async () => {
+          await Promise.resolve();
+          return ok({
+            controlledWinc: "50",
+            effectiveBalance: "50",
+            givenApprovals: [],
+            receivedApprovals: [],
+            winc: "50",
+          });
+        },
+        getUploadCosts: async () => {
+          await Promise.resolve();
+          return ok([{ adjustments: [], fees: [], winc: "80" }]);
+        },
+        topUpWithTokens: async () => {
+          await Promise.resolve();
+          return ok({
+            id: "fund-1",
+            owner: "owner",
+            quantity: "1000",
+            status: "confirmed",
+            target: "target",
+            token: "arweave",
+            winc: "900",
+          });
+        },
+      },
+      byteCounts: [1024],
+      notify,
+    });
+
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(notify.mock.calls[0]?.[0]).toContain("likely insufficient");
+  });
 });
