@@ -320,21 +320,22 @@ export const GalleryScene: FC<GallerySceneProps> = ({
         />
       </div>
 
-      {/* Mint Modal */}
-      <MintModal
-        isOpen={isMintModalOpen && !!latestPainting}
-        onClose={() => {
-          setIsMintModalOpen(false);
-          // Do not clear exportedGlbFile here to allow exit animation
-          // It will be cleared when painting changes or manually if needed
-        }}
-        paintingMetadata={{
-          timestamp: latestPainting?.timestamp ?? new Date().toISOString(),
-          paintingHash: latestPainting?.id ?? `painting-${String(Date.now())}`,
-          thumbnailUrl: latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL,
-        }}
-        glbFile={exportedGlbFile}
-      />
+      {isMintModalOpen && latestPainting ? (
+        <MintModal
+          isOpen
+          onClose={() => {
+            setIsMintModalOpen(false);
+            // Do not clear exportedGlbFile here to allow exit animation
+            // It will be cleared when painting changes or manually if needed
+          }}
+          paintingMetadata={{
+            timestamp: latestPainting.timestamp,
+            paintingHash: latestPainting.id,
+            thumbnailUrl: latestPainting.imageUrl,
+          }}
+          glbFile={exportedGlbFile}
+        />
+      ) : null}
     </>
   );
 };
