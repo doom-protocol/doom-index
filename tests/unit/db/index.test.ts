@@ -2,7 +2,9 @@ import { describe, expect, it, mock } from "bun:test";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-type DbIndexModule = typeof import("@/server/db/index");
+interface DbIndexModule {
+  getDB: (d1Binding?: D1Database) => Promise<unknown>;
+}
 
 async function importDbIndex(): Promise<DbIndexModule> {
   mock.restore();

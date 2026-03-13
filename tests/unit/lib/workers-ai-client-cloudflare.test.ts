@@ -1,9 +1,44 @@
-import type { TextGenerationRequest } from "@/lib/workers-ai-client";
+import type { AiModels } from "@cloudflare/workers-types";
 import { describe, expect, it, mock } from "bun:test";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-type WorkersAiClientModule = typeof import("@/lib/workers-ai-client");
+interface TextGenerationRequest {
+  model?: keyof AiModels;
+  systemPrompt: string;
+  userPrompt: string;
+}
+
+interface WorkersAiError {
+  message: string;
+  missingVar?: string;
+  provider?: string;
+  rawValue?: string;
+  timeoutMs?: number;
+  type: "ConfigurationError" | "ExternalApiError" | "ParsingError" | "TimeoutError";
+}
+
+interface TestOkResult<T> {
+  error?: never;
+  isErr: () => this is TestErrResult;
+  isOk: () => this is TestOkResult<T>;
+  value: T;
+}
+
+interface TestErrResult {
+  error: WorkersAiError;
+  isErr: () => this is TestErrResult;
+  isOk: () => this is TestOkResult<never>;
+  value?: never;
+}
+
+type TestResult<T> = TestOkResult<T> | TestErrResult;
+
+interface WorkersAiClientModule {
+  createWorkersAiClient: () => {
+    generateText: (input: TextGenerationRequest) => Promise<TestResult<{ modelId: keyof AiModels; text: string }>>;
+  };
+}
 
 async function importWorkersAiClient(): Promise<WorkersAiClientModule> {
   mock.restore();

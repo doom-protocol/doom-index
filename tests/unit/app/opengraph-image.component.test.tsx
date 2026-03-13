@@ -9,11 +9,16 @@
  */
 
 import "../../preload";
-import { alt as ogpAltText, size as ogpSize } from "@/app/opengraph-image-config";
 import NextImage from "next/image";
 import { render } from "@testing-library/react";
 import { describe, expect, test } from "bun:test";
 import type { ComponentProps } from "react";
+
+const ogpAltText = "DOOM INDEX - A decentralized archive of financial emotions.";
+const ogpSize = {
+  width: 1200,
+  height: 630,
+} as const;
 
 type TestImageProps = Omit<ComponentProps<"img">, "alt" | "height" | "src" | "width"> & {
   alt?: string;

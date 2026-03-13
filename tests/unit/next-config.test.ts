@@ -15,6 +15,7 @@ interface NextConfigImageSettings {
 async function loadNextConfig() {
   process.env.npm_lifecycle_event = "dev";
   void mock.module("@opennextjs/cloudflare", () => ({
+    getCloudflareContext: async () => Promise.resolve({ env: {} }),
     initOpenNextCloudflareForDev: () => undefined,
   }));
   const modulePath = `@/../next.config.ts?cacheBust=${String(Date.now())}`;
