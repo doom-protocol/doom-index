@@ -104,17 +104,17 @@ const timeoutMs = options?.timeoutMs ?? DEFAULT_RUNWARE_TIMEOUT;
 
 ## スクリプトでの使用例
 
-### generate.ts での使用
+### gen-img.ts での使用
 
 ```bash
 # デフォルトモデルを使用（FLUX.1 Kontext [dev]）
-bun scripts/generate.ts
+bun scripts/gen-img.ts
 
 # FLUX.1 [schnell]を使用（高速生成）
-bun scripts/generate.ts --model "runware:100@1"
+bun scripts/gen-img.ts --model "runware:100@1"
 
 # 特定のRunware AIRモデルを使用
-bun scripts/generate.ts --model "runware:200@1"
+bun scripts/gen-img.ts --model "runware:200@1"
 ```
 
 ### コード内での使用

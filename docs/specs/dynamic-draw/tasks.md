@@ -229,14 +229,14 @@
   - _Requirements: 12_
 
 - [x] 11. 手動実行スクリプトの実装とテスト
-- [x] 11.1 scripts/generate.ts の更新
-  - scripts/generate.ts は手動テスト用として現状維持（任意の MC 値でのテスト生成）
+- [x] 11.1 scripts/gen-img.ts の更新
+  - scripts/gen-img.ts は手動テスト用として現状維持（任意の MC 値でのテスト生成）
   - 本番の hourly cron は PaintingGenerationOrchestrator を使用（src/cron.ts）
   - コメントを更新して用途を明確化
   - _Requirements: 10_
 
 - [ ] 11.2 手動実行テストの実行
-  - scripts/generate.ts を使用して一連のフローを手動実行
+  - scripts/gen-img.ts を使用して一連のフローを手動実行
   - 正常フロー: トークン選定 → コンテキスト構築 → プロンプト生成 → 画像生成 → ローカル保存
   - 強制リストフロー: FORCE_TOKEN_LIST 環境変数を設定してトークン選定をテスト
   - 生成された画像ファイルが正しいフォーマット（webp）で保存されることを確認
@@ -300,7 +300,7 @@
 ## 完了基準
 
 - [ ] すべてのユニットテストと統合テストが合格
-- [ ] scripts/generate.ts を使用した手動実行テストが成功し、out/ ディレクトリに画像とメタデータが出力される
+- [ ] scripts/gen-img.ts を使用した手動実行テストが成功し、out/ ディレクトリに画像とメタデータが出力される
 - [ ] ローカル環境で cron が正常に実行される（bun run preview --test-scheduled）
 - [ ] 本番環境で初回 cron が正常に実行され、絵画が生成される
 - [ ] Cloudflare Workers のダッシュボードで cron 実行の成功率が 95% 以上
