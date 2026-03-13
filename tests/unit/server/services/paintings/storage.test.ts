@@ -11,38 +11,40 @@ async function loadStorageModule(): Promise<StorageModule> {
   return (await import(moduleUrl.href)) as StorageModule;
 }
 
-const ensureTurboUploadFundingMock = mock(async () => {
+const getBalanceMock = mock(async () => {
   await Promise.resolve();
   return ok({
     currentBalanceWinc: BigInt(100),
-    didNotify: false,
-    didTopUp: false,
-    estimatedCostWinc: BigInt(1),
-    remainingBalanceWinc: BigInt(99),
+    controlledWinc: "100",
+    effectiveBalance: "100",
+    givenApprovals: [],
+    receivedApprovals: [],
+    winc: "100",
   });
 });
-const uploadPaintingImageAssetMock = mock(async () => {
+const getUploadCostsMock = mock(async () => {
+  await Promise.resolve();
+  return ok([{ adjustments: [], fees: [], winc: "1" }]);
+});
+const topUpWithTokensMock = mock(async () => {
   await Promise.resolve();
   return ok({
-    imageTxId: "image-tx",
-    imageUrl: "https://preferred.example/image-tx",
+    id: "topup-tx",
+    owner: "owner",
+    quantity: "1",
+    status: "confirmed",
+    target: "target",
+    token: "arweave",
+    winc: "1",
   });
 });
-const uploadPaintingGlbAssetMock = mock(async () => {
+const uploadFileMock = mock(async () => {
   await Promise.resolve();
   return ok({
-    glbTxId: "glb-tx",
-    glbUrl: "https://preferred.example/glb-tx",
-  });
-});
-const uploadNftMetadataBundleMock = mock(async () => {
-  await Promise.resolve();
-  return ok({
-    baseMetadataUrl: "https://preferred.example/manifest-tx",
-    manifestTxId: "manifest-tx",
-    metadataTxId: "metadata-tx",
-    resolvedFromProbe: true,
-    tokenMetadataUrl: "https://preferred.example/manifest-tx/1",
+    dataCaches: [],
+    fastFinalityIndexes: [],
+    id: "image-tx",
+    url: "https://permagate.io/image-tx",
   });
 });
 
@@ -58,91 +60,21 @@ function registerStorageModuleMocks() {
 
   void mock.module("@/lib/ardrive-client", () => ({
     createArdriveClient: () => ({
-      getBalance: mock(async () => {
-        await Promise.resolve();
-        return ok({
-          controlledWinc: "100",
-          effectiveBalance: "100",
-          givenApprovals: [],
-          receivedApprovals: [],
-          winc: "100",
-        });
-      }),
-      getUploadCosts: mock(async () => {
-        await Promise.resolve();
-        return ok([{ adjustments: [], fees: [], winc: "1" }]);
-      }),
-      uploadFile: mock(async () => {
-        await Promise.resolve();
-        return ok({
-          dataCaches: [],
-          fastFinalityIndexes: [],
-          id: "image-tx",
-          url: "https://permagate.io/image-tx",
-        });
-      }),
+      getBalance: getBalanceMock,
+      getUploadCosts: getUploadCostsMock,
+      topUpWithTokens: topUpWithTokensMock,
+      uploadFile: uploadFileMock,
     }),
-  }));
-
-  void mock.module("@/server/services/paintings/arweave-services", () => ({
-    buildManifestJson: ({ metadataId, tokenId }: { metadataId: string; tokenId: number | string }) => ({
-      manifest: "arweave/paths",
-      paths: {
-        [String(tokenId)]: {
-          id: metadataId,
-        },
-      },
-      version: "0.2.0",
-    }),
-    buildMetadataJson: ({
-      animationUrl,
-      imageContentType,
-      imageUrl,
-      paintingId,
-      tokenId,
-    }: {
-      animationUrl: string;
-      imageContentType: string;
-      imageUrl: string;
-      paintingId: string;
-      tokenId: number | string;
-    }) => ({
-      animation_url: animationUrl,
-      image: imageUrl,
-      name: `DOOM INDEX #${String(tokenId)}`,
-      properties: {
-        category: "image",
-        files: [
-          {
-            type: imageContentType,
-            uri: imageUrl,
-          },
-          {
-            type: "model/gltf-binary",
-            uri: animationUrl,
-          },
-        ],
-      },
-      symbol: "DOOM",
-      description: `Painting ${paintingId}`,
-    }),
-    buildTransactionUrl: ({ gatewayBaseUrl, txId }: { gatewayBaseUrl: string; txId: string }) =>
-      `${gatewayBaseUrl.replace(/\/$/, "")}/${txId}`,
-    ensureTurboUploadFunding: ensureTurboUploadFundingMock,
-    parseOptionalBigInt: (value: string | undefined) => (value ? BigInt(value) : undefined),
-    uploadNftMetadataBundle: uploadNftMetadataBundleMock,
-    uploadPaintingGlbAsset: uploadPaintingGlbAssetMock,
-    uploadPaintingImageAsset: uploadPaintingImageAssetMock,
   }));
 }
 
 describe("unit/server/services/paintings/storage", () => {
   beforeEach(() => {
     registerStorageModuleMocks();
-    ensureTurboUploadFundingMock.mockClear();
-    uploadNftMetadataBundleMock.mockClear();
-    uploadPaintingGlbAssetMock.mockClear();
-    uploadPaintingImageAssetMock.mockClear();
+    getBalanceMock.mockClear();
+    getUploadCostsMock.mockClear();
+    topUpWithTokensMock.mockClear();
+    uploadFileMock.mockClear();
   });
 
   afterEach(() => {
@@ -163,6 +95,6 @@ describe("unit/server/services/paintings/storage", () => {
       imageTxId: "image-tx",
       imageUrl: "https://preferred.example/image-tx",
     });
-    expect(uploadPaintingImageAssetMock).toHaveBeenCalledTimes(1);
+    expect(uploadFileMock).toHaveBeenCalledTimes(1);
   });
 });

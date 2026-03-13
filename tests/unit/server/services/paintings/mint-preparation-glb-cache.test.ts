@@ -49,28 +49,49 @@ const updateMintAssetRefsMock = mock(async () => {
   await Promise.resolve();
   return ok(undefined);
 });
-const uploadPaintingGlbAssetMock = mock(async () => {
+const getBalanceMock = mock(async () => {
   await Promise.resolve();
   return ok({
-    glbTxId: "glb-tx",
-    glbUrl: "https://example.test/glb-tx",
+    controlledWinc: "100",
+    effectiveBalance: "100",
+    givenApprovals: [],
+    receivedApprovals: [],
+    winc: "100",
   });
 });
-const uploadPaintingImageAssetMock = mock(async () => {
+const getUploadCostsMock = mock(async () => {
+  await Promise.resolve();
+  return ok([{ adjustments: [], fees: [], winc: "1" }]);
+});
+const topUpWithTokensMock = mock(async () => {
   await Promise.resolve();
   return ok({
-    imageTxId: "image-tx",
-    imageUrl: "https://example.test/image-tx",
+    id: "topup-tx",
+    owner: "owner",
+    quantity: "1",
+    status: "confirmed",
+    target: "target",
+    token: "arweave",
+    winc: "1",
   });
 });
-const uploadNftMetadataBundleMock = mock(async (params: { glbUrl: string; tokenId: string }) => {
+const uploadFileMock = mock(async (_bytes: Uint8Array, contentType: string) => {
   await Promise.resolve();
   return ok({
-    baseMetadataUrl: "https://example.test/manifest",
-    manifestTxId: "manifest-tx",
-    metadataTxId: "metadata-tx",
-    resolvedFromProbe: true,
-    tokenMetadataUrl: `https://example.test/manifest/${params.tokenId}`,
+    dataCaches: [],
+    fastFinalityIndexes: [],
+    id: contentType === "model/gltf-binary" ? "glb-tx" : "manifest-tx",
+    url: "https://permagate.io/upload-tx",
+  });
+});
+const uploadJsonMock = mock(async (json: object) => {
+  await Promise.resolve();
+  return ok({
+    dataCaches: [],
+    fastFinalityIndexes: [],
+    id: "metadata-tx",
+    json,
+    url: "https://permagate.io/metadata-tx",
   });
 });
 
@@ -90,38 +111,11 @@ function registerMintPreparationModuleMocks() {
 
   void mock.module("@/lib/ardrive-client", () => ({
     createArdriveClient: () => ({
-      getBalance: mock(async () => {
-        await Promise.resolve();
-        return ok({
-          controlledWinc: "100",
-          effectiveBalance: "100",
-          givenApprovals: [],
-          receivedApprovals: [],
-          winc: "100",
-        });
-      }),
-      getUploadCosts: mock(async () => {
-        await Promise.resolve();
-        return ok([{ adjustments: [], fees: [], winc: "1" }]);
-      }),
-      uploadFile: mock(async () => {
-        await Promise.resolve();
-        return ok({
-          dataCaches: [],
-          fastFinalityIndexes: [],
-          id: "upload-tx",
-          url: "https://permagate.io/upload-tx",
-        });
-      }),
-      uploadJson: mock(async () => {
-        await Promise.resolve();
-        return ok({
-          dataCaches: [],
-          fastFinalityIndexes: [],
-          id: "metadata-tx",
-          url: "https://permagate.io/metadata-tx",
-        });
-      }),
+      getBalance: getBalanceMock,
+      getUploadCosts: getUploadCostsMock,
+      topUpWithTokens: topUpWithTokensMock,
+      uploadFile: uploadFileMock,
+      uploadJson: uploadJsonMock,
     }),
   }));
 
@@ -131,66 +125,6 @@ function registerMintPreparationModuleMocks() {
       updateMintAssetRefs: updateMintAssetRefsMock,
     }),
   }));
-
-  void mock.module("@/server/services/paintings/arweave-services", () => ({
-    buildManifestJson: ({ metadataId, tokenId }: { metadataId: string; tokenId: number | string }) => ({
-      manifest: "arweave/paths",
-      paths: {
-        [String(tokenId)]: {
-          id: metadataId,
-        },
-      },
-      version: "0.2.0",
-    }),
-    buildMetadataJson: ({
-      animationUrl,
-      imageContentType,
-      imageUrl,
-      paintingId,
-      tokenId,
-    }: {
-      animationUrl: string;
-      imageContentType: string;
-      imageUrl: string;
-      paintingId: string;
-      tokenId: number | string;
-    }) => ({
-      animation_url: animationUrl,
-      image: imageUrl,
-      name: `DOOM INDEX #${String(tokenId)}`,
-      properties: {
-        category: "image",
-        files: [
-          {
-            type: imageContentType,
-            uri: imageUrl,
-          },
-          {
-            type: "model/gltf-binary",
-            uri: animationUrl,
-          },
-        ],
-      },
-      symbol: "DOOM",
-      description: `Painting ${paintingId}`,
-    }),
-    buildTransactionUrl: ({ gatewayBaseUrl, txId }: { gatewayBaseUrl: string; txId: string }) =>
-      `${gatewayBaseUrl.replace(/\/$/, "")}/${txId}`,
-    ensureTurboUploadFunding: mock(async () => {
-      await Promise.resolve();
-      return ok({
-        currentBalanceWinc: BigInt(100),
-        didNotify: false,
-        didTopUp: false,
-        estimatedCostWinc: BigInt(1),
-        remainingBalanceWinc: BigInt(99),
-      });
-    }),
-    parseOptionalBigInt: (value: string | undefined) => (value ? BigInt(value) : undefined),
-    uploadNftMetadataBundle: uploadNftMetadataBundleMock,
-    uploadPaintingGlbAsset: uploadPaintingGlbAssetMock,
-    uploadPaintingImageAsset: uploadPaintingImageAssetMock,
-  }));
 }
 
 describe("unit/server/services/paintings/mint-preparation glb cache", () => {
@@ -198,9 +132,11 @@ describe("unit/server/services/paintings/mint-preparation glb cache", () => {
     registerMintPreparationModuleMocks();
     findByIdMock.mockClear();
     updateMintAssetRefsMock.mockClear();
-    uploadPaintingImageAssetMock.mockClear();
-    uploadPaintingGlbAssetMock.mockClear();
-    uploadNftMetadataBundleMock.mockClear();
+    getBalanceMock.mockClear();
+    getUploadCostsMock.mockClear();
+    topUpWithTokensMock.mockClear();
+    uploadFileMock.mockClear();
+    uploadJsonMock.mockClear();
   });
 
   afterEach(() => {
@@ -214,10 +150,27 @@ describe("unit/server/services/paintings/mint-preparation glb cache", () => {
 
     const fetchImpl = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
       await Promise.resolve();
+      const url =
+        typeof _input === "string"
+          ? _input
+          : _input instanceof URL
+            ? _input.toString()
+            : _input instanceof Request
+              ? _input.url
+              : "";
       if (init?.method === "HEAD") {
         return new Response(null, {
           headers: {
             "content-type": "image/webp",
+          },
+          status: 200,
+        });
+      }
+
+      if (url.endsWith("/manifest-tx/42")) {
+        return new Response("{}", {
+          headers: {
+            "content-type": "application/json",
           },
           status: 200,
         });
@@ -238,25 +191,31 @@ describe("unit/server/services/paintings/mint-preparation glb cache", () => {
     });
 
     expect(result.isOk()).toBe(true);
-    expect(uploadPaintingGlbAssetMock).toHaveBeenCalledTimes(1);
-    const firstGlbUploadCall = uploadPaintingGlbAssetMock.mock.calls[0] as unknown as
+    expect(uploadFileMock).toHaveBeenCalledTimes(2);
+    const firstGlbUploadCall = uploadFileMock.mock.calls.find((call) => call[1] === "model/gltf-binary") as unknown as
       | [
           {
-            glb: {
-              bytes: Uint8Array;
-            };
+            byteLength: number;
           },
+          string,
         ]
       | undefined;
-    expect(firstGlbUploadCall?.[0].glb.bytes.byteLength).toBeGreaterThan(16);
+    expect(firstGlbUploadCall?.[0].byteLength).toBeGreaterThan(16);
     expect(updateMintAssetRefsMock).toHaveBeenCalledWith("painting-1", {
       glbTxId: "glb-tx",
       glbUrl: "https://example.test/glb-tx",
     });
-    expect(uploadNftMetadataBundleMock.mock.calls[0]?.[0]).toMatchObject({
-      glbUrl: "https://example.test/glb-tx",
-      imageUrl: "https://example.test/painting.webp",
-      tokenId: "42",
+    expect(uploadJsonMock.mock.calls[0]?.[0]).toMatchObject({
+      animation_url: "https://example.test/glb-tx",
+      image: "https://example.test/painting.webp",
+      name: "DOOM INDEX #42",
+    });
+    expect(result._unsafeUnwrap()).toEqual({
+      baseMetadataUrl: "https://example.test/manifest-tx",
+      manifestTxId: "manifest-tx",
+      metadataTxId: "metadata-tx",
+      resolvedFromProbe: true,
+      tokenMetadataUrl: "https://example.test/manifest-tx/42",
     });
   });
 });
