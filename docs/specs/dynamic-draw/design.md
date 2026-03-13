@@ -1429,11 +1429,11 @@ flowchart TD
 - 冪等性チェックのテスト（重複 hourBucket）
 - エラーハンドリングのテスト（API 失敗、D1 失敗）
 
-### Manual Execution Tests (scripts/generate.ts)
+### Manual Execution Tests (scripts/gen-img.ts)
 
 **Manual Generation Script**:
 
-- `scripts/generate.ts` を使用して一連のフローを手動実行し、結果が `out/` ディレクトリに出力されるかを確認
+- `scripts/gen-img.ts` を使用して一連のフローを手動実行し、結果が `out/` ディレクトリに出力されるかを確認
 - 正常フロー: トークン選定 → コンテキスト構築 → プロンプト生成 → 画像生成 → ローカル保存
 - 強制リストフロー: `FORCE_TOKEN_LIST` 環境変数を設定してトークン選定をテスト
 - 画像検証: 生成された画像ファイルが正しいフォーマット（webp）で保存され、ヘッダーが有効であることを確認
@@ -1592,7 +1592,7 @@ flowchart TD
 1. オーケストレーション層の実装
    - `cron.ts` を `PaintingGenerationOrchestrator` に置き換え
    - 既存の `market-cap.ts` サービスを削除
-   - `scripts/generate.ts` を使用した手動実行テストの作成
+   - `scripts/gen-img.ts` を使用した手動実行テストの作成
 2. Cron トリガの更新
    - `wrangler.toml` の cron トリガを `0 * * * *`（毎時 0 分）に変更
 3. 本番デプロイ
@@ -1602,7 +1602,7 @@ flowchart TD
 
 **Validation Checkpoints**:
 
-- `scripts/generate.ts` を使用した手動実行テストが成功し、`out/` ディレクトリに画像とメタデータが出力される
+- `scripts/gen-img.ts` を使用した手動実行テストが成功し、`out/` ディレクトリに画像とメタデータが出力される
 - ローカル環境で cron が正常に実行される（`bun run preview --test-scheduled`）
 - 本番環境で初回 cron が正常に実行され、絵画が生成される
 

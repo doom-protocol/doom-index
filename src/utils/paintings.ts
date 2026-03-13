@@ -3,13 +3,6 @@
  * For complex validation and business logic, see lib/pure/archive-*.ts
  */
 
-export function buildPublicR2Path(key: string): string {
-  const normalized = key.replace(/^\/+/, "");
-  // Always use relative path via API route to ensure same-origin access
-  // and avoid CORS/mixed-content issues
-  return `/api/r2/${normalized}`;
-}
-
 export function buildPaintingKey(dateString: string, filename: string): string {
   const dateMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!dateMatch) {

@@ -32,7 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
   });
 
   // If the procedure returns a Response object, pass it through
-  // This allows streaming binary data (e.g., R2 objects) directly
+  // This allows streaming binary data directly when procedures need it.
   return response;
 };
 

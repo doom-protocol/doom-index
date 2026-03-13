@@ -10,8 +10,6 @@
  */
 
 import { mock } from "bun:test";
-import { ok } from "neverthrow";
-import type { AppError } from "@/types/app-error";
 
 type BunMock = ReturnType<typeof mock>;
 
@@ -27,13 +25,6 @@ type AnalyticsMock = () => {
   sendGAEvent: BunMock;
 };
 
-type GlbExportServiceMock = () => {
-  glbExportService: {
-    exportPaintingModel: BunMock;
-    optimizeGlb: BunMock;
-  };
-};
-
 type ViewerCountStoreMock = () => {
   viewerCountStore: {
     update: (newCount: number, newUpdatedAt: number) => void;
@@ -45,7 +36,6 @@ type ViewerCountStoreMock = () => {
 interface EnvMockOptions {
   NEXT_PUBLIC_BASE_URL?: string;
   LOG_LEVEL?: string;
-  NEXT_PUBLIC_R2_URL?: string;
   NEXT_PUBLIC_GENERATION_INTERVAL_MS?: number;
 }
 
@@ -53,7 +43,6 @@ type EnvMock = () => {
   env: {
     NEXT_PUBLIC_BASE_URL: string;
     LOG_LEVEL: string;
-    NEXT_PUBLIC_R2_URL: string;
     NEXT_PUBLIC_GENERATION_INTERVAL_MS: number;
   };
   isDevelopment: () => boolean;
@@ -75,36 +64,6 @@ export function createAnalyticsMock(): AnalyticsMock {
       MINT_SUCCESS: "mint_success",
     },
     sendGAEvent: mock(() => {}),
-  });
-}
-
-/**
- * Create mock for @/lib/glb-export-service
- *
- * ⚠️ WARNING: Do NOT use mock.module() with this mock at file level!
- * mock.module() affects ALL test files in the process.
- * Instead, use method replacement with beforeAll/afterAll:
- *
- * ```typescript
- * import { glbExportService } from "@/lib/glb-export-service";
- *
- * const originalMethod = glbExportService.exportPaintingModel;
- * beforeAll(() => {
- *   glbExportService.exportPaintingModel = mock(async () => ok(new File([], "mock.glb")));
- * });
- * afterAll(() => {
- *   glbExportService.exportPaintingModel = originalMethod;
- * });
- * ```
- */
-export function createGlbExportServiceMock(): GlbExportServiceMock {
-  return () => ({
-    glbExportService: {
-      exportPaintingModel: mock(async () =>
-        Promise.resolve(ok<File, AppError>(new File([], "test.glb", { type: "application/octet-stream" }))),
-      ),
-      optimizeGlb: mock(async () => Promise.resolve(ok<ArrayBuffer, AppError>(new ArrayBuffer(1024)))),
-    },
   });
 }
 
@@ -150,7 +109,6 @@ export function createEnvMock(options?: EnvMockOptions): EnvMock {
     env: {
       NEXT_PUBLIC_BASE_URL: baseUrl,
       LOG_LEVEL: options?.LOG_LEVEL ?? "DEBUG",
-      NEXT_PUBLIC_R2_URL: options?.NEXT_PUBLIC_R2_URL ?? "/api/r2",
       NEXT_PUBLIC_GENERATION_INTERVAL_MS: generationIntervalMs,
     },
     isDevelopment: () => baseUrl.includes("localhost"),

@@ -80,6 +80,7 @@ export interface PaintingMetadata {
   paramsHash: string;
   seed: string;
   imageUrl: string;
+  glbUrl?: string;
   fileSize: number;
   visualParams: VisualParams;
   prompt: string;

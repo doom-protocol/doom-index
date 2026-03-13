@@ -8,7 +8,7 @@
  * 4. Build painting context
  * 5. Generate prompt
  * 6. Generate image
- * 7. Store painting to R2 and D1
+ * 7. Store painting to Arweave and D1
  *
  * Requirements: 10, 12
  */
@@ -16,10 +16,10 @@
 import { GENERATION_INTERVAL_MS } from "@/constants";
 import { env } from "@/env";
 import { createImageProvider } from "@/lib/image-generation-providers";
-import { resolveBucketOrThrow } from "@/lib/r2";
 import { createTavilyClient } from "@/lib/tavily-client";
 import { createWorkersAiClient } from "@/lib/workers-ai-client";
 import type { MarketSnapshotsRepository } from "@/server/repositories/market-snapshots-repository";
+import type { InsertPaintingRecord } from "@/server/repositories/paintings-repository";
 import type { TokensRepository } from "@/server/repositories/tokens-repository";
 import { createImageGenerationService } from "@/server/services/image-generation";
 import { createTokenAnalysisService } from "@/server/services/token-analysis-service";
@@ -27,7 +27,7 @@ import { createWorldPromptService } from "@/server/services/world-prompt-service
 import type { AppError } from "@/types/app-error";
 import type { PaintingMetadata, SelectedToken } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { buildPaintingKey, extractIdFromFilename } from "@/utils/paintings";
+import { extractIdFromFilename } from "@/utils/paintings";
 import { getIntervalBucket } from "@/utils/time";
 import { err, ok } from "neverthrow";
 import type { Result } from "neverthrow";
@@ -60,8 +60,8 @@ interface OrchestratorDeps {
   marketSnapshotsRepository: MarketSnapshotsRepository;
   tokensRepository: TokensRepository;
   paintingsService?: PaintingsService; // Optional injected service
-  r2Bucket?: R2Bucket;
   d1Binding?: D1Database;
+  assetsFetcher?: Fetcher;
 }
 
 /**
@@ -176,9 +176,6 @@ export class PaintingGenerationOrchestrator {
       });
 
       // Step 6: Initialize services for image generation
-      const bucket = resolveBucketOrThrow({
-        r2Bucket: this.deps.r2Bucket ?? cloudflareEnv.R2_BUCKET,
-      });
       const d1Binding = this.deps.d1Binding ?? cloudflareEnv.DB;
 
       // Initialize Workers AI client and token context service
@@ -243,7 +240,7 @@ export class PaintingGenerationOrchestrator {
       const paintingsService =
         this.deps.paintingsService ??
         createPaintingsService({
-          r2Bucket: bucket,
+          assetsFetcher: this.deps.assetsFetcher ?? cloudflareEnv.ASSETS,
           d1Binding,
         });
 
@@ -263,12 +260,11 @@ export class PaintingGenerationOrchestrator {
         negative: finalComposition.prompt.negative,
       };
 
-      const storeResult = await paintingsService.storeImageWithMetadata(
-        finalComposition.minuteBucket,
-        finalComposition.prompt.filename,
+      const storeResult = await paintingsService.storePaintingAssets({
         imageBuffer,
-        metadata,
-      );
+        imageContentType: "image/webp",
+        paintingId: metadata.id,
+      });
 
       if (storeResult.isErr()) {
         logger.error(`[PaintingGenerationOrchestrator] Painting storage failed`, {
@@ -278,11 +274,17 @@ export class PaintingGenerationOrchestrator {
       }
 
       const imageUrl = storeResult.value.imageUrl;
-      const finalMetadata: PaintingMetadata = { ...metadata, imageUrl };
+      const finalMetadata: PaintingMetadata = {
+        ...metadata,
+        imageUrl,
+      };
 
       // Step 9: Index in D1
-      const r2Key = buildPaintingKey(finalComposition.minuteBucket, finalComposition.prompt.filename);
-      const indexResult = await paintingsService.insertPainting(finalMetadata, r2Key);
+      const insertRecord: InsertPaintingRecord = {
+        ...finalMetadata,
+        imageTxId: storeResult.value.imageTxId,
+      };
+      const indexResult = await paintingsService.insertPainting(insertRecord);
       if (indexResult.isErr()) {
         logger.error(`[PaintingGenerationOrchestrator] Painting indexing failed`, {
           error: indexResult.error,

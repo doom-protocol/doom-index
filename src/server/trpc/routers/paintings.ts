@@ -1,9 +1,10 @@
 import { get, set } from "@/lib/cache";
 import { createPaintingsService } from "@/server/services/paintings";
 import { CACHE_TTL_SECONDS } from "@/constants";
+import { TRPCError } from "@trpc/server";
 import * as v from "valibot";
-import { resolveR2BucketOrThrow, resultOrThrow } from "../helpers";
-import { paintingsListSchema } from "../schemas";
+import { resultOrThrow } from "../helpers";
+import { paintingsListSchema, prepareMintMetadataSchema } from "../schemas";
 import { publicProcedure, router } from "../trpc";
 
 export const paintingsRouter = router({
@@ -29,11 +30,8 @@ export const paintingsRouter = router({
         return cached;
       }
 
-      // Resolve R2 bucket and create archive service with D1 binding
-      const bucket = resolveR2BucketOrThrow(ctx);
       const d1Binding = ctx.env?.DB;
       const archiveService = createPaintingsService({
-        r2Bucket: bucket,
         d1Binding,
       });
 
@@ -53,5 +51,13 @@ export const paintingsRouter = router({
       });
 
       return result;
+    }),
+  prepareMintMetadata: publicProcedure
+    .input((val) => v.parse(prepareMintMetadataSchema, val))
+    .mutation(() => {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Mint metadata preparation is disabled until authorized requests are implemented.",
+      });
     }),
 });

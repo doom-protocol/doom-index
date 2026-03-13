@@ -1,12 +1,12 @@
 ---
 title: DOOM INDEX - プロダクト概要
 includes: always
-updated: 2025-12-02
+updated: 2026-03-13
 ---
 
 ## プロダクト概要
 
-DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場データを基に、10分ごとにユニークなジェネラティブアートを生成・提示するビジュアライゼーションプロダクトです。AI がトークンの市場心理を芸術として可視化し、生成画像は Cloudflare R2 に保存され、Web UI と OGP に活用されます。
+DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場データを基に、10分ごとにユニークなジェネラティブアートを生成・提示するビジュアライゼーションプロダクトです。AI がトークンの市場心理を芸術として可視化し、定期生成では画像のみを Arweave に保存し、GLB と NFT metadata は mint 時にだけ生成・保存します。D1 は作品インデックスと mint 用の GLB キャッシュを保持し、Web UI と OGP に活用されます。
 
 ## コア機能
 
@@ -14,15 +14,15 @@ DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場�
 - 動的 OGP 画像生成（OpenGraph 連携）
 - 3D ギャラリー表示（React Three Fiber）
 - **アーカイブページ** - 過去の生成作品を閲覧・検索可能なアーカイブ機能
-- ストレージ永続化（Cloudflare R2／公開 URL 読み取り）
+- ストレージ永続化（Arweave / Turbo SDK、定期生成は image-only）
 - **データベース統合（Cloudflare D1）** - アーカイブインデックス、トークン情報、市場スナップショット
 - 動的トークン選択（CoinGecko トレンド API + 強制リスト対応）
 - 画像生成（Runware／モック）- Runware が本番プロバイダ
 - **動的プロンプト生成（dynamic-prompt）** - Tavily Search + Workers AI によるトークン固有のナラティブコンテキスト生成
 - 市場心理分析（Fear & Greed Index 統合）
 - **型安全な API 通信（tRPC v11）** - エンドツーエンドの型安全性を実現
-- **Solana NFT ミント機能** - Metaplex + Irys によるオンチェーン NFT 発行
-- CLI ツールによるローカル生成・検証（`scripts/generate.ts`）
+- **Solana NFT ミント機能** - Doom NFT program と Arweave メタデータ/GLB ストレージによるオンチェーン NFT 発行
+- CLI ツールによるローカル生成・検証（`scripts/gen-img.ts`）
 - ローカル開発用のスケジュール実行・プレビュー（Workers Preview + Cron）
 - **Cloudflare Cache API 統合** - Edge キャッシュによるレイテンシ低減とコスト最適化
 
@@ -34,12 +34,13 @@ DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場�
 - **トークン固有のコンテキスト生成** - dynamic-prompt による各トークンの象徴性・ナラティブの自動生成
 - **NFT ミント** - 生成作品を Solana NFT としてオンチェーン発行
 - 実運用前のローカル検証（モック・固定トークン・特定モデルでの生成）
-- 分析・展示向けのアーカイブ生成（`out/` または R2 への保存）
+- 分析・展示向けのアーカイブ生成（`out/` または Arweave への保存）
 
 ## 価値提案
 
 - トレンドトークンの市場心理を即時にアートへ反映し、感情を視覚化
-- エッジ実行と R2 による高速・安定配信
+- エッジ実行と Arweave gateway 配信による永続公開
+- 画像を先行保存し、重い GLB upload を mint 時に後ろ倒しすることで固定費を抑制
 - **D1 データベースによる高速検索** - アーカイブの効率的なインデックス化とクエリ
 - **AI によるコンテキスト生成** - Workers AI + Tavily でトークン固有のナラティブを自動生成
 - 動的トークン選択により市場トレンドをリアルタイムに反映
@@ -47,7 +48,7 @@ DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場�
 - 型安全（TypeScript）と結果型（neverthrow）で堅牢なエラーハンドリング
 - **tRPC によるエンドツーエンド型安全性** - 開発時の型補完と実行時エラー削減
 - **Edge キャッシュによる最適化** - 外部 API 呼び出し削減と UX 向上
-- **Solana NFT ミント** - Metaplex による分散型所有権証明
+- **Solana NFT ミント** - Doom NFT program と Arweave パスマニフェストによる分散型所有権証明
 
 ## 主要制約・前提
 

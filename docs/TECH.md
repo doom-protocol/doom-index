@@ -1,15 +1,15 @@
 ---
 title: DOOM INDEX - 技術スタックと運用
 includes: always
-updated: 2025-12-02
+updated: 2026-03-13
 ---
 
 ## 全体アーキテクチャ
 
 - フロントエンド: Next.js 16（App Router, Edge Runtime, React Compiler）
 - バンドラー: **next-rspack** - Rust ベース高速バンドラー
-- 実行/配信: Cloudflare Pages + Workers（Cron Triggers: 10分ごと, R2 Bindings）
-- ストレージ: Cloudflare R2（S3 互換, 公開ドメイン読み取り）
+- 実行/配信: Cloudflare Pages + Workers（Cron Triggers: 10分ごと）
+- ストレージ: Arweave（Turbo SDK 経由アップロード、gateway 読み取り。定期生成は image-only、GLB は mint 時に upload）
 - **データベース: Cloudflare D1（SQLite 互換）** - アーカイブインデックスとトークンコンテキストキャッシュ
 - ランタイム: ローカル Bun / 本番 workerd
 - 画像生成: Runware（本番）/ Mock（テスト用）
@@ -21,7 +21,7 @@ updated: 2025-12-02
 - エラー処理: neverthrow（Result 型）
 - **バリデーション: valibot** - 型安全な環境変数とスキーマ検証
 - **キャッシュ: Cloudflare Cache API** - Edge キャッシュによる最適化
-- **NFT ミント: Metaplex + Irys** - Solana NFT 発行と IPFS ストレージ
+- **NFT ミント: Doom NFT program + Arweave ストレージ** - カスタム Solana ミントプログラムと Arweave メタデータ配信。初回 mint で GLB を生成・保存し、以後は painting ごとに再利用
 
 ## リポジトリ主要構成
 
@@ -30,7 +30,7 @@ updated: 2025-12-02
 - `src/server/services` サーバー専用ビジネスロジック（市場データ、生成、状態、収益等）
   - `src/server/services/paintings/` 絵画生成オーケストレーターと関連サービス
   - `src/server/services/token-analysis-service.ts` トークン分析サービス
-- `src/lib` 外部統合（R2, Provider, tRPC クライアント, 時刻, ハッシュ, 純関数群）
+- `src/lib` 外部統合（ArDrive, Provider, tRPC クライアント, 時刻, ハッシュ, 純関数群）
 - `src/lib/cache` Cloudflare Cache API ヘルパー（開発中）
 - `src/server/repositories` データアクセス層（D1）
   - `paintings-repository.ts`
@@ -55,7 +55,8 @@ updated: 2025-12-02
 ## バックエンド/エッジ
 
 - Cloudflare Workers（Cron: 10分ごとトリガ - `*/10 * * * *`）
-- R2 連携（Bindings or 公開ドメイン）
+- Turbo SDK / Arweave gateway 連携
+- recurring generation では image upload のみを行い、mint preparation で GLB + metadata + manifest を補完
 - OpenNext for Cloudflare によるビルド/デプロイ（`@opennextjs/cloudflare@^1.17.1`）
 
 ## 依存関係（主要）
@@ -69,7 +70,7 @@ updated: 2025-12-02
 - **マイグレーション: `drizzle-kit@^0.31.7`** - Drizzle マイグレーション管理
 - 状態/バリデーション: `@tanstack/react-query@^5.90.11`, `valibot@^1.2.0`, `neverthrow@^7.2.0`
 - **NFT/ブロックチェーン: `@metaplex-foundation/*`, `@solana/web3.js@^1.98.4`, `@solana/wallet-adapter-*`**
-- **IPFS: `pinata@^2.5.1`** - Pinata SDK for IPFS uploads
+- **Arweave: `@ardrive/turbo-sdk`** - Turbo SDK for Arweave uploads
 - **環境変数管理: `@t3-oss/env-nextjs@^0.13.8`** - valibot ベースの型安全な環境変数検証
 - 開発/CF: `wrangler@^4.71.0`, `@cloudflare/workers-types@^4.20260310.1`, `@opennextjs/cloudflare@^1.17.1`
 - 品質: `eslint@^9.39.1`, `eslint-config-next@16.1.6`, `oxfmt`
@@ -82,13 +83,13 @@ updated: 2025-12-02
 - **ログレベル: `LOG_LEVEL`**（任意: ERROR/WARN/INFO/DEBUG/LOG、クライアント公開可）
 - **Node 環境: `NODE_ENV`**（development/test/production、クライアント公開可）
 - **ベース URL: `NEXT_PUBLIC_BASE_URL`**（必須、クライアント公開）
-- **R2 URL: `NEXT_PUBLIC_R2_URL`**（必須、R2 パブリック URL または API プロキシ）
 - Provider キー
   - `RUNWARE_API_KEY`（必須）
 - **Tavily API キー: `TAVILY_API_KEY`**（dynamic-prompt 用、任意）
 - **CoinGecko API キー: `COINGECKO_API_KEY`**（任意、レート制限緩和用）
 - **Solana RPC: `NEXT_PUBLIC_SOLANA_RPC_URL`**（任意、デフォルト: devnet）
-- **IPFS: `PINATA_JWT`**（NFT メタデータアップロード用、任意）
+- **Arweave: `ARDRIVE_TURBO_SECRET_KEY`**（ArDrive JWK secret, NFT metadata upload 用）
+- **Arweave Gateway: `ARWEAVE_GATEWAY_BASE_URL`**（任意、既定: `https://permagate.io`）
 - D1 データベース設定（Cloudflare Dashboard で設定）
   - `CLOUDFLARE_ACCOUNT_ID`（本番マイグレーション用）
   - `CLOUDFLARE_DATABASE_ID`（本番マイグレーション用）
@@ -163,4 +164,4 @@ bun run deploy         # Cloudflare へデプロイ
 - **動的プロンプト生成** - Tavily + Workers AI によるトークンコンテキストの自動生成とキャッシュ
 - **環境変数検証: valibot** - `@t3-oss/env-nextjs` による型安全な環境変数管理
 - **Cloudflare Cache API 統合** - Edge キャッシュによる最適化
-- **Solana NFT ミント** - Metaplex + Irys による分散型所有権証明
+- **Solana NFT ミント** - Doom NFT program + Arweave パスマニフェストによる分散型所有権証明

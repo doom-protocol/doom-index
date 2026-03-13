@@ -1,155 +1,185 @@
 /**
  * useSolanaMint Hook
  *
- * Provides NFT minting functionality using Metaplex Token Metadata
- * Handles transaction building and minting to Solana
- *
- * @see https://developers.metaplex.com/token-metadata
+ * Mints a DOOM INDEX NFT through the custom Anchor/MPL Core program defined by
+ * `src/constants/idl/doom_nft_program.json`.
  */
 
-import { useUmi } from "@/components/providers/umi-provider";
 import {
-  CREATORS,
-  DEFAULT_SELLER_FEE_BASIS_POINTS,
-  DOOM_INDEX_COLLECTION_ADDRESS,
-  UPDATE_AUTHORITY_ADDRESS,
-} from "@/constants/solana";
+  buildDoomNftMintTransaction,
+  fetchGlobalConfig,
+  getDoomNftProgramErrorMessage,
+  isRetryableReservationRaceError,
+  validateGlobalConfigForMint,
+} from "@/lib/anchor/doom-nft-program";
+import { getErrorMessage } from "@/utils/error";
 import { logger } from "@/utils/logger";
-import { createNft } from "@metaplex-foundation/mpl-token-metadata";
-import { generateSigner, percentAmount, publicKey } from "@metaplex-foundation/umi";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useCallback, useState } from "react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { Keypair } from "@solana/web3.js";
+import { useCallback, useEffect, useState } from "react";
 
-type CreateNftInput = Parameters<typeof createNft>[1];
-
-/**
- * Mint parameters
- */
-export interface MintParams {
-  name: string;
-  symbol: string;
-  uri: string; // IPFS metadata URI
-  sellerFeeBasisPoints?: number;
-}
+const MAX_MINT_ATTEMPTS = 2;
 
 /**
  * Mint result
  */
 export interface MintResult {
+  assetAddress: string;
   signature: string;
-  mintAddress: string;
+  tokenId: bigint;
 }
 
 /**
  * useSolanaMint hook result
  */
 export interface UseSolanaMintResult {
-  mint: (params: MintParams) => Promise<MintResult>;
+  mint: () => Promise<MintResult>;
   isMinting: boolean;
   error: Error | null;
+  nextTokenId: bigint | null;
+  refreshMintState: () => Promise<void>;
+}
+
+function toMintError(error: unknown): Error {
+  const doomProgramMessage = getDoomNftProgramErrorMessage(error);
+
+  if (doomProgramMessage) {
+    return new Error(doomProgramMessage);
+  }
+
+  if (error instanceof Error) {
+    return error;
+  }
+
+  return new Error(getErrorMessage(error) || "Minting failed");
 }
 
 /**
- * Hook for minting NFTs using Metaplex Token Metadata
+ * Hook for minting NFTs using the custom Doom NFT program.
  *
  * @returns Mint functions and state
  */
 export function useSolanaMint(): UseSolanaMintResult {
   const [isMinting, setIsMinting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const umi = useUmi();
+  const [nextTokenId, setNextTokenId] = useState<bigint | null>(null);
+  const { connection } = useConnection();
   const wallet = useWallet();
 
-  const mint = useCallback(
-    async (params: MintParams): Promise<MintResult> => {
-      if (!wallet.connected) {
-        throw new Error("Wallet not connected");
-      }
-      setIsMinting(true);
-      setError(null);
+  const refreshMintState = useCallback(async (): Promise<void> => {
+    try {
+      const { globalConfig } = await fetchGlobalConfig(connection);
+      setNextTokenId(globalConfig.nextTokenId);
+    } catch (refreshError) {
+      logger.warn("solana.mint.state-refresh-failed", {
+        error: getErrorMessage(refreshError),
+      });
+      setNextTokenId(null);
+    }
+  }, [connection]);
 
-      try {
+  useEffect(() => {
+    void refreshMintState();
+  }, [refreshMintState]);
+
+  const mint = useCallback(async (): Promise<MintResult> => {
+    if (!wallet.connected || !wallet.publicKey) {
+      throw new Error("Wallet not connected");
+    }
+
+    setIsMinting(true);
+    setError(null);
+
+    try {
+      for (let attempt = 0; attempt < MAX_MINT_ATTEMPTS; attempt++) {
+        const { address: globalConfigAddress, globalConfig } = await fetchGlobalConfig(connection);
+        validateGlobalConfigForMint(globalConfig, globalConfigAddress);
+
+        const tokenId = globalConfig.nextTokenId;
+
+        const assetSigner = Keypair.generate();
+        const transaction = buildDoomNftMintTransaction({
+          asset: assetSigner.publicKey,
+          collection: globalConfig.collection,
+          globalConfig: globalConfigAddress,
+          tokenId,
+          user: wallet.publicKey,
+        });
+        const latestBlockhash = await connection.getLatestBlockhash();
+
+        transaction.feePayer = wallet.publicKey;
+        transaction.recentBlockhash = latestBlockhash.blockhash;
+
         logger.info("solana.mint.start", {
-          name: params.name,
-          uri: params.uri,
+          attempt: attempt + 1,
+          tokenId: tokenId.toString(),
+          walletAddress: wallet.publicKey.toBase58(),
         });
 
-        // Generate a new mint address
-        const mint = generateSigner(umi);
+        try {
+          const signature = await wallet.sendTransaction(transaction, connection, {
+            signers: [assetSigner],
+          });
+          const confirmation = await connection.confirmTransaction(
+            {
+              blockhash: latestBlockhash.blockhash,
+              lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+              signature,
+            },
+            "confirmed",
+          );
 
-        logger.info("solana.mint.address-generated", {
-          mintAddress: mint.publicKey,
-        });
+          if (confirmation.value.err) {
+            throw new Error(`Mint transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+          }
 
-        // Create NFT using Metaplex Token Metadata
-        const nftConfig: CreateNftInput = {
-          mint,
-          name: params.name,
-          symbol: params.symbol,
-          uri: params.uri,
-          sellerFeeBasisPoints: percentAmount(params.sellerFeeBasisPoints ?? DEFAULT_SELLER_FEE_BASIS_POINTS),
-          isCollection: false,
-        };
+          logger.info("solana.mint.success", {
+            assetAddress: assetSigner.publicKey.toBase58(),
+            signature,
+            tokenId: tokenId.toString(),
+          });
 
-        // Optional: Add collection if configured
-        if (typeof DOOM_INDEX_COLLECTION_ADDRESS === "string") {
-          nftConfig.collection = {
-            verified: false,
-            key: DOOM_INDEX_COLLECTION_ADDRESS,
+          setNextTokenId(tokenId + BigInt(1));
+
+          return {
+            assetAddress: assetSigner.publicKey.toBase58(),
+            signature,
+            tokenId,
           };
+        } catch (mintAttemptError) {
+          if (attempt + 1 < MAX_MINT_ATTEMPTS && isRetryableReservationRaceError(mintAttemptError)) {
+            logger.warn("solana.mint.retrying-after-race", {
+              attempt: attempt + 1,
+              error: getErrorMessage(mintAttemptError),
+            });
+            continue;
+          }
+
+          throw mintAttemptError;
         }
-
-        // Optional: Add update authority if configured
-        if (typeof UPDATE_AUTHORITY_ADDRESS === "string") {
-          nftConfig.updateAuthority = UPDATE_AUTHORITY_ADDRESS;
-        }
-
-        // Optional: Add creators if configured and valid
-        const validCreators = CREATORS.filter((creator) => creator.address.length > 0);
-        if (validCreators.length > 0) {
-          nftConfig.creators = validCreators.map((creator) => ({
-            address: publicKey(creator.address),
-            verified: creator.verified,
-            share: creator.share,
-          }));
-        }
-
-        const tx = createNft(umi, nftConfig);
-
-        // Send and confirm transaction
-        const result = await tx.sendAndConfirm(umi);
-        const signature = result.signature.toString();
-
-        logger.info("solana.mint.success", {
-          signature,
-          mintAddress: mint.publicKey,
-        });
-
-        setIsMinting(false);
-
-        return {
-          signature,
-          mintAddress: mint.publicKey.toString(),
-        };
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        logger.error("solana.mint.failed", {
-          error: error.message,
-          details: err,
-        });
-
-        setError(error);
-        setIsMinting(false);
-
-        throw error;
       }
-    },
-    [umi, wallet.connected],
-  );
+
+      throw new Error("Minting failed after retry.");
+    } catch (mintError) {
+      const resolvedError = toMintError(mintError);
+
+      logger.error("solana.mint.failed", {
+        error: resolvedError.message,
+        details: mintError,
+      });
+
+      setError(resolvedError);
+      throw resolvedError;
+    } finally {
+      setIsMinting(false);
+    }
+  }, [connection, wallet]);
 
   return {
-    mint,
-    isMinting,
     error,
+    isMinting,
+    mint,
+    nextTokenId,
+    refreshMintState,
   };
 }

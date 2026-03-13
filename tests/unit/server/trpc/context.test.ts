@@ -53,7 +53,6 @@ describe("Context Creator", () => {
     expect(TestAppContext.headers).toBeDefined();
     expect(TestAppContext.logger).toBeDefined();
     expect(TestAppContext.kvNamespace).toBeUndefined();
-    expect(TestAppContext.r2Bucket).toBeUndefined();
   });
 
   it("should create static server context without request headers", async () => {
@@ -63,6 +62,5 @@ describe("Context Creator", () => {
     expect(testAppContext.headers.get("user-agent")).toBeNull();
     expect(testAppContext.logger).toBeDefined();
     expect(testAppContext.kvNamespace).toBeUndefined();
-    expect(testAppContext.r2Bucket).toBeUndefined();
   });
 });

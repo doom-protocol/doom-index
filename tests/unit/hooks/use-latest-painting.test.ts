@@ -23,7 +23,7 @@ const mockPainting: PaintingMetadata = {
   minuteBucket: "2025/11/30/12/00",
   paramsHash: "test-hash",
   seed: "12345",
-  imageUrl: "/api/r2/paintings/test.webp",
+  imageUrl: "https://permagate.io/test-painting-image-tx",
   fileSize: 1024000,
   visualParams: {
     fogDensity: 0.5,

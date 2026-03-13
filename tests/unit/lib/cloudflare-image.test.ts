@@ -69,7 +69,7 @@ describe("cloudflare-image", () => {
       expect(result).toBe("https://example.com/image.jpg");
     });
 
-    it("should add query params for /api/r2/ paths for server-side transformation", async () => {
+    it("should leave legacy /api/r2/ paths unchanged", async () => {
       void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
@@ -77,14 +77,10 @@ describe("cloudflare-image", () => {
       const { buildLoaderImageUrl } = await import("@/lib/cloudflare-image");
       const result = buildLoaderImageUrl("/api/r2/paintings/test.jpg", 800);
 
-      // /api/r2 URLs now get query params for server-side transformation
-      expect(result).toContain("/api/r2/paintings/test.jpg");
-      expect(result).toContain("w=800");
-      expect(result).toContain("fit=scale-down");
-      expect(result).toContain("fmt=auto");
+      expect(result).toBe("/api/r2/paintings/test.jpg");
     });
 
-    it("should transform relative path in production", async () => {
+    it("should leave public relative paths unchanged in production", async () => {
       void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
@@ -92,13 +88,10 @@ describe("cloudflare-image", () => {
       const { buildLoaderImageUrl } = await import("@/lib/cloudflare-image");
       const result = buildLoaderImageUrl("/images/test.jpg", 800);
 
-      expect(result).toContain("/cdn-cgi/image/");
-      expect(result).toContain("width=800");
-      expect(result).toContain("fit=scale-down");
-      expect(result).toContain("format=auto");
+      expect(result).toBe("/images/test.jpg");
     });
 
-    it("should include quality parameter when provided", async () => {
+    it("should ignore quality for unchanged public relative paths", async () => {
       void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
@@ -106,7 +99,7 @@ describe("cloudflare-image", () => {
       const { buildLoaderImageUrl } = await import("@/lib/cloudflare-image");
       const result = buildLoaderImageUrl("/images/test.jpg", 800, 75);
 
-      expect(result).toContain("quality=75");
+      expect(result).toBe("/images/test.jpg");
     });
   });
 
@@ -179,19 +172,18 @@ describe("cloudflare-image", () => {
   });
 
   describe("getImageUrlWithDpr", () => {
-    it("should add query params for /api/r2/ paths with DPR scaling", async () => {
+    it("should leave legacy /api/r2/ paths unchanged when DPR is applied", async () => {
       void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
-      const { getImageUrlWithDpr, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
+      const { getImageUrlWithDpr } = await import("@/lib/cloudflare-image");
       const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 2);
 
-      const expectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * Math.min(2, 1.5));
-      expect(result).toContain(`w=${String(expectedWidth)}`);
+      expect(result).toBe("/api/r2/paintings/test.jpg");
     });
 
-    it("should clamp DPR to maximum of 1.5 for /api/r2/ paths", async () => {
+    it("should still leave legacy /api/r2/ paths unchanged when DPR exceeds the cap", async () => {
       void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
@@ -199,11 +191,10 @@ describe("cloudflare-image", () => {
       const { getImageUrlWithDpr, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
       const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 3);
 
-      const expectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * 1.5);
-      expect(result).toContain(`w=${String(expectedWidth)}`);
+      expect(result).toBe("/api/r2/paintings/test.jpg");
     });
 
-    it("should clamp DPR to minimum of 1 for /api/r2/ paths", async () => {
+    it("should still leave legacy /api/r2/ paths unchanged when DPR is below the cap", async () => {
       void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
@@ -211,8 +202,7 @@ describe("cloudflare-image", () => {
       const { getImageUrlWithDpr, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
       const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 0.5);
 
-      const expectedWidth = IMAGE_PRESETS.galleryTexture.width;
-      expect(result).toContain(`w=${String(expectedWidth)}`);
+      expect(result).toBe("/api/r2/paintings/test.jpg");
     });
 
     it("should return original URL for public directory images (non-/api/ paths)", async () => {
@@ -230,7 +220,7 @@ describe("cloudflare-image", () => {
   });
 
   describe("getTransformedTextureUrl", () => {
-    it("should add query params for /api/r2/ paths with galleryTexture preset by default", async () => {
+    it("should leave legacy /api/r2/ paths unchanged with the default preset", async () => {
       void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
@@ -238,10 +228,10 @@ describe("cloudflare-image", () => {
       const { getTransformedTextureUrl, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
       const result = getTransformedTextureUrl("/api/r2/paintings/test.jpg");
 
-      expect(result).toContain(`w=${String(IMAGE_PRESETS.galleryTexture.width)}`);
+      expect(result).toBe("/api/r2/paintings/test.jpg");
     });
 
-    it("should apply DPR scaling for /api/r2/ paths", async () => {
+    it("should leave legacy /api/r2/ paths unchanged when applying DPR scaling", async () => {
       void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
@@ -249,11 +239,10 @@ describe("cloudflare-image", () => {
       const { getTransformedTextureUrl, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
       const result = getTransformedTextureUrl("/api/r2/paintings/test.jpg", "galleryTexture", 1.5);
 
-      const expectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * 1.5);
-      expect(result).toContain(`w=${String(expectedWidth)}`);
+      expect(result).toBe("/api/r2/paintings/test.jpg");
     });
 
-    it("should use specified preset for /api/r2/ paths", async () => {
+    it("should leave legacy /api/r2/ paths unchanged for non-default presets", async () => {
       void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
@@ -261,7 +250,7 @@ describe("cloudflare-image", () => {
       const { getTransformedTextureUrl, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
       const result = getTransformedTextureUrl("/api/r2/paintings/test.jpg", "modalFull", 1);
 
-      expect(result).toContain(`w=${String(IMAGE_PRESETS.modalFull.width)}`);
+      expect(result).toBe("/api/r2/paintings/test.jpg");
     });
 
     it("should return original URL for public directory images", async () => {
@@ -376,21 +365,17 @@ describe("cloudflare-image", () => {
       expect(IMAGE_PRESETS.modalFull.width).toBeLessThanOrEqual(1600);
     });
 
-    it("should clamp DPR to 1.5 to prevent excessive image sizes", async () => {
+    it("should leave legacy /api/r2/ paths unchanged even when DPR would otherwise be clamped", async () => {
       void mock.module("@/utils/url", () => ({
         getBaseUrl: () => "https://doomindex.fun",
       }));
 
       const { getImageUrlWithDpr, IMAGE_PRESETS } = await import("@/lib/cloudflare-image");
 
-      // Even with DPR of 3, the effective DPR should be clamped to 1.5
-      // Use /api/r2/ path since public directory images are not transformed
+      // Legacy /api/r2/ paths bypass IMAGE_PRESETS-driven DPR transforms and are returned as-is.
+      // This assertion locks the passthrough behavior in getImageUrlWithDpr for that path family.
       const result = getImageUrlWithDpr("/api/r2/paintings/test.jpg", "galleryTexture", 3);
-      const maxExpectedWidth = Math.round(IMAGE_PRESETS.galleryTexture.width * 1.5);
-
-      expect(result).toContain(`w=${String(maxExpectedWidth)}`);
-      // Ensure we never exceed 1.5x the base width
-      expect(maxExpectedWidth).toBeLessThanOrEqual(IMAGE_PRESETS.galleryTexture.width * 1.5);
+      expect(result).toBe("/api/r2/paintings/test.jpg");
     });
 
     it("should ensure maximum transformed width stays under 2048px", async () => {

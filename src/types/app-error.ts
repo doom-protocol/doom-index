@@ -1,6 +1,6 @@
 interface ExternalApiError {
   type: "ExternalApiError";
-  provider: "ImageProvider" | "WorkersAI" | "Tavily" | "coingecko" | "alternative.me" | "runware" | "pinata";
+  provider: "ImageProvider" | "WorkersAI" | "Tavily" | "coingecko" | "alternative.me" | "runware" | "ardrive";
   status?: number;
   message: string;
   ticker?: string;

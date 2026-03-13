@@ -1,5 +1,51 @@
 # Mint NFT 機能 - 技術設計書
 
+## Current Storage Model
+
+2026-03-13 時点の実装は、この旧設計書の IPFS 前提から外れている。現在の production flow は以下を正とする。
+
+- 定期生成では `image` のみを Arweave/Turbo に upload する
+- `glb` と `metadata.json` と path manifest は mint 時にだけ upload する
+- 同じ painting が再 mint された場合は、初回 mint 時に保存した `glbUrl` を D1 から再利用する
+- `metadata.json` には既存の `imageUrl` を含め、`animation_url` のみ mint-time GLB を参照する
+
+## Arweave Storage Cost
+
+2026-03-13 の live 見積りと現在の fixture 実測サイズを基準に、運用コストは以下とする。
+
+- 前提:
+  - production cron は 1 時間ごと
+  - image は約 `40,482 B`
+  - framed GLB は約 `550,476 B`
+  - ArDrive Turbo 見積りと当時の AR 価格を使用
+- 定期生成の image-only upload:
+  - 約 `$0.000347 / 回`
+  - 約 `$0.25 / 30日`
+  - 約 `$3.04 / 年`
+- mint 時の追加費用:
+  - `GLB + metadata + manifest` で約 `$0.00472 / mint`
+- 総額の目安:
+  - 月額 `約 $0.25 + 0.00472 × 月間 mint 数`
+  - 年額 `約 $3.04 + 0.00472 × 年間 mint 数`
+- 旧方式との比較:
+  - 毎回 `image + GLB` を upload すると約 `$3.65 / 月`、約 `$44.4 / 年`
+  - 現行方式では固定費を 90% 以上削減できる
+
+補足:
+
+- 上の recurring cost は「1 時間ごとに image-only upload を行う」前提で書かれた見積り
+- 実際の recurring cost は cron 頻度に比例するため、運用間隔を変える場合は線形で再計算する
+
+## Operations Links
+
+Arweave / Turbo の運用時に見るリンクをここにまとめる。
+
+- Turbo account: <https://turbo.ar.io/account>
+- Turbo top page: <https://turbo.ar.io/>
+- DOOM INDEX uploader address: `w-0BSqoDiZoct2ISCa1uSCgjm374kFE9hJwKMzAKJ-s`
+- Arweave explorer (ViewBlock items): <https://viewblock.io/arweave/address/w-0BSqoDiZoct2ISCa1uSCgjm374kFE9hJwKMzAKJ-s?tab=items>
+- Default gateway: <https://permagate.io>
+
 ## Overview
 
 本機能は DOOM INDEX の絵画モデル（FramedPainting の 3D オブジェクト）を GLB 形式でエクスポートし、NFT メタデータと共に Pinata 経由で IPFS に永続化したうえで、ユーザーが直接ブラウザから Solana ウォレットを接続して NFT としてミントする機能を提供します。

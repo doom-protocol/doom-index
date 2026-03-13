@@ -28,7 +28,7 @@ describe("isPaintingMetadata", () => {
         lightIntensity: 0.1,
         warmHue: 0.2,
       },
-      imageUrl: "/api/r2/images/2025/11/14/DOOM_202511141234_abc12345_def45678.webp",
+      imageUrl: "https://permagate.io/DOOM_202511141234_abc12345_def45678-image",
       fileSize: 123456,
       prompt: "test prompt",
       negative: "test negative",
@@ -58,7 +58,7 @@ describe("isPaintingMetadata", () => {
         fogDensity: 0.5,
         // missing other visual params
       },
-      imageUrl: "/api/r2/images/2025/11/14/DOOM_202511141234_abc12345_def45678.webp",
+      imageUrl: "https://permagate.io/DOOM_202511141234_abc12345_def45678-image",
       fileSize: 123456,
       prompt: "test prompt",
       negative: "test negative",

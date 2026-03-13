@@ -1,10 +1,5 @@
 import * as v from "valibot";
 
-/**
- * Legacy Token Ticker Schema kept for backward compatibility.
- */
-export const tokenTickerInputSchema = v.string();
-
 // Viewer Schemas
 export const viewerRegisterSchema = v.object({
   sessionId: v.pipe(v.string(), v.minLength(1, "Session ID is required")),
@@ -13,19 +8,6 @@ export const viewerRegisterSchema = v.object({
 
 export const viewerRemoveSchema = v.object({
   sessionId: v.pipe(v.string(), v.minLength(1, "Session ID is required")),
-});
-
-// Token Schemas
-/**
- * Legacy token state schema kept for backward compatibility.
- */
-export const tokenStateInputSchema = v.object({
-  ticker: tokenTickerInputSchema,
-});
-
-// R2 Schemas
-export const r2GetObjectSchema = v.object({
-  key: v.pipe(v.array(v.pipe(v.string(), v.minLength(1))), v.minLength(1, "At least one key segment is required")),
 });
 
 // Paintings Schemas
@@ -49,16 +31,13 @@ export const paintingsListSchema = v.pipe(
   ),
 );
 
-// IPFS Schemas
-export const createSignedUploadUrlSchema = v.object({
-  filename: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
-  contentType: v.picklist(["application/octet-stream", "application/json"]),
-  keyvalues: v.optional(
-    v.object({
-      walletAddress: v.optional(v.string()),
-      timestamp: v.string(),
-      paintingHash: v.string(),
-      network: v.picklist(["devnet", "mainnet-beta"]),
-    }),
+export const prepareMintMetadataSchema = v.object({
+  paintingId: v.pipe(v.string(), v.minLength(1, "paintingId is required")),
+  tokenId: v.pipe(
+    v.union([
+      v.pipe(v.number(), v.integer(), v.minValue(0, "tokenId must be non-negative")),
+      v.pipe(v.string(), v.regex(/^\d+$/, "tokenId must be a non-negative integer")),
+    ]),
+    v.transform((value) => String(value)),
   ),
 });

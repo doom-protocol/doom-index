@@ -41,7 +41,7 @@ yarn-error.log*
 .env.production.local
 .env.test.local
 .dev.vars
-.prd.vars
+.prod.vars
 
 # vercel
 .vercel
@@ -63,3 +63,5 @@ local-test-*.db
 .env.development
 
 .agents/memory/
+
+ArDrive Wallet.json

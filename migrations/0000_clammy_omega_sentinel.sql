@@ -5,8 +5,10 @@ CREATE TABLE `paintings` (
 	`minute_bucket` text NOT NULL,
 	`params_hash` text NOT NULL,
 	`seed` text NOT NULL,
-	`r2_key` text NOT NULL,
+	`image_tx_id` text NOT NULL,
+	`glb_tx_id` text NOT NULL,
 	`image_url` text NOT NULL,
+	`glb_url` text NOT NULL,
 	`file_size` integer NOT NULL,
 	`visual_params_json` text NOT NULL,
 	`prompt` text NOT NULL,
@@ -17,7 +19,8 @@ CREATE INDEX `idx_paintings_ts_id` ON `paintings` (`ts`,`id`);--> statement-brea
 CREATE INDEX `idx_paintings_ts` ON `paintings` (`ts`);--> statement-breakpoint
 CREATE INDEX `idx_paintings_params_hash` ON `paintings` (`params_hash`);--> statement-breakpoint
 CREATE INDEX `idx_paintings_seed` ON `paintings` (`seed`);--> statement-breakpoint
-CREATE UNIQUE INDEX `idx_paintings_r2_key` ON `paintings` (`r2_key`);--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_paintings_image_tx_id` ON `paintings` (`image_tx_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_paintings_glb_tx_id` ON `paintings` (`glb_tx_id`);--> statement-breakpoint
 CREATE TABLE `tokens` (
 	`id` text PRIMARY KEY NOT NULL,
 	`symbol` text NOT NULL,
