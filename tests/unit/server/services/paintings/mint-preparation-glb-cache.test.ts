@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { readFile } from "node:fs/promises";
 import { ok } from "neverthrow";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -72,10 +73,6 @@ const uploadNftMetadataBundleMock = mock(async (params: { glbUrl: string; tokenI
     tokenMetadataUrl: `https://example.test/manifest/${params.tokenId}`,
   });
 });
-const buildFramedPaintingGlbFromPublicFrameMock = mock(async () => {
-  await Promise.resolve();
-  return ok(new ArrayBuffer(16));
-});
 
 function registerMintPreparationModuleMocks() {
   void mock.module("@/env", () => ({
@@ -136,6 +133,49 @@ function registerMintPreparationModuleMocks() {
   }));
 
   void mock.module("@/server/services/paintings/arweave-services", () => ({
+    buildManifestJson: ({ metadataId, tokenId }: { metadataId: string; tokenId: number | string }) => ({
+      manifest: "arweave/paths",
+      paths: {
+        [String(tokenId)]: {
+          id: metadataId,
+        },
+      },
+      version: "0.2.0",
+    }),
+    buildMetadataJson: ({
+      animationUrl,
+      imageContentType,
+      imageUrl,
+      paintingId,
+      tokenId,
+    }: {
+      animationUrl: string;
+      imageContentType: string;
+      imageUrl: string;
+      paintingId: string;
+      tokenId: number | string;
+    }) => ({
+      animation_url: animationUrl,
+      image: imageUrl,
+      name: `DOOM INDEX #${String(tokenId)}`,
+      properties: {
+        category: "image",
+        files: [
+          {
+            type: imageContentType,
+            uri: imageUrl,
+          },
+          {
+            type: "model/gltf-binary",
+            uri: animationUrl,
+          },
+        ],
+      },
+      symbol: "DOOM",
+      description: `Painting ${paintingId}`,
+    }),
+    buildTransactionUrl: ({ gatewayBaseUrl, txId }: { gatewayBaseUrl: string; txId: string }) =>
+      `${gatewayBaseUrl.replace(/\/$/, "")}/${txId}`,
     ensureTurboUploadFunding: mock(async () => {
       await Promise.resolve();
       return ok({
@@ -151,10 +191,6 @@ function registerMintPreparationModuleMocks() {
     uploadPaintingGlbAsset: uploadPaintingGlbAssetMock,
     uploadPaintingImageAsset: uploadPaintingImageAssetMock,
   }));
-
-  void mock.module("@/server/services/paintings/framed-painting-bundle-service", () => ({
-    buildFramedPaintingGlbFromPublicFrame: buildFramedPaintingGlbFromPublicFrameMock,
-  }));
 }
 
 describe("unit/server/services/paintings/mint-preparation glb cache", () => {
@@ -165,7 +201,6 @@ describe("unit/server/services/paintings/mint-preparation glb cache", () => {
     uploadPaintingImageAssetMock.mockClear();
     uploadPaintingGlbAssetMock.mockClear();
     uploadNftMetadataBundleMock.mockClear();
-    buildFramedPaintingGlbFromPublicFrameMock.mockClear();
   });
 
   afterEach(() => {
@@ -174,6 +209,8 @@ describe("unit/server/services/paintings/mint-preparation glb cache", () => {
 
   it("uploads and caches a GLB when the painting does not have one yet", async () => {
     const { preparePaintingMintMetadata } = await loadMintPreparationModule();
+    const rootDir = process.cwd();
+    const imageBytes = await readFile(join(rootDir, "public/placeholder-painting.webp"));
 
     const fetchImpl = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
       await Promise.resolve();
@@ -186,7 +223,7 @@ describe("unit/server/services/paintings/mint-preparation glb cache", () => {
         });
       }
 
-      return new Response(new Uint8Array([1, 2, 3, 4]), {
+      return new Response(imageBytes, {
         headers: {
           "content-type": "image/webp",
         },
@@ -201,8 +238,15 @@ describe("unit/server/services/paintings/mint-preparation glb cache", () => {
     });
 
     expect(result.isOk()).toBe(true);
-    expect(buildFramedPaintingGlbFromPublicFrameMock).toHaveBeenCalledTimes(1);
     expect(uploadPaintingGlbAssetMock).toHaveBeenCalledTimes(1);
+    const glbUploadCall = uploadPaintingGlbAssetMock.mock.calls[0]?.[0] as
+      | {
+          glb: {
+            bytes: Uint8Array;
+          };
+        }
+      | undefined;
+    expect(glbUploadCall?.glb.bytes.byteLength).toBeGreaterThan(16);
     expect(updateMintAssetRefsMock).toHaveBeenCalledWith("painting-1", {
       glbTxId: "glb-tx",
       glbUrl: "https://example.test/glb-tx",

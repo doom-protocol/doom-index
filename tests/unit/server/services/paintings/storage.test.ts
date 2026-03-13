@@ -45,10 +45,6 @@ const uploadNftMetadataBundleMock = mock(async () => {
     tokenMetadataUrl: "https://preferred.example/manifest-tx/1",
   });
 });
-const buildFramedPaintingGlbFromPublicFrameMock = mock(async () => {
-  await Promise.resolve();
-  return ok(new ArrayBuffer(8));
-});
 
 function registerStorageModuleMocks() {
   void mock.module("@/env", () => ({
@@ -138,10 +134,6 @@ function registerStorageModuleMocks() {
     uploadPaintingGlbAsset: uploadPaintingGlbAssetMock,
     uploadPaintingImageAsset: uploadPaintingImageAssetMock,
   }));
-
-  void mock.module("@/server/services/paintings/framed-painting-bundle-service", () => ({
-    buildFramedPaintingGlbFromPublicFrame: buildFramedPaintingGlbFromPublicFrameMock,
-  }));
 }
 
 describe("unit/server/services/paintings/storage", () => {
@@ -151,7 +143,6 @@ describe("unit/server/services/paintings/storage", () => {
     uploadNftMetadataBundleMock.mockClear();
     uploadPaintingGlbAssetMock.mockClear();
     uploadPaintingImageAssetMock.mockClear();
-    buildFramedPaintingGlbFromPublicFrameMock.mockClear();
   });
 
   afterEach(() => {
@@ -173,6 +164,5 @@ describe("unit/server/services/paintings/storage", () => {
       imageUrl: "https://preferred.example/image-tx",
     });
     expect(uploadPaintingImageAssetMock).toHaveBeenCalledTimes(1);
-    expect(buildFramedPaintingGlbFromPublicFrameMock).not.toHaveBeenCalled();
   });
 });

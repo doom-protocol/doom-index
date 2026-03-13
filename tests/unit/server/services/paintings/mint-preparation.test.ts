@@ -108,6 +108,49 @@ function registerMintPreparationModuleMocks() {
   }));
 
   void mock.module("@/server/services/paintings/arweave-services", () => ({
+    buildManifestJson: ({ metadataId, tokenId }: { metadataId: string; tokenId: number | string }) => ({
+      manifest: "arweave/paths",
+      paths: {
+        [String(tokenId)]: {
+          id: metadataId,
+        },
+      },
+      version: "0.2.0",
+    }),
+    buildMetadataJson: ({
+      animationUrl,
+      imageContentType,
+      imageUrl,
+      paintingId,
+      tokenId,
+    }: {
+      animationUrl: string;
+      imageContentType: string;
+      imageUrl: string;
+      paintingId: string;
+      tokenId: number | string;
+    }) => ({
+      animation_url: animationUrl,
+      image: imageUrl,
+      name: `DOOM INDEX #${String(tokenId)}`,
+      properties: {
+        category: "image",
+        files: [
+          {
+            type: imageContentType,
+            uri: imageUrl,
+          },
+          {
+            type: "model/gltf-binary",
+            uri: animationUrl,
+          },
+        ],
+      },
+      symbol: "DOOM",
+      description: `Painting ${paintingId}`,
+    }),
+    buildTransactionUrl: ({ gatewayBaseUrl, txId }: { gatewayBaseUrl: string; txId: string }) =>
+      `${gatewayBaseUrl.replace(/\/$/, "")}/${txId}`,
     ensureTurboUploadFunding: mock(async () => {
       await Promise.resolve();
       return ok({
