@@ -1,5 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { ok } from "neverthrow";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+
+type StorageModule = typeof import("@/server/services/paintings/storage");
+
+async function loadStorageModule(): Promise<StorageModule> {
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/server/services/paintings/storage.ts"));
+  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+  return (await import(moduleUrl.href)) as StorageModule;
+}
 
 const ensureTurboUploadFundingMock = mock(async () => {
   await Promise.resolve();
@@ -149,7 +159,7 @@ describe("unit/server/services/paintings/storage", () => {
   });
 
   it("uploads only the image during recurring storage and skips GLB composition", async () => {
-    const { storePaintingAssets } = await import("@/server/services/paintings/storage");
+    const { storePaintingAssets } = await loadStorageModule();
 
     const result = await storePaintingAssets({
       imageBuffer: new Uint8Array([1, 2, 3]).buffer,

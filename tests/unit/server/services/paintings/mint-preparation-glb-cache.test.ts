@@ -1,5 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { ok } from "neverthrow";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+
+type MintPreparationModule = typeof import("@/server/services/paintings/mint-preparation");
+
+async function loadMintPreparationModule(): Promise<MintPreparationModule> {
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/server/services/paintings/mint-preparation.ts"));
+  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+  return (await import(moduleUrl.href)) as MintPreparationModule;
+}
 
 const findByIdMock = mock(async () => {
   await Promise.resolve();
@@ -163,7 +173,7 @@ describe("unit/server/services/paintings/mint-preparation glb cache", () => {
   });
 
   it("uploads and caches a GLB when the painting does not have one yet", async () => {
-    const { preparePaintingMintMetadata } = await import("@/server/services/paintings/mint-preparation");
+    const { preparePaintingMintMetadata } = await loadMintPreparationModule();
 
     const fetchImpl = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
       await Promise.resolve();
