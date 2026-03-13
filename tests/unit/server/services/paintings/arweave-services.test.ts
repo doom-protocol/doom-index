@@ -1,19 +1,18 @@
-import { describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { err, ok } from "neverthrow";
 
-import {
-  buildBaseMetadataUrl,
-  buildManifestJson,
-  buildMetadataJson,
-  buildPreferredAssetUrl,
-  buildTokenMetadataUrl,
-  ensureTurboUploadFunding,
-  uploadNftMetadataBundle,
-  uploadPaintingAssetBundle,
-} from "@/server/services/paintings/arweave-services";
+async function loadArweaveServices() {
+  return import("@/server/services/paintings/arweave-services");
+}
 
 describe("unit/server/services/paintings/arweave-services", () => {
-  it("preserves the token-id-only Arweave path manifest structure", () => {
+  beforeEach(() => {
+    mock.restore();
+  });
+
+  it("preserves the token-id-only Arweave path manifest structure", async () => {
+    const { buildManifestJson } = await loadArweaveServices();
+
     expect(
       buildManifestJson({
         metadataId: "metadata-tx",
@@ -30,7 +29,9 @@ describe("unit/server/services/paintings/arweave-services", () => {
     });
   });
 
-  it("builds metadata urls from the manifest root plus token id", () => {
+  it("builds metadata urls from the manifest root plus token id", async () => {
+    const { buildBaseMetadataUrl, buildTokenMetadataUrl } = await loadArweaveServices();
+
     expect(
       buildTokenMetadataUrl({
         gatewayBaseUrl: "https://cache.example/",
@@ -48,6 +49,7 @@ describe("unit/server/services/paintings/arweave-services", () => {
   });
 
   it("uploads the image and glb painting bundle and returns preferred urls", async () => {
+    const { buildPreferredAssetUrl, uploadPaintingAssetBundle } = await loadArweaveServices();
     const uploadFile = mock(async (_bytes: Uint8Array, contentType: string) => {
       await Promise.resolve();
       if (contentType === "image/webp") {
@@ -99,6 +101,7 @@ describe("unit/server/services/paintings/arweave-services", () => {
   });
 
   it("uploads metadata and manifest while preserving the existing token path layout", async () => {
+    const { buildMetadataJson, uploadNftMetadataBundle } = await loadArweaveServices();
     const uploadJson = mock(async (json: object) => {
       await Promise.resolve();
       expect(json).toEqual(
@@ -159,6 +162,7 @@ describe("unit/server/services/paintings/arweave-services", () => {
   });
 
   it("checks Turbo funding before upload when a threshold is configured", async () => {
+    const { ensureTurboUploadFunding } = await loadArweaveServices();
     const notify = mock(async (_message: string) => Promise.resolve());
     let balanceCalls = 0;
 
@@ -210,6 +214,7 @@ describe("unit/server/services/paintings/arweave-services", () => {
   });
 
   it("reports that the pending upload is likely insufficient when projected balance goes negative", async () => {
+    const { ensureTurboUploadFunding } = await loadArweaveServices();
     const notify = mock(async (_message: string) => Promise.resolve());
 
     await ensureTurboUploadFunding({
@@ -250,6 +255,7 @@ describe("unit/server/services/paintings/arweave-services", () => {
   });
 
   it("fails when projected balance is insufficient and auto top-up is not configured", async () => {
+    const { ensureTurboUploadFunding } = await loadArweaveServices();
     const result = await ensureTurboUploadFunding({
       ardrive: {
         getBalance: async () => {
@@ -282,7 +288,9 @@ describe("unit/server/services/paintings/arweave-services", () => {
   });
 
   it("fails when projected balance is still insufficient after auto top-up", async () => {
+    const { ensureTurboUploadFunding } = await loadArweaveServices();
     let balanceCalls = 0;
+
     const result = await ensureTurboUploadFunding({
       ardrive: {
         getBalance: async () => {
