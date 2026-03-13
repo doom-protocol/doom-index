@@ -13,22 +13,22 @@ const unsignedIntegerStringSchema = v.pipe(v.string(), v.regex(/^\d+$/, "Expecte
 
 const serverSchema = {
   // Image Provider API Keys
-  OPENAI_API_KEY: v.optional(v.string()),
+  OPENAI_API_KEY: v.pipe(v.string(), v.minLength(1)),
   RUNWARE_API_KEY: v.pipe(v.string(), v.minLength(1)),
   // External API Keys
-  TAVILY_API_KEY: v.optional(v.string()),
-  COINGECKO_API_KEY: v.optional(v.string()),
-  FORCE_TOKEN_LIST: v.optional(v.string()),
-  SLACK_WEBHOOK_URL: v.optional(v.string()),
+  TAVILY_API_KEY: v.pipe(v.string(), v.minLength(1)),
+  COINGECKO_API_KEY: v.pipe(v.string(), v.minLength(1)),
+  FORCE_TOKEN_LIST: v.optional(v.pipe(v.string(), v.minLength(1))),
+  SLACK_WEBHOOK_URL: v.optional(v.pipe(v.string(), v.url())),
   // ArDrive / Arweave
-  ARDRIVE_TURBO_SECRET_KEY: v.optional(v.string()),
+  ARDRIVE_TURBO_SECRET_KEY: v.pipe(v.string(), v.minLength(1)),
   ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON: v.optional(unsignedIntegerStringSchema),
   ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC: v.optional(unsignedIntegerStringSchema),
   ARWEAVE_GATEWAY_BASE_URL: v.optional(v.pipe(v.string(), v.url()), DEFAULT_ARWEAVE_GATEWAY_BASE_URL),
   // Admin Tools
-  ADMIN_SECRET: v.optional(v.string()),
-  CACHE_PURGE_API_TOKEN: v.optional(v.string()),
-  CACHE_PURGE_ZONE_ID: v.optional(v.string()),
+  ADMIN_SECRET: v.pipe(v.string(), v.minLength(1)),
+  CACHE_PURGE_API_TOKEN: v.pipe(v.string(), v.minLength(1)),
+  CACHE_PURGE_ZONE_ID: v.pipe(v.string(), v.minLength(1)),
 };
 
 const clientSchema = {
@@ -37,7 +37,7 @@ const clientSchema = {
 };
 
 const sharedSchema = {
-  IMAGE_MODEL: v.optional(v.string()),
+  IMAGE_MODEL: v.optional(v.string(), "runware:400@1"),
   LOG_LEVEL: v.optional(v.picklist(["ERROR", "WARN", "INFO", "DEBUG", "LOG"]), "DEBUG"),
   NODE_ENV: v.optional(v.picklist(["development", "test", "production"]), "development"),
   NEXT_PUBLIC_GENERATION_INTERVAL_MS: v.pipe(v.string(), v.transform(Number), v.number(), v.integer(), v.minValue(1)),
