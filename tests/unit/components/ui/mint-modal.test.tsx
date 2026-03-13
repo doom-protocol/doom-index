@@ -9,6 +9,7 @@ import type { FC, ReactNode } from "react";
 const NEXT_TOKEN_ID = BigInt(7);
 const WALLET_PUBLIC_KEY = new PublicKey(new Uint8Array(32).fill(9));
 const textEncoder = new TextEncoder();
+const MASKED_WALLET_PUBLIC_KEY = "user...1111";
 
 function encodeU32LE(value: number): Uint8Array {
   const bytes = new Uint8Array(4);
@@ -374,7 +375,7 @@ describe("unit/components/ui/mint-modal", () => {
           connected: true,
           connecting: false,
           openReason: "reopen",
-          publicKey: "user111111111111111111111111111111111111111",
+          publicKey: MASKED_WALLET_PUBLIC_KEY,
           selectedWalletName: "Phantom",
         }),
       );
@@ -383,7 +384,7 @@ describe("unit/components/ui/mint-modal", () => {
         expect.objectContaining({
           connected: true,
           isOpen: true,
-          publicKey: "user111111111111111111111111111111111111111",
+          publicKey: MASKED_WALLET_PUBLIC_KEY,
           selectedWalletName: "Phantom",
         }),
       );

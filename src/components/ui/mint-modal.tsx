@@ -30,6 +30,20 @@ export interface MintModalProps {
   };
 }
 
+function maskPublicKey(publicKey: string | null): string | null {
+  if (!publicKey) {
+    return null;
+  }
+
+  const normalizedPublicKey = publicKey.trim();
+
+  if (normalizedPublicKey.length <= 8) {
+    return normalizedPublicKey;
+  }
+
+  return `${normalizedPublicKey.slice(0, 4)}...${normalizedPublicKey.slice(-4)}`;
+}
+
 const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isMintCompleted, setIsMintCompleted] = useState(false);
@@ -46,11 +60,12 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
   // Mock price (in SOL)
   const MINT_PRICE = 0.1;
   const selectedWalletName = wallet.wallet?.adapter.name ?? null;
+  const maskedPublicKey = maskPublicKey(publicKey);
   const walletDebugStateRef = useRef({
     connected,
     connecting: isWalletConnecting,
     hasSelectedWallet: wallet.wallet !== null,
-    publicKey,
+    publicKey: maskedPublicKey,
     selectedWalletName,
   });
 
@@ -58,7 +73,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
     connected,
     connecting: isWalletConnecting,
     hasSelectedWallet: wallet.wallet !== null,
-    publicKey,
+    publicKey: maskedPublicKey,
     selectedWalletName,
   };
 
@@ -67,7 +82,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
       ...walletDebugStateRef.current,
       isOpen,
     });
-  }, [connected, isOpen, isWalletConnecting, publicKey, selectedWalletName, wallet.wallet]);
+  }, [connected, isOpen, isWalletConnecting, maskedPublicKey, selectedWalletName, wallet.wallet]);
 
   useEffect(() => {
     if (!isOpen) {

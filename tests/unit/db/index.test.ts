@@ -10,6 +10,11 @@ describe("getDB", () => {
   it("throws a clear error when the DB binding is missing from Cloudflare context", async () => {
     cloudflareEnv = {};
 
+    // Re-apply mock so getDB's dynamic import resolves to this env (other test files may have overwritten it)
+    void mock.module("@opennextjs/cloudflare", () => ({
+      getCloudflareContext: async () => Promise.resolve({ env: cloudflareEnv }),
+    }));
+
     const { getDB, resetDBForTests } = await import("@/server/db/index");
     resetDBForTests();
 

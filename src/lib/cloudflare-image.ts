@@ -149,45 +149,6 @@ export function getDevicePixelRatio(): number {
 }
 
 /**
- * Build image URL for Next.js Image loader
- * Centralizes all bypass logic for local, preview, and special paths
- *
- * Keeps remote Arweave URLs and local public assets unchanged.
- * Same-origin non-public paths can still use Cloudflare Image Transformations.
- *
- * @param src - Source image URL
- * @param width - Target width
- * @param quality - Optional quality (1-100)
- * @returns Transformed URL or original if bypass conditions are met
- */
-export function buildLoaderImageUrl(src: string, width: number, quality?: number): string {
-  const base = getBaseUrl();
-  const isLocal = base.includes("localhost") || base.includes("127.0.0.1");
-
-  // Bypass conditions: local dev or absolute URLs
-  if (isLocal || src.startsWith("http://") || src.startsWith("https://")) {
-    return src;
-  }
-
-  if (src.startsWith("/")) {
-    return src;
-  }
-
-  // For other paths: Use /cdn-cgi/image/ prefix (only works on production domain)
-  const isPreview = base.includes(".workers.dev");
-  if (isPreview) {
-    return src;
-  }
-
-  return transformImageUrl(src, {
-    width,
-    quality,
-    fit: "scale-down",
-    format: "auto",
-  });
-}
-
-/**
  * Get transformed texture URL for 3D rendering
  * Pure function replacement for useTransformedTextureUrl hook
  *

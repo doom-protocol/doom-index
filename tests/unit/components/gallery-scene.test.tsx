@@ -122,8 +122,10 @@ const nextMockPainting = {
 // Import the real module to spread its exports
 const realUseLatestPainting = await import("@/hooks/use-latest-painting");
 let currentLatestPainting: typeof mockPainting | null = mockPainting;
+let currentLatestPaintingIsFetching = false;
 const latestPaintingHook = () => ({
   data: currentLatestPainting,
+  isFetching: currentLatestPaintingIsFetching,
   isLoading: false,
   error: null,
 });
@@ -439,6 +441,7 @@ describe("unit/components/gallery-scene", () => {
     latestLightsProps = null;
     orbitControlsState = createOrbitControlsState();
     currentLatestPainting = mockPainting;
+    currentLatestPaintingIsFetching = false;
 
     // Override performance with complete mock for React 19
     globalThis.performance = createMockPerformance();
@@ -598,6 +601,7 @@ describe("unit/components/gallery-scene", () => {
       });
 
       currentLatestPainting = null;
+      currentLatestPaintingIsFetching = true;
       rerender(<GalleryScene />);
 
       await waitFor(() => {
@@ -615,6 +619,7 @@ describe("unit/components/gallery-scene", () => {
       expect(mintButton).toBeEnabled();
 
       currentLatestPainting = null;
+      currentLatestPaintingIsFetching = true;
       rerender(<GalleryScene />);
 
       expect(getByRole("button", { name: /mint/i })).toBeEnabled();
@@ -624,6 +629,22 @@ describe("unit/components/gallery-scene", () => {
 
       await waitFor(() => {
         expect(queryByTestId("mint-modal-shell")).toBeInTheDocument();
+      });
+    });
+
+    it("should clear the cached painting after a settled empty latest painting result", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      const { getByRole, rerender } = render(<GalleryScene />);
+
+      expect(getByRole("button", { name: /mint/i })).toBeEnabled();
+
+      currentLatestPainting = null;
+      currentLatestPaintingIsFetching = false;
+      rerender(<GalleryScene />);
+
+      await waitFor(() => {
+        expect(getByRole("button", { name: /mint/i })).toBeDisabled();
       });
     });
 

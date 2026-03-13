@@ -6,8 +6,7 @@
     "scripts/gen-img.ts",
     "scripts/test-slack-report.ts",
     "scripts/update-react-imports.ts",
-    "scripts/webpack/stub.cjs",
-    "src/lib/image-loader.ts"
+    "scripts/webpack/stub.cjs"
   ],
   "project": [
     "src/**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts,mdx}",

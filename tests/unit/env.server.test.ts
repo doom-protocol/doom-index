@@ -39,4 +39,23 @@ describe("unit/env.server", () => {
     expect(result.exitCode).not.toBe(0);
     expect(new TextDecoder().decode(result.stderr)).toContain("ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON");
   });
+
+  it("rejects whitespace-only required env values after trimming", () => {
+    const env = { ...process.env };
+    env.NEXT_PUBLIC_BASE_URL = "http://localhost:8787";
+    env.NEXT_PUBLIC_GENERATION_INTERVAL_MS = "600000";
+    env.LOG_LEVEL = "DEBUG";
+    env.RUNWARE_API_KEY = "   ";
+
+    const result = Bun.spawnSync({
+      cmd: ["bun", "--eval", 'await import("./src/env.ts");'],
+      cwd: process.cwd(),
+      env,
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+
+    expect(result.exitCode).not.toBe(0);
+    expect(new TextDecoder().decode(result.stderr)).toContain("RUNWARE_API_KEY");
+  });
 });

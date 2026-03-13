@@ -3,6 +3,7 @@ import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import type { NextConfig } from "next";
 import withRspack from "next-rspack";
 import { resolve as resolvePath } from "node:path";
+import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "./src/constants/arweave";
 
 interface MutableWebpackConfig {
   optimization?: {
@@ -38,6 +39,7 @@ const serverBundleStubbedModules = [
 
 const isNextDev = process.env.npm_lifecycle_event === "dev" || process.argv[2] === "dev";
 const isCloudflareBuild = process.env.npm_lifecycle_event === "build:cf";
+const arweaveGatewayUrl = new URL(DEFAULT_ARWEAVE_GATEWAY_BASE_URL);
 
 function customizeWebpack(config: MutableWebpackConfig, { isServer }: { isServer: boolean }): MutableWebpackConfig {
   config.resolve ??= {};
@@ -100,8 +102,13 @@ const nextConfig: NextConfig = {
   },
   pageExtensions: ["ts", "tsx", "mdx"],
   images: {
-    loader: "custom",
-    loaderFile: "./src/lib/image-loader.ts",
+    remotePatterns: [
+      {
+        protocol: arweaveGatewayUrl.protocol === "https:" ? "https" : "http",
+        hostname: arweaveGatewayUrl.hostname,
+        pathname: "/**",
+      },
+    ],
   },
   typedRoutes: true,
   typescript: {

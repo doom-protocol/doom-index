@@ -1,7 +1,9 @@
-import type { JsonGenerationRequest, TextGenerationRequest } from "@/lib/workers-ai-client";
-import { createWorkersAiClient } from "@/lib/workers-ai-client";
+// Mock before workers-ai-client is loaded so it resolves AI from env
+import "./opennextjs-cloudflare-mock-empty-env";
 import type { Ai, AiModels, AiTextGenerationOutput } from "@cloudflare/workers-types";
 import { beforeEach, describe, expect, it, mock } from "bun:test";
+import type { JsonGenerationRequest, TextGenerationRequest } from "@/lib/workers-ai-client";
+import { createWorkersAiClient } from "@/lib/workers-ai-client";
 
 /**
  * Create a mock AI binding that satisfies the Ai interface

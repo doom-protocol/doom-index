@@ -10,25 +10,25 @@ import * as v from "valibot";
 import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "@/constants/arweave";
 
 const unsignedIntegerStringSchema = v.pipe(v.string(), v.regex(/^\d+$/, "Expected an unsigned integer string"));
+const nonEmptyEnvString = v.pipe(v.string(), v.trim(), v.minLength(1));
 
 const serverSchema = {
   // Image Provider API Keys
-  OPENAI_API_KEY: v.pipe(v.string(), v.minLength(1)),
-  RUNWARE_API_KEY: v.pipe(v.string(), v.minLength(1)),
+  RUNWARE_API_KEY: nonEmptyEnvString,
   // External API Keys
-  TAVILY_API_KEY: v.pipe(v.string(), v.minLength(1)),
-  COINGECKO_API_KEY: v.pipe(v.string(), v.minLength(1)),
-  FORCE_TOKEN_LIST: v.optional(v.pipe(v.string(), v.minLength(1))),
-  SLACK_WEBHOOK_URL: v.optional(v.pipe(v.string(), v.url())),
+  TAVILY_API_KEY: nonEmptyEnvString,
+  COINGECKO_API_KEY: nonEmptyEnvString,
+  FORCE_TOKEN_LIST: v.optional(nonEmptyEnvString),
+  SLACK_WEBHOOK_URL: v.optional(v.pipe(v.string(), v.trim(), v.url())),
   // ArDrive / Arweave
-  ARDRIVE_TURBO_SECRET_KEY: v.pipe(v.string(), v.minLength(1)),
+  ARDRIVE_TURBO_SECRET_KEY: nonEmptyEnvString,
   ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON: v.optional(unsignedIntegerStringSchema),
   ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC: v.optional(unsignedIntegerStringSchema),
-  ARWEAVE_GATEWAY_BASE_URL: v.optional(v.pipe(v.string(), v.url()), DEFAULT_ARWEAVE_GATEWAY_BASE_URL),
+  ARWEAVE_GATEWAY_BASE_URL: v.optional(v.pipe(v.string(), v.trim(), v.url()), DEFAULT_ARWEAVE_GATEWAY_BASE_URL),
   // Admin Tools
-  ADMIN_SECRET: v.pipe(v.string(), v.minLength(1)),
-  CACHE_PURGE_API_TOKEN: v.pipe(v.string(), v.minLength(1)),
-  CACHE_PURGE_ZONE_ID: v.pipe(v.string(), v.minLength(1)),
+  ADMIN_SECRET: nonEmptyEnvString,
+  CACHE_PURGE_API_TOKEN: nonEmptyEnvString,
+  CACHE_PURGE_ZONE_ID: nonEmptyEnvString,
 };
 
 const clientSchema = {
@@ -44,7 +44,6 @@ const sharedSchema = {
 };
 
 const readServerRuntimeEnv = () => ({
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   RUNWARE_API_KEY: process.env.RUNWARE_API_KEY,
   TAVILY_API_KEY: process.env.TAVILY_API_KEY,
   COINGECKO_API_KEY: process.env.COINGECKO_API_KEY,

@@ -76,16 +76,21 @@ export const GalleryScene: FC<GallerySceneProps> = ({
   initialPainting,
 }) => {
   const isDevMode = isDevelopment();
-  const { data: latestPainting } = useLatestPainting(initialPainting);
+  const { data: latestPainting, isFetching } = useLatestPainting(initialPainting);
   const lastResolvedPaintingRef = useRef<PaintingMetadata | null>(initialPainting ?? null);
 
   useEffect(() => {
     if (latestPainting) {
       lastResolvedPaintingRef.current = latestPainting;
+      return;
     }
-  }, [latestPainting]);
 
-  const displayPainting = latestPainting ?? lastResolvedPaintingRef.current;
+    if (!isFetching) {
+      lastResolvedPaintingRef.current = null;
+    }
+  }, [isFetching, latestPainting]);
+
+  const displayPainting = isFetching ? (latestPainting ?? lastResolvedPaintingRef.current) : latestPainting;
   const thumbnailUrl = displayPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 
   const paintingRef = useRef<Group>(null);

@@ -84,12 +84,18 @@ export interface SolanaConnectionConfig {
 }
 
 function normalizeSolanaNetwork(network: unknown): SolanaNetwork | null {
-  if (network === "mainnet" || network === "mainnet-beta") {
+  if (typeof network !== "string") {
+    return null;
+  }
+
+  const normalized = network.trim().toLowerCase();
+
+  if (normalized === "mainnet" || normalized === "mainnet-beta") {
     return "mainnet";
   }
 
-  if (network === "devnet" || network === "testnet") {
-    return network;
+  if (normalized === "devnet" || normalized === "testnet") {
+    return normalized;
   }
 
   return null;
@@ -154,9 +160,14 @@ export const getSolanaRpcUrl = (): string => {
 
 export const getSolanaConnectionConfig = (): SolanaConnectionConfig => {
   const endpoint = getSolanaRpcUrl();
+  const network = inferSolanaNetworkFromRpcUrl(endpoint);
+
+  if (!network) {
+    throw new Error(`Unable to infer Solana network from RPC URL: ${endpoint}`);
+  }
 
   return {
     endpoint,
-    network: inferSolanaNetworkFromRpcUrl(endpoint) ?? getDefaultSolanaNetwork(),
+    network,
   };
 };

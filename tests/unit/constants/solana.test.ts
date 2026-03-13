@@ -51,10 +51,10 @@ describe("unit/constants/solana", () => {
     });
   });
 
-  it("falls back to the configured network when a custom RPC URL cannot be inferred", () => {
+  it("normalizes formatted NEXT_PUBLIC_SOLANA_NETWORK values before resolving the default endpoint", () => {
     const result = runSolanaConfigScript({
-      NEXT_PUBLIC_SOLANA_RPC_URL: "https://rpc.example.com/solana",
-      NEXT_PUBLIC_SOLANA_NETWORK: "testnet",
+      NEXT_PUBLIC_SOLANA_RPC_URL: undefined,
+      NEXT_PUBLIC_SOLANA_NETWORK: "  MAINNET-BETA  ",
     });
 
     expect(result.exitCode).toBe(0);
@@ -65,8 +65,19 @@ describe("unit/constants/solana", () => {
     };
 
     expect(output).toEqual({
-      endpoint: "https://rpc.example.com/solana",
-      network: "testnet",
+      endpoint: "https://api.mainnet-beta.solana.com",
+      network: "mainnet",
     });
+  });
+
+  it("fails fast when a custom RPC URL does not reveal the Solana network", () => {
+    const result = runSolanaConfigScript({
+      NEXT_PUBLIC_SOLANA_RPC_URL: "https://rpc.example.com/solana",
+      NEXT_PUBLIC_SOLANA_NETWORK: "testnet",
+    });
+
+    expect(result.exitCode).not.toBe(0);
+    expect(new TextDecoder().decode(result.stderr)).toContain("Unable to infer Solana network from RPC URL");
+    expect(new TextDecoder().decode(result.stderr)).toContain("https://rpc.example.com/solana");
   });
 });

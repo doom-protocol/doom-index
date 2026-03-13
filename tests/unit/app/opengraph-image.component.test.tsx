@@ -8,9 +8,8 @@
  * Based on: https://natt.sh/blog/2024-12-09-testing-react-components-bun
  */
 
-// Ensure DOM environment is initialized (preload may not be executed in time)
+import "./opengraph-image.setup";
 import "../../preload";
-
 import { alt, size } from "@/app/opengraph-image";
 import NextImage from "next/image";
 import { render } from "@testing-library/react";
