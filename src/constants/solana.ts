@@ -78,14 +78,54 @@ export const SOLANA_NETWORKS = {
 
 export type SolanaNetwork = keyof typeof SOLANA_NETWORKS;
 
+export interface SolanaConnectionConfig {
+  endpoint: string;
+  network: SolanaNetwork;
+}
+
+function normalizeSolanaNetwork(network: unknown): SolanaNetwork | null {
+  if (network === "mainnet" || network === "mainnet-beta") {
+    return "mainnet";
+  }
+
+  if (network === "devnet" || network === "testnet") {
+    return network;
+  }
+
+  return null;
+}
+
+function inferSolanaNetworkFromRpcUrl(rpcUrl: string): SolanaNetwork | null {
+  try {
+    const normalizedUrl = new URL(rpcUrl);
+    const networkHint = `${normalizedUrl.hostname}${normalizedUrl.pathname}`.toLowerCase();
+
+    if (networkHint.includes("mainnet")) {
+      return "mainnet";
+    }
+
+    if (networkHint.includes("devnet")) {
+      return "devnet";
+    }
+
+    if (networkHint.includes("testnet")) {
+      return "testnet";
+    }
+  } catch {
+    // Ignore URL parsing failures and fall through to env/default resolution.
+  }
+
+  return null;
+}
+
 /**
  * Get the default Solana network to use
  * Can be overridden by environment variables
  */
 export const getDefaultSolanaNetwork = (): SolanaNetwork => {
   try {
-    const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
-    if (network === "mainnet" || network === "devnet" || network === "testnet") {
+    const network = normalizeSolanaNetwork(process.env.NEXT_PUBLIC_SOLANA_NETWORK);
+    if (network) {
       return network;
     }
   } catch {
@@ -110,4 +150,13 @@ export const getSolanaRpcUrl = (): string => {
 
   const network = getDefaultSolanaNetwork();
   return SOLANA_NETWORKS[network];
+};
+
+export const getSolanaConnectionConfig = (): SolanaConnectionConfig => {
+  const endpoint = getSolanaRpcUrl();
+
+  return {
+    endpoint,
+    network: inferSolanaNetworkFromRpcUrl(endpoint) ?? getDefaultSolanaNetwork(),
+  };
 };

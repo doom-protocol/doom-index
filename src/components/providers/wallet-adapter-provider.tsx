@@ -1,6 +1,7 @@
 "use client";
 
-import { getDefaultSolanaNetwork, getSolanaRpcUrl } from "@/constants/solana";
+import { getSolanaConnectionConfig } from "@/constants/solana";
+import type { SolanaNetwork } from "@/constants/solana";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
@@ -23,9 +24,7 @@ interface Props {
   children?: ReactNode;
 }
 
-function getWalletAdapterNetwork(): WalletAdapterNetwork {
-  const configuredNetwork = getDefaultSolanaNetwork();
-
+function getWalletAdapterNetwork(configuredNetwork: SolanaNetwork): WalletAdapterNetwork {
   switch (configuredNetwork) {
     case "mainnet": {
       return WalletAdapterNetwork.Mainnet;
@@ -40,9 +39,8 @@ function getWalletAdapterNetwork(): WalletAdapterNetwork {
 }
 
 export const WalletAdapterProvider: FC<Props> = ({ children }) => {
-  const network = getWalletAdapterNetwork();
-
-  const endpoint = useMemo(() => getSolanaRpcUrl(), []);
+  const { endpoint, network } = useMemo(() => getSolanaConnectionConfig(), []);
+  const walletAdapterNetwork = getWalletAdapterNetwork(network);
 
   const wallets = useMemo(
     () => [
@@ -59,12 +57,12 @@ export const WalletAdapterProvider: FC<Props> = ({ children }) => {
        * in the npm package `@solana/wallet-adapter-wallets`.
        */
       new PhantomWalletAdapter(),
-      new SolflareWalletAdapter({ network }),
+      new SolflareWalletAdapter({ network: walletAdapterNetwork }),
       new CoinbaseWalletAdapter(),
       new TrustWalletAdapter(),
       new LedgerWalletAdapter(),
     ],
-    [network],
+    [walletAdapterNetwork],
   );
 
   return (

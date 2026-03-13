@@ -77,7 +77,16 @@ export const GalleryScene: FC<GallerySceneProps> = ({
 }) => {
   const isDevMode = isDevelopment();
   const { data: latestPainting } = useLatestPainting(initialPainting);
-  const thumbnailUrl = latestPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
+  const lastResolvedPaintingRef = useRef<PaintingMetadata | null>(initialPainting ?? null);
+
+  useEffect(() => {
+    if (latestPainting) {
+      lastResolvedPaintingRef.current = latestPainting;
+    }
+  }, [latestPainting]);
+
+  const displayPainting = latestPainting ?? lastResolvedPaintingRef.current;
+  const thumbnailUrl = displayPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 
   const paintingRef = useRef<Group>(null);
   const isClampingCameraRef = useRef(false);
@@ -88,14 +97,14 @@ export const GalleryScene: FC<GallerySceneProps> = ({
   const [mintPainting, setMintPainting] = useState<PaintingMetadata | null>(null);
 
   const handleMintClick = () => {
-    if (!latestPainting) return;
+    if (!displayPainting) return;
 
     if (mintModalCloseTimeoutRef.current !== null) {
       window.clearTimeout(mintModalCloseTimeoutRef.current);
       mintModalCloseTimeoutRef.current = null;
     }
 
-    setMintPainting(latestPainting);
+    setMintPainting(displayPainting);
     setIsMintModalMounted(true);
 
     if (mintModalOpenFrameRef.current !== null) {
@@ -293,7 +302,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
 
         <Suspense fallback={null}>
           <ThreeErrorBoundary fallback={<FramedPainting thumbnailUrl={DEFAULT_THUMBNAIL} paintingId={undefined} />}>
-            <FramedPainting ref={paintingRef} thumbnailUrl={thumbnailUrl} paintingId={latestPainting?.id} />
+            <FramedPainting ref={paintingRef} thumbnailUrl={thumbnailUrl} paintingId={displayPainting?.id} />
           </ThreeErrorBoundary>
         </Suspense>
         {isDevMode && <Stats />}
@@ -310,7 +319,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
           pointerEvents: "none",
         }}
       >
-        <MintButton onClick={handleMintClick} isLoading={false} disabled={!latestPainting} />
+        <MintButton onClick={handleMintClick} isLoading={false} disabled={!displayPainting} />
       </div>
 
       {isMintModalMounted && mintPainting ? (

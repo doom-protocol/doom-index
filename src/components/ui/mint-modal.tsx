@@ -14,7 +14,7 @@ import { getErrorMessage } from "@/utils/error";
 import { logger } from "@/utils/logger";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
 import { toast } from "sonner";
 import type { Group } from "three";
@@ -41,13 +41,55 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
   const { setVisible } = useWalletModal();
   const { mint, isMinting, nextTokenId } = useSolanaMint();
   const { triggerHaptic } = useHaptic();
+  const hasOpenedRef = useRef(false);
 
   // Mock price (in SOL)
   const MINT_PRICE = 0.1;
+  const selectedWalletName = wallet.wallet?.adapter.name ?? null;
+  const walletDebugStateRef = useRef({
+    connected,
+    connecting: isWalletConnecting,
+    hasSelectedWallet: wallet.wallet !== null,
+    publicKey,
+    selectedWalletName,
+  });
+
+  walletDebugStateRef.current = {
+    connected,
+    connecting: isWalletConnecting,
+    hasSelectedWallet: wallet.wallet !== null,
+    publicKey,
+    selectedWalletName,
+  };
+
+  useEffect(() => {
+    logger.debug("mint.modal.wallet-state", {
+      ...walletDebugStateRef.current,
+      isOpen,
+    });
+  }, [connected, isOpen, isWalletConnecting, publicKey, selectedWalletName, wallet.wallet]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    logger.debug("mint.modal.opened", {
+      ...walletDebugStateRef.current,
+      openReason: hasOpenedRef.current ? "reopen" : "initial-open",
+    });
+    hasOpenedRef.current = true;
+  }, [isOpen]);
 
   // Handle wallet connection
   const handleConnectWallet = useCallback(async () => {
+    const currentWalletDebugState = walletDebugStateRef.current;
+
+    logger.debug("mint.modal.connect-clicked", currentWalletDebugState);
+    sendGAEvent(GA_EVENTS.MINT_WALLET_CONNECT);
+
     if (!wallet.wallet) {
+      logger.debug("mint.modal.wallet-selector.opened", currentWalletDebugState);
       setVisible(true);
       return;
     }

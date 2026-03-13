@@ -110,6 +110,10 @@ const readWalletModal = () => ({
 const readHaptic = () => ({
   triggerHaptic: mock(() => {}),
 });
+const loggerDebugMock = mock(() => {});
+const loggerErrorMock = mock(() => {});
+const loggerInfoMock = mock(() => {});
+const loggerWarnMock = mock(() => {});
 
 void mock.module("@/hooks/use-solana-wallet", () => ({
   useSolanaWallet: readSolanaWallet,
@@ -144,16 +148,17 @@ void mock.module("@/lib/analytics", () => ({
   GA_EVENTS: {
     MINT_SUCCESS: "mint_success",
     MINT_TRANSACTION_START: "mint_transaction_start",
+    MINT_WALLET_CONNECT: "mint_wallet_connect",
   },
   sendGAEvent: mock(() => {}),
 }));
 
 void mock.module("@/utils/logger", () => ({
   logger: {
-    debug: mock(() => {}),
-    error: mock(() => {}),
-    info: mock(() => {}),
-    warn: mock(() => {}),
+    debug: loggerDebugMock,
+    error: loggerErrorMock,
+    info: loggerInfoMock,
+    warn: loggerWarnMock,
   },
 }));
 
@@ -181,6 +186,10 @@ describe("unit/components/ui/mint-modal", () => {
     getLatestBlockhashMock.mockClear();
     confirmTransactionMock.mockClear();
     setVisibleMock.mockClear();
+    loggerDebugMock.mockClear();
+    loggerErrorMock.mockClear();
+    loggerInfoMock.mockClear();
+    loggerWarnMock.mockClear();
     useWalletState.wallet = null;
     useWalletState.connected = false;
     useWalletState.publicKey = null;
@@ -240,6 +249,24 @@ describe("unit/components/ui/mint-modal", () => {
       expect(setVisibleMock).toHaveBeenCalledWith(true);
       expect(connectWalletMock).not.toHaveBeenCalled();
     });
+
+    expect(loggerDebugMock).toHaveBeenCalledWith(
+      "mint.modal.connect-clicked",
+      expect.objectContaining({
+        connected: false,
+        connecting: false,
+        hasSelectedWallet: false,
+        publicKey: null,
+        selectedWalletName: null,
+      }),
+    );
+    expect(loggerDebugMock).toHaveBeenCalledWith(
+      "mint.modal.wallet-selector.opened",
+      expect.objectContaining({
+        hasSelectedWallet: false,
+        selectedWalletName: null,
+      }),
+    );
   });
 
   it("calls connectWallet when a wallet is already selected", async () => {
@@ -267,6 +294,99 @@ describe("unit/components/ui/mint-modal", () => {
     await waitFor(() => {
       expect(connectWalletMock).toHaveBeenCalledTimes(1);
       expect(setVisibleMock).not.toHaveBeenCalled();
+    });
+  });
+
+  it("logs wallet adapter state when the modal is opened and reopened", async () => {
+    const { MintModal } = await import("@/components/ui/mint-modal");
+    useWalletState.wallet = {
+      adapter: {
+        name: "Phantom",
+      },
+    };
+
+    const { rerender } = render(
+      <MintModal
+        isOpen={true}
+        onClose={() => {}}
+        paintingMetadata={{
+          timestamp: "2026-03-12T00:00:00.000Z",
+          paintingHash: "abcd1234",
+          thumbnailUrl: "/painting.webp",
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(loggerDebugMock).toHaveBeenCalledWith(
+        "mint.modal.opened",
+        expect.objectContaining({
+          connected: false,
+          connecting: false,
+          openReason: "initial-open",
+          publicKey: null,
+          selectedWalletName: "Phantom",
+        }),
+      );
+      expect(loggerDebugMock).toHaveBeenCalledWith(
+        "mint.modal.wallet-state",
+        expect.objectContaining({
+          isOpen: true,
+          selectedWalletName: "Phantom",
+        }),
+      );
+    });
+
+    rerender(
+      <MintModal
+        isOpen={false}
+        onClose={() => {}}
+        paintingMetadata={{
+          timestamp: "2026-03-12T00:00:00.000Z",
+          paintingHash: "abcd1234",
+          thumbnailUrl: "/painting.webp",
+        }}
+      />,
+    );
+
+    solanaWalletState.connected = true;
+    solanaWalletState.connecting = false;
+    solanaWalletState.publicKey = "user111111111111111111111111111111111111111";
+    useWalletState.connected = true;
+    useWalletState.publicKey = WALLET_PUBLIC_KEY;
+
+    rerender(
+      <MintModal
+        isOpen={true}
+        onClose={() => {}}
+        paintingMetadata={{
+          timestamp: "2026-03-12T00:00:00.000Z",
+          paintingHash: "abcd1234",
+          thumbnailUrl: "/painting.webp",
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(loggerDebugMock).toHaveBeenCalledWith(
+        "mint.modal.opened",
+        expect.objectContaining({
+          connected: true,
+          connecting: false,
+          openReason: "reopen",
+          publicKey: "user111111111111111111111111111111111111111",
+          selectedWalletName: "Phantom",
+        }),
+      );
+      expect(loggerDebugMock).toHaveBeenCalledWith(
+        "mint.modal.wallet-state",
+        expect.objectContaining({
+          connected: true,
+          isOpen: true,
+          publicKey: "user111111111111111111111111111111111111111",
+          selectedWalletName: "Phantom",
+        }),
+      );
     });
   });
 

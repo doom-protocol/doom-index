@@ -606,6 +606,27 @@ describe("unit/components/gallery-scene", () => {
       });
     });
 
+    it("should keep the mint opener interactive across a transient latest painting gap", async () => {
+      const { GalleryScene } = await import("@/components/gallery/gallery-scene");
+
+      const { getByRole, queryByTestId, rerender } = render(<GalleryScene />);
+
+      const mintButton = getByRole("button", { name: /mint/i });
+      expect(mintButton).toBeEnabled();
+
+      currentLatestPainting = null;
+      rerender(<GalleryScene />);
+
+      expect(getByRole("button", { name: /mint/i })).toBeEnabled();
+      expect(queryByTestId("mint-modal-shell")).toBeNull();
+
+      fireEvent.click(getByRole("button", { name: /mint/i }));
+
+      await waitFor(() => {
+        expect(queryByTestId("mint-modal-shell")).toBeInTheDocument();
+      });
+    });
+
     it("should close MintModal when a newer painting arrives", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 

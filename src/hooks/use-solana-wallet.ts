@@ -69,6 +69,16 @@ export function useSolanaWallet(): UseSolanaWalletResult {
   const wallet = useWallet();
   const umi = useUmi();
 
+  const getWalletDebugState = useCallback(
+    () => ({
+      connected: wallet.connected,
+      connecting: wallet.connecting,
+      publicKey: wallet.publicKey?.toString() ?? null,
+      walletName: wallet.wallet?.adapter.name ?? null,
+    }),
+    [wallet],
+  );
+
   const connectWallet = useCallback(async (): Promise<WalletConnectionResult> => {
     // Clear previous error
     setConnectionError(null);
@@ -79,7 +89,7 @@ export function useSolanaWallet(): UseSolanaWalletResult {
         type: "wallet_not_selected",
         message: "No wallet selected",
       };
-      logger.warn("wallet.connection.no_wallet_selected");
+      logger.warn("wallet.connection.no_wallet_selected", getWalletDebugState());
       toast.error("Please select a wallet first");
       setConnectionError(error.type);
       return nt.err(error);
@@ -87,18 +97,20 @@ export function useSolanaWallet(): UseSolanaWalletResult {
 
     // Check if already connected
     if (wallet.connected) {
-      logger.info("wallet.connection.already_connected");
+      logger.info("wallet.connection.already_connected", getWalletDebugState());
       return nt.ok(true);
     }
 
     logger.info("wallet.connection.starting", {
-      walletName: wallet.wallet.adapter.name,
+      ...getWalletDebugState(),
     });
 
     try {
+      logger.debug("wallet.connection.adapter-connect.start", getWalletDebugState());
       await wallet.connect();
+      logger.debug("wallet.connection.adapter-connect.success", getWalletDebugState());
       logger.info("wallet.connection.success", {
-        walletName: wallet.wallet.adapter.name,
+        ...getWalletDebugState(),
       });
       toast.success("Wallet connected successfully");
       return nt.ok(true);
@@ -128,15 +140,15 @@ export function useSolanaWallet(): UseSolanaWalletResult {
       };
 
       logger.error("wallet.connection.failed", {
+        ...getWalletDebugState(),
         error: err.message,
         errorType,
-        walletName: wallet.wallet.adapter.name,
       });
 
       setConnectionError(errorType);
       return nt.err(errorObj);
     }
-  }, [wallet]);
+  }, [getWalletDebugState, wallet]);
 
   const disconnectWallet = useCallback(async (): Promise<void> => {
     setConnectionError(null);

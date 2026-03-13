@@ -1,6 +1,6 @@
 "use client";
 
-import { getSolanaRpcUrl } from "@/constants/solana";
+import { getSolanaConnectionConfig } from "@/constants/solana";
 import { logger } from "@/utils/logger";
 import { mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import type { Umi } from "@metaplex-foundation/umi";
@@ -12,10 +12,9 @@ import type { FC, ReactNode } from "react";
 
 // Create Umi instance
 const createUmiInstance = (): Umi => {
-  // Get RPC URL using centralized configuration
-  const rpcUrl = getSolanaRpcUrl();
+  const { endpoint } = getSolanaConnectionConfig();
 
-  const umi = createUmi(rpcUrl).use(mplTokenMetadata());
+  const umi = createUmi(endpoint).use(mplTokenMetadata());
 
   return umi;
 };
