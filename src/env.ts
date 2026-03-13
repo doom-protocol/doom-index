@@ -9,30 +9,32 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import * as v from "valibot";
 import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "@/constants/arweave";
 
-const unsignedIntegerStringSchema = v.pipe(v.string(), v.regex(/^\d+$/, "Expected an unsigned integer string"));
-const nonEmptyEnvString = v.pipe(v.string(), v.trim(), v.minLength(1));
-
 const serverSchema = {
   // Image Provider API Keys
-  RUNWARE_API_KEY: nonEmptyEnvString,
+  RUNWARE_API_KEY: v.pipe(v.string(), v.trim(), v.minLength(1)),
   // External API Keys
-  TAVILY_API_KEY: nonEmptyEnvString,
-  COINGECKO_API_KEY: nonEmptyEnvString,
-  FORCE_TOKEN_LIST: v.optional(nonEmptyEnvString),
+  TAVILY_API_KEY: v.pipe(v.string(), v.trim(), v.minLength(1)),
+  COINGECKO_API_KEY: v.pipe(v.string(), v.trim(), v.minLength(1)),
+  FORCE_TOKEN_LIST: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1))),
   SLACK_WEBHOOK_URL: v.optional(v.pipe(v.string(), v.trim(), v.url())),
   // ArDrive / Arweave
-  ARDRIVE_TURBO_SECRET_KEY: nonEmptyEnvString,
-  ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON: v.optional(unsignedIntegerStringSchema),
-  ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC: v.optional(unsignedIntegerStringSchema),
+  ARDRIVE_TURBO_SECRET_KEY: v.pipe(v.string(), v.trim(), v.minLength(1)),
+  ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON: v.optional(
+    v.pipe(v.string(), v.regex(/^\d+$/, "Expected an unsigned integer string")),
+  ),
+  ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC: v.optional(
+    v.pipe(v.string(), v.regex(/^\d+$/, "Expected an unsigned integer string")),
+  ),
   ARWEAVE_GATEWAY_BASE_URL: v.optional(v.pipe(v.string(), v.trim(), v.url()), DEFAULT_ARWEAVE_GATEWAY_BASE_URL),
   // Admin Tools
-  ADMIN_SECRET: nonEmptyEnvString,
-  CACHE_PURGE_API_TOKEN: nonEmptyEnvString,
-  CACHE_PURGE_ZONE_ID: nonEmptyEnvString,
+  ADMIN_SECRET: v.pipe(v.string(), v.trim(), v.minLength(1)),
+  CACHE_PURGE_API_TOKEN: v.pipe(v.string(), v.trim(), v.minLength(1)),
+  CACHE_PURGE_ZONE_ID: v.pipe(v.string(), v.trim(), v.minLength(1)),
 };
 
 const clientSchema = {
   NEXT_PUBLIC_BASE_URL: v.pipe(v.string(), v.url()),
+  NEXT_PUBLIC_ENABLE_LEVA: v.optional(v.picklist(["true", "false"]), "false"),
   NEXT_PUBLIC_SOLANA_RPC_URL: v.optional(v.pipe(v.string(), v.url()), "https://api.devnet.solana.com"),
 };
 
@@ -57,6 +59,7 @@ const readServerRuntimeEnv = () => ({
   CACHE_PURGE_API_TOKEN: process.env.CACHE_PURGE_API_TOKEN,
   CACHE_PURGE_ZONE_ID: process.env.CACHE_PURGE_ZONE_ID,
   NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+  NEXT_PUBLIC_ENABLE_LEVA: process.env.NEXT_PUBLIC_ENABLE_LEVA,
   NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
   IMAGE_MODEL: process.env.IMAGE_MODEL,
   NODE_ENV: process.env.NODE_ENV,
@@ -66,6 +69,7 @@ const readServerRuntimeEnv = () => ({
 
 const readPublicRuntimeEnv = () => ({
   NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+  NEXT_PUBLIC_ENABLE_LEVA: process.env.NEXT_PUBLIC_ENABLE_LEVA,
   NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
   IMAGE_MODEL: process.env.IMAGE_MODEL,
   NODE_ENV: process.env.NODE_ENV,
@@ -141,6 +145,10 @@ if (shouldEagerlyValidateServerEnv()) {
 
 export function isDevelopment(): boolean {
   return publicEnv.NEXT_PUBLIC_BASE_URL.includes("localhost");
+}
+
+export function isLevaEnabled(): boolean {
+  return isDevelopment() && publicEnv.NEXT_PUBLIC_ENABLE_LEVA === "true";
 }
 
 export function getEnvironmentName(): "development" | "production" {

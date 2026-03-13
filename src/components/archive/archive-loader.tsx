@@ -11,7 +11,7 @@ export const ArchiveLoader: FC = () => {
   return (
     <>
       <div
-        className="h-screen overflow-y-auto px-8 pb-[200px] pt-28 font-sans sm:pt-32"
+        className="h-screen overflow-y-auto px-8 pt-28 pb-[200px] font-sans sm:pt-32"
         style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
       >
         <h1 className="mb-4 normal-case" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>

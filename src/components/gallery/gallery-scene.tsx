@@ -9,9 +9,8 @@ import {
 import type { OrbitControlsBounds } from "@/lib/pure/gallery-orbit-bounds";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { Grid, OrbitControls, Stats } from "@react-three/drei";
+import { Grid, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import dynamic from "next/dynamic";
 import { Suspense, startTransition, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
@@ -26,11 +25,6 @@ import { FramedPainting } from "./framed-painting";
 import { GALLERY_BACK_WALL_Z, GALLERY_FLOOR_Y, GalleryRoom } from "./gallery-room";
 import { Lights } from "./lights";
 import { isDevelopment } from "@/env";
-
-// Dynamic import for Leva to avoid SSR/document issues in test environment
-const Leva = dynamic(async () => import("leva").then((mod) => ({ default: mod.Leva })), {
-  ssr: false,
-});
 
 interface GallerySceneProps {
   cameraPreset?: "dashboard" | "painting";
@@ -205,27 +199,6 @@ export const GalleryScene: FC<GallerySceneProps> = ({
 
   return (
     <>
-      {/* Leva GUI Panel - only visible in development mode */}
-      {isDevMode && (
-        <Leva
-          collapsed={false}
-          oneLineLabels={false}
-          flat={false}
-          theme={{
-            colors: {
-              elevation1: "#1a1a2e",
-              elevation2: "#16213e",
-              elevation3: "#0f3460",
-              accent1: "#e94560",
-              accent2: "#ff6b6b",
-              accent3: "#4ecdc4",
-              highlight1: "#ffffff",
-              highlight2: "#aaaaaa",
-              highlight3: "#888888",
-            },
-          }}
-        />
-      )}
       <Canvas
         className="r3f-gallery-canvas"
         frameloop="demand"
@@ -282,7 +255,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
           mouseButtons={{ LEFT: 0, MIDDLE: 1, RIGHT: 2 }}
           onChange={handleOrbitControlsChange}
         />
-        <Lights disableDevControls />
+        <Lights />
 
         {isDevMode && (
           <>
@@ -310,7 +283,6 @@ export const GalleryScene: FC<GallerySceneProps> = ({
             <FramedPainting ref={paintingRef} thumbnailUrl={thumbnailUrl} paintingId={displayPainting?.id} />
           </ThreeErrorBoundary>
         </Suspense>
-        {isDevMode && <Stats />}
       </Canvas>
       <div
         style={{

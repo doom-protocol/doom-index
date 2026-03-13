@@ -260,7 +260,7 @@ Genesis charges protocol-level fees on deposits and withdrawals. For current fee
 Buckets use condition objects for timing (deposit start/end, claim start/end). Use the helper:
 
 ```typescript
-import { createTimeAbsoluteCondition } from '@metaplex-foundation/genesis';
+import { createTimeAbsoluteCondition } from "@metaplex-foundation/genesis";
 
 const condition = createTimeAbsoluteCondition(BigInt(unixTimestamp));
 ```
@@ -293,15 +293,15 @@ Available end behavior types:
 Buckets can have claim schedules that control when users can claim tokens:
 
 ```typescript
-import { createClaimSchedule, createNeverClaimSchedule } from '@metaplex-foundation/genesis';
+import { createClaimSchedule, createNeverClaimSchedule } from "@metaplex-foundation/genesis";
 
 // Linear vesting with cliff
 const schedule = createClaimSchedule({
-  startTime: BigInt(startTimestamp),  // When linear vesting begins
-  endTime: BigInt(endTimestamp),      // When vesting completes
-  cliffTime: BigInt(cliffTimestamp),  // Cliff date
-  cliffAmountBps: 1000,              // 10% unlocked at cliff
-  period: 2_592_000n,                // Release every 30 days
+  startTime: BigInt(startTimestamp), // When linear vesting begins
+  endTime: BigInt(endTimestamp), // When vesting completes
+  cliffTime: BigInt(cliffTimestamp), // Cliff date
+  cliffAmountBps: 1000, // 10% unlocked at cliff
+  period: 2_592_000n, // Release every 30 days
 });
 
 // Permanently locked (e.g., LP tokens that should never vest)
@@ -313,11 +313,11 @@ const locked = createNeverClaimSchedule();
 Presale and launch pool buckets support merkle-tree allowlists to restrict who can deposit:
 
 ```typescript
-import { prepareAllowlist } from '@metaplex-foundation/genesis';
+import { prepareAllowlist } from "@metaplex-foundation/genesis";
 
 const { root, proofs, treeHeight } = prepareAllowlist([
-  { address: publicKey('Addr111...') },
-  { address: publicKey('Addr222...') },
+  { address: publicKey("Addr111...") },
+  { address: publicKey("Addr222...") },
 ]);
 ```
 

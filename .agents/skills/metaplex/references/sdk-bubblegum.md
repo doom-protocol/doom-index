@@ -18,13 +18,11 @@ npm install @metaplex-foundation/mpl-bubblegum @metaplex-foundation/mpl-core @me
 ## Setup
 
 ```typescript
-import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
-import { mplBubblegum } from '@metaplex-foundation/mpl-bubblegum';
-import { mplCore } from '@metaplex-foundation/mpl-core';
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
+import { mplBubblegum } from "@metaplex-foundation/mpl-bubblegum";
+import { mplCore } from "@metaplex-foundation/mpl-core";
 
-const umi = createUmi('https://api.devnet.solana.com')
-  .use(mplBubblegum())
-  .use(mplCore());  // Needed for Core collection operations
+const umi = createUmi("https://api.devnet.solana.com").use(mplBubblegum()).use(mplCore()); // Needed for Core collection operations
 
 // Add identity — see sdk-umi.md "Node.js / Scripts" section for keypair loading
 ```
@@ -34,8 +32,8 @@ const umi = createUmi('https://api.devnet.solana.com')
 ## Create Tree
 
 ```typescript
-import { createTreeV2 } from '@metaplex-foundation/mpl-bubblegum';
-import { generateSigner } from '@metaplex-foundation/umi';
+import { createTreeV2 } from "@metaplex-foundation/mpl-bubblegum";
+import { generateSigner } from "@metaplex-foundation/umi";
 
 const merkleTree = generateSigner(umi);
 
@@ -52,15 +50,15 @@ await createTreeV2(umi, {
 > **Royalties**: The `sellerFeeBasisPoints` in cNFT metadata is **informational only** — it is not enforced on-chain. For royalty enforcement, add a `Royalties` plugin to the Core collection (see `./sdk-core.md` "Add Plugin to Collection"). Marketplaces read the collection's plugin for enforcement rules.
 
 ```typescript
-import { mintV2 } from '@metaplex-foundation/mpl-bubblegum';
-import { none } from '@metaplex-foundation/umi';
+import { mintV2 } from "@metaplex-foundation/mpl-bubblegum";
+import { none } from "@metaplex-foundation/umi";
 
 const { signature } = await mintV2(umi, {
   leafOwner: umi.identity.publicKey,
   merkleTree: merkleTree.publicKey,
   metadata: {
-    name: 'My cNFT',
-    uri: 'https://arweave.net/xxx',
+    name: "My cNFT",
+    uri: "https://arweave.net/xxx",
     sellerFeeBasisPoints: 550,
     collection: none(),
     creators: [],
@@ -71,16 +69,16 @@ const { signature } = await mintV2(umi, {
 ## Mint cNFT into Collection
 
 ```typescript
-import { mintV2 } from '@metaplex-foundation/mpl-bubblegum';
-import { some } from '@metaplex-foundation/umi';
+import { mintV2 } from "@metaplex-foundation/mpl-bubblegum";
+import { some } from "@metaplex-foundation/umi";
 
 await mintV2(umi, {
   leafOwner: umi.identity.publicKey,
   merkleTree: merkleTree.publicKey,
   collectionMint: collectionAddress,
   metadata: {
-    name: 'My cNFT',
-    uri: 'https://arweave.net/xxx',
+    name: "My cNFT",
+    uri: "https://arweave.net/xxx",
     sellerFeeBasisPoints: 550,
     collection: some({ key: collectionAddress, verified: false }),
     creators: [],
@@ -95,7 +93,7 @@ Note: The `collectionMint` param triggers on-chain collection verification. The 
 Use the `signature` returned by `sendAndConfirm` to extract the asset ID:
 
 ```typescript
-import { parseLeafFromMintV2Transaction } from '@metaplex-foundation/mpl-bubblegum';
+import { parseLeafFromMintV2Transaction } from "@metaplex-foundation/mpl-bubblegum";
 
 // signature comes from: const { signature } = await mintV2(umi, {...}).sendAndConfirm(umi);
 const leaf = await parseLeafFromMintV2Transaction(umi, signature);
@@ -107,16 +105,16 @@ const assetId = leaf.id;
 > Requires `dasApi()` plugin — all mutation operations need the Merkle proof from DAS API.
 
 ```typescript
-import { getAssetWithProof, updateMetadataV2 } from '@metaplex-foundation/mpl-bubblegum';
-import { none, some } from '@metaplex-foundation/umi';
+import { getAssetWithProof, updateMetadataV2 } from "@metaplex-foundation/mpl-bubblegum";
+import { none, some } from "@metaplex-foundation/umi";
 
 const assetWithProof = await getAssetWithProof(umi, assetId, { truncateCanopy: true });
 
 await updateMetadataV2(umi, {
   ...assetWithProof,
   authority: treeAuthority,
-  name: some('Updated Name'),
-  uri: some('https://arweave.net/new-uri'),
+  name: some("Updated Name"),
+  uri: some("https://arweave.net/new-uri"),
   // Pass none() for fields you don't want to change
   symbol: none(),
   sellerFeeBasisPoints: none(),
@@ -128,13 +126,13 @@ await updateMetadataV2(umi, {
 ## Burn cNFT
 
 ```typescript
-import { getAssetWithProof, burnV2 } from '@metaplex-foundation/mpl-bubblegum';
+import { getAssetWithProof, burnV2 } from "@metaplex-foundation/mpl-bubblegum";
 
 const assetWithProof = await getAssetWithProof(umi, assetId, { truncateCanopy: true });
 
 await burnV2(umi, {
   ...assetWithProof,
-  authority: leafOwner,   // Owner or burn delegate
+  authority: leafOwner, // Owner or burn delegate
 }).sendAndConfirm(umi);
 ```
 
@@ -143,7 +141,7 @@ await burnV2(umi, {
 > Requires `dasApi()` plugin — `getAssetWithProof` fetches the Merkle proof via DAS API. See "Fetch cNFTs" section below for setup.
 
 ```typescript
-import { getAssetWithProof, transferV2 } from '@metaplex-foundation/mpl-bubblegum';
+import { getAssetWithProof, transferV2 } from "@metaplex-foundation/mpl-bubblegum";
 
 // Fetch proof from DAS API
 const assetWithProof = await getAssetWithProof(umi, assetId, {
@@ -162,7 +160,7 @@ await transferV2(umi, {
 ### Delegate and Freeze (Single Transaction)
 
 ```typescript
-import { delegateAndFreezeV2, getAssetWithProof } from '@metaplex-foundation/mpl-bubblegum';
+import { delegateAndFreezeV2, getAssetWithProof } from "@metaplex-foundation/mpl-bubblegum";
 
 const assetWithProof = await getAssetWithProof(umi, assetId, { truncateCanopy: true });
 
@@ -176,7 +174,7 @@ await delegateAndFreezeV2(umi, {
 ### Freeze / Thaw Separately
 
 ```typescript
-import { freezeV2, thawV2 } from '@metaplex-foundation/mpl-bubblegum';
+import { freezeV2, thawV2 } from "@metaplex-foundation/mpl-bubblegum";
 
 const assetWithProof = await getAssetWithProof(umi, assetId, { truncateCanopy: true });
 
@@ -197,7 +195,7 @@ await thawV2(umi, {
 ### Thaw and Revoke Delegate
 
 ```typescript
-import { thawAndRevokeV2 } from '@metaplex-foundation/mpl-bubblegum';
+import { thawAndRevokeV2 } from "@metaplex-foundation/mpl-bubblegum";
 
 const assetWithProof = await getAssetWithProof(umi, assetId, { truncateCanopy: true });
 
@@ -212,7 +210,7 @@ await thawAndRevokeV2(umi, {
 ### Approve/Revoke Leaf Delegate
 
 ```typescript
-import { delegateV2, getAssetWithProof } from '@metaplex-foundation/mpl-bubblegum';
+import { delegateV2, getAssetWithProof } from "@metaplex-foundation/mpl-bubblegum";
 
 const assetWithProof = await getAssetWithProof(umi, assetId, { truncateCanopy: true });
 
@@ -228,7 +226,7 @@ await delegateV2(umi, {
 ### Set Tree Delegate
 
 ```typescript
-import { setTreeDelegate } from '@metaplex-foundation/mpl-bubblegum';
+import { setTreeDelegate } from "@metaplex-foundation/mpl-bubblegum";
 
 // Approve tree delegate (can mint on your behalf)
 await setTreeDelegate(umi, {
@@ -241,7 +239,7 @@ await setTreeDelegate(umi, {
 ## Make cNFT Non-Transferable
 
 ```typescript
-import { setNonTransferableV2 } from '@metaplex-foundation/mpl-bubblegum';
+import { setNonTransferableV2 } from "@metaplex-foundation/mpl-bubblegum";
 
 // Requires collection authority. Makes ALL cNFTs in this collection non-transferable.
 await setNonTransferableV2(umi, {
@@ -253,7 +251,7 @@ await setNonTransferableV2(umi, {
 ## Verify / Unverify Creator
 
 ```typescript
-import { verifyCreatorV2, unverifyCreatorV2, getAssetWithProof } from '@metaplex-foundation/mpl-bubblegum';
+import { verifyCreatorV2, unverifyCreatorV2, getAssetWithProof } from "@metaplex-foundation/mpl-bubblegum";
 
 const assetWithProof = await getAssetWithProof(umi, assetId, { truncateCanopy: true });
 
@@ -278,13 +276,13 @@ await unverifyCreatorV2(umi, {
 > Requires a DAS-compatible RPC (e.g., Helius, Triton, QuickNode) and the `dasApi()` plugin. See `./sdk-umi.md` DAS section.
 
 ```typescript
-import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
-import { mplBubblegum } from '@metaplex-foundation/mpl-bubblegum';
-import { mplCore } from '@metaplex-foundation/mpl-core';
-import { dasApi } from '@metaplex-foundation/digital-asset-standard-api';
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
+import { mplBubblegum } from "@metaplex-foundation/mpl-bubblegum";
+import { mplCore } from "@metaplex-foundation/mpl-core";
+import { dasApi } from "@metaplex-foundation/digital-asset-standard-api";
 
 // Add DAS plugin (use DAS-compatible RPC)
-const umi = createUmi('https://mainnet.helius-rpc.com/?api-key=YOUR_KEY')
+const umi = createUmi("https://mainnet.helius-rpc.com/?api-key=YOUR_KEY")
   .use(mplBubblegum())
   .use(mplCore())
   .use(dasApi());

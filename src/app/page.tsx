@@ -2,7 +2,7 @@ import { Header } from "@/components/ui/header";
 import { createStaticServerCaller } from "@/server/trpc/server-caller";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { HomeClient } from "./home-client";
+import { GalleryScene } from "@/components/gallery/gallery-scene";
 
 export default async function HomePage() {
   let initialPainting: PaintingMetadata | null = null;
@@ -28,7 +28,7 @@ export default async function HomePage() {
       }}
     >
       <Header />
-      <HomeClient initialPainting={initialPainting} />
+      <GalleryScene initialPainting={initialPainting} />
     </main>
   );
 }

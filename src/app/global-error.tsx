@@ -1,37 +1,59 @@
 "use client";
 
-import { reportGlobalError } from "@/lib/actions/report-error";
-import NextError from "next/error";
-import { useEffect } from "react";
 import type { FC } from "react";
 
 const GlobalError: FC<{ error: Error & { digest?: string } }> = ({ error }) => {
-  useEffect(() => {
-    // Report error to Slack via Server Action
-    const report = async () => {
-      try {
-        await reportGlobalError({
-          message: error.message,
-          stack: error.stack,
-          name: error.name,
-          digest: error.digest,
-        });
-      } catch (e) {
-        console.error("Failed to report global error:", e);
-      }
-    };
-
-    void report();
-  }, [error]);
-
   return (
-    <html>
-      <body>
-        {/* `NextError` is the default Next.js error page component. Its type
-        definition requires a `statusCode` prop. However, since the App Router
-        does not expose status codes for errors, we simply pass 0 to render a
-        generic error message. */}
-        <NextError statusCode={0} />
+    <html lang="en">
+      <body
+        style={{
+          margin: 0,
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          backgroundColor: "#000000",
+          color: "#ffffff",
+          fontFamily: "serif",
+        }}
+      >
+        <main
+          style={{
+            display: "grid",
+            gap: "0.75rem",
+            padding: "2rem",
+            textAlign: "center",
+          }}
+        >
+          <h1
+            style={{
+              margin: 0,
+              fontSize: "1.75rem",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            }}
+          >
+            Something went wrong
+          </h1>
+          <p
+            style={{
+              margin: 0,
+              maxWidth: "32rem",
+              lineHeight: 1.6,
+              color: "rgba(255, 255, 255, 0.72)",
+            }}
+          >
+            An unexpected error interrupted the gallery. Please reload the page and try again.
+          </p>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "0.875rem",
+              color: "rgba(255, 255, 255, 0.5)",
+            }}
+          >
+            {error.digest ? `Reference: ${error.digest}` : null}
+          </p>
+        </main>
       </body>
     </html>
   );

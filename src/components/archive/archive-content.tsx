@@ -72,7 +72,7 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
     <>
       <div
         ref={listRef}
-        className={`h-screen overflow-y-auto px-8 pb-[200px] pt-28 sm:pt-32 font-sans transition-opacity duration-300 ${
+        className={`h-screen overflow-y-auto px-8 pt-28 pb-[200px] font-sans transition-opacity duration-300 sm:pt-32 ${
           isTransitioning ? "opacity-0" : "opacity-100"
         }`}
         style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}

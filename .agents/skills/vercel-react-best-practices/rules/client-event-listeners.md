@@ -57,7 +57,7 @@ function useKeyboardShortcut(key: string, callback: () => void) {
   useSWRSubscription("global-keydown", () => {
     const handler = (e: KeyboardEvent) => {
       if (e.metaKey && keyCallbacks.has(e.key)) {
-        keyCallbacks.get(e.key)!.forEach(cb => cb());
+        keyCallbacks.get(e.key)!.forEach((cb) => cb());
       }
     };
     window.addEventListener("keydown", handler);

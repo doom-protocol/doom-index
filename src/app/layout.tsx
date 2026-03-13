@@ -1,5 +1,4 @@
 import { Providers } from "@/app/providers";
-import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { getBaseUrl } from "@/utils/url";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
@@ -111,7 +110,6 @@ const RootLayout: FC<{ children: ReactNode }> = ({ children }) => {
             overflow: "hidden",
           }}
         >
-          <LoadingIndicator />
           <Providers>{children}</Providers>
         </body>
         <GoogleAnalytics gaId="G-RMLTMSSJ8T" />

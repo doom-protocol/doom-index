@@ -35,13 +35,13 @@ npm install @metaplex-foundation/umi-bundle-defaults \
 ### Browser / Wallet Adapter
 
 ```typescript
-import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
-import { mplCore } from '@metaplex-foundation/mpl-core';
-import { mplTokenMetadata } from '@metaplex-foundation/mpl-token-metadata';
-import { walletAdapterIdentity } from '@metaplex-foundation/umi-signer-wallet-adapters';
-import { irysUploader } from '@metaplex-foundation/umi-uploader-irys';
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
+import { mplCore } from "@metaplex-foundation/mpl-core";
+import { mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
+import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-adapters";
+import { irysUploader } from "@metaplex-foundation/umi-uploader-irys";
 
-const umi = createUmi('https://api.devnet.solana.com')
+const umi = createUmi("https://api.devnet.solana.com")
   .use(mplCore())
   .use(mplTokenMetadata())
   .use(walletAdapterIdentity(wallet))
@@ -51,18 +51,16 @@ const umi = createUmi('https://api.devnet.solana.com')
 ### Node.js / Scripts (Keypair from File)
 
 ```typescript
-import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
-import { keypairIdentity } from '@metaplex-foundation/umi';
-import { mplCore } from '@metaplex-foundation/mpl-core';
-import { mplTokenMetadata } from '@metaplex-foundation/mpl-token-metadata';
-import fs from 'fs';
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
+import { keypairIdentity } from "@metaplex-foundation/umi";
+import { mplCore } from "@metaplex-foundation/mpl-core";
+import { mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
+import fs from "fs";
 
 // Create Umi first, then load keypair using its eddsa helper
-const umi = createUmi('https://api.devnet.solana.com')
-  .use(mplCore())
-  .use(mplTokenMetadata());
+const umi = createUmi("https://api.devnet.solana.com").use(mplCore()).use(mplTokenMetadata());
 
-const secretKey = JSON.parse(fs.readFileSync('/path/to/keypair.json', 'utf-8'));
+const secretKey = JSON.parse(fs.readFileSync("/path/to/keypair.json", "utf-8"));
 const keypair = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(secretKey));
 umi.use(keypairIdentity(keypair));
 ```
@@ -94,7 +92,7 @@ await createV1(umi, { ...args })
 ### Compute Budget
 
 ```typescript
-import { setComputeUnitLimit, setComputeUnitPrice } from '@metaplex-foundation/mpl-toolbox';
+import { setComputeUnitLimit, setComputeUnitPrice } from "@metaplex-foundation/mpl-toolbox";
 
 await createV1(umi, { ...args })
   .prepend(setComputeUnitLimit(umi, { units: 200_000 }))
@@ -105,7 +103,7 @@ await createV1(umi, { ...args })
 ### Safe Fetch (returns null if not found)
 
 ```typescript
-import { safeFetchMetadata } from '@metaplex-foundation/mpl-token-metadata';
+import { safeFetchMetadata } from "@metaplex-foundation/mpl-token-metadata";
 
 const metadata = await safeFetchMetadata(umi, metadataPda);
 if (metadata) {
@@ -120,7 +118,7 @@ Use `safeFetch*` variants when the account may not exist (e.g., checking if a mi
 ## Uploading
 
 ```typescript
-import { irysUploader } from '@metaplex-foundation/umi-uploader-irys';
+import { irysUploader } from "@metaplex-foundation/umi-uploader-irys";
 
 const umi = createUmi(rpcEndpoint).use(irysUploader());
 
@@ -129,10 +127,10 @@ const [imageUri] = await umi.uploader.upload([imageFile]);
 
 // Upload JSON
 const metadataUri = await umi.uploader.uploadJson({
-  name: 'My NFT',
-  description: 'Description',
+  name: "My NFT",
+  description: "Description",
   image: imageUri,
-  attributes: [{ trait_type: 'Background', value: 'Blue' }],
+  attributes: [{ trait_type: "Background", value: "Blue" }],
 });
 ```
 
@@ -143,9 +141,9 @@ const metadataUri = await umi.uploader.uploadJson({
 > **Important**: DAS API requires a DAS-compatible RPC provider (e.g., Helius, Triton, QuickNode). The default public Solana RPC does **not** support DAS methods.
 
 ```typescript
-import { dasApi } from '@metaplex-foundation/digital-asset-standard-api';
+import { dasApi } from "@metaplex-foundation/digital-asset-standard-api";
 
-const umi = createUmi('https://mainnet.helius-rpc.com/?api-key=YOUR_KEY').use(dasApi());
+const umi = createUmi("https://mainnet.helius-rpc.com/?api-key=YOUR_KEY").use(dasApi());
 
 // Single asset by ID
 const asset = await umi.rpc.getAsset(assetId);
@@ -155,7 +153,7 @@ const assets = await umi.rpc.getAssetsByOwner({ owner: walletAddress });
 
 // By collection
 const collectionAssets = await umi.rpc.getAssetsByCollection({
-  collection: collectionAddress
+  collection: collectionAddress,
 });
 
 // Search
@@ -173,8 +171,8 @@ const results = await umi.rpc.searchAssets({
 try {
   await instruction.sendAndConfirm(umi);
 } catch (error) {
-  if (error.name === 'TokenMetadataError') {
-    console.error('Token Metadata Error:', error.message);
+  if (error.name === "TokenMetadataError") {
+    console.error("Token Metadata Error:", error.message);
   }
   throw error;
 }

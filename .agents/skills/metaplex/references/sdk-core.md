@@ -14,15 +14,15 @@ Umi SDK operations for creating and managing Core NFTs and collections.
 ## Create Asset
 
 ```typescript
-import { create, fetchAsset } from '@metaplex-foundation/mpl-core';
-import { generateSigner } from '@metaplex-foundation/umi';
+import { create, fetchAsset } from "@metaplex-foundation/mpl-core";
+import { generateSigner } from "@metaplex-foundation/umi";
 
 const asset = generateSigner(umi);
 
 await create(umi, {
   asset,
-  name: 'My Core NFT',
-  uri: 'https://arweave.net/xxx',
+  name: "My Core NFT",
+  uri: "https://arweave.net/xxx",
 }).sendAndConfirm(umi);
 
 const fetchedAsset = await fetchAsset(umi, asset.publicKey);
@@ -31,34 +31,34 @@ const fetchedAsset = await fetchAsset(umi, asset.publicKey);
 ## Create Collection
 
 ```typescript
-import { createCollection } from '@metaplex-foundation/mpl-core';
+import { createCollection } from "@metaplex-foundation/mpl-core";
 
 const collection = generateSigner(umi);
 
 await createCollection(umi, {
   collection,
-  name: 'My Collection',
-  uri: 'https://arweave.net/xxx',
+  name: "My Collection",
+  uri: "https://arweave.net/xxx",
 }).sendAndConfirm(umi);
 ```
 
 ## Create Collection with Plugins (Single Step)
 
 ```typescript
-import { createCollection, ruleSet } from '@metaplex-foundation/mpl-core';
+import { createCollection, ruleSet } from "@metaplex-foundation/mpl-core";
 
 const collection = generateSigner(umi);
 
 await createCollection(umi, {
   collection,
-  name: 'My Collection',
-  uri: 'https://arweave.net/xxx',
+  name: "My Collection",
+  uri: "https://arweave.net/xxx",
   plugins: [
     {
-      type: 'Royalties',
+      type: "Royalties",
       basisPoints: 500,
       creators: [{ address: umi.identity.publicKey, percentage: 100 }],
-      ruleSet: ruleSet('None'),
+      ruleSet: ruleSet("None"),
     },
   ],
 }).sendAndConfirm(umi);
@@ -70,26 +70,26 @@ await createCollection(umi, {
 await create(umi, {
   asset: generateSigner(umi),
   collection: collection.publicKey,
-  name: 'Asset #1',
-  uri: 'https://arweave.net/xxx',
+  name: "Asset #1",
+  uri: "https://arweave.net/xxx",
 }).sendAndConfirm(umi);
 ```
 
 ## Create Asset with Plugins (Single Step)
 
 ```typescript
-import { create, ruleSet } from '@metaplex-foundation/mpl-core';
+import { create, ruleSet } from "@metaplex-foundation/mpl-core";
 
 await create(umi, {
   asset: generateSigner(umi),
-  name: 'My NFT with Royalties',
-  uri: 'https://arweave.net/xxx',
+  name: "My NFT with Royalties",
+  uri: "https://arweave.net/xxx",
   plugins: [
     {
-      type: 'Royalties',
+      type: "Royalties",
       basisPoints: 500,
       creators: [{ address: creatorAddress, percentage: 100 }],
-      ruleSet: ruleSet('None'),
+      ruleSet: ruleSet("None"),
     },
   ],
 }).sendAndConfirm(umi);
@@ -100,14 +100,14 @@ await create(umi, {
 Requires fetching the asset first (see "Fetch-first pattern" note above).
 
 ```typescript
-import { update, fetchAsset } from '@metaplex-foundation/mpl-core';
+import { update, fetchAsset } from "@metaplex-foundation/mpl-core";
 
 const asset = await fetchAsset(umi, assetAddress);
 
 await update(umi, {
   asset,
-  name: 'Updated Name',
-  uri: 'https://arweave.net/new-uri',
+  name: "Updated Name",
+  uri: "https://arweave.net/new-uri",
 }).sendAndConfirm(umi);
 ```
 
@@ -116,12 +116,12 @@ await update(umi, {
 ## Update Collection
 
 ```typescript
-import { updateCollection } from '@metaplex-foundation/mpl-core';
+import { updateCollection } from "@metaplex-foundation/mpl-core";
 
 await updateCollection(umi, {
   collection: collectionAddress,
-  name: 'Updated Collection Name',
-  uri: 'https://arweave.net/new-uri',
+  name: "Updated Collection Name",
+  uri: "https://arweave.net/new-uri",
 }).sendAndConfirm(umi);
 ```
 
@@ -130,7 +130,7 @@ await updateCollection(umi, {
 Requires fetching the asset first.
 
 ```typescript
-import { burn, fetchAsset } from '@metaplex-foundation/mpl-core';
+import { burn, fetchAsset } from "@metaplex-foundation/mpl-core";
 
 const asset = await fetchAsset(umi, assetAddress);
 await burn(umi, { asset }).sendAndConfirm(umi);
@@ -146,7 +146,7 @@ import {
   fetchCollection,
   fetchAssetsByOwner,
   fetchAssetsByCollection,
-} from '@metaplex-foundation/mpl-core';
+} from "@metaplex-foundation/mpl-core";
 
 // Single asset
 const asset = await fetchAsset(umi, assetAddress);
@@ -166,7 +166,7 @@ const collectionAssets = await fetchAssetsByCollection(umi, collectionAddress);
 ## Transfer Asset
 
 ```typescript
-import { transferV1 } from '@metaplex-foundation/mpl-core';
+import { transferV1 } from "@metaplex-foundation/mpl-core";
 
 await transferV1(umi, {
   asset: assetAddress,
@@ -193,16 +193,16 @@ Available plugin types: `Royalties`, `FreezeDelegate`, `BurnDelegate`, `Transfer
 ### Add Plugin — After Creation
 
 ```typescript
-import { addPlugin, ruleSet } from '@metaplex-foundation/mpl-core';
+import { addPlugin, ruleSet } from "@metaplex-foundation/mpl-core";
 
 // Add to asset
 await addPlugin(umi, {
   asset: assetAddress,
   plugin: {
-    type: 'Royalties',
+    type: "Royalties",
     basisPoints: 500,
     creators: [{ address: creatorAddress, percentage: 100 }],
-    ruleSet: ruleSet('None'),
+    ruleSet: ruleSet("None"),
   },
 }).sendAndConfirm(umi);
 ```
@@ -210,15 +210,15 @@ await addPlugin(umi, {
 ### Add Plugin to Collection
 
 ```typescript
-import { addCollectionPlugin, ruleSet } from '@metaplex-foundation/mpl-core';
+import { addCollectionPlugin, ruleSet } from "@metaplex-foundation/mpl-core";
 
 await addCollectionPlugin(umi, {
   collection: collectionAddress,
   plugin: {
-    type: 'Royalties',
+    type: "Royalties",
     basisPoints: 500,
     creators: [{ address: creatorAddress, percentage: 100 }],
-    ruleSet: ruleSet('None'),
+    ruleSet: ruleSet("None"),
   },
 }).sendAndConfirm(umi);
 ```
@@ -226,29 +226,29 @@ await addCollectionPlugin(umi, {
 ### Update Plugin
 
 ```typescript
-import { updatePlugin } from '@metaplex-foundation/mpl-core';
+import { updatePlugin } from "@metaplex-foundation/mpl-core";
 
 // Update asset plugin (e.g., change royalty percentage)
 await updatePlugin(umi, {
   asset: assetAddress,
   plugin: {
-    type: 'Royalties',
+    type: "Royalties",
     basisPoints: 750,
     creators: [{ address: creatorAddress, percentage: 100 }],
-    ruleSet: ruleSet('None'),
+    ruleSet: ruleSet("None"),
   },
 }).sendAndConfirm(umi);
 
 // Update collection plugin
-import { updateCollectionPlugin } from '@metaplex-foundation/mpl-core';
+import { updateCollectionPlugin } from "@metaplex-foundation/mpl-core";
 
 await updateCollectionPlugin(umi, {
   collection: collectionAddress,
   plugin: {
-    type: 'Royalties',
+    type: "Royalties",
     basisPoints: 750,
     creators: [{ address: creatorAddress, percentage: 100 }],
-    ruleSet: ruleSet('None'),
+    ruleSet: ruleSet("None"),
   },
 }).sendAndConfirm(umi);
 ```
@@ -256,30 +256,30 @@ await updateCollectionPlugin(umi, {
 ### Remove Plugin
 
 ```typescript
-import { removePlugin, removeCollectionPlugin } from '@metaplex-foundation/mpl-core';
+import { removePlugin, removeCollectionPlugin } from "@metaplex-foundation/mpl-core";
 
 // From asset
 await removePlugin(umi, {
   asset: assetAddress,
-  plugin: { type: 'FreezeDelegate' },
+  plugin: { type: "FreezeDelegate" },
 }).sendAndConfirm(umi);
 
 // From collection
 await removeCollectionPlugin(umi, {
   collection: collectionAddress,
-  plugin: { type: 'Attributes' },
+  plugin: { type: "Attributes" },
 }).sendAndConfirm(umi);
 ```
 
 ### Delegate Plugin Authority
 
 ```typescript
-import { approvePluginAuthority } from '@metaplex-foundation/mpl-core';
+import { approvePluginAuthority } from "@metaplex-foundation/mpl-core";
 
 await approvePluginAuthority(umi, {
   asset: assetAddress,
-  plugin: { type: 'FreezeDelegate' },
-  newAuthority: { type: 'Address', address: delegateAddress },
+  plugin: { type: "FreezeDelegate" },
+  newAuthority: { type: "Address", address: delegateAddress },
 }).sendAndConfirm(umi);
 ```
 
@@ -288,11 +288,11 @@ await approvePluginAuthority(umi, {
 Owner-managed plugins (Freeze, Transfer, Burn delegates) revert to `Owner` authority. Authority-managed plugins revert to `UpdateAuthority`. Owner-managed delegates are **auto-revoked on transfer**.
 
 ```typescript
-import { revokePluginAuthority } from '@metaplex-foundation/mpl-core';
+import { revokePluginAuthority } from "@metaplex-foundation/mpl-core";
 
 await revokePluginAuthority(umi, {
   asset: assetAddress,
-  plugin: { type: 'FreezeDelegate' },
+  plugin: { type: "FreezeDelegate" },
 }).sendAndConfirm(umi);
 ```
 
@@ -303,7 +303,7 @@ await revokePluginAuthority(umi, {
 Requires `FreezeDelegate` plugin on the asset. The delegate authority (or owner, if no delegate) can freeze/thaw. Requires fetching the asset first.
 
 ```typescript
-import { freezeAsset, thawAsset, fetchAsset } from '@metaplex-foundation/mpl-core';
+import { freezeAsset, thawAsset, fetchAsset } from "@metaplex-foundation/mpl-core";
 
 const asset = await fetchAsset(umi, assetAddress);
 
@@ -326,11 +326,11 @@ await thawAsset(umi, {
 Alternative: use `updatePlugin` to toggle freeze state directly:
 
 ```typescript
-import { updatePlugin } from '@metaplex-foundation/mpl-core';
+import { updatePlugin } from "@metaplex-foundation/mpl-core";
 
 await updatePlugin(umi, {
   asset: assetAddress,
-  plugin: { type: 'FreezeDelegate', frozen: true },  // or false to thaw
+  plugin: { type: "FreezeDelegate", frozen: true }, // or false to thaw
 }).sendAndConfirm(umi);
 ```
 
@@ -345,13 +345,13 @@ Non-transferable tokens using `PermanentFreezeDelegate` plugin set to `frozen: t
 ```typescript
 await create(umi, {
   asset: generateSigner(umi),
-  name: 'Soulbound Token',
-  uri: 'https://arweave.net/xxx',
+  name: "Soulbound Token",
+  uri: "https://arweave.net/xxx",
   plugins: [
     {
-      type: 'PermanentFreezeDelegate',
+      type: "PermanentFreezeDelegate",
       frozen: true,
-      authority: { type: 'None' },  // Permanently frozen — no one can thaw
+      authority: { type: "None" }, // Permanently frozen — no one can thaw
     },
   ],
 }).sendAndConfirm(umi);
@@ -362,13 +362,13 @@ await create(umi, {
 ```typescript
 await create(umi, {
   asset: generateSigner(umi),
-  name: 'Revocable Soulbound',
-  uri: 'https://arweave.net/xxx',
+  name: "Revocable Soulbound",
+  uri: "https://arweave.net/xxx",
   plugins: [
     {
-      type: 'PermanentFreezeDelegate',
+      type: "PermanentFreezeDelegate",
       frozen: true,
-      authority: { type: 'Address', address: adminAddress },  // Admin can unfreeze
+      authority: { type: "Address", address: adminAddress }, // Admin can unfreeze
     },
   ],
 }).sendAndConfirm(umi);
@@ -381,13 +381,13 @@ All assets in this collection are frozen at collection level:
 ```typescript
 await createCollection(umi, {
   collection: generateSigner(umi),
-  name: 'Soulbound Collection',
-  uri: 'https://arweave.net/xxx',
+  name: "Soulbound Collection",
+  uri: "https://arweave.net/xxx",
   plugins: [
     {
-      type: 'PermanentFreezeDelegate',
+      type: "PermanentFreezeDelegate",
       frozen: true,
-      authority: { type: 'UpdateAuthority' },  // Update authority can unfreeze
+      authority: { type: "UpdateAuthority" }, // Update authority can unfreeze
     },
   ],
 }).sendAndConfirm(umi);
@@ -396,11 +396,11 @@ await createCollection(umi, {
 To toggle collection freeze:
 
 ```typescript
-import { updateCollectionPlugin } from '@metaplex-foundation/mpl-core';
+import { updateCollectionPlugin } from "@metaplex-foundation/mpl-core";
 
 await updateCollectionPlugin(umi, {
   collection: collectionAddress,
-  plugin: { type: 'PermanentFreezeDelegate', frozen: false },
+  plugin: { type: "PermanentFreezeDelegate", frozen: false },
 }).sendAndConfirm(umi);
 ```
 

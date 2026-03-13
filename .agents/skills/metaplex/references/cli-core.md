@@ -36,12 +36,14 @@ mplx core collection template                                               # Ge
 **Plugin file format** (for `--pluginsFile`):
 
 ```json
-[{
-  "type": "Royalties",
-  "basisPoints": 500,
-  "creators": [{"address": "<CREATOR_ADDRESS>", "percentage": 100}],
-  "ruleSet": {"type": "None"}
-}]
+[
+  {
+    "type": "Royalties",
+    "basisPoints": 500,
+    "creators": [{ "address": "<CREATOR_ADDRESS>", "percentage": 100 }],
+    "ruleSet": { "type": "None" }
+  }
+]
 ```
 
 **Available Types:** `Royalties`, `FreezeDelegate`, `BurnDelegate`, `TransferDelegate`, `Attributes`, `ImmutableMetadata`, `PermanentFreezeDelegate`, `PermanentTransferDelegate`, `PermanentBurnDelegate`

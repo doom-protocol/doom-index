@@ -1,7 +1,6 @@
 import createMDX from "@next/mdx";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import type { NextConfig } from "next";
-import withRspack from "next-rspack";
 import { resolve as resolvePath } from "node:path";
 import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "./src/constants/arweave";
 
@@ -120,7 +119,7 @@ const nextConfig: NextConfig = {
 const withMDX = createMDX();
 const configWithMDX = withMDX(nextConfig);
 
-export default isNextDev ? configWithMDX : withRspack(configWithMDX);
+export default configWithMDX;
 
 // `initOpenNextCloudflareForDev()` is only for local `next dev`.
 // Tying it to a localhost public URL makes CI/production builds try to open Wrangler dev bindings.

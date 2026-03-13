@@ -787,7 +787,7 @@ describe("unit/components/gallery-scene", () => {
   });
 
   describe("performance-guarantees", () => {
-    it("should keep the top page on the production light rig from the first render", async () => {
+    it("should leave top-page light controls available from the first render", async () => {
       const { GalleryScene } = await import("@/components/gallery/gallery-scene");
 
       const { getByTestId } = render(<GalleryScene />);
@@ -796,7 +796,7 @@ describe("unit/components/gallery-scene", () => {
         expect(getByTestId("full-lights")).toBeDefined();
       });
 
-      expect(latestLightsProps?.disableDevControls).toBe(true);
+      expect(latestLightsProps?.disableDevControls).toBeUndefined();
     });
 
     it("should configure OrbitControls with damping for smooth inertial movement", async () => {

@@ -7,7 +7,7 @@ import type { FC } from "react";
 import { CircleGeometry, DoubleSide, Float32BufferAttribute } from "three";
 import type { Mesh, Object3D, SpotLight } from "three";
 
-import { isDevelopment } from "@/env";
+import { isLevaEnabled } from "@/env";
 
 interface LightsProps {
   variant?: "simple" | "full";
@@ -155,14 +155,13 @@ const LightsWithControls = dynamic(
 
 // Exported component that switches between simple, full, or dev-controlled lights
 export const Lights: FC<LightsProps> = ({ variant = "full", disableDevControls = false }) => {
-  const isDevMode = isDevelopment();
+  const levaEnabled = isLevaEnabled();
 
   if (variant === "simple") {
     return <SimpleLights />;
   }
 
-  // In development mode, use interactive controls unless explicitly disabled
-  if (isDevMode && !disableDevControls) {
+  if (levaEnabled && !disableDevControls) {
     return <LightsWithControls />;
   }
 
