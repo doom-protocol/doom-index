@@ -50,7 +50,6 @@ import {
   buildFramedPaintingGlbFromPublicFrame,
   copyBytesToArrayBuffer,
 } from "@/server/services/paintings/framed-painting-bundle-service";
-import { storePaintingAssets } from "@/server/services/paintings/storage";
 
 export interface CliArgs {
   dryRun: boolean;
@@ -325,6 +324,7 @@ async function uploadExplicitAssets(
 
 async function uploadFixtureAssets(
   args: CliArgs,
+  ardrive: ReturnType<typeof createArdriveClient>,
   explicitGatewayBaseUrl: string | undefined,
 ): Promise<{
   glbUrl: string;
@@ -336,11 +336,42 @@ async function uploadFixtureAssets(
     throw new Error(imageResult.error.message);
   }
 
-  const uploadResult = await storePaintingAssets({
+  const composedGlbResult = await buildFramedPaintingGlbFromPublicFrame({
+    paintingImageBuffer: copyBytesToArrayBuffer(imageResult.value.bytes),
+    paintingImageContentType: imageResult.value.contentType,
+  });
+  if (composedGlbResult.isErr()) {
+    throw new Error(composedGlbResult.error.message);
+  }
+
+  const fundingResult = await ensureTurboUploadFunding({
+    ardrive,
+    autoTopUpAmountWinston: parseOptionalBigInt(
+      env.ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON,
+      "ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON",
+    ),
+    byteCounts: [imageResult.value.bytes.byteLength, composedGlbResult.value.byteLength],
+    notifyThresholdWinc: parseOptionalBigInt(
+      env.ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC,
+      "ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC",
+    ),
+  });
+  if (fundingResult.isErr()) {
+    throw new Error(fundingResult.error.message);
+  }
+
+  const uploadResult = await uploadPaintingAssetBundle({
+    ardrive,
     explicitGatewayBaseUrl,
-    imageBuffer: copyBytesToArrayBuffer(imageResult.value.bytes),
-    imageContentType: imageResult.value.contentType,
+    image: {
+      bytes: imageResult.value.bytes,
+      contentType: imageResult.value.contentType,
+    },
     paintingId: args.paintingId ?? `fixture-${String(args.tokenId)}`,
+    glb: {
+      bytes: new Uint8Array(composedGlbResult.value),
+      contentType: "model/gltf-binary",
+    },
   });
   if (uploadResult.isErr()) {
     throw new Error(uploadResult.error.message);
@@ -360,7 +391,7 @@ async function uploadBundle(args: CliArgs): Promise<UploadedAssetBundleSummary> 
   });
 
   const assetUploadResult = args.fixture
-    ? await uploadFixtureAssets(args, explicitGatewayBaseUrl)
+    ? await uploadFixtureAssets(args, ardrive, explicitGatewayBaseUrl)
     : await uploadExplicitAssets(args, ardrive, explicitGatewayBaseUrl);
 
   const metadataPreviewBytes = JSON_ENCODER.encode(

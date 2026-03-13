@@ -336,6 +336,10 @@ describe("unit/components/ui/mint-modal", () => {
       />,
     );
 
+    await waitFor(() => {
+      expect(prepareMintMetadataMock).not.toHaveBeenCalled();
+    });
+
     fireEvent.click(getByRole("button", { name: /^mint$/i }));
 
     await waitFor(() => {

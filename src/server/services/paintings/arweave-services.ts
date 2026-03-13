@@ -56,6 +56,16 @@ interface UploadedPaintingAssetBundle {
   imageUrl: string;
 }
 
+interface UploadedPaintingImageAsset {
+  imageTxId: string;
+  imageUrl: string;
+}
+
+interface UploadedPaintingGlbAsset {
+  glbTxId: string;
+  glbUrl: string;
+}
+
 interface UploadedNftMetadataBundle {
   baseMetadataUrl: string;
   manifestTxId: string;
@@ -428,52 +438,126 @@ export async function uploadPaintingAssetBundle(params: {
   };
   paintingId?: string;
 }): Promise<Result<UploadedPaintingAssetBundle, AppError>> {
-  const baseTags = buildBaseTags(params.paintingId);
-
-  logger.info("[uploadPaintingAssetBundle] Uploading image to Arweave...", {
+  const imageUploadResult = await uploadPaintingImageAsset({
+    ardrive: params.ardrive,
+    explicitGatewayBaseUrl: params.explicitGatewayBaseUrl,
+    image: params.image,
     paintingId: params.paintingId,
-    imageSize: params.image.bytes.byteLength,
-    imageContentType: params.image.contentType,
   });
-  const imageUploadResult = await params.ardrive.uploadFile(params.image.bytes, params.image.contentType, [
-    ...baseTags,
-    { name: "File-Type", value: "thumbnail" },
-  ]);
   if (imageUploadResult.isErr()) {
-    logger.error("[uploadPaintingAssetBundle] Image upload failed", { error: imageUploadResult.error });
     return err(imageUploadResult.error);
   }
-  logger.info("[uploadPaintingAssetBundle] Image uploaded", {
-    imageTxId: imageUploadResult.value.id,
-  });
 
-  logger.info("[uploadPaintingAssetBundle] Uploading GLB to Arweave...", {
-    glbSize: params.glb.bytes.byteLength,
-    glbContentType: params.glb.contentType,
+  const glbUploadResult = await uploadPaintingGlbAsset({
+    ardrive: params.ardrive,
+    explicitGatewayBaseUrl: params.explicitGatewayBaseUrl,
+    glb: params.glb,
+    paintingId: params.paintingId,
   });
-  const glbUploadResult = await params.ardrive.uploadFile(params.glb.bytes, params.glb.contentType, [
-    ...baseTags,
-    { name: "File-Type", value: "animation" },
-  ]);
   if (glbUploadResult.isErr()) {
-    logger.error("[uploadPaintingAssetBundle] GLB upload failed", { error: glbUploadResult.error });
     return err(glbUploadResult.error);
   }
-  logger.info("[uploadPaintingAssetBundle] GLB uploaded", {
-    glbTxId: glbUploadResult.value.id,
+
+  return ok({
+    glbTxId: glbUploadResult.value.glbTxId,
+    glbUrl: glbUploadResult.value.glbUrl,
+    imageTxId: imageUploadResult.value.imageTxId,
+    imageUrl: imageUploadResult.value.imageUrl,
+  });
+}
+
+async function uploadPaintingAsset(params: {
+  ardrive: Pick<ArdriveClient, "uploadFile">;
+  asset: {
+    bytes: Uint8Array;
+    contentType: string;
+  };
+  explicitGatewayBaseUrl?: string;
+  fileType: "animation" | "thumbnail";
+  logPrefix: "GLB" | "image";
+  paintingId?: string;
+}): Promise<Result<{ txId: string; url: string }, AppError>> {
+  const baseTags = buildBaseTags(params.paintingId);
+
+  logger.info(`[uploadPainting${params.logPrefix}Asset] Uploading ${params.logPrefix} to Arweave...`, {
+    paintingId: params.paintingId,
+    contentType: params.asset.contentType,
+    size: params.asset.bytes.byteLength,
+  });
+
+  const uploadResult = await params.ardrive.uploadFile(params.asset.bytes, params.asset.contentType, [
+    ...baseTags,
+    { name: "File-Type", value: params.fileType },
+  ]);
+  if (uploadResult.isErr()) {
+    logger.error(`[uploadPainting${params.logPrefix}Asset] Upload failed`, { error: uploadResult.error });
+    return err(uploadResult.error);
+  }
+
+  logger.info(`[uploadPainting${params.logPrefix}Asset] Upload completed`, {
+    txId: uploadResult.value.id,
   });
 
   return ok({
-    glbTxId: glbUploadResult.value.id,
-    glbUrl: buildPreferredAssetUrl({
+    txId: uploadResult.value.id,
+    url: buildPreferredAssetUrl({
       explicitGatewayBaseUrl: params.explicitGatewayBaseUrl,
-      uploadResult: glbUploadResult.value,
+      uploadResult: uploadResult.value,
     }),
-    imageTxId: imageUploadResult.value.id,
-    imageUrl: buildPreferredAssetUrl({
-      explicitGatewayBaseUrl: params.explicitGatewayBaseUrl,
-      uploadResult: imageUploadResult.value,
-    }),
+  });
+}
+
+export async function uploadPaintingImageAsset(params: {
+  ardrive: Pick<ArdriveClient, "uploadFile">;
+  explicitGatewayBaseUrl?: string;
+  image: {
+    bytes: Uint8Array;
+    contentType: string;
+  };
+  paintingId?: string;
+}): Promise<Result<UploadedPaintingImageAsset, AppError>> {
+  const uploadResult = await uploadPaintingAsset({
+    ardrive: params.ardrive,
+    asset: params.image,
+    explicitGatewayBaseUrl: params.explicitGatewayBaseUrl,
+    fileType: "thumbnail",
+    logPrefix: "image",
+    paintingId: params.paintingId,
+  });
+  if (uploadResult.isErr()) {
+    return err(uploadResult.error);
+  }
+
+  return ok({
+    imageTxId: uploadResult.value.txId,
+    imageUrl: uploadResult.value.url,
+  });
+}
+
+export async function uploadPaintingGlbAsset(params: {
+  ardrive: Pick<ArdriveClient, "uploadFile">;
+  explicitGatewayBaseUrl?: string;
+  glb: {
+    bytes: Uint8Array;
+    contentType: string;
+  };
+  paintingId?: string;
+}): Promise<Result<UploadedPaintingGlbAsset, AppError>> {
+  const uploadResult = await uploadPaintingAsset({
+    ardrive: params.ardrive,
+    asset: params.glb,
+    explicitGatewayBaseUrl: params.explicitGatewayBaseUrl,
+    fileType: "animation",
+    logPrefix: "GLB",
+    paintingId: params.paintingId,
+  });
+  if (uploadResult.isErr()) {
+    return err(uploadResult.error);
+  }
+
+  return ok({
+    glbTxId: uploadResult.value.txId,
+    glbUrl: uploadResult.value.url,
   });
 }
 

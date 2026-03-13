@@ -15,6 +15,10 @@ describe("unit/server/services/paintings/list", () => {
         await Promise.resolve();
         return ok(undefined);
       }),
+      updateMintAssetRefs: mock(async () => {
+        await Promise.resolve();
+        return ok(undefined);
+      }),
       list: mock(async () => {
         await Promise.resolve();
         return ok({

@@ -58,9 +58,9 @@ export interface ArchiveIndexRow {
   paramsHash: string;
   seed: string;
   imageTxId: string;
-  glbTxId: string;
+  glbTxId: string | null;
   imageUrl: string;
-  glbUrl: string;
+  glbUrl: string | null;
   fileSize: number;
   ts: number;
   visualParamsJson: string;
@@ -69,8 +69,8 @@ export interface ArchiveIndexRow {
 }
 
 export interface InsertPaintingRecord extends PaintingMetadata {
-  glbUrl: string;
-  glbTxId: string;
+  glbUrl?: string;
+  glbTxId?: string;
   imageTxId: string;
 }
 
@@ -157,6 +157,13 @@ export interface PaintingsRepository {
   list: (options: ListArchiveOptions) => Promise<Result<ListArchiveResult, AppError>>;
   insert: (record: InsertPaintingRecord) => Promise<Result<void, AppError>>;
   findById: (id: string) => Promise<Result<PaintingMetadata | null, AppError>>;
+  updateMintAssetRefs: (
+    id: string,
+    assetRefs: {
+      glbTxId: string;
+      glbUrl: string;
+    },
+  ) => Promise<Result<void, AppError>>;
 }
 
 interface CreatePaintingsRepositoryDeps {
@@ -335,9 +342,9 @@ export function createPaintingsRepository({
           paramsHash: record.paramsHash,
           seed: record.seed,
           imageTxId: record.imageTxId,
-          glbTxId: record.glbTxId,
+          glbTxId: record.glbTxId ?? null,
           imageUrl: record.imageUrl,
-          glbUrl: record.glbUrl,
+          glbUrl: record.glbUrl ?? null,
           fileSize: record.fileSize,
           visualParamsJson: JSON.stringify(record.visualParams),
           prompt: record.prompt,
@@ -345,7 +352,7 @@ export function createPaintingsRepository({
         })
         .onConflictDoNothing(); // id is PK, safe for idempotency
 
-      log.debug("archive-repo.insert", { id: record.id, imageTxId: record.imageTxId, glbTxId: record.glbTxId });
+      log.debug("archive-repo.insert", { id: record.id, imageTxId: record.imageTxId, glbTxId: record.glbTxId ?? null });
 
       return ok(undefined);
     } catch (error) {
@@ -383,7 +390,7 @@ export function createPaintingsRepository({
         seed: row.seed,
         visualParams: parsedVisualParams,
         imageUrl: row.imageUrl,
-        glbUrl: row.glbUrl,
+        glbUrl: row.glbUrl ?? undefined,
         fileSize: row.fileSize,
         prompt: row.prompt,
         negative: row.negative,
@@ -403,9 +410,41 @@ export function createPaintingsRepository({
     }
   }
 
+  async function updateMintAssetRefs(
+    id: string,
+    assetRefs: {
+      glbTxId: string;
+      glbUrl: string;
+    },
+  ): Promise<Result<void, AppError>> {
+    try {
+      const db = await getDB(d1Binding);
+
+      await db
+        .update(paintings)
+        .set({
+          glbTxId: assetRefs.glbTxId,
+          glbUrl: assetRefs.glbUrl,
+        })
+        .where(eq(paintings.id, id));
+
+      log.debug("archive-repo.update-mint-asset-refs", { id, glbTxId: assetRefs.glbTxId });
+      return ok(undefined);
+    } catch (error) {
+      log.error("archive-repo.update-mint-asset-refs.error", { error, id });
+      return err({
+        type: "StorageError" as const,
+        op: "put" as const,
+        key: id,
+        message: `D1 update failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
+    }
+  }
+
   return {
     list,
     insert,
     findById,
+    updateMintAssetRefs,
   };
 }

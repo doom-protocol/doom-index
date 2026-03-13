@@ -27,7 +27,6 @@ import type { PaintingsRepository } from "@/server/repositories/paintings-reposi
 import { TokensRepository } from "@/server/repositories/tokens-repository";
 import { createImageGenerationService } from "@/server/services/image-generation";
 import type { PaintingsService } from "@/server/services/paintings";
-import { buildFramedPaintingGlbFromPublicFrame } from "@/server/services/paintings/framed-painting-bundle-service";
 import { MarketDataService } from "@/server/services/paintings/market-data";
 import { PaintingContextBuilder } from "@/server/services/paintings/painting-context-builder";
 import { PaintingGenerationOrchestrator } from "@/server/services/paintings/painting-generation-orchestrator";
@@ -143,9 +142,9 @@ const createLocalPaintingsRepository = (db: BunSQLiteDatabase<typeof schema>): P
             paramsHash: record.paramsHash,
             seed: record.seed,
             imageTxId: record.imageTxId,
-            glbTxId: record.glbTxId,
+            glbTxId: record.glbTxId ?? null,
             imageUrl: record.imageUrl,
-            glbUrl: record.glbUrl,
+            glbUrl: record.glbUrl ?? null,
             fileSize: record.fileSize,
             visualParamsJson: JSON.stringify(record.visualParams),
             prompt: record.prompt,
@@ -165,6 +164,7 @@ const createLocalPaintingsRepository = (db: BunSQLiteDatabase<typeof schema>): P
       }
     },
     findById: async () => Promise.resolve(ok(null)),
+    updateMintAssetRefs: async () => Promise.resolve(ok(undefined)),
   };
 };
 
@@ -179,22 +179,9 @@ const createLocalPaintingsService = (outputDir: string, archiveRepository: Paint
     await mkdir(outputDir, { recursive: true });
 
     const imagePath = join(outputDir, `${params.paintingId}.webp`);
-    const glbPath = join(outputDir, `${params.paintingId}.glb`);
     await Bun.write(imagePath, params.imageBuffer);
 
-    const glbResult = await buildFramedPaintingGlbFromPublicFrame({
-      paintingImageBuffer: params.imageBuffer,
-      paintingImageContentType: params.imageContentType ?? "image/webp",
-    });
-    if (glbResult.isErr()) {
-      return err(glbResult.error);
-    }
-
-    await Bun.write(glbPath, glbResult.value);
-
     return ok({
-      glbTxId: `local-${params.paintingId}-glb`,
-      glbUrl: pathToFileURL(glbPath).toString(),
       imageTxId: `local-${params.paintingId}-image`,
       imageUrl: pathToFileURL(imagePath).toString(),
     });

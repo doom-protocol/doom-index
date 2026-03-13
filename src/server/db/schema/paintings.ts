@@ -17,9 +17,9 @@ export const paintings = sqliteTable(
     seed: text("seed").notNull(), // 12-character hex seed for reproducibility
 
     imageTxId: text("image_tx_id").notNull(), // Arweave transaction id for the image asset
-    glbTxId: text("glb_tx_id").notNull(), // Arweave transaction id for the GLB asset
+    glbTxId: text("glb_tx_id"), // Arweave transaction id for the GLB asset, populated on mint
     imageUrl: text("image_url").notNull(), // Public Arweave gateway URL for the image
-    glbUrl: text("glb_url").notNull(), // Public Arweave gateway URL for the GLB
+    glbUrl: text("glb_url"), // Public Arweave gateway URL for the GLB, populated on mint
     fileSize: integer("file_size").notNull(), // Image file size in bytes
 
     visualParamsJson: text("visual_params_json").notNull(), // JSON: { fogDensity: number, skyTint: number, ... }

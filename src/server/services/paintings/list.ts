@@ -70,7 +70,7 @@ function parseVisualParams(item: ArchiveIndexRow): VisualParams {
 function toPaintings(items: ArchiveIndexRow[]): Painting[] {
   return items.map((item) => ({
     fileSize: item.fileSize,
-    glbUrl: item.glbUrl,
+    glbUrl: item.glbUrl ?? undefined,
     id: item.id,
     imageUrl: item.imageUrl,
     minuteBucket: item.minuteBucket,

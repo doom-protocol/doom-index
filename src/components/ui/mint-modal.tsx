@@ -15,7 +15,7 @@ import { getErrorMessage } from "@/utils/error";
 import { logger } from "@/utils/logger";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { FC } from "react";
 import { toast } from "sonner";
 import type { Group } from "three";
@@ -43,7 +43,6 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
   const { mint, isMinting, nextTokenId } = useSolanaMint();
   const trpcClient = useTRPCClient();
   const { triggerHaptic } = useHaptic();
-  const mintPreparationPromiseRef = useRef<Promise<void> | null>(null);
   const [mintPreparationState, setMintPreparationState] = useState<{
     status: "idle" | "pending" | "success" | "error";
     tokenId?: bigint;
@@ -51,19 +50,13 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
   }>({
     status: "idle",
   });
-  const mintPreparationStateRef = useRef(mintPreparationState);
 
   // Mock price (in SOL)
   const MINT_PRICE = 0.1;
 
-  useEffect(() => {
-    mintPreparationStateRef.current = mintPreparationState;
-  }, [mintPreparationState]);
-
   const prepareMintMetadata = useCallback(
     async (tokenId: bigint): Promise<void> => {
-      const currentPreparation = mintPreparationStateRef.current;
-      if (currentPreparation.tokenId === tokenId && currentPreparation.status === "success") {
+      if (mintPreparationState.tokenId === tokenId && mintPreparationState.status === "success") {
         return;
       }
 
@@ -73,12 +66,10 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
       });
 
       try {
-        const preparationPromise = trpcClient.paintings.prepareMintMetadata.mutate({
+        const result = await trpcClient.paintings.prepareMintMetadata.mutate({
           paintingId: paintingMetadata.paintingHash,
           tokenId: tokenId.toString(),
         });
-        mintPreparationPromiseRef.current = preparationPromise.then(() => undefined);
-        const result = await preparationPromise;
 
         logger.info("mint.metadata-preparation.ready", {
           paintingId: paintingMetadata.paintingHash,
@@ -106,25 +97,13 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
         throw error;
       }
     },
-    [paintingMetadata.paintingHash, trpcClient.paintings.prepareMintMetadata],
+    [
+      mintPreparationState.status,
+      mintPreparationState.tokenId,
+      paintingMetadata.paintingHash,
+      trpcClient.paintings.prepareMintMetadata,
+    ],
   );
-
-  useEffect(() => {
-    if (!isOpen || typeof nextTokenId !== "bigint") {
-      return;
-    }
-
-    const currentPreparation = mintPreparationStateRef.current;
-    if (currentPreparation.tokenId === nextTokenId && currentPreparation.status !== "error") {
-      return;
-    }
-
-    void prepareMintMetadata(nextTokenId).catch(() => undefined);
-
-    return () => {
-      mintPreparationPromiseRef.current = null;
-    };
-  }, [isOpen, nextTokenId, prepareMintMetadata]);
 
   // Handle wallet connection
   const handleConnectWallet = useCallback(async () => {
@@ -147,14 +126,9 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
 
     try {
       sendGAEvent(GA_EVENTS.MINT_TRANSACTION_START);
-      const tokenId = typeof nextTokenId === "bigint" ? nextTokenId : null;
-      if (tokenId !== null && (mintPreparationState.tokenId !== tokenId || mintPreparationState.status !== "success")) {
-        const preparationPromise = prepareMintMetadata(tokenId);
-        mintPreparationPromiseRef.current = preparationPromise.then(() => undefined);
-      }
-
-      await mintPreparationPromiseRef.current;
-      const result = await mint();
+      const result = await mint({
+        prepareMetadata: prepareMintMetadata,
+      });
 
       logger.info("mint.success", {
         assetAddress: result.assetAddress,
@@ -180,17 +154,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
     } finally {
       setIsProcessing(false);
     }
-  }, [
-    connected,
-    setVisible,
-    mint,
-    mintPreparationState.status,
-    mintPreparationState.tokenId,
-    nextTokenId,
-    onClose,
-    prepareMintMetadata,
-    publicKey,
-  ]);
+  }, [connected, setVisible, mint, onClose, prepareMintMetadata, publicKey]);
 
   // Handle modal close
   const handleClose = useCallback(() => {

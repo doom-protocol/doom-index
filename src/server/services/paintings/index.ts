@@ -37,8 +37,6 @@ export interface PaintingsService {
   storePaintingAssets: (params: { imageBuffer: ArrayBuffer; imageContentType?: string; paintingId: string }) => Promise<
     Result<
       {
-        glbTxId: string;
-        glbUrl: string;
         imageTxId: string;
         imageUrl: string;
       },

@@ -4,12 +4,9 @@ import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 import { err, ok } from "neverthrow";
 import type { Result } from "neverthrow";
-import { ensureTurboUploadFunding, parseOptionalBigInt, uploadPaintingAssetBundle } from "./arweave-services";
-import { buildFramedPaintingGlbFromPublicFrame } from "./framed-painting-bundle-service";
+import { ensureTurboUploadFunding, parseOptionalBigInt, uploadPaintingImageAsset } from "./arweave-services";
 
 export interface StoredPaintingAssets {
-  glbTxId: string;
-  glbUrl: string;
   imageTxId: string;
   imageUrl: string;
 }
@@ -32,20 +29,6 @@ export async function storePaintingAssets(params: {
     secretKey: env.ARDRIVE_TURBO_SECRET_KEY,
   });
 
-  logger.info("[storePaintingAssets] Composing framed GLB...");
-  const composedGlbResult = await buildFramedPaintingGlbFromPublicFrame({
-    assetsFetcher: params.assetsFetcher,
-    paintingImageBuffer: params.imageBuffer,
-    paintingImageContentType: params.imageContentType ?? "image/webp",
-  });
-  if (composedGlbResult.isErr()) {
-    logger.error("[storePaintingAssets] GLB composition failed", { error: composedGlbResult.error });
-    return err(composedGlbResult.error);
-  }
-  logger.info("[storePaintingAssets] GLB composed successfully", {
-    glbSize: composedGlbResult.value.byteLength,
-  });
-
   logger.info("[storePaintingAssets] Checking Turbo upload funding...");
   const fundingResult = await ensureTurboUploadFunding({
     ardrive,
@@ -53,7 +36,7 @@ export async function storePaintingAssets(params: {
       env.ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON,
       "ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON",
     ),
-    byteCounts: [params.imageBuffer.byteLength, composedGlbResult.value.byteLength],
+    byteCounts: [params.imageBuffer.byteLength],
     notifyThresholdWinc: parseOptionalBigInt(
       env.ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC,
       "ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC",
@@ -70,8 +53,8 @@ export async function storePaintingAssets(params: {
     didTopUp: fundingResult.value.didTopUp,
   });
 
-  logger.info("[storePaintingAssets] Uploading image + GLB to Arweave...");
-  const uploadResult = await uploadPaintingAssetBundle({
+  logger.info("[storePaintingAssets] Uploading image to Arweave...");
+  const uploadResult = await uploadPaintingImageAsset({
     ardrive,
     explicitGatewayBaseUrl: params.explicitGatewayBaseUrl ?? env.ARWEAVE_GATEWAY_BASE_URL,
     image: {
@@ -79,18 +62,12 @@ export async function storePaintingAssets(params: {
       contentType: params.imageContentType ?? "image/webp",
     },
     paintingId: params.paintingId,
-    glb: {
-      bytes: new Uint8Array(composedGlbResult.value),
-      contentType: "model/gltf-binary",
-    },
   });
 
   if (uploadResult.isOk()) {
     logger.info("[storePaintingAssets] Upload completed", {
       imageTxId: uploadResult.value.imageTxId,
       imageUrl: uploadResult.value.imageUrl,
-      glbTxId: uploadResult.value.glbTxId,
-      glbUrl: uploadResult.value.glbUrl,
     });
   } else {
     logger.error("[storePaintingAssets] Upload failed", { error: uploadResult.error });

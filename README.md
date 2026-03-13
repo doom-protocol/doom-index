@@ -1,6 +1,6 @@
 # DOOM INDEX
 
-DOOM INDEX is a Cloudflare-first generative art project. It turns live crypto market context into paintings, stores the resulting image and framed GLB on Arweave via ArDrive Turbo, and indexes the metadata in D1 for the web UI, archive, OGP, and mint flow.
+DOOM INDEX is a Cloudflare-first generative art project. It turns live crypto market context into paintings, stores the resulting image on Arweave via ArDrive Turbo during recurring generation, and uploads the framed GLB plus NFT metadata only when a mint happens. D1 indexes the artwork and caches mint-time GLB refs for the web UI, archive, OGP, and mint flow.
 
 ## Overview
 

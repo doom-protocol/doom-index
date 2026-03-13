@@ -1,7 +1,7 @@
 ---
 title: DOOM INDEX - 技術スタックと運用
 includes: always
-updated: 2025-12-02
+updated: 2026-03-13
 ---
 
 ## 全体アーキテクチャ
@@ -9,7 +9,7 @@ updated: 2025-12-02
 - フロントエンド: Next.js 16（App Router, Edge Runtime, React Compiler）
 - バンドラー: **next-rspack** - Rust ベース高速バンドラー
 - 実行/配信: Cloudflare Pages + Workers（Cron Triggers: 10分ごと）
-- ストレージ: Arweave（Turbo SDK 経由アップロード、gateway 読み取り）
+- ストレージ: Arweave（Turbo SDK 経由アップロード、gateway 読み取り。定期生成は image-only、GLB は mint 時に upload）
 - **データベース: Cloudflare D1（SQLite 互換）** - アーカイブインデックスとトークンコンテキストキャッシュ
 - ランタイム: ローカル Bun / 本番 workerd
 - 画像生成: Runware（本番）/ Mock（テスト用）
@@ -21,7 +21,7 @@ updated: 2025-12-02
 - エラー処理: neverthrow（Result 型）
 - **バリデーション: valibot** - 型安全な環境変数とスキーマ検証
 - **キャッシュ: Cloudflare Cache API** - Edge キャッシュによる最適化
-- **NFT ミント: Doom NFT program + Arweave ストレージ** - カスタム Solana ミントプログラムと Arweave メタデータ配信
+- **NFT ミント: Doom NFT program + Arweave ストレージ** - カスタム Solana ミントプログラムと Arweave メタデータ配信。初回 mint で GLB を生成・保存し、以後は painting ごとに再利用
 
 ## リポジトリ主要構成
 
@@ -56,6 +56,7 @@ updated: 2025-12-02
 
 - Cloudflare Workers（Cron: 10分ごとトリガ - `*/10 * * * *`）
 - Turbo SDK / Arweave gateway 連携
+- recurring generation では image upload のみを行い、mint preparation で GLB + metadata + manifest を補完
 - OpenNext for Cloudflare によるビルド/デプロイ（`@opennextjs/cloudflare@^1.17.1`）
 
 ## 依存関係（主要）

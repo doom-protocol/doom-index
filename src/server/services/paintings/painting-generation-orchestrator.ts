@@ -255,7 +255,6 @@ export class PaintingGenerationOrchestrator {
         seed: finalComposition.seed,
         visualParams: finalComposition.vp,
         imageUrl: "",
-        glbUrl: "",
         fileSize: imageBuffer.byteLength,
         prompt: finalComposition.prompt.text,
         negative: finalComposition.prompt.negative,
@@ -275,17 +274,14 @@ export class PaintingGenerationOrchestrator {
       }
 
       const imageUrl = storeResult.value.imageUrl;
-      const glbUrl = storeResult.value.glbUrl;
-      const finalMetadata: PaintingMetadata & { glbUrl: string } = {
+      const finalMetadata: PaintingMetadata = {
         ...metadata,
-        glbUrl,
         imageUrl,
       };
 
       // Step 9: Index in D1
       const insertRecord: InsertPaintingRecord = {
         ...finalMetadata,
-        glbTxId: storeResult.value.glbTxId,
         imageTxId: storeResult.value.imageTxId,
       };
       const indexResult = await paintingsService.insertPainting(insertRecord);

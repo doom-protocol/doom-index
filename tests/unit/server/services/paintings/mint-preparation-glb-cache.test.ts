@@ -5,9 +5,9 @@ const findByIdMock = mock(async () => {
   await Promise.resolve();
   return ok({
     fileSize: 123,
-    glbUrl: "https://example.test/glb-tx",
+    glbUrl: undefined,
     id: "painting-1",
-    imageUrl: "https://example.test/painting",
+    imageUrl: "https://example.test/painting.webp",
     minuteBucket: "2026/03/13/10/00",
     negative: "",
     paramsHash: "hash",
@@ -38,7 +38,14 @@ const updateMintAssetRefsMock = mock(async () => {
   await Promise.resolve();
   return ok(undefined);
 });
-const uploadNftMetadataBundleMock = mock(async (params: { imageContentType: string; tokenId: string }) => {
+const uploadPaintingGlbAssetMock = mock(async () => {
+  await Promise.resolve();
+  return ok({
+    glbTxId: "glb-tx",
+    glbUrl: "https://example.test/glb-tx",
+  });
+});
+const uploadNftMetadataBundleMock = mock(async (params: { glbUrl: string; tokenId: string }) => {
   await Promise.resolve();
   return ok({
     baseMetadataUrl: "https://example.test/manifest",
@@ -48,6 +55,10 @@ const uploadNftMetadataBundleMock = mock(async (params: { imageContentType: stri
     tokenMetadataUrl: `https://example.test/manifest/${params.tokenId}`,
   });
 });
+const buildFramedPaintingGlbFromPublicFrameMock = mock(async () => {
+  await Promise.resolve();
+  return ok(new ArrayBuffer(16));
+});
 
 void mock.module("@/env", () => ({
   env: {
@@ -55,6 +66,10 @@ void mock.module("@/env", () => ({
     ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC: undefined,
     ARDRIVE_TURBO_SECRET_KEY: '{"kty":"RSA"}',
     ARWEAVE_GATEWAY_BASE_URL: "https://example.test",
+  },
+  isDevelopment: () => false,
+  publicEnv: {
+    NEXT_PUBLIC_BASE_URL: "https://example.test",
   },
 }));
 
@@ -74,16 +89,22 @@ void mock.module("@/lib/ardrive-client", () => ({
       await Promise.resolve();
       return ok([{ adjustments: [], fees: [], winc: "1" }]);
     }),
-    topUpWithTokens: mock(async () => {
+    uploadFile: mock(async () => {
       await Promise.resolve();
       return ok({
-        id: "topup-tx",
-        owner: "owner",
-        quantity: "1",
-        status: "confirmed",
-        target: "target",
-        token: "arweave",
-        winc: "1",
+        dataCaches: [],
+        fastFinalityIndexes: [],
+        id: "upload-tx",
+        url: "https://permagate.io/upload-tx",
+      });
+    }),
+    uploadJson: mock(async () => {
+      await Promise.resolve();
+      return ok({
+        dataCaches: [],
+        fastFinalityIndexes: [],
+        id: "metadata-tx",
+        url: "https://permagate.io/metadata-tx",
       });
     }),
   }),
@@ -109,16 +130,23 @@ void mock.module("@/server/services/paintings/arweave-services", () => ({
   }),
   parseOptionalBigInt: (value: string | undefined) => (value ? BigInt(value) : undefined),
   uploadNftMetadataBundle: uploadNftMetadataBundleMock,
+  uploadPaintingGlbAsset: uploadPaintingGlbAssetMock,
 }));
 
-describe("unit/server/services/paintings/mint-preparation", () => {
+void mock.module("@/server/services/paintings/framed-painting-bundle-service", () => ({
+  buildFramedPaintingGlbFromPublicFrame: buildFramedPaintingGlbFromPublicFrameMock,
+}));
+
+describe("unit/server/services/paintings/mint-preparation glb cache", () => {
   beforeEach(() => {
     findByIdMock.mockClear();
     updateMintAssetRefsMock.mockClear();
+    uploadPaintingGlbAssetMock.mockClear();
     uploadNftMetadataBundleMock.mockClear();
+    buildFramedPaintingGlbFromPublicFrameMock.mockClear();
   });
 
-  it("detects the painting image content type from response headers and preserves string token ids", async () => {
+  it("uploads and caches a GLB when the painting does not have one yet", async () => {
     const { preparePaintingMintMetadata } = await import("@/server/services/paintings/mint-preparation");
 
     const fetchImpl = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
@@ -126,26 +154,37 @@ describe("unit/server/services/paintings/mint-preparation", () => {
       if (init?.method === "HEAD") {
         return new Response(null, {
           headers: {
-            "content-type": "image/png; charset=utf-8",
+            "content-type": "image/webp",
           },
           status: 200,
         });
       }
 
-      throw new Error("Unexpected fetch call");
+      return new Response(new Uint8Array([1, 2, 3, 4]), {
+        headers: {
+          "content-type": "image/webp",
+        },
+        status: 200,
+      });
     }) as unknown as typeof fetch;
 
     const result = await preparePaintingMintMetadata({
       fetchImpl,
       paintingId: "painting-1",
-      tokenId: "9007199254740993",
+      tokenId: "42",
     });
 
     expect(result.isOk()).toBe(true);
-    expect(uploadNftMetadataBundleMock).toHaveBeenCalledTimes(1);
+    expect(buildFramedPaintingGlbFromPublicFrameMock).toHaveBeenCalledTimes(1);
+    expect(uploadPaintingGlbAssetMock).toHaveBeenCalledTimes(1);
+    expect(updateMintAssetRefsMock).toHaveBeenCalledWith("painting-1", {
+      glbTxId: "glb-tx",
+      glbUrl: "https://example.test/glb-tx",
+    });
     expect(uploadNftMetadataBundleMock.mock.calls[0]?.[0]).toMatchObject({
-      imageContentType: "image/png",
-      tokenId: "9007199254740993",
+      glbUrl: "https://example.test/glb-tx",
+      imageUrl: "https://example.test/painting.webp",
+      tokenId: "42",
     });
   });
 });
