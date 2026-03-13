@@ -6,22 +6,13 @@ import {
   buildFramedPaintingGlbFromPublicFrame,
   copyBytesToArrayBuffer,
 } from "@/server/services/paintings/framed-painting-bundle-service";
+import { readGlbJson } from "../../../../helpers/read-glb-json";
 
 interface GlbJson {
   nodes?: Array<{
     name?: string;
     translation?: [number, number, number];
   }>;
-}
-
-function readGlbJson(glb: ArrayBuffer): GlbJson {
-  const bytes = new Uint8Array(glb);
-  const view = new DataView(glb);
-  const jsonChunkLength = view.getUint32(12, true);
-  const jsonChunkStart = 20;
-  const jsonChunkEnd = jsonChunkStart + jsonChunkLength;
-  const jsonText = new TextDecoder().decode(bytes.slice(jsonChunkStart, jsonChunkEnd)).trimEnd();
-  return JSON.parse(jsonText) as GlbJson;
 }
 
 describe("unit/server/services/paintings/framed-painting-bundle-service", () => {
@@ -65,7 +56,7 @@ describe("unit/server/services/paintings/framed-painting-bundle-service", () => 
     });
 
     expect(result.isOk()).toBe(true);
-    const json = readGlbJson(result._unsafeUnwrap());
+    const json = readGlbJson(result._unsafeUnwrap()) as GlbJson;
     expect(json.nodes?.find((node) => node.name === "painting-plane")?.translation).toEqual([0, 0, -0.035]);
   });
 });

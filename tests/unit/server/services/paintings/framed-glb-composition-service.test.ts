@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { composeFramedPaintingGlb } from "@/server/services/paintings/framed-glb-composition-service";
+import { readGlbJson } from "../../../../helpers/read-glb-json";
 
 interface GlbJson {
   accessors?: unknown[];
@@ -40,16 +41,6 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   return buffer;
 }
 
-function readGlbJson(glb: ArrayBuffer): GlbJson {
-  const bytes = new Uint8Array(glb);
-  const view = new DataView(glb);
-  const jsonChunkLength = view.getUint32(12, true);
-  const jsonChunkStart = 20;
-  const jsonChunkEnd = jsonChunkStart + jsonChunkLength;
-  const jsonText = new TextDecoder().decode(bytes.slice(jsonChunkStart, jsonChunkEnd)).trimEnd();
-  return JSON.parse(jsonText) as GlbJson;
-}
-
 describe("unit/server/services/paintings/framed-glb-composition-service", () => {
   it("composes a worker-safe framed glb that keeps the raw frame orientation and only adds a painting plane", async () => {
     const rootDir = process.cwd();
@@ -68,7 +59,7 @@ describe("unit/server/services/paintings/framed-glb-composition-service", () => 
     }
 
     const glb = result.value;
-    const json = readGlbJson(glb);
+    const json = readGlbJson(glb) as GlbJson;
 
     expect(glb.byteLength).toBeGreaterThan(500_000);
     expect(json.extensionsUsed).toContain("EXT_meshopt_compression");
