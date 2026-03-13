@@ -352,7 +352,11 @@ export function createPaintingsRepository({
         })
         .onConflictDoNothing(); // id is PK, safe for idempotency
 
-      log.debug("archive-repo.insert", { id: record.id, imageTxId: record.imageTxId, glbTxId: record.glbTxId ?? null });
+      log.debug("archive-repo.insert", {
+        id: record.id,
+        imageTxId: record.imageTxId,
+        glbTxId: record.glbTxId ?? null,
+      });
 
       return ok(undefined);
     } catch (error) {

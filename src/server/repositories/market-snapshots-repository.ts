@@ -90,7 +90,9 @@ export class MarketSnapshotsRepository {
       logger.info(`[MarketSnapshotsRepository] Upserted snapshot: ${hourBucket}`);
       return ok(undefined);
     } catch (error) {
-      logger.error(`[MarketSnapshotsRepository] Failed to upsert snapshot: ${hourBucket}`, { error });
+      logger.error(`[MarketSnapshotsRepository] Failed to upsert snapshot: ${hourBucket}`, {
+        error,
+      });
       return err({
         type: "StorageError" as const,
         op: "put" as const,

@@ -250,8 +250,14 @@ describe("unit/lib/metadata-builder", () => {
 
       expect(metadata.attributes).toContainEqual({ trait_type: "Generated", value: "painting-id" });
       expect(metadata.attributes).toContainEqual({ trait_type: "ID", value: 99 });
-      expect(metadata.attributes).toContainEqual({ trait_type: "Prompt", value: "Positive prompt" });
-      expect(metadata.attributes).toContainEqual({ trait_type: "Negative Prompt", value: "Negative prompt" });
+      expect(metadata.attributes).toContainEqual({
+        trait_type: "Prompt",
+        value: "Positive prompt",
+      });
+      expect(metadata.attributes).toContainEqual({
+        trait_type: "Negative Prompt",
+        value: "Negative prompt",
+      });
       expect(metadata.doom_index.source_id).toBe("painting-id");
       expect(metadata.doom_index.seed).toBe("seed-1");
       expect(metadata.doom_index.params_hash).toBe("params-hash");

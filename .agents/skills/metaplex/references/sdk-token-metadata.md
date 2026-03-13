@@ -415,7 +415,10 @@ After creating a fungible token with `createFungible`, mint supply using `mintTo
 ```typescript
 import { mintTokensTo, findAssociatedTokenPda } from "@metaplex-foundation/mpl-toolbox";
 
-const tokenAccount = findAssociatedTokenPda(umi, { mint: mint.publicKey, owner: umi.identity.publicKey });
+const tokenAccount = findAssociatedTokenPda(umi, {
+  mint: mint.publicKey,
+  owner: umi.identity.publicKey,
+});
 
 await mintTokensTo(umi, {
   mint: mint.publicKey,

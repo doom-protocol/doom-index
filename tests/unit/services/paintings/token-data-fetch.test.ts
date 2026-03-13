@@ -61,7 +61,9 @@ describe("TokenDataFetchService", () => {
     });
 
     const service = new TokenDataFetchService(client as CoinGeckoClient);
-    const result = await service.fetchTokenDetails(["bitcoin"], "force-override", { forcePriority: 0 });
+    const result = await service.fetchTokenDetails(["bitcoin"], "force-override", {
+      forcePriority: 0,
+    });
 
     expect(result.isOk()).toBe(true);
     if (result.isOk()) {

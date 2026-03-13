@@ -121,7 +121,9 @@ const ZERO_MAP = TOKEN_TICKERS.reduce(
 
 export const mcRouter = router({
   getMarketCaps: publicProcedure.query(async ({ ctx }) => {
-    const cached = await get<{ tokens: Record<string, number> }>("mc:getMarketCaps", { logger: ctx.logger });
+    const cached = await get<{ tokens: Record<string, number> }>("mc:getMarketCaps", {
+      logger: ctx.logger,
+    });
     if (cached) {
       return { ...cached, generatedAt: new Date().toISOString() };
     }

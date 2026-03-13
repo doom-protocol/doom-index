@@ -43,11 +43,11 @@ interface UseLatestPaintingModuleMock {
 
 /**
  * Create mock for @/hooks/use-latest-painting
- * Returns a function that returns the mock module object
+ * Returns a function that returns the mock module object (async for ESM import)
  */
-export function createUseLatestPaintingMock(options?: UseLatestPaintingMockOptions): () => UseLatestPaintingModuleMock {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const realUseLatestPainting = require("@/hooks/use-latest-painting") as UseLatestPaintingModuleMock;
+export function createUseLatestPaintingMock(
+  options?: UseLatestPaintingMockOptions,
+): () => Promise<UseLatestPaintingModuleMock> {
   const mockUseLatestPainting = mock(() => ({
     data: options?.painting ?? null,
     isLoading: options?.isLoading ?? false,
@@ -56,11 +56,14 @@ export function createUseLatestPaintingMock(options?: UseLatestPaintingMockOptio
   }));
   const refetchLatestPainting = () => async () => Promise.resolve(undefined);
 
-  return (): UseLatestPaintingModuleMock => ({
-    ...realUseLatestPainting,
-    useLatestPainting: mockUseLatestPainting,
-    useLatestPaintingRefetch: refetchLatestPainting,
-  });
+  return async (): Promise<UseLatestPaintingModuleMock> => {
+    const real = await import("@/hooks/use-latest-painting");
+    return {
+      ...real,
+      useLatestPainting: mockUseLatestPainting,
+      useLatestPaintingRefetch: refetchLatestPainting,
+    } as unknown as UseLatestPaintingModuleMock;
+  };
 }
 
 /**
