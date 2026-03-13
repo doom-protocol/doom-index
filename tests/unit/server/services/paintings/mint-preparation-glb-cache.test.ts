@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { ok } from "neverthrow";
 
 const findByIdMock = mock(async () => {
@@ -45,6 +45,13 @@ const uploadPaintingGlbAssetMock = mock(async () => {
     glbUrl: "https://example.test/glb-tx",
   });
 });
+const uploadPaintingImageAssetMock = mock(async () => {
+  await Promise.resolve();
+  return ok({
+    imageTxId: "image-tx",
+    imageUrl: "https://example.test/image-tx",
+  });
+});
 const uploadNftMetadataBundleMock = mock(async (params: { glbUrl: string; tokenId: string }) => {
   await Promise.resolve();
   return ok({
@@ -60,90 +67,99 @@ const buildFramedPaintingGlbFromPublicFrameMock = mock(async () => {
   return ok(new ArrayBuffer(16));
 });
 
-void mock.module("@/env", () => ({
-  env: {
-    ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON: undefined,
-    ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC: undefined,
-    ARDRIVE_TURBO_SECRET_KEY: '{"kty":"RSA"}',
-    ARWEAVE_GATEWAY_BASE_URL: "https://example.test",
-  },
-  isDevelopment: () => false,
-  publicEnv: {
-    NEXT_PUBLIC_BASE_URL: "https://example.test",
-  },
-}));
+function registerMintPreparationModuleMocks() {
+  void mock.module("@/env", () => ({
+    env: {
+      ARDRIVE_TURBO_AUTO_TOP_UP_AMOUNT_WINSTON: undefined,
+      ARDRIVE_TURBO_LOW_BALANCE_NOTIFY_THRESHOLD_WINC: undefined,
+      ARDRIVE_TURBO_SECRET_KEY: '{"kty":"RSA"}',
+      ARWEAVE_GATEWAY_BASE_URL: "https://example.test",
+    },
+    isDevelopment: () => false,
+    publicEnv: {
+      NEXT_PUBLIC_BASE_URL: "https://example.test",
+    },
+  }));
 
-void mock.module("@/lib/ardrive-client", () => ({
-  createArdriveClient: () => ({
-    getBalance: mock(async () => {
+  void mock.module("@/lib/ardrive-client", () => ({
+    createArdriveClient: () => ({
+      getBalance: mock(async () => {
+        await Promise.resolve();
+        return ok({
+          controlledWinc: "100",
+          effectiveBalance: "100",
+          givenApprovals: [],
+          receivedApprovals: [],
+          winc: "100",
+        });
+      }),
+      getUploadCosts: mock(async () => {
+        await Promise.resolve();
+        return ok([{ adjustments: [], fees: [], winc: "1" }]);
+      }),
+      uploadFile: mock(async () => {
+        await Promise.resolve();
+        return ok({
+          dataCaches: [],
+          fastFinalityIndexes: [],
+          id: "upload-tx",
+          url: "https://permagate.io/upload-tx",
+        });
+      }),
+      uploadJson: mock(async () => {
+        await Promise.resolve();
+        return ok({
+          dataCaches: [],
+          fastFinalityIndexes: [],
+          id: "metadata-tx",
+          url: "https://permagate.io/metadata-tx",
+        });
+      }),
+    }),
+  }));
+
+  void mock.module("@/server/repositories/paintings-repository", () => ({
+    createPaintingsRepository: () => ({
+      findById: findByIdMock,
+      updateMintAssetRefs: updateMintAssetRefsMock,
+    }),
+  }));
+
+  void mock.module("@/server/services/paintings/arweave-services", () => ({
+    ensureTurboUploadFunding: mock(async () => {
       await Promise.resolve();
       return ok({
-        controlledWinc: "100",
-        effectiveBalance: "100",
-        givenApprovals: [],
-        receivedApprovals: [],
-        winc: "100",
+        currentBalanceWinc: BigInt(100),
+        didNotify: false,
+        didTopUp: false,
+        estimatedCostWinc: BigInt(1),
+        remainingBalanceWinc: BigInt(99),
       });
     }),
-    getUploadCosts: mock(async () => {
-      await Promise.resolve();
-      return ok([{ adjustments: [], fees: [], winc: "1" }]);
-    }),
-    uploadFile: mock(async () => {
-      await Promise.resolve();
-      return ok({
-        dataCaches: [],
-        fastFinalityIndexes: [],
-        id: "upload-tx",
-        url: "https://permagate.io/upload-tx",
-      });
-    }),
-    uploadJson: mock(async () => {
-      await Promise.resolve();
-      return ok({
-        dataCaches: [],
-        fastFinalityIndexes: [],
-        id: "metadata-tx",
-        url: "https://permagate.io/metadata-tx",
-      });
-    }),
-  }),
-}));
+    parseOptionalBigInt: (value: string | undefined) => (value ? BigInt(value) : undefined),
+    uploadNftMetadataBundle: uploadNftMetadataBundleMock,
+    uploadPaintingGlbAsset: uploadPaintingGlbAssetMock,
+    uploadPaintingImageAsset: uploadPaintingImageAssetMock,
+  }));
 
-void mock.module("@/server/repositories/paintings-repository", () => ({
-  createPaintingsRepository: () => ({
-    findById: findByIdMock,
-    updateMintAssetRefs: updateMintAssetRefsMock,
-  }),
-}));
-
-void mock.module("@/server/services/paintings/arweave-services", () => ({
-  ensureTurboUploadFunding: mock(async () => {
-    await Promise.resolve();
-    return ok({
-      currentBalanceWinc: BigInt(100),
-      didNotify: false,
-      didTopUp: false,
-      estimatedCostWinc: BigInt(1),
-      remainingBalanceWinc: BigInt(99),
-    });
-  }),
-  parseOptionalBigInt: (value: string | undefined) => (value ? BigInt(value) : undefined),
-  uploadNftMetadataBundle: uploadNftMetadataBundleMock,
-  uploadPaintingGlbAsset: uploadPaintingGlbAssetMock,
-}));
-
-void mock.module("@/server/services/paintings/framed-painting-bundle-service", () => ({
-  buildFramedPaintingGlbFromPublicFrame: buildFramedPaintingGlbFromPublicFrameMock,
-}));
+  void mock.module("@/server/services/paintings/framed-painting-bundle-service", () => ({
+    buildFramedPaintingGlbFromPublicFrame: buildFramedPaintingGlbFromPublicFrameMock,
+  }));
+}
 
 describe("unit/server/services/paintings/mint-preparation glb cache", () => {
   beforeEach(() => {
+    registerMintPreparationModuleMocks();
     findByIdMock.mockClear();
     updateMintAssetRefsMock.mockClear();
+    uploadPaintingImageAssetMock.mockClear();
     uploadPaintingGlbAssetMock.mockClear();
     uploadNftMetadataBundleMock.mockClear();
     buildFramedPaintingGlbFromPublicFrameMock.mockClear();
+  });
+
+  afterEach(() => {
+    mock.restore();
   });
 
   it("uploads and caches a GLB when the painting does not have one yet", async () => {

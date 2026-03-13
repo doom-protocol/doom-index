@@ -1,11 +1,7 @@
-import { describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import {
-  buildFramedPaintingGlbFromPublicFrame,
-  copyBytesToArrayBuffer,
-} from "@/server/services/paintings/framed-painting-bundle-service";
 import { readGlbJson } from "../../../../helpers/read-glb-json";
 
 interface GlbJson {
@@ -15,8 +11,17 @@ interface GlbJson {
   }>;
 }
 
+async function loadFramedPaintingBundleService() {
+  return import("@/server/services/paintings/framed-painting-bundle-service");
+}
+
 describe("unit/server/services/paintings/framed-painting-bundle-service", () => {
+  beforeEach(() => {
+    mock.restore();
+  });
+
   it("loads /frame.glb and produces the finalized Worker-safe framed painting glb", async () => {
+    const { buildFramedPaintingGlbFromPublicFrame, copyBytesToArrayBuffer } = await loadFramedPaintingBundleService();
     const rootDir = process.cwd();
     const frameBytes = await readFile(join(rootDir, "public/frame.glb"));
     const imageBytes = await readFile(join(rootDir, "public/placeholder-painting.webp"));
