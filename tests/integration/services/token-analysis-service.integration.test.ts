@@ -7,14 +7,18 @@
  * - Error handling
  */
 
-import { getDB } from "@/server/db";
-import { createTavilyClient } from "@/lib/tavily-client";
-import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import { TokensRepository } from "@/server/repositories/tokens-repository";
-import type { TokenMetaInput } from "@/server/services/token-analysis-service";
-import { createTokenAnalysisService } from "@/server/services/token-analysis-service";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+
+async function getCloudflareContextFn() {
+  try {
+    const cloudflareModule = await import("@opennextjs/cloudflare");
+    return "getCloudflareContext" in cloudflareModule && typeof cloudflareModule.getCloudflareContext === "function"
+      ? cloudflareModule.getCloudflareContext
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 // TODO: Fix D1 binding mock for integration tests
 describe.skip("TokenAnalysisService Integration", () => {
@@ -32,12 +36,30 @@ describe.skip("TokenAnalysisService Integration", () => {
       // Skip if D1 is not available in test environment
       let d1Binding: D1Database | null = null;
       try {
+        const getCloudflareContext = await getCloudflareContextFn();
+        if (!getCloudflareContext) {
+          console.log("Skipping test: Cloudflare context helper not available");
+          return;
+        }
         const { env } = await getCloudflareContext({ async: true });
         d1Binding = env.DB;
       } catch (error) {
         console.log("Skipping test: D1 database not available", error);
         return;
       }
+      const [
+        { getDB },
+        { createTavilyClient },
+        { createWorkersAiClient },
+        { TokensRepository },
+        { createTokenAnalysisService },
+      ] = await Promise.all([
+        import("@/server/db"),
+        import("@/lib/tavily-client"),
+        import("@/lib/workers-ai-client"),
+        import("@/server/repositories/tokens-repository"),
+        import("@/server/services/token-analysis-service"),
+      ]);
       const db = await getDB(d1Binding);
       const tokensRepository = new TokensRepository(db);
       const tavilyClient = createTavilyClient();
@@ -49,7 +71,7 @@ describe.skip("TokenAnalysisService Integration", () => {
       });
 
       // Create a test token context in D1 first
-      const testTokenMeta: TokenMetaInput = {
+      const testTokenMeta = {
         id: "integration-test-token",
         name: "Integration Test Token",
         symbol: "ITT",
@@ -87,12 +109,30 @@ describe.skip("TokenAnalysisService Integration", () => {
       // Skip if not available in test environment
       let d1Binding: D1Database | null = null;
       try {
+        const getCloudflareContext = await getCloudflareContextFn();
+        if (!getCloudflareContext) {
+          console.log("Skipping test: Cloudflare context helper not available");
+          return;
+        }
         const { env } = await getCloudflareContext({ async: true });
         d1Binding = env.DB;
       } catch (error) {
         console.log("Skipping test: D1 database not available", error);
         return;
       }
+      const [
+        { getDB },
+        { createTavilyClient },
+        { createWorkersAiClient },
+        { TokensRepository },
+        { createTokenAnalysisService },
+      ] = await Promise.all([
+        import("@/server/db"),
+        import("@/lib/tavily-client"),
+        import("@/lib/workers-ai-client"),
+        import("@/server/repositories/tokens-repository"),
+        import("@/server/services/token-analysis-service"),
+      ]);
       const db = await getDB(d1Binding);
       const tokensRepository = new TokensRepository(db);
       const tavilyClient = createTavilyClient();
@@ -105,7 +145,7 @@ describe.skip("TokenAnalysisService Integration", () => {
 
       // Use a unique token ID to ensure cache miss
       const uniqueId = `integration-test-${String(Date.now())}`;
-      const testTokenMeta: TokenMetaInput = {
+      const testTokenMeta = {
         id: uniqueId,
         name: "Bitcoin",
         symbol: "BTC",
@@ -138,12 +178,30 @@ describe.skip("TokenAnalysisService Integration", () => {
     it("should handle errors gracefully when external APIs fail", async () => {
       let d1Binding: D1Database | null = null;
       try {
+        const getCloudflareContext = await getCloudflareContextFn();
+        if (!getCloudflareContext) {
+          console.log("Skipping test: Cloudflare context helper not available");
+          return;
+        }
         const { env } = await getCloudflareContext({ async: true });
         d1Binding = env.DB;
       } catch (error) {
         console.log("Skipping test: D1 database not available", error);
         return;
       }
+      const [
+        { getDB },
+        { createTavilyClient },
+        { createWorkersAiClient },
+        { TokensRepository },
+        { createTokenAnalysisService },
+      ] = await Promise.all([
+        import("@/server/db"),
+        import("@/lib/tavily-client"),
+        import("@/lib/workers-ai-client"),
+        import("@/server/repositories/tokens-repository"),
+        import("@/server/services/token-analysis-service"),
+      ]);
       const db = await getDB(d1Binding);
       const tokensRepository = new TokensRepository(db);
       // Use invalid API key to force error
@@ -155,7 +213,7 @@ describe.skip("TokenAnalysisService Integration", () => {
         tokensRepository,
       });
 
-      const testTokenMeta: TokenMetaInput = {
+      const testTokenMeta = {
         id: `error-test-${String(Date.now())}`,
         name: "Test Token",
         symbol: "TEST",

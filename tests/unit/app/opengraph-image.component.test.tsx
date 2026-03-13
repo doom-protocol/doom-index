@@ -8,9 +8,8 @@
  * Based on: https://natt.sh/blog/2024-12-09-testing-react-components-bun
  */
 
-import "./opengraph-image.setup";
 import "../../preload";
-import { alt, size } from "@/app/opengraph-image";
+import { alt as ogpAltText, size as ogpSize } from "@/app/opengraph-image-config";
 import NextImage from "next/image";
 import { render } from "@testing-library/react";
 import { describe, expect, test } from "bun:test";
@@ -82,7 +81,7 @@ describe("OGP Image Generation Components", () => {
         <div>
           <TestImage
             src="data:image/webp;base64,test"
-            alt={alt}
+            alt={ogpAltText}
             data-testid="artwork-image"
             style={{
               position: "absolute",
@@ -102,7 +101,7 @@ describe("OGP Image Generation Components", () => {
       expect(image).toHaveStyle({ height: "100%" });
       expect(image).toHaveStyle({ width: "auto" });
       expect(image).toHaveStyle({ objectFit: "contain" });
-      expect(image).toHaveAttribute("alt", alt);
+      expect(image).toHaveAttribute("alt", ogpAltText);
     });
 
     test("should render frame overlay with correct styling", () => {
@@ -203,13 +202,13 @@ describe("OGP Image Generation Components", () => {
 
   describe("OGP Image Size Configuration", () => {
     test("should use correct OGP dimensions (1200×630)", () => {
-      expect(size.width).toBe(1200);
-      expect(size.height).toBe(630);
-      expect(size.width / size.height).toBeCloseTo(1.905, 2);
+      expect(ogpSize.width).toBe(1200);
+      expect(ogpSize.height).toBe(630);
+      expect(ogpSize.width / ogpSize.height).toBeCloseTo(1.905, 2);
     });
 
     test("should match standard OGP aspect ratio", () => {
-      const aspectRatio = size.width / size.height;
+      const aspectRatio = ogpSize.width / ogpSize.height;
 
       // Standard OGP aspect ratio is 1.91:1
       expect(aspectRatio).toBeGreaterThan(1.9);
@@ -217,7 +216,7 @@ describe("OGP Image Generation Components", () => {
     });
 
     test("should have correct alt text", () => {
-      expect(alt).toBe("DOOM INDEX - A decentralized archive of financial emotions.");
+      expect(ogpAltText).toBe("DOOM INDEX - A decentralized archive of financial emotions.");
     });
   });
 
