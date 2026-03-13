@@ -438,20 +438,24 @@ export async function uploadPaintingAssetBundle(params: {
   };
   paintingId?: string;
 }): Promise<Result<UploadedPaintingAssetBundle, AppError>> {
-  const imageUploadResult = await uploadPaintingImageAsset({
+  const imageUploadResult = await uploadPaintingAsset({
     ardrive: params.ardrive,
+    asset: params.image,
     explicitGatewayBaseUrl: params.explicitGatewayBaseUrl,
-    image: params.image,
+    fileType: "thumbnail",
+    logPrefix: "image",
     paintingId: params.paintingId,
   });
   if (imageUploadResult.isErr()) {
     return err(imageUploadResult.error);
   }
 
-  const glbUploadResult = await uploadPaintingGlbAsset({
+  const glbUploadResult = await uploadPaintingAsset({
     ardrive: params.ardrive,
+    asset: params.glb,
     explicitGatewayBaseUrl: params.explicitGatewayBaseUrl,
-    glb: params.glb,
+    fileType: "animation",
+    logPrefix: "GLB",
     paintingId: params.paintingId,
   });
   if (glbUploadResult.isErr()) {
@@ -459,10 +463,10 @@ export async function uploadPaintingAssetBundle(params: {
   }
 
   return ok({
-    glbTxId: glbUploadResult.value.glbTxId,
-    glbUrl: glbUploadResult.value.glbUrl,
-    imageTxId: imageUploadResult.value.imageTxId,
-    imageUrl: imageUploadResult.value.imageUrl,
+    glbTxId: glbUploadResult.value.txId,
+    glbUrl: glbUploadResult.value.url,
+    imageTxId: imageUploadResult.value.txId,
+    imageUrl: imageUploadResult.value.url,
   });
 }
 
