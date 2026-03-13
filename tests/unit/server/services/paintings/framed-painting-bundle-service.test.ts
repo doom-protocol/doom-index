@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { readGlbJson } from "../../../../helpers/read-glb-json";
 
@@ -11,8 +12,14 @@ interface GlbJson {
   }>;
 }
 
-async function loadFramedPaintingBundleService() {
-  return import("@/server/services/paintings/framed-painting-bundle-service");
+type FramedPaintingBundleServiceModule = typeof import("@/server/services/paintings/framed-painting-bundle-service");
+
+async function loadFramedPaintingBundleService(): Promise<FramedPaintingBundleServiceModule> {
+  const moduleUrl = pathToFileURL(
+    join(process.cwd(), "src/server/services/paintings/framed-painting-bundle-service.ts"),
+  );
+  moduleUrl.searchParams.set("test", String(Date.now()));
+  return (await import(moduleUrl.href)) as FramedPaintingBundleServiceModule;
 }
 
 describe("unit/server/services/paintings/framed-painting-bundle-service", () => {
