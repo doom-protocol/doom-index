@@ -120,8 +120,8 @@ function registerStorageModuleMocks() {
       symbol: "DOOM",
       description: `Painting ${paintingId}`,
     }),
-    buildTransactionUrl: ({ gatewayBaseUrl, transactionId }: { gatewayBaseUrl: string; transactionId: string }) =>
-      `${gatewayBaseUrl.replace(/\/$/, "")}/${transactionId}`,
+    buildTransactionUrl: ({ gatewayBaseUrl, txId }: { gatewayBaseUrl: string; txId: string }) =>
+      `${gatewayBaseUrl.replace(/\/$/, "")}/${txId}`,
     ensureTurboUploadFunding: ensureTurboUploadFundingMock,
     parseOptionalBigInt: (value: string | undefined) => (value ? BigInt(value) : undefined),
     uploadNftMetadataBundle: uploadNftMetadataBundleMock,
