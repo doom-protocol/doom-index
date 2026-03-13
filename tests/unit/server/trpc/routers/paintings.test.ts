@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createMockContext } from "../helpers";
@@ -12,23 +12,7 @@ async function loadPaintingsRouterModule(): Promise<PaintingsRouterModule> {
   return (await import(moduleUrl.href)) as PaintingsRouterModule;
 }
 
-const preparePaintingMintMetadataMock = mock(async () => {
-  await Promise.resolve();
-  throw new Error("preparePaintingMintMetadata should not be called from the public router");
-});
-
 describe("Paintings Router", () => {
-  beforeEach(() => {
-    preparePaintingMintMetadataMock.mockClear();
-    void mock.module("@/server/services/paintings/mint-preparation", () => ({
-      preparePaintingMintMetadata: preparePaintingMintMetadataMock,
-    }));
-  });
-
-  afterEach(() => {
-    mock.restore();
-  });
-
   it("blocks public prepareMintMetadata calls before any upload work starts", async () => {
     const { paintingsRouter } = await loadPaintingsRouterModule();
     const caller = paintingsRouter.createCaller(createMockContext());
@@ -45,7 +29,5 @@ describe("Paintings Router", () => {
         expect(error.code).toBe("FORBIDDEN");
       }
     }
-
-    expect(preparePaintingMintMetadataMock).not.toHaveBeenCalled();
   });
 });

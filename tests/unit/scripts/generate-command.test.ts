@@ -13,7 +13,7 @@ const readPackageJson = async () => {
 describe("unit/scripts/generate-command", () => {
   it("points the generate script at an existing TypeScript entrypoint", async () => {
     const packageJson = await readPackageJson();
-    const generateScript = packageJson.scripts?.generate;
+    const generateScript = packageJson.scripts?.["generate:img"];
 
     expect(generateScript).toBeString();
 
