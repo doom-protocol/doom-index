@@ -239,14 +239,16 @@ describe("unit/server/services/paintings/mint-preparation glb cache", () => {
 
     expect(result.isOk()).toBe(true);
     expect(uploadPaintingGlbAssetMock).toHaveBeenCalledTimes(1);
-    const glbUploadCall = uploadPaintingGlbAssetMock.mock.calls[0]?.[0] as
-      | {
-          glb: {
-            bytes: Uint8Array;
-          };
-        }
+    const firstGlbUploadCall = uploadPaintingGlbAssetMock.mock.calls[0] as unknown as
+      | [
+          {
+            glb: {
+              bytes: Uint8Array;
+            };
+          },
+        ]
       | undefined;
-    expect(glbUploadCall?.glb.bytes.byteLength).toBeGreaterThan(16);
+    expect(firstGlbUploadCall?.[0].glb.bytes.byteLength).toBeGreaterThan(16);
     expect(updateMintAssetRefsMock).toHaveBeenCalledWith("painting-1", {
       glbTxId: "glb-tx",
       glbUrl: "https://example.test/glb-tx",
