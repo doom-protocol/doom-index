@@ -10,7 +10,6 @@ import { MintPaintingPreviewScene } from "@/components/ui/mint-painting-preview-
 import { useSolanaMint } from "@/hooks/use-solana-mint";
 import { useSolanaWallet } from "@/hooks/use-solana-wallet";
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
-import { useTRPCClient } from "@/lib/trpc/client";
 import { getErrorMessage } from "@/utils/error";
 import { logger } from "@/utils/logger";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -41,69 +40,10 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
   const { connectWallet, connected, connecting: isWalletConnecting, publicKey } = useSolanaWallet();
   const { setVisible } = useWalletModal();
   const { mint, isMinting, nextTokenId } = useSolanaMint();
-  const trpcClient = useTRPCClient();
   const { triggerHaptic } = useHaptic();
-  const [mintPreparationState, setMintPreparationState] = useState<{
-    status: "idle" | "pending" | "success" | "error";
-    tokenId?: bigint;
-    tokenMetadataUrl?: string;
-  }>({
-    status: "idle",
-  });
 
   // Mock price (in SOL)
   const MINT_PRICE = 0.1;
-
-  const prepareMintMetadata = useCallback(
-    async (tokenId: bigint): Promise<void> => {
-      if (mintPreparationState.tokenId === tokenId && mintPreparationState.status === "success") {
-        return;
-      }
-
-      setMintPreparationState({
-        status: "pending",
-        tokenId,
-      });
-
-      try {
-        const result = await trpcClient.paintings.prepareMintMetadata.mutate({
-          paintingId: paintingMetadata.paintingHash,
-          tokenId: tokenId.toString(),
-        });
-
-        logger.info("mint.metadata-preparation.ready", {
-          paintingId: paintingMetadata.paintingHash,
-          tokenId: tokenId.toString(),
-          tokenMetadataUrl: result.tokenMetadataUrl,
-        });
-
-        setMintPreparationState({
-          status: "success",
-          tokenId,
-          tokenMetadataUrl: result.tokenMetadataUrl,
-        });
-      } catch (error: unknown) {
-        logger.warn("mint.metadata-preparation.failed", {
-          error: getErrorMessage(error),
-          paintingId: paintingMetadata.paintingHash,
-          tokenId: tokenId.toString(),
-        });
-
-        setMintPreparationState({
-          status: "error",
-          tokenId,
-        });
-
-        throw error;
-      }
-    },
-    [
-      mintPreparationState.status,
-      mintPreparationState.tokenId,
-      paintingMetadata.paintingHash,
-      trpcClient.paintings.prepareMintMetadata,
-    ],
-  );
 
   // Handle wallet connection
   const handleConnectWallet = useCallback(async () => {
@@ -126,9 +66,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
 
     try {
       sendGAEvent(GA_EVENTS.MINT_TRANSACTION_START);
-      const result = await mint({
-        prepareMetadata: prepareMintMetadata,
-      });
+      const result = await mint();
 
       logger.info("mint.success", {
         assetAddress: result.assetAddress,
@@ -154,7 +92,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
     } finally {
       setIsProcessing(false);
     }
-  }, [connected, setVisible, mint, onClose, prepareMintMetadata, publicKey]);
+  }, [connected, setVisible, mint, onClose, publicKey]);
 
   // Handle modal close
   const handleClose = useCallback(() => {
@@ -165,14 +103,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
 
   const isLoading = isMinting || isWalletConnecting || isProcessing;
   const displayTokenId = mintedTokenId ?? (typeof nextTokenId === "bigint" ? nextTokenId : null);
-  const metadataStatusLabel =
-    mintPreparationState.status === "pending"
-      ? "Preparing metadata on Arweave..."
-      : mintPreparationState.status === "success"
-        ? "Metadata ready on gateway"
-        : mintPreparationState.status === "error"
-          ? "Metadata retry required"
-          : "Waiting for token id";
+  const mintStatusLabel = displayTokenId === null ? "Loading next token id..." : "Ready to mint on Solana";
 
   const collectionName = displayTokenId === null ? "DOOM INDEX NFT" : `DOOM INDEX #${displayTokenId.toString()}`;
 
@@ -221,7 +152,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
               <span className="text-2xl font-bold text-white/90 sm:text-3xl">{MINT_PRICE}</span>
               <span className="text-base text-white/60 sm:text-lg">SOL</span>
             </div>
-            <p className="text-sm text-white/55">{metadataStatusLabel}</p>
+            <p className="text-sm text-white/55">{mintStatusLabel}</p>
           </div>
 
           {/* Action Button */}
