@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { err, ok } from "neverthrow";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
-async function loadArweaveServices() {
-  return import("@/server/services/paintings/arweave-services");
+type ArweaveServicesModule = typeof import("@/server/services/paintings/arweave-services");
+
+async function loadArweaveServices(): Promise<ArweaveServicesModule> {
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/server/services/paintings/arweave-services.ts"));
+  moduleUrl.searchParams.set("test", String(Date.now()));
+  return (await import(moduleUrl.href)) as ArweaveServicesModule;
 }
 
 describe("unit/server/services/paintings/arweave-services", () => {
