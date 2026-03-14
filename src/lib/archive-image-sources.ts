@@ -36,7 +36,11 @@ function buildArchiveImageCandidateUrls(imageUrl: string, fallbackGatewayBaseUrl
 export function getArchiveImageSources(imageUrl: string, options: ArchiveImageSourceOptions = {}): string[] {
   const baseUrl = options.baseUrl ?? getBaseUrl();
 
-  return buildArchiveImageCandidateUrls(imageUrl, options.fallbackGatewayBaseUrls).map((candidateUrl) =>
-    transformImageUrlWithBaseUrl(candidateUrl, IMAGE_PRESETS.archiveGrid, baseUrl),
-  );
+  return buildArchiveImageCandidateUrls(imageUrl, options.fallbackGatewayBaseUrls).map((candidateUrl) => {
+    if (candidateUrl.startsWith("http://") || candidateUrl.startsWith("https://")) {
+      return candidateUrl;
+    }
+
+    return transformImageUrlWithBaseUrl(candidateUrl, IMAGE_PRESETS.archiveGrid, baseUrl);
+  });
 }
