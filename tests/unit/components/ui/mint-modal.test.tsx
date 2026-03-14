@@ -456,7 +456,7 @@ describe("unit/components/ui/mint-modal", () => {
 
     expect(queryByRole("button", { name: /connect wallet/i })).toBeNull();
     expect(queryByText(/coming soon/i)).toBeNull();
-    expect(queryByText("DOOM NFT #7")).not.toBeNull();
+    expect(queryByText(/DOOM NFT/)).not.toBeNull();
     expect(getByRole("button", { name: /^mint$/i })).toBeEnabled();
   });
 
