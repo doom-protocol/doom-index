@@ -631,8 +631,8 @@ describe("unit/components/gallery-scene", () => {
       fireEvent.click(getByRole("button", { name: /mint/i }));
 
       await waitFor(() => {
-        expect(queryByTestId("mint-modal-shell")).toBeInTheDocument();
-        expect(queryByRole("button", { name: /connect wallet/i })).toBeInTheDocument();
+        expect(queryByTestId("mint-modal-shell")).not.toBeNull();
+        expect(queryByRole("button", { name: /connect wallet/i })).not.toBeNull();
       });
     });
 
@@ -644,8 +644,8 @@ describe("unit/components/gallery-scene", () => {
       fireEvent.click(getByRole("button", { name: /mint/i }));
 
       await waitFor(() => {
-        expect(queryByTestId("mint-modal-shell")).toBeInTheDocument();
-        expect(queryByRole("button", { name: /connect wallet/i })).toBeInTheDocument();
+        expect(queryByTestId("mint-modal-shell")).not.toBeNull();
+        expect(queryByRole("button", { name: /connect wallet/i })).not.toBeNull();
       });
 
       currentLatestPainting = null;
@@ -653,8 +653,8 @@ describe("unit/components/gallery-scene", () => {
       rerender(<GalleryScene />);
 
       await waitFor(() => {
-        expect(queryByTestId("mint-modal-shell")).toBeInTheDocument();
-        expect(queryByRole("button", { name: /connect wallet/i })).toBeInTheDocument();
+        expect(queryByTestId("mint-modal-shell")).not.toBeNull();
+        expect(queryByRole("button", { name: /connect wallet/i })).not.toBeNull();
       });
     });
 
@@ -676,7 +676,7 @@ describe("unit/components/gallery-scene", () => {
       fireEvent.click(getByRole("button", { name: /mint/i }));
 
       await waitFor(() => {
-        expect(queryByTestId("mint-modal-shell")).toBeInTheDocument();
+        expect(queryByTestId("mint-modal-shell")).not.toBeNull();
       });
     });
 
@@ -704,7 +704,7 @@ describe("unit/components/gallery-scene", () => {
       fireEvent.click(getByRole("button", { name: /mint/i }));
 
       await waitFor(() => {
-        expect(queryByTestId("mint-modal-shell")).toBeInTheDocument();
+        expect(queryByTestId("mint-modal-shell")).not.toBeNull();
       });
 
       currentLatestPainting = nextMockPainting;
