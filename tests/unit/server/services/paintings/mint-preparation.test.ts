@@ -102,6 +102,11 @@ function registerMintPreparationModuleMocks() {
       ARDRIVE_TURBO_SECRET_KEY: '{"kty":"RSA"}',
       ARWEAVE_GATEWAY_BASE_URL: "https://example.test",
     },
+    getEnvironmentName: () => "test" as const,
+    isDevelopment: () => false,
+    publicEnv: {
+      NEXT_PUBLIC_BASE_URL: "https://example.test",
+    },
   }));
 
   void mock.module("@/lib/ardrive-client", () => ({
@@ -124,6 +129,7 @@ function registerMintPreparationModuleMocks() {
 
 describe("unit/server/services/paintings/mint-preparation", () => {
   beforeEach(() => {
+    mock.restore();
     registerMintPreparationModuleMocks();
     findByIdMock.mockClear();
     updateMintAssetRefsMock.mockClear();

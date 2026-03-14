@@ -103,6 +103,7 @@ function registerMintPreparationModuleMocks() {
       ARDRIVE_TURBO_SECRET_KEY: '{"kty":"RSA"}',
       ARWEAVE_GATEWAY_BASE_URL: "https://example.test",
     },
+    getEnvironmentName: () => "test" as const,
     isDevelopment: () => false,
     publicEnv: {
       NEXT_PUBLIC_BASE_URL: "https://example.test",
