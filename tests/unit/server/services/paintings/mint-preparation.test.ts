@@ -196,7 +196,7 @@ describe("unit/server/services/paintings/mint-preparation", () => {
       | undefined;
     expect(uploadedMetadata?.animation_url).toBe("https://example.test/glb-tx");
     expect(uploadedMetadata?.image).toBe("https://example.test/painting");
-    expect(uploadedMetadata?.name).toBe("DOOM INDEX #9007199254740993");
+    expect(uploadedMetadata?.name).toBe("DOOM NFT #9007199254740993");
     expect(uploadedMetadata?.properties.files).toContainEqual({
       type: "image/png",
       uri: "https://example.test/painting",

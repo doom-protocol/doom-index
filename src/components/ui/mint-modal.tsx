@@ -7,6 +7,7 @@
  */
 
 import { MintPaintingPreviewScene } from "@/components/ui/mint-painting-preview-scene";
+import { buildDoomNftName } from "@/constants/nft";
 import { useSolanaMint } from "@/hooks/use-solana-mint";
 import { useSolanaWallet } from "@/hooks/use-solana-wallet";
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
@@ -165,7 +166,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
   const displayTokenId = mintedTokenId ?? (typeof nextTokenId === "bigint" ? nextTokenId : null);
   const mintStatusLabel = displayTokenId === null ? "Loading next token id..." : "Ready to mint on Solana";
 
-  const collectionName = displayTokenId === null ? "DOOM INDEX NFT" : `DOOM INDEX #${displayTokenId.toString()}`;
+  const collectionName = buildDoomNftName(displayTokenId);
 
   return (
     <div

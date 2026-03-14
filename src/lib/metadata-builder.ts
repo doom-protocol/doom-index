@@ -5,6 +5,7 @@
  * @see https://docs.metaplex.com/programs/token-metadata/token-standard
  */
 
+import { buildDoomNftName } from "@/constants/nft";
 import type { VisualParams } from "@/lib/pure/mapping";
 
 /**
@@ -117,7 +118,7 @@ export function buildNftMetadata(params: BuildMetadataParams): NftMetadata {
   }
 
   return {
-    name: `DOOM INDEX #${truncatedHash}`,
+    name: buildDoomNftName(truncatedHash),
     symbol: "DOOM",
     description:
       "A generative artwork from DOOM INDEX - an AI-powered decentralized archive of financial emotions. " +
@@ -172,7 +173,7 @@ export function buildFullNftMetadata(params: BuildFullMetadataParams): FullNftMe
   ];
 
   return {
-    name: `DOOM INDEX #${String(tokenNumber)}`,
+    name: buildDoomNftName(tokenNumber),
     symbol: "DOOM",
     description:
       "A generative artwork from DOOM INDEX - an AI-powered decentralized archive of financial emotions. " +

@@ -16,7 +16,7 @@ describe("unit/lib/metadata-builder", () => {
         walletAddress: "0x123",
       });
 
-      expect(metadata.name).toBe("DOOM INDEX #abc123");
+      expect(metadata.name).toBe("DOOM NFT #abc123");
       expect(metadata.symbol).toBe("DOOM");
       expect(metadata.description).toContain("DOOM INDEX");
       expect(metadata.image).toBe("ipfs://QmTest123");
@@ -142,7 +142,7 @@ describe("unit/lib/metadata-builder", () => {
         tokenNumber: 7,
       });
 
-      expect(metadata.name).toBe("DOOM INDEX #7");
+      expect(metadata.name).toBe("DOOM NFT #7");
       expect(metadata.image).toBe("https://arweave.net/image-tx");
       expect(metadata.animation_url).toBe("https://arweave.net/animation-tx");
       expect(metadata.external_url).toBe("https://doomindex.fun/artworks/7");

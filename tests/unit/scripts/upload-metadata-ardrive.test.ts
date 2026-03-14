@@ -113,7 +113,7 @@ describe("unit/scripts/upload-metadata-ardrive", () => {
       description: "A generative artwork from DOOM INDEX - an AI-powered decentralized archive of financial emotions.",
       external_url: "https://doomindex.fun/artworks/1",
       image: "https://arweave.net/image-tx",
-      name: "DOOM INDEX #1",
+      name: "DOOM NFT #1",
       properties: {
         category: "vr",
         files: [

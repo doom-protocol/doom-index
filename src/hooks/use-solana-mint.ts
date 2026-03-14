@@ -1,7 +1,7 @@
 /**
  * useSolanaMint Hook
  *
- * Mints a DOOM INDEX NFT through the custom Anchor/MPL Core program defined by
+ * Mints a DOOM NFT through the custom Anchor/MPL Core program defined by
  * `src/constants/idl/doom_nft_program.json`.
  */
 

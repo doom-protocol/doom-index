@@ -1,4 +1,5 @@
 import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "@/constants/arweave";
+import { buildDoomNftName } from "@/constants/nft";
 import type { ArdriveClient, Tag } from "@/lib/ardrive-client";
 import { buildArweaveGatewayBaseUrls, normalizeArweaveGatewayBaseUrl } from "@/lib/pure/arweave-gateway";
 import { sendSlackMessage } from "@/lib/slack-client";
@@ -139,7 +140,7 @@ export function buildMetadataJson(params: {
     description: METADATA_DESCRIPTION,
     external_url: `https://doomindex.fun/artworks/${normalizedTokenId}`,
     image: params.imageUrl,
-    name: `DOOM INDEX #${normalizedTokenId}`,
+    name: buildDoomNftName(normalizedTokenId),
     properties: {
       category: "vr",
       files: [

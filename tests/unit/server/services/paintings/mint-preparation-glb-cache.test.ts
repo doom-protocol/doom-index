@@ -208,7 +208,7 @@ describe("unit/server/services/paintings/mint-preparation glb cache", () => {
     expect(uploadJsonMock.mock.calls[0]?.[0]).toMatchObject({
       animation_url: "https://example.test/glb-tx",
       image: "https://example.test/painting.webp",
-      name: "DOOM INDEX #42",
+      name: "DOOM NFT #42",
     });
     expect(result._unsafeUnwrap()).toEqual({
       baseMetadataUrl: "https://example.test/manifest-tx",
