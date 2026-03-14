@@ -1,6 +1,5 @@
 "use client";
 
-import { LazyWalletProvider } from "@/components/providers/lazy-wallet-provider";
 import { useViewer } from "@/hooks/use-viewer";
 import { TRPCProvider, createTRPCClientInstance } from "@/lib/trpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -43,24 +42,22 @@ export const Providers: FC<{ children: ReactNode }> = ({ children }) => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LazyWalletProvider>
-        <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-          {children}
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              classNames: {
-                toast: "liquid-glass-toast",
-                error: "liquid-glass-toast-error",
-                success: "liquid-glass-toast-success",
-                info: "liquid-glass-toast-info",
-                warning: "liquid-glass-toast-warning",
-              },
-            }}
-            theme="dark"
-          />
-        </TRPCProvider>
-      </LazyWalletProvider>
+      <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+        {children}
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            classNames: {
+              toast: "liquid-glass-toast",
+              error: "liquid-glass-toast-error",
+              success: "liquid-glass-toast-success",
+              info: "liquid-glass-toast-info",
+              warning: "liquid-glass-toast-warning",
+            },
+          }}
+          theme="dark"
+        />
+      </TRPCProvider>
     </QueryClientProvider>
   );
 };

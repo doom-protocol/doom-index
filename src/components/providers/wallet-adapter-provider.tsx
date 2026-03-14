@@ -3,15 +3,10 @@
 import { getSolanaConnectionConfig } from "@/constants/solana";
 import type { SolanaNetwork } from "@/constants/solana";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import {
-  CoinbaseWalletAdapter,
-  LedgerWalletAdapter,
-  PhantomWalletAdapter,
-  SolflareWalletAdapter,
-  TrustWalletAdapter,
-} from "@solana/wallet-adapter-wallets";
+import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
 import { useMemo } from "react";
 import type { FC, ReactNode } from "react";
 
@@ -43,25 +38,7 @@ export const WalletAdapterProvider: FC<Props> = ({ children }) => {
   const walletAdapterNetwork = getWalletAdapterNetwork(network);
 
   const wallets = useMemo(
-    () => [
-      /**
-       * Wallets that implement either of these standards will be available automatically.
-       *
-       *   - Solana Mobile Stack Mobile Wallet Adapter Protocol
-       *     (https://github.com/solana-mobile/mobile-wallet-adapter)
-       *   - Solana Wallet Standard
-       *     (https://github.com/anza-xyz/wallet-standard)
-       *
-       * If you wish to support a wallet that supports neither of those standards,
-       * instantiate its legacy wallet adapter here. Common legacy adapters can be found
-       * in the npm package `@solana/wallet-adapter-wallets`.
-       */
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter({ network: walletAdapterNetwork }),
-      new CoinbaseWalletAdapter(),
-      new TrustWalletAdapter(),
-      new LedgerWalletAdapter(),
-    ],
+    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter({ network: walletAdapterNetwork })],
     [walletAdapterNetwork],
   );
 

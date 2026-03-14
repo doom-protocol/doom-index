@@ -90,10 +90,32 @@ const readConnectionState = () => ({
   connection: connectionState,
 });
 const readWalletState = () => walletState;
+const prepareMintMetadataMutateMock = mock(async () => {
+  await Promise.resolve();
+  return {
+    baseMetadataUrl: "https://permagate.io/manifest",
+    manifestTxId: "manifest-tx",
+    metadataTxId: "metadata-tx",
+    resolvedFromProbe: false,
+    tokenMetadataUrl: "https://permagate.io/manifest/42",
+  };
+});
 
 void mock.module("@solana/wallet-adapter-react", () => ({
   useConnection: readConnectionState,
   useWallet: readWalletState,
+}));
+
+const readTRPCClient = () => ({
+  paintings: {
+    prepareMintMetadata: {
+      mutate: prepareMintMetadataMutateMock,
+    },
+  },
+});
+
+void mock.module("@/lib/trpc/client", () => ({
+  useTRPCClient: readTRPCClient,
 }));
 
 void mock.module("@/utils/logger", () => ({
@@ -107,6 +129,17 @@ void mock.module("@/utils/logger", () => ({
 
 describe("unit/hooks/use-solana-mint", () => {
   beforeEach(() => {
+    prepareMintMetadataMutateMock.mockReset();
+    prepareMintMetadataMutateMock.mockImplementation(async () => {
+      await Promise.resolve();
+      return {
+        baseMetadataUrl: "https://permagate.io/manifest",
+        manifestTxId: "manifest-tx",
+        metadataTxId: "metadata-tx",
+        resolvedFromProbe: false,
+        tokenMetadataUrl: "https://permagate.io/manifest/42",
+      };
+    });
     sendTransactionMock.mockReset();
     sendTransactionMock.mockImplementation(async () => {
       await Promise.resolve();
@@ -191,9 +224,13 @@ describe("unit/hooks/use-solana-mint", () => {
 
     let mintResult: Awaited<ReturnType<typeof result.current.mint>> | undefined;
     await act(async () => {
-      mintResult = await result.current.mint();
+      mintResult = await result.current.mint("painting-42");
     });
 
+    expect(prepareMintMetadataMutateMock).toHaveBeenCalledWith({
+      paintingId: "painting-42",
+      tokenId: INITIAL_TOKEN_ID.toString(),
+    });
     expect(sendTransactionMock).toHaveBeenCalledTimes(1);
     const [transaction, _connection, options] = sendTransactionMock.mock.calls[0] as unknown as [
       {
@@ -235,7 +272,7 @@ describe("unit/hooks/use-solana-mint", () => {
     let mintError: unknown;
     await act(async () => {
       try {
-        await result.current.mint();
+        await result.current.mint("painting-42");
       } catch (error) {
         mintError = error;
       }
@@ -288,7 +325,7 @@ describe("unit/hooks/use-solana-mint", () => {
 
     let mintResult: Awaited<ReturnType<typeof result.current.mint>> | undefined;
     await act(async () => {
-      mintResult = await result.current.mint();
+      mintResult = await result.current.mint("painting-42");
     });
 
     expect(sendTransactionMock).toHaveBeenCalledTimes(2);

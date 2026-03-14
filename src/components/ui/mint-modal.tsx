@@ -123,7 +123,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
 
     try {
       sendGAEvent(GA_EVENTS.MINT_TRANSACTION_START);
-      const result = await mint();
+      const result = await mint(paintingMetadata.paintingHash);
 
       logger.info("mint.success", {
         assetAddress: result.assetAddress,
@@ -149,7 +149,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
     } finally {
       setIsProcessing(false);
     }
-  }, [connected, setVisible, mint, onClose, publicKey]);
+  }, [connected, mint, onClose, paintingMetadata.paintingHash, publicKey, setVisible]);
 
   // Handle modal close
   const handleClose = useCallback(() => {

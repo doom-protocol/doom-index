@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useLatestPainting } from "@/hooks/use-latest-painting";
 import {
   constrainOrbitControlsSnapshot,
@@ -16,8 +17,8 @@ import type { FC } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
 import type { Group } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import { useMintFeatureStore } from "@/features/mint/store";
 import { MintButton } from "../ui/mint-button";
-import { MintModal } from "../ui/mint-modal";
 import { ThreeErrorBoundary } from "../ui/three-error-boundary";
 
 import { CameraRig } from "./camera-rig";
@@ -31,9 +32,15 @@ interface GallerySceneProps {
   initialPainting?: PaintingMetadata | null;
 }
 
+const MintFeatureRoot = dynamic(
+  async () => import("@/features/mint/mint-feature-root").then((mod) => mod.MintFeatureRoot),
+  {
+    ssr: false,
+  },
+);
+
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
-const MODAL_TRANSITION_MS = 500;
 const CAMERA_FLOOR_CLEARANCE = 0.02;
 const CAMERA_BACK_WALL_CLEARANCE = 0.02;
 const MIN_CAMERA_Y = GALLERY_FLOOR_Y + CAMERA_FLOOR_CLEARANCE;
@@ -87,32 +94,18 @@ export const GalleryScene: FC<GallerySceneProps> = ({
   const displayPainting = isFetching ? (latestPainting ?? lastResolvedPaintingRef.current) : latestPainting;
   const thumbnailUrl = displayPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 
+  const openMintFeature = useMintFeatureStore((state) => state.openMintFeature);
+  const resetMintFeature = useMintFeatureStore((state) => state.resetMintFeature);
   const paintingRef = useRef<Group>(null);
   const isClampingCameraRef = useRef(false);
-  const mintModalCloseTimeoutRef = useRef<number | null>(null);
-  const mintModalOpenFrameRef = useRef<number | null>(null);
-  const [isMintModalMounted, setIsMintModalMounted] = useState(false);
-  const [isMintModalOpen, setIsMintModalOpen] = useState(false);
-  const [mintPainting, setMintPainting] = useState<PaintingMetadata | null>(null);
 
   const handleMintClick = () => {
     if (!displayPainting) return;
 
-    if (mintModalCloseTimeoutRef.current !== null) {
-      window.clearTimeout(mintModalCloseTimeoutRef.current);
-      mintModalCloseTimeoutRef.current = null;
-    }
-
-    setMintPainting(displayPainting);
-    setIsMintModalMounted(true);
-
-    if (mintModalOpenFrameRef.current !== null) {
-      window.cancelAnimationFrame(mintModalOpenFrameRef.current);
-    }
-
-    mintModalOpenFrameRef.current = window.requestAnimationFrame(() => {
-      setIsMintModalOpen(true);
-      mintModalOpenFrameRef.current = null;
+    openMintFeature({
+      timestamp: displayPainting.timestamp,
+      paintingHash: displayPainting.id,
+      thumbnailUrl: displayPainting.imageUrl,
     });
   };
 
@@ -149,32 +142,17 @@ export const GalleryScene: FC<GallerySceneProps> = ({
         lastTs: currentPainting.timestamp,
       });
       previousPaintingKeyRef.current = currentPaintingKey;
-      if (mintModalCloseTimeoutRef.current !== null) {
-        window.clearTimeout(mintModalCloseTimeoutRef.current);
-        mintModalCloseTimeoutRef.current = null;
-      }
-      if (mintModalOpenFrameRef.current !== null) {
-        window.cancelAnimationFrame(mintModalOpenFrameRef.current);
-        mintModalOpenFrameRef.current = null;
-      }
       startTransition(() => {
-        setIsMintModalOpen(false);
-        setIsMintModalMounted(false);
-        setMintPainting(null);
+        resetMintFeature();
       });
     }
-  }, [latestPainting, thumbnailUrl]);
+  }, [latestPainting, resetMintFeature, thumbnailUrl]);
 
   useEffect(() => {
     return () => {
-      if (mintModalCloseTimeoutRef.current !== null) {
-        window.clearTimeout(mintModalCloseTimeoutRef.current);
-      }
-      if (mintModalOpenFrameRef.current !== null) {
-        window.cancelAnimationFrame(mintModalOpenFrameRef.current);
-      }
+      resetMintFeature();
     };
-  }, []);
+  }, [resetMintFeature]);
 
   const handleOrbitControlsChange = (event?: OrbitControlsEvent) => {
     const controls = readOrbitControls(event);
@@ -298,28 +276,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
       >
         <MintButton onClick={handleMintClick} isLoading={false} disabled={!displayPainting} />
       </div>
-
-      {isMintModalMounted && mintPainting ? (
-        <MintModal
-          isOpen={isMintModalOpen}
-          onClose={() => {
-            setIsMintModalOpen(false);
-            if (mintModalCloseTimeoutRef.current !== null) {
-              window.clearTimeout(mintModalCloseTimeoutRef.current);
-            }
-            mintModalCloseTimeoutRef.current = window.setTimeout(() => {
-              setIsMintModalMounted(false);
-              setMintPainting(null);
-              mintModalCloseTimeoutRef.current = null;
-            }, MODAL_TRANSITION_MS);
-          }}
-          paintingMetadata={{
-            timestamp: mintPainting.timestamp,
-            paintingHash: mintPainting.id,
-            thumbnailUrl: mintPainting.imageUrl,
-          }}
-        />
-      ) : null}
+      <MintFeatureRoot />
     </>
   );
 };

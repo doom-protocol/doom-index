@@ -12,6 +12,7 @@ import {
   isRetryableReservationRaceError,
   validateGlobalConfigForMint,
 } from "@/lib/anchor/doom-nft-program";
+import { useTRPCClient } from "@/lib/trpc/client";
 import { getErrorMessage } from "@/utils/error";
 import { logger } from "@/utils/logger";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
@@ -33,7 +34,7 @@ export interface MintResult {
  * useSolanaMint hook result
  */
 export interface UseSolanaMintResult {
-  mint: () => Promise<MintResult>;
+  mint: (paintingId: string) => Promise<MintResult>;
   isMinting: boolean;
   error: Error | null;
   nextTokenId: bigint | null;
@@ -63,6 +64,7 @@ export function useSolanaMint(): UseSolanaMintResult {
   const [isMinting, setIsMinting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [nextTokenId, setNextTokenId] = useState<bigint | null>(null);
+  const client = useTRPCClient();
   const { connection } = useConnection();
   const wallet = useWallet();
 
@@ -82,98 +84,105 @@ export function useSolanaMint(): UseSolanaMintResult {
     void refreshMintState();
   }, [refreshMintState]);
 
-  const mint = useCallback(async (): Promise<MintResult> => {
-    if (!wallet.connected || !wallet.publicKey) {
-      throw new Error("Wallet not connected");
-    }
+  const mint = useCallback(
+    async (paintingId: string): Promise<MintResult> => {
+      if (!wallet.connected || !wallet.publicKey) {
+        throw new Error("Wallet not connected");
+      }
 
-    setIsMinting(true);
-    setError(null);
+      setIsMinting(true);
+      setError(null);
 
-    try {
-      for (let attempt = 0; attempt < MAX_MINT_ATTEMPTS; attempt++) {
-        const { address: globalConfigAddress, globalConfig } = await fetchGlobalConfig(connection);
-        validateGlobalConfigForMint(globalConfig, globalConfigAddress);
+      try {
+        for (let attempt = 0; attempt < MAX_MINT_ATTEMPTS; attempt++) {
+          const { address: globalConfigAddress, globalConfig } = await fetchGlobalConfig(connection);
+          validateGlobalConfigForMint(globalConfig, globalConfigAddress);
 
-        const tokenId = globalConfig.nextTokenId;
-
-        const assetSigner = Keypair.generate();
-        const transaction = buildDoomNftMintTransaction({
-          asset: assetSigner.publicKey,
-          collection: globalConfig.collection,
-          globalConfig: globalConfigAddress,
-          tokenId,
-          user: wallet.publicKey,
-        });
-        const latestBlockhash = await connection.getLatestBlockhash();
-
-        transaction.feePayer = wallet.publicKey;
-        transaction.recentBlockhash = latestBlockhash.blockhash;
-
-        logger.info("solana.mint.start", {
-          attempt: attempt + 1,
-          tokenId: tokenId.toString(),
-          walletAddress: wallet.publicKey.toBase58(),
-        });
-
-        try {
-          const signature = await wallet.sendTransaction(transaction, connection, {
-            signers: [assetSigner],
-          });
-          const confirmation = await connection.confirmTransaction(
-            {
-              blockhash: latestBlockhash.blockhash,
-              lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-              signature,
-            },
-            "confirmed",
-          );
-
-          if (confirmation.value.err) {
-            throw new Error(`Mint transaction failed: ${JSON.stringify(confirmation.value.err)}`);
-          }
-
-          logger.info("solana.mint.success", {
-            assetAddress: assetSigner.publicKey.toBase58(),
-            signature,
+          const tokenId = globalConfig.nextTokenId;
+          await client.paintings.prepareMintMetadata.mutate({
+            paintingId,
             tokenId: tokenId.toString(),
           });
 
-          setNextTokenId(tokenId + BigInt(1));
-
-          return {
-            assetAddress: assetSigner.publicKey.toBase58(),
-            signature,
+          const assetSigner = Keypair.generate();
+          const transaction = buildDoomNftMintTransaction({
+            asset: assetSigner.publicKey,
+            collection: globalConfig.collection,
+            globalConfig: globalConfigAddress,
             tokenId,
-          };
-        } catch (mintAttemptError) {
-          if (attempt + 1 < MAX_MINT_ATTEMPTS && isRetryableReservationRaceError(mintAttemptError)) {
-            logger.warn("solana.mint.retrying-after-race", {
-              attempt: attempt + 1,
-              error: getErrorMessage(mintAttemptError),
+            user: wallet.publicKey,
+          });
+          const latestBlockhash = await connection.getLatestBlockhash();
+
+          transaction.feePayer = wallet.publicKey;
+          transaction.recentBlockhash = latestBlockhash.blockhash;
+
+          logger.info("solana.mint.start", {
+            attempt: attempt + 1,
+            tokenId: tokenId.toString(),
+            walletAddress: wallet.publicKey.toBase58(),
+          });
+
+          try {
+            const signature = await wallet.sendTransaction(transaction, connection, {
+              signers: [assetSigner],
             });
-            continue;
+            const confirmation = await connection.confirmTransaction(
+              {
+                blockhash: latestBlockhash.blockhash,
+                lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+                signature,
+              },
+              "confirmed",
+            );
+
+            if (confirmation.value.err) {
+              throw new Error(`Mint transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+            }
+
+            logger.info("solana.mint.success", {
+              assetAddress: assetSigner.publicKey.toBase58(),
+              signature,
+              tokenId: tokenId.toString(),
+            });
+
+            setNextTokenId(tokenId + BigInt(1));
+
+            return {
+              assetAddress: assetSigner.publicKey.toBase58(),
+              signature,
+              tokenId,
+            };
+          } catch (mintAttemptError) {
+            if (attempt + 1 < MAX_MINT_ATTEMPTS && isRetryableReservationRaceError(mintAttemptError)) {
+              logger.warn("solana.mint.retrying-after-race", {
+                attempt: attempt + 1,
+                error: getErrorMessage(mintAttemptError),
+              });
+              continue;
+            }
+
+            throw mintAttemptError;
           }
-
-          throw mintAttemptError;
         }
+
+        throw new Error("Minting failed after retry.");
+      } catch (mintError) {
+        const resolvedError = toMintError(mintError);
+
+        logger.error("solana.mint.failed", {
+          error: resolvedError.message,
+          details: mintError,
+        });
+
+        setError(resolvedError);
+        throw resolvedError;
+      } finally {
+        setIsMinting(false);
       }
-
-      throw new Error("Minting failed after retry.");
-    } catch (mintError) {
-      const resolvedError = toMintError(mintError);
-
-      logger.error("solana.mint.failed", {
-        error: resolvedError.message,
-        details: mintError,
-      });
-
-      setError(resolvedError);
-      throw resolvedError;
-    } finally {
-      setIsMinting(false);
-    }
-  }, [connection, wallet]);
+    },
+    [client, connection, wallet],
+  );
 
   return {
     error,

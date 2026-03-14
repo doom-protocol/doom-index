@@ -1,7 +1,7 @@
+import { preparePaintingMintMetadata } from "@/server/services/paintings/mint-preparation";
 import { get, set } from "@/lib/cache";
-import { createPaintingsService } from "@/server/services/paintings";
 import { CACHE_TTL_SECONDS } from "@/constants";
-import { TRPCError } from "@trpc/server";
+import { listImages } from "@/server/services/paintings/list";
 import * as v from "valibot";
 import { resultOrThrow } from "../helpers";
 import { paintingsListSchema, prepareMintMetadataSchema } from "../schemas";
@@ -30,13 +30,7 @@ export const paintingsRouter = router({
         return cached;
       }
 
-      const d1Binding = ctx.env?.DB;
-      const archiveService = createPaintingsService({
-        d1Binding,
-      });
-
-      // List images
-      const listResult = await archiveService.listImages({
+      const listResult = await listImages(ctx.env?.DB, {
         limit,
         cursor,
         from,
@@ -54,10 +48,16 @@ export const paintingsRouter = router({
     }),
   prepareMintMetadata: publicProcedure
     .input((val) => v.parse(prepareMintMetadataSchema, val))
-    .mutation(() => {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Mint metadata preparation is disabled until authorized requests are implemented.",
+    .mutation(async ({ ctx, input }) => {
+      const result = await preparePaintingMintMetadata({
+        d1Binding: ctx.env?.DB,
+        paintingId: input.paintingId,
+        tokenId: input.tokenId,
+      });
+
+      return resultOrThrow(result, ctx, {
+        paintingId: input.paintingId,
+        tokenId: input.tokenId,
       });
     }),
 });

@@ -10,7 +10,7 @@ import "../../preload";
 
 import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { FC, ReactNode } from "react";
 import type { PublicKey } from "@solana/web3.js";
 import { createLoggerMock, createMockPerformance, resetMockTime, advanceMockTime, getMockTime } from "../../mocks";
@@ -185,6 +185,8 @@ const connectionHook = () => ({
   },
 });
 void mock.module("@solana/wallet-adapter-react", () => ({
+  ConnectionProvider: ({ children }: { children: ReactNode }): ReactNode => children,
+  WalletProvider: ({ children }: { children: ReactNode }): ReactNode => children,
   useConnection: connectionHook,
   useWallet: walletHook,
 }));
@@ -194,7 +196,16 @@ const walletModalState = {
 };
 const readWalletModalState = () => walletModalState;
 void mock.module("@solana/wallet-adapter-react-ui", () => ({
+  WalletModalProvider: ({ children }: { children: ReactNode }): ReactNode => children,
   useWalletModal: readWalletModalState,
+}));
+
+void mock.module("@solana/wallet-adapter-phantom", () => ({
+  PhantomWalletAdapter: function PhantomWalletAdapter() {},
+}));
+
+void mock.module("@solana/wallet-adapter-solflare", () => ({
+  SolflareWalletAdapter: function SolflareWalletAdapter(_config?: unknown) {},
 }));
 
 // Gallery scene no longer depends on the old client-side GLB export service.
@@ -401,17 +412,42 @@ void mock.module("leva", () => ({
   useControls: readLevaControls,
 }));
 
-// Mock next/dynamic so a component with a loading fallback behaves like the
-// preloaded placeholder path. This lets us catch regressions where GalleryScene
-// renders a temporary light rig before the final Lights component is ready.
+// Mock next/dynamic with an eager async loader so feature-boundary components
+// still behave like dynamically imported client modules in tests.
 void mock.module("next/dynamic", () => ({
-  default: (_loader: unknown, options?: { loading?: FC }) => {
-    if (options?.loading) {
-      const LoadingComponent = options.loading;
-      return LoadingComponent;
-    }
+  default: <TProps extends object>(
+    loader: () => Promise<FC<TProps> | { default: FC<TProps> }>,
+    options?: { loading?: FC },
+  ) => {
+    const LoadingComponent = options?.loading ?? (() => null);
 
-    return () => null;
+    return (props: TProps) => {
+      const [LoadedComponent, setLoadedComponent] = useState<FC<TProps> | null>(null);
+
+      useEffect(() => {
+        let isMounted = true;
+
+        void loader().then((loaded) => {
+          if (!isMounted) {
+            return;
+          }
+
+          const resolvedComponent =
+            typeof loaded === "function" ? loaded : ((loaded.default as FC<TProps> | undefined) ?? null);
+          setLoadedComponent(() => resolvedComponent);
+        });
+
+        return () => {
+          isMounted = false;
+        };
+      }, []);
+
+      if (!LoadedComponent) {
+        return <LoadingComponent />;
+      }
+
+      return <LoadedComponent {...props} />;
+    };
   },
 }));
 

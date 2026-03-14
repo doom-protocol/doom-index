@@ -33,16 +33,6 @@ const runUseSolanaWalletScript = (connectImplementation: string) => {
           },
         };
 
-        mock.module("@/components/providers/umi-provider", () => ({
-          useUmi: () => ({
-            rpc: {
-              sendTransaction: async () => ({
-                toString: () => "sig",
-              }),
-            },
-          }),
-        }));
-
         mock.module("@solana/wallet-adapter-react", () => ({
           useWallet: () => walletState,
         }));

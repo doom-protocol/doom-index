@@ -13,8 +13,20 @@ import { XIcon } from "@/components/icons/x-icon";
 import { GITHUB_URL, PUMP_FUN_URL, X_URL } from "@/constants";
 
 import { useClickOutside, useEscapeKey } from "@/hooks/use-click-outside";
-import { HeaderProgress } from "./header-progress";
 import { ViewerCountBadge } from "./viewer-count-badge";
+import dynamic from "next/dynamic";
+
+const HeaderProgress = dynamic(
+  async () => {
+    const mod = await import("./header-progress");
+    return {
+      default: mod.HeaderProgress,
+    };
+  },
+  {
+    ssr: false,
+  },
+);
 
 interface NavLinkConfig {
   href: string;
