@@ -3,6 +3,8 @@ import "../../../preload";
 import { DOOM_NFT_PROGRAM_ID, deriveGlobalConfigPda } from "@/lib/anchor/doom-nft-program";
 import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { PublicKey } from "@solana/web3.js";
 import type { FC, ReactNode } from "react";
 
@@ -134,75 +136,88 @@ const loggerErrorMock = mock(() => {});
 const loggerInfoMock = mock(() => {});
 const loggerWarnMock = mock(() => {});
 
-void mock.module("@/hooks/use-solana-wallet", () => ({
-  useSolanaWallet: readSolanaWallet,
-}));
+function registerMintModalMocks() {
+  void mock.module("@/hooks/use-solana-wallet", () => ({
+    useSolanaWallet: readSolanaWallet,
+  }));
 
-void mock.module("@/hooks/use-solana-mint", () => ({
-  useSolanaMint: readSolanaMint,
-}));
+  void mock.module("@/hooks/use-solana-mint", () => ({
+    useSolanaMint: readSolanaMint,
+  }));
 
-void mock.module("@solana/wallet-adapter-react", () => ({
-  useConnection: readConnection,
-  useWallet: readWallet,
-}));
+  void mock.module("@solana/wallet-adapter-react", () => ({
+    ConnectionProvider: ({ children }: { children: ReactNode }): ReactNode => children,
+    WalletProvider: ({ children }: { children: ReactNode }): ReactNode => children,
+    useConnection: readConnection,
+    useWallet: readWallet,
+  }));
 
-void mock.module("@solana/wallet-adapter-react-ui", () => ({
-  useWalletModal: readWalletModal,
-}));
+  void mock.module("@solana/wallet-adapter-react-ui", () => ({
+    WalletModalProvider: ({ children }: { children: ReactNode }): ReactNode => children,
+    useWalletModal: readWalletModal,
+  }));
 
-void mock.module("@react-three/fiber", () => ({
-  Canvas: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
+  void mock.module("@react-three/fiber", () => ({
+    Canvas: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  }));
 
-void mock.module("@react-three/drei", () => ({
-  OrbitControls: () => null,
-}));
+  void mock.module("@react-three/drei", () => ({
+    OrbitControls: () => null,
+  }));
 
-void mock.module("@/components/gallery/framed-painting", () => ({
-  FramedPainting: () => <div data-testid="framed-painting" />,
-}));
+  void mock.module("@/components/gallery/framed-painting", () => ({
+    FramedPainting: () => <div data-testid="framed-painting" />,
+  }));
 
-void mock.module("@/components/gallery/lights", () => ({
-  Lights: () => null,
-}));
+  void mock.module("@/components/gallery/lights", () => ({
+    Lights: () => null,
+  }));
 
-void mock.module("@/lib/analytics", () => ({
-  GA_EVENTS: {
-    MINT_SUCCESS: "mint_success",
-    MINT_TRANSACTION_START: "mint_transaction_start",
-    MINT_WALLET_CONNECT: "mint_wallet_connect",
-  },
-  sendGAEvent: mock(() => {}),
-}));
+  void mock.module("@/lib/analytics", () => ({
+    GA_EVENTS: {
+      MINT_SUCCESS: "mint_success",
+      MINT_TRANSACTION_START: "mint_transaction_start",
+      MINT_WALLET_CONNECT: "mint_wallet_connect",
+    },
+    sendGAEvent: mock(() => {}),
+  }));
 
-void mock.module("@/utils/logger", () => ({
-  logger: {
-    debug: loggerDebugMock,
-    error: loggerErrorMock,
-    info: loggerInfoMock,
-    warn: loggerWarnMock,
-  },
-}));
+  void mock.module("@/utils/logger", () => ({
+    logger: {
+      debug: loggerDebugMock,
+      error: loggerErrorMock,
+      info: loggerInfoMock,
+      warn: loggerWarnMock,
+    },
+  }));
 
-void mock.module("@/utils/error", () => ({
-  getErrorMessage: () => "Minting failed",
-}));
+  void mock.module("@/utils/error", () => ({
+    getErrorMessage: () => "Minting failed",
+  }));
 
-void mock.module("sonner", () => ({
-  toast: {
-    error: mock(() => {}),
-    info: mock(() => {}),
-    success: mock(() => {}),
-  },
-}));
+  void mock.module("sonner", () => ({
+    toast: {
+      error: mock(() => {}),
+      info: mock(() => {}),
+      success: mock(() => {}),
+    },
+  }));
 
-void mock.module("use-haptic", () => ({
-  useHaptic: readHaptic,
-}));
+  void mock.module("use-haptic", () => ({
+    useHaptic: readHaptic,
+  }));
+}
+
+async function loadMintModalModule() {
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/components/ui/mint-modal.tsx"));
+  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+  return import(moduleUrl.href) as Promise<typeof import("@/components/ui/mint-modal")>;
+}
 
 describe("unit/components/ui/mint-modal", () => {
   beforeEach(() => {
+    mock.restore();
+    registerMintModalMocks();
     connectWalletMock.mockClear();
     sendTransactionMock.mockClear();
     getAccountInfoMock.mockClear();
@@ -247,6 +262,7 @@ describe("unit/components/ui/mint-modal", () => {
 
   afterEach(() => {
     cleanup();
+    mock.restore();
   });
 
   afterAll(() => {
@@ -254,7 +270,7 @@ describe("unit/components/ui/mint-modal", () => {
   });
 
   it("opens the wallet selector when no wallet is selected", async () => {
-    const { MintModal } = await import("@/components/ui/mint-modal");
+    const { MintModal } = await loadMintModalModule();
 
     const { getByRole } = render(
       <MintModal
@@ -297,7 +313,7 @@ describe("unit/components/ui/mint-modal", () => {
   });
 
   it("calls connectWallet when a wallet is already selected", async () => {
-    const { MintModal } = await import("@/components/ui/mint-modal");
+    const { MintModal } = await loadMintModalModule();
     useWalletState.wallet = {
       adapter: {
         name: "Phantom",
@@ -327,7 +343,7 @@ describe("unit/components/ui/mint-modal", () => {
   });
 
   it("logs wallet adapter state when the modal is opened and reopened", async () => {
-    const { MintModal } = await import("@/components/ui/mint-modal");
+    const { MintModal } = await loadMintModalModule();
     useWalletState.wallet = {
       adapter: {
         name: "Phantom",
@@ -420,7 +436,7 @@ describe("unit/components/ui/mint-modal", () => {
   });
 
   it("shows the real mint button once the wallet is connected", async () => {
-    const { MintModal } = await import("@/components/ui/mint-modal");
+    const { MintModal } = await loadMintModalModule();
     solanaWalletState.connected = true;
     solanaWalletState.publicKey = "user111111111111111111111111111111111111111";
     useWalletState.connected = true;
@@ -440,11 +456,12 @@ describe("unit/components/ui/mint-modal", () => {
 
     expect(queryByRole("button", { name: /connect wallet/i })).toBeNull();
     expect(queryByText(/coming soon/i)).toBeNull();
+    expect(queryByText("DOOM NFT #7")).not.toBeNull();
     expect(getByRole("button", { name: /^mint$/i })).toBeEnabled();
   });
 
   it("calls mint when the connected-state mint button is pressed", async () => {
-    const { MintModal } = await import("@/components/ui/mint-modal");
+    const { MintModal } = await loadMintModalModule();
     solanaWalletState.connected = true;
     solanaWalletState.publicKey = "user111111111111111111111111111111111111111";
     useWalletState.connected = true;
