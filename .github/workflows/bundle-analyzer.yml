@@ -39,7 +39,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build Worker package
-        run: bun --env-file=.example.vars run build:cf
+        run: bun --env-file=.env.example run build:cf
 
       - name: Summarize vinext server output
         run: |

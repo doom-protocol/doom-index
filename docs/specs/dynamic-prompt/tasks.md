@@ -133,7 +133,7 @@
   - _Requirements: 2, 3, 6_
 
 - [x] 8.2 環境変数と設定の整理
-  - `TAVILY_API_KEY` や `WORKERS_AI_DEFAULT_MODEL`（例: `@cf/ibm-granite/granite-4.0-h-micro`）など、本機能に必要な環境変数を `.example.vars` / `.dev.vars` などの設定例と整合させる
+  - `TAVILY_API_KEY` や `WORKERS_AI_DEFAULT_MODEL`（例: `@cf/ibm-granite/granite-4.0-h-micro`）など、本機能に必要な環境変数を `.env.example` / `.env.local` などの設定例と整合させる
   - Cloudflare Workers の `wrangler.toml` に `[ai]` バインディングが設定されていることを確認し、`env.AI` 経由で Workers AI を呼び出せるようにする
   - 環境変数未設定時に ConfigurationError を返す経路を確認し、開発・本番双方での設定ミスに気付きやすくする
   - _Requirements: 7, 8_

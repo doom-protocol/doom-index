@@ -123,5 +123,5 @@ DOOM INDEX は、Solana 上の 8 種類の指標トークン（`$CO2 / $ICE / $F
 1. WHEN 画像生成 Provider の API Key を設定するとき THEN Security Layer SHALL `wrangler secret put PROVIDER_API_KEY` コマンドで Cloudflare Workers Secrets に保存する。
 2. IF Cron Worker が画像生成を実行するとき THEN Cron Worker SHALL `env.PROVIDER_API_KEY` から Secret を取得し、Image Provider API への `fetch` リクエストに含める。
 3. WHERE `wrangler.toml` に Secret 参照が記載されているとき THEN Configuration SHALL Secret 名のみを記載し、値は含めない（例: `[vars]` セクションに Secret は記載しない）。
-4. WHEN ローカル開発時に Secret が必要なとき THEN Developer SHALL `.dev.vars` ファイル（`.gitignore` に追加）に `PROVIDER_API_KEY=xxx` を記載し、`wrangler dev` が自動読み込みする。
+4. WHEN ローカル開発時に Secret が必要なとき THEN Developer SHALL `.env.local` ファイル（`.gitignore` に追加）に `PROVIDER_API_KEY=xxx` を記載し、ローカル実行時に読み込まれるようにする。
 5. IF Secret が更新されたとき THEN Security Layer SHALL `wrangler secret put` で上書きし、Workers の再デプロイなしに即座に反映される。

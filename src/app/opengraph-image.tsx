@@ -407,10 +407,6 @@ export default async function Image(): Promise<Response> {
     const assetsFetcher = env.ASSETS;
     const imagesBinding = env.IMAGES;
 
-    if (!imagesBinding) {
-      throw new Error("IMAGES binding not available in environment");
-    }
-
     logger.info("ogp.step-init-url");
     // Get request URL
     const requestUrl = getBaseUrl();
@@ -461,67 +457,65 @@ export default async function Image(): Promise<Response> {
       const fallbackAssetsFetcher = env.ASSETS;
       const fallbackImagesBinding = env.IMAGES;
 
-      if (fallbackAssetsFetcher && fallbackImagesBinding) {
-        logger.info("ogp.fallback-load-image");
-        try {
-          const fallbackBuffer = await getFallbackImageBuffer(fallbackAssetsFetcher);
-          const [frameBuffer, backgroundBuffer] = await Promise.all([
-            getFrameImageBuffer(fallbackAssetsFetcher),
-            getBackgroundImageBuffer(fallbackAssetsFetcher),
-          ]);
-          const transformedFallback = await renderPaintingOnCanvas(
-            fallbackBuffer,
-            fallbackImagesBinding,
-            frameBuffer,
-            backgroundBuffer,
-          );
+      logger.info("ogp.fallback-load-image");
+      try {
+        const fallbackBuffer = await getFallbackImageBuffer(fallbackAssetsFetcher);
+        const [frameBuffer, backgroundBuffer] = await Promise.all([
+          getFrameImageBuffer(fallbackAssetsFetcher),
+          getBackgroundImageBuffer(fallbackAssetsFetcher),
+        ]);
+        const transformedFallback = await renderPaintingOnCanvas(
+          fallbackBuffer,
+          fallbackImagesBinding,
+          frameBuffer,
+          backgroundBuffer,
+        );
 
-          logger.info("ogp.fallback-completed", {
-            durationMs: Date.now() - startTime,
-          });
+        logger.info("ogp.fallback-completed", {
+          durationMs: Date.now() - startTime,
+        });
 
-          return new Response(transformedFallback, {
-            status: 200,
-            headers: {
-              "Content-Type": "image/png",
-              "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`,
-            },
-          });
-        } catch (fallbackTransformError) {
-          const fallbackTransformErrorMessage =
-            fallbackTransformError instanceof Error ? fallbackTransformError.message : String(fallbackTransformError);
-          logger.error("ogp.fallback-transform-error", {
-            reason: `Fallback image transformation failed: ${fallbackTransformErrorMessage}`,
-            error: fallbackTransformErrorMessage,
-            willUseOriginalFallback: true,
-          });
+        return new Response(transformedFallback, {
+          status: 200,
+          headers: {
+            "Content-Type": "image/png",
+            "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`,
+          },
+        });
+      } catch (fallbackTransformError) {
+        const fallbackTransformErrorMessage =
+          fallbackTransformError instanceof Error ? fallbackTransformError.message : String(fallbackTransformError);
+        logger.error("ogp.fallback-transform-error", {
+          reason: `Fallback image transformation failed: ${fallbackTransformErrorMessage}`,
+          error: fallbackTransformErrorMessage,
+          willUseOriginalFallback: true,
+        });
 
-          const fallbackDataUrl = await getFallbackImageDataUrl(fallbackAssetsFetcher);
-          const fallbackBuffer = await fetch(fallbackDataUrl).then(async (r) => r.arrayBuffer());
-          const [frameBuffer, backgroundBuffer] = await Promise.all([
-            getFrameImageBuffer(fallbackAssetsFetcher),
-            getBackgroundImageBuffer(fallbackAssetsFetcher),
-          ]);
+        const fallbackDataUrl = await getFallbackImageDataUrl(fallbackAssetsFetcher);
+        const fallbackBuffer = await fetch(fallbackDataUrl).then(async (r) => r.arrayBuffer());
+        const [frameBuffer, backgroundBuffer] = await Promise.all([
+          getFrameImageBuffer(fallbackAssetsFetcher),
+          getBackgroundImageBuffer(fallbackAssetsFetcher),
+        ]);
 
-          logger.info("ogp.fallback-completed", {
-            durationMs: Date.now() - startTime,
-          });
+        logger.info("ogp.fallback-completed", {
+          durationMs: Date.now() - startTime,
+        });
 
-          const transformedFallback = await renderPaintingOnCanvas(
-            fallbackBuffer,
-            fallbackImagesBinding,
-            frameBuffer,
-            backgroundBuffer,
-          );
+        const transformedFallback = await renderPaintingOnCanvas(
+          fallbackBuffer,
+          fallbackImagesBinding,
+          frameBuffer,
+          backgroundBuffer,
+        );
 
-          return new Response(transformedFallback, {
-            status: 200,
-            headers: {
-              "Content-Type": "image/png",
-              "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`,
-            },
-          });
-        }
+        return new Response(transformedFallback, {
+          status: 200,
+          headers: {
+            "Content-Type": "image/png",
+            "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`,
+          },
+        });
       }
     } catch (fallbackError) {
       const fallbackErrorMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);

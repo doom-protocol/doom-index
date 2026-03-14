@@ -6,7 +6,7 @@
  * Uploads explicit assets or a locally composed fixture bundle to Arweave.
  *
  * Usage:
- *   bun run --env-file=.dev.vars scripts/upload-metadata-ardrive.ts \
+ *   bun run --env-file=.env.local scripts/upload-metadata-ardrive.ts \
  *     --token-id <n> \
  *     --thumbnail <path|url> \
  *     --glb <path|url> \
@@ -15,7 +15,7 @@
  *     [--dry-run]
  *
  * Fixture mode:
- *   bun run --env-file=.dev.vars scripts/upload-metadata-ardrive.ts \
+ *   bun run --env-file=.env.local scripts/upload-metadata-ardrive.ts \
  *     --token-id <n> \
  *     --fixture \
  *     [--painting-id <id>] \

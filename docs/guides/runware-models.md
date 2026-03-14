@@ -81,7 +81,7 @@ export const RUNWARE_AIR_MODELS = {
 デフォルトモデルは環境変数 `IMAGE_MODEL` で上書きできます：
 
 ```bash
-# .env または .dev.vars
+# .env.local など
 IMAGE_MODEL=runware:200@1
 ```
 

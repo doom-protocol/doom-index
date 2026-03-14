@@ -55,7 +55,9 @@ export function useViewer(): null {
     let w: Worker | null = null;
     try {
       // Start Web Worker which handles WebSocket connection and Heartbeat
-      w = new Worker(new URL("../workers/viewer.worker.ts", import.meta.url));
+      w = new Worker(new URL("../workers/viewer.worker.ts", import.meta.url), {
+        type: "module",
+      });
       workerRef.current = w;
 
       w.addEventListener("error", handleError);

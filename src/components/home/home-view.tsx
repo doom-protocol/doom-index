@@ -4,15 +4,9 @@ import { Header } from "@/components/ui/header";
 import type { PaintingMetadata } from "@/types/paintings";
 import dynamic from "next/dynamic";
 
-const HomeScene = dynamic(
-  async () => {
-    const mod = await import("@/components/gallery/gallery-scene");
-    return { default: mod.GalleryScene };
-  },
-  {
-    ssr: false,
-  },
-);
+const HomeScene = dynamic(async () => import("@/components/gallery/gallery-scene").then((mod) => mod.GalleryScene), {
+  ssr: false,
+});
 
 export function HomeView({ initialPainting }: { initialPainting: PaintingMetadata | null }) {
   return (

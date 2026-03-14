@@ -28,7 +28,6 @@ const AboutPage: NextPage = () => {
       <AboutScene>
         <MDXArticle />
       </AboutScene>
-      {/* Regular HTML for reader mode (visually hidden) */}
       <article className="sr-only" aria-label="About DOOM INDEX">
         <MDXArticle />
       </article>

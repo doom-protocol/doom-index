@@ -1,8 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap");
 @import "tailwindcss";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-cinzel-decorative: "Cinzel Decorative", serif;
 }
 
 @theme inline {

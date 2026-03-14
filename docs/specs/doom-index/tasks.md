@@ -24,11 +24,11 @@
 
 ### Task 0.3: Cloudflare Workers Secrets 設定
 
-- **Description**: 画像生成 Provider の API Key を Cloudflare Workers Secrets に保存し、ローカル開発用に `.dev.vars` を作成する。
+- **Description**: 画像生成 Provider の API Key を Cloudflare Workers Secrets に保存し、ローカル開発用に `.env.local` を作成する。
 - **Acceptance Criteria**:
   - `wrangler secret put PROVIDER_API_KEY` で Secret が保存されている
-  - `.dev.vars` ファイルが作成され、`PROVIDER_API_KEY=xxx` が記載されている
-  - `.gitignore` に `.dev.vars` が追加されている
+  - `.env.local` ファイルが作成され、`PROVIDER_API_KEY=xxx` が記載されている
+  - `.gitignore` に `.env.local` が追加されている
 - **Dependencies**: Task 0.1
 - **Estimated Effort**: 0.25h
 

@@ -16,17 +16,9 @@ import { useClickOutside, useEscapeKey } from "@/hooks/use-click-outside";
 import { ViewerCountBadge } from "./viewer-count-badge";
 import dynamic from "next/dynamic";
 
-const HeaderProgress = dynamic(
-  async () => {
-    const mod = await import("./header-progress");
-    return {
-      default: mod.HeaderProgress,
-    };
-  },
-  {
-    ssr: false,
-  },
-);
+const HeaderProgress = dynamic(async () => import("./header-progress").then((mod) => mod.HeaderProgress), {
+  ssr: false,
+});
 
 interface NavLinkConfig {
   href: string;

@@ -142,16 +142,10 @@ const FullLights: FC = () => {
   );
 };
 
-const LightsWithControls = dynamic(
-  async () =>
-    import("./lights-controls").then((mod) => ({
-      default: mod.LightsWithControls,
-    })),
-  {
-    ssr: false,
-    loading: () => <FullLights />,
-  },
-);
+const LightsWithControls = dynamic(async () => import("./lights-controls").then((mod) => mod.LightsWithControls), {
+  ssr: false,
+  loading: () => <FullLights />,
+});
 
 // Exported component that switches between simple, full, or dev-controlled lights
 export const Lights: FC<LightsProps> = ({ variant = "full", disableDevControls = false }) => {
