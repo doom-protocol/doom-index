@@ -9,6 +9,4 @@ const config = defineCloudflareConfig({
   cachePurge: purgeCache({ type: "direct" }),
 });
 
-config.default.minify = true;
-
 export default config;
