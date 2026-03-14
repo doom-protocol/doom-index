@@ -4,11 +4,12 @@ import { buildSizesAttr } from "@/types/domain";
 import type { ResponsiveSizes } from "@/types/domain";
 import { logger } from "@/utils/logger";
 import Image from "next/image";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { FC, ReactNode, SyntheticEvent } from "react";
 
 interface ProgressiveImageProps {
   src: string;
+  sources?: string[];
   alt: string;
   className?: string;
   fill?: boolean;
@@ -31,6 +32,7 @@ interface ProgressiveImageProps {
  */
 export const ProgressiveImage: FC<ProgressiveImageProps> = ({
   src,
+  sources,
   alt,
   className = "",
   fill = false,
@@ -44,26 +46,69 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
   skeleton,
   logContext,
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const candidateSources = useMemo(() => {
+    if (sources && sources.length > 0) {
+      return sources;
+    }
+
+    return [src];
+  }, [sources, src]);
+  const sourceKey = candidateSources.join("\n");
+  const [imageState, setImageState] = useState({
+    currentSourceIndex: 0,
+    hasError: false,
+    isLoading: true,
+    sourceKey,
+  });
+  const currentSourceIndex = imageState.sourceKey === sourceKey ? imageState.currentSourceIndex : 0;
+  const hasError = imageState.sourceKey === sourceKey ? imageState.hasError : false;
+  const isLoading = imageState.sourceKey === sourceKey ? imageState.isLoading : true;
+  const currentSrc = candidateSources[currentSourceIndex] ?? src;
 
   const handleImageLoad = () => {
     logger.debug("progressive-image.loaded", {
-      src,
+      src: currentSrc,
       ...(logContext ?? {}),
     });
-    setIsLoading(false);
+    setImageState((previousState) => ({
+      ...previousState,
+      hasError: false,
+      isLoading: false,
+      sourceKey,
+    }));
     onLoad?.();
   };
 
   const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
+    const nextSourceIndex = currentSourceIndex + 1;
+    const nextSrc = candidateSources[nextSourceIndex];
+
+    if (nextSrc) {
+      logger.warn("progressive-image.retry", {
+        failedSrc: currentSrc,
+        nextSrc,
+        ...(logContext ?? {}),
+      });
+      setImageState({
+        currentSourceIndex: nextSourceIndex,
+        hasError: false,
+        isLoading: true,
+        sourceKey,
+      });
+      return;
+    }
+
     logger.error("progressive-image.failed", {
-      src,
+      src: currentSrc,
       error: event,
       ...(logContext ?? {}),
     });
-    setIsLoading(false);
-    setHasError(true);
+    setImageState({
+      currentSourceIndex,
+      hasError: true,
+      isLoading: false,
+      sourceKey,
+    });
     onError?.(event);
   };
 
@@ -83,7 +128,8 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
     <>
       {isLoading && skeleton && <div className="absolute inset-0 z-10">{skeleton}</div>}
       <Image
-        src={src}
+        key={currentSrc}
+        src={currentSrc}
         alt={alt}
         fill={fill}
         width={!fill ? width : undefined}

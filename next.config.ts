@@ -2,7 +2,7 @@ import createMDX from "@next/mdx";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import type { NextConfig } from "next";
 import { resolve as resolvePath } from "node:path";
-import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "./src/constants/arweave";
+import { buildArweaveGatewayBaseUrls } from "./src/lib/pure/arweave-gateway";
 
 interface MutableWebpackConfig {
   optimization?: {
@@ -38,7 +38,9 @@ const serverBundleStubbedModules = [
 
 const isNextDev = process.env.npm_lifecycle_event === "dev" || process.argv[2] === "dev";
 const isCloudflareBuild = process.env.npm_lifecycle_event === "build:cf";
-const arweaveGatewayUrl = new URL(DEFAULT_ARWEAVE_GATEWAY_BASE_URL);
+const arweaveGatewayUrls = buildArweaveGatewayBaseUrls({
+  preferredGatewayBaseUrl: process.env.ARWEAVE_GATEWAY_BASE_URL,
+});
 
 function customizeWebpack(config: MutableWebpackConfig, { isServer }: { isServer: boolean }): MutableWebpackConfig {
   config.resolve ??= {};
@@ -101,13 +103,15 @@ const nextConfig: NextConfig = {
   },
   pageExtensions: ["ts", "tsx", "mdx"],
   images: {
-    remotePatterns: [
-      {
-        protocol: arweaveGatewayUrl.protocol === "https:" ? "https" : "http",
-        hostname: arweaveGatewayUrl.hostname,
+    remotePatterns: arweaveGatewayUrls.map((gatewayUrl) => {
+      const parsedGatewayUrl = new URL(gatewayUrl);
+
+      return {
+        protocol: parsedGatewayUrl.protocol === "https:" ? "https" : "http",
+        hostname: parsedGatewayUrl.hostname,
         pathname: "/**",
-      },
-    ],
+      };
+    }),
   },
   typedRoutes: true,
   typescript: {

@@ -1,5 +1,6 @@
 import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "@/constants/arweave";
 import type { ArdriveClient, Tag } from "@/lib/ardrive-client";
+import { buildArweaveGatewayBaseUrls, normalizeArweaveGatewayBaseUrl } from "@/lib/pure/arweave-gateway";
 import { sendSlackMessage } from "@/lib/slack-client";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
@@ -99,37 +100,14 @@ function appendUrlSegment(baseUrl: string, segment: string): string {
 }
 
 export function normalizeGatewayBaseUrl(gatewayBaseUrl: string): string {
-  const normalized = gatewayBaseUrl.trim().replace(/\/+$/u, "");
-
-  if (!normalized) {
-    throw new Error("Gateway base URL must not be empty");
-  }
-
-  return new URL(normalized).toString().replace(/\/+$/u, "");
+  return normalizeArweaveGatewayBaseUrl(gatewayBaseUrl);
 }
 
 export function buildGatewayBaseUrls(params: { explicitGatewayBaseUrl?: string }): string[] {
-  const seen = new Set<string>();
-  const gateways: string[] = [];
-
-  const pushGateway = (value: string | undefined): void => {
-    if (!value) {
-      return;
-    }
-
-    const normalized = normalizeGatewayBaseUrl(value);
-    if (seen.has(normalized)) {
-      return;
-    }
-
-    seen.add(normalized);
-    gateways.push(normalized);
-  };
-
-  pushGateway(params.explicitGatewayBaseUrl);
-  pushGateway(DEFAULT_ARWEAVE_GATEWAY_BASE_URL);
-
-  return gateways;
+  return buildArweaveGatewayBaseUrls({
+    fallbackGatewayBaseUrls: [],
+    preferredGatewayBaseUrl: params.explicitGatewayBaseUrl,
+  });
 }
 
 export function buildTransactionUrl(params: { gatewayBaseUrl?: string; txId: string }): string {

@@ -100,6 +100,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
   const handleConnectWallet = useCallback(async () => {
     const currentWalletDebugState = walletDebugStateRef.current;
 
+    triggerHaptic();
     logger.debug("mint.modal.connect-clicked", currentWalletDebugState);
     sendGAEvent(GA_EVENTS.MINT_WALLET_CONNECT);
 
@@ -110,10 +111,12 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
     }
 
     await connectWallet();
-  }, [connectWallet, setVisible, wallet.wallet]);
+  }, [connectWallet, setVisible, triggerHaptic, wallet.wallet]);
 
   // Handle complete mint flow
   const handleMint = useCallback(async () => {
+    triggerHaptic();
+
     if (!connected) {
       setVisible(true);
       return;
@@ -149,7 +152,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
     } finally {
       setIsProcessing(false);
     }
-  }, [connected, mint, onClose, paintingMetadata.paintingHash, publicKey, setVisible]);
+  }, [connected, mint, onClose, paintingMetadata.paintingHash, publicKey, setVisible, triggerHaptic]);
 
   // Handle modal close
   const handleClose = useCallback(() => {

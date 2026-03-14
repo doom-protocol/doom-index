@@ -79,6 +79,16 @@ const confirmTransactionMock = mock(async () => {
   };
 });
 const setVisibleMock = mock((_visible: boolean) => {});
+const mintMock = mock(async (paintingId: string) => {
+  await Promise.resolve();
+
+  return {
+    assetAddress: "asset-address",
+    signature: "signature",
+    tokenId: NEXT_TOKEN_ID,
+    paintingId,
+  };
+});
 const useWalletState = {
   wallet: null as { adapter: { name: string } } | null,
   connected: false,
@@ -108,8 +118,16 @@ const readConnection = () => ({
 const readWalletModal = () => ({
   setVisible: setVisibleMock,
 });
+const triggerHapticMock = mock(() => {});
 const readHaptic = () => ({
-  triggerHaptic: mock(() => {}),
+  triggerHaptic: triggerHapticMock,
+});
+const readSolanaMint = () => ({
+  error: null,
+  isMinting: false,
+  mint: mintMock,
+  nextTokenId: NEXT_TOKEN_ID,
+  refreshMintState: mock(async () => {}),
 });
 const loggerDebugMock = mock(() => {});
 const loggerErrorMock = mock(() => {});
@@ -118,6 +136,10 @@ const loggerWarnMock = mock(() => {});
 
 void mock.module("@/hooks/use-solana-wallet", () => ({
   useSolanaWallet: readSolanaWallet,
+}));
+
+void mock.module("@/hooks/use-solana-mint", () => ({
+  useSolanaMint: readSolanaMint,
 }));
 
 void mock.module("@solana/wallet-adapter-react", () => ({
@@ -187,6 +209,8 @@ describe("unit/components/ui/mint-modal", () => {
     getLatestBlockhashMock.mockClear();
     confirmTransactionMock.mockClear();
     setVisibleMock.mockClear();
+    mintMock.mockClear();
+    triggerHapticMock.mockClear();
     loggerDebugMock.mockClear();
     loggerErrorMock.mockClear();
     loggerInfoMock.mockClear();
@@ -251,6 +275,8 @@ describe("unit/components/ui/mint-modal", () => {
       expect(connectWalletMock).not.toHaveBeenCalled();
     });
 
+    expect(triggerHapticMock).toHaveBeenCalledTimes(1);
+
     expect(loggerDebugMock).toHaveBeenCalledWith(
       "mint.modal.connect-clicked",
       expect.objectContaining({
@@ -296,6 +322,8 @@ describe("unit/components/ui/mint-modal", () => {
       expect(connectWalletMock).toHaveBeenCalledTimes(1);
       expect(setVisibleMock).not.toHaveBeenCalled();
     });
+
+    expect(triggerHapticMock).toHaveBeenCalledTimes(1);
   });
 
   it("logs wallet adapter state when the modal is opened and reopened", async () => {
@@ -437,7 +465,9 @@ describe("unit/components/ui/mint-modal", () => {
     fireEvent.click(getByRole("button", { name: /^mint$/i }));
 
     await waitFor(() => {
-      expect(sendTransactionMock).toHaveBeenCalledTimes(1);
+      expect(mintMock).toHaveBeenCalledWith("abcd1234");
     });
+
+    expect(triggerHapticMock).toHaveBeenCalledTimes(1);
   });
 });
