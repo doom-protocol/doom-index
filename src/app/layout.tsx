@@ -1,9 +1,7 @@
-import { Providers } from "@/app/providers";
 import { getBaseUrl } from "@/utils/url";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
 import { Cinzel_Decorative } from "next/font/google";
-import { ViewTransition } from "react";
 import type { FC, ReactNode } from "react";
 import "./globals.css";
 
@@ -109,9 +107,7 @@ const RootLayout: FC<{ children: ReactNode }> = ({ children }) => {
           overflow: "hidden",
         }}
       >
-        <Providers>
-          <ViewTransition>{children}</ViewTransition>
-        </Providers>
+        {children}
       </body>
       <GoogleAnalytics gaId="G-RMLTMSSJ8T" />
     </html>

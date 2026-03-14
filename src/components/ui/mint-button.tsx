@@ -1,9 +1,9 @@
 "use client";
 
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
+import { useHapticFeedback } from "@/hooks/use-haptic-feedback";
 import { useEffect, useState } from "react";
 import type { FC } from "react";
-import { useHaptic } from "use-haptic";
 
 interface MintButtonProps {
   disabled?: boolean;
@@ -18,7 +18,7 @@ export const MintButton: FC<MintButtonProps> = ({
   isError: initialIsError = false,
   onClick,
 }) => {
-  const { triggerHaptic } = useHaptic();
+  const { triggerHaptic } = useHapticFeedback();
   const [showError, setShowError] = useState(initialIsError);
 
   useEffect(() => {

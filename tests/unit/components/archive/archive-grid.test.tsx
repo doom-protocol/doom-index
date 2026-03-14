@@ -40,8 +40,24 @@ describe("ArchiveGrid", () => {
   beforeEach(() => {
     mock.restore();
     void mock.module("next/image", () => ({
-      default: ({ alt, src, loading }: { alt: string; src: string; loading?: "eager" | "lazy" }) => (
-        <div aria-label={alt} data-loading={loading ?? "lazy"} data-src={src} role="img" />
+      default: ({
+        alt,
+        src,
+        loading,
+        unoptimized,
+      }: {
+        alt: string;
+        src: string;
+        loading?: "eager" | "lazy";
+        unoptimized?: boolean;
+      }) => (
+        <div
+          aria-label={alt}
+          data-loading={loading ?? "lazy"}
+          data-src={src}
+          data-unoptimized={unoptimized ? "true" : "false"}
+          role="img"
+        />
       ),
     }));
   });
@@ -61,5 +77,16 @@ describe("ArchiveGrid", () => {
     expect(images).toHaveLength(8);
     expect(images.slice(0, 6).every((image) => image.getAttribute("data-loading") === "eager")).toBe(true);
     expect(images.slice(6).every((image) => image.getAttribute("data-loading") === "lazy")).toBe(true);
+  });
+
+  it("bypasses the Next image optimizer for remote archive images", async () => {
+    const { ArchiveGrid } = await import("@/components/archive/archive-grid");
+    const items = Array.from({ length: 2 }, (_, index) => createPainting(index + 1));
+
+    const { getAllByRole } = render(<ArchiveGrid items={items} />);
+
+    const images = getAllByRole("img");
+
+    expect(images.every((image) => image.getAttribute("data-unoptimized") === "true")).toBe(true);
   });
 });

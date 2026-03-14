@@ -3,8 +3,13 @@ import r2IncrementalCache from "@opennextjs/cloudflare/overrides/incremental-cac
 // import doQueue from "@opennextjs/cloudflare/overrides/queue/do-queue";
 import { purgeCache } from "@opennextjs/cloudflare/overrides/cache-purge/index";
 
-export default defineCloudflareConfig({
+const cloudflareConfig = defineCloudflareConfig({
   incrementalCache: r2IncrementalCache,
   // queue: doQueue,
   cachePurge: purgeCache({ type: "direct" }),
 });
+
+export default {
+  ...cloudflareConfig,
+  buildCommand: "next build --turbopack",
+};

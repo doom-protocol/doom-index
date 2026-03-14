@@ -1,12 +1,12 @@
 "use client";
 
 import { GENERATION_INTERVAL_MS } from "@/constants";
+import { useHapticFeedback } from "@/hooks/use-haptic-feedback";
 import { useLatestPainting, useLatestPaintingRefetch } from "@/hooks/use-latest-painting";
 import { getTimestampMs } from "@/lib/cloudflare-image";
 import { logger } from "@/utils/logger";
 import { useEffect, useRef } from "react";
 import type { FC } from "react";
-import { useHaptic } from "use-haptic";
 import useSound from "use-sound";
 
 const INTERVAL_MS = GENERATION_INTERVAL_MS;
@@ -16,7 +16,7 @@ export const HeaderProgress: FC = () => {
   const progressBarRef = useRef<HTMLDivElement | null>(null);
   const timeLabelRef = useRef<HTMLSpanElement | null>(null);
 
-  const { triggerHaptic } = useHaptic();
+  const { triggerHaptic } = useHapticFeedback();
   const [playChime] = useSound("/clock-chime.mp3", { interrupt: true });
   const refetchLatestPainting = useLatestPaintingRefetch();
   const { dataUpdatedAt } = useLatestPainting();

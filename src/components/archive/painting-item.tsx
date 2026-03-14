@@ -54,6 +54,7 @@ export const PaintingComponent: FC<PaintingProps> = ({ item, loading, onClick })
         fill
         sizes={ARCHIVE_GRID_SIZES}
         loading={loading}
+        imagePreset="archiveGrid"
         className="object-cover transition-opacity"
         skeleton={<PaintingSkeleton />}
         logContext={{

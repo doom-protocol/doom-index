@@ -3,13 +3,13 @@
 import { GalleryRoom } from "@/components/gallery/gallery-room";
 import { Lights } from "@/components/gallery/lights";
 import { useEscapeKey } from "@/hooks/use-click-outside";
+import { useHapticFeedback } from "@/hooks/use-haptic-feedback";
 import { sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
 import { ACESFilmicToneMapping, Vector3 } from "three";
-import { useHaptic } from "use-haptic";
 import { ArchiveFramedPainting } from "./archive-framed-painting";
 
 interface ArchiveDetailViewProps {
@@ -81,7 +81,7 @@ const CameraAnimation: FC<CameraAnimationProps> = ({ isZoomingOut, onZoomOutComp
 export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const { triggerHaptic } = useHaptic();
+  const { triggerHaptic } = useHapticFeedback();
 
   const handleClose = useCallback(() => {
     triggerHaptic();

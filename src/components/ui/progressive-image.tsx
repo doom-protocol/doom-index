@@ -1,7 +1,9 @@
 "use client";
 
+import { getImageUrlForContext } from "@/lib/cloudflare-image";
 import { buildSizesAttr } from "@/types/domain";
 import type { ResponsiveSizes } from "@/types/domain";
+import type { ImagePreset } from "@/lib/cloudflare-image";
 import { logger } from "@/utils/logger";
 import Image from "next/image";
 import { useState } from "react";
@@ -21,6 +23,7 @@ interface ProgressiveImageProps {
   fallback?: ReactNode;
   skeleton?: ReactNode;
   logContext?: Record<string, unknown>;
+  imagePreset?: ImagePreset;
 }
 
 /**
@@ -43,13 +46,17 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
   fallback,
   skeleton,
   logContext,
+  imagePreset,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const isRemoteSource = src.startsWith("http://") || src.startsWith("https://");
+  const displaySrc = imagePreset ? getImageUrlForContext(src, imagePreset) : src;
 
   const handleImageLoad = () => {
     logger.debug("progressive-image.loaded", {
-      src,
+      src: displaySrc,
+      originalSrc: src,
       ...(logContext ?? {}),
     });
     setIsLoading(false);
@@ -58,7 +65,8 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
 
   const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
     logger.error("progressive-image.failed", {
-      src,
+      src: displaySrc,
+      originalSrc: src,
       error: event,
       ...(logContext ?? {}),
     });
@@ -83,13 +91,14 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
     <>
       {isLoading && skeleton && <div className="absolute inset-0 z-10">{skeleton}</div>}
       <Image
-        src={src}
+        src={displaySrc}
         alt={alt}
         fill={fill}
         width={!fill ? width : undefined}
         height={!fill ? height : undefined}
         sizes={buildSizesAttr(sizes)}
         loading={loading}
+        unoptimized={isRemoteSource}
         className={`${className} ${isLoading ? "opacity-0" : "opacity-100"}`}
         onLoad={handleImageLoad}
         onError={handleImageError}

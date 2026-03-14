@@ -11,13 +11,13 @@ import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
 import { Grid, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
+import dynamic from "next/dynamic";
 import { Suspense, startTransition, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from "three";
 import type { Group } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { MintButton } from "../ui/mint-button";
-import { MintModal } from "../ui/mint-modal";
 import { ThreeErrorBoundary } from "../ui/three-error-boundary";
 
 import { CameraRig } from "./camera-rig";
@@ -64,6 +64,16 @@ const readOrbitControls = (event?: OrbitControlsEvent): OrbitControlsImpl | null
 
   return controls as OrbitControlsImpl;
 };
+
+const MintModalWithProviders = dynamic(
+  async () =>
+    import("../ui/mint-modal-with-providers").then((mod) => ({
+      default: mod.MintModalWithProviders,
+    })),
+  {
+    ssr: false,
+  },
+);
 
 export const GalleryScene: FC<GallerySceneProps> = ({
   cameraPreset: initialCameraPreset = "painting",
@@ -300,7 +310,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
       </div>
 
       {isMintModalMounted && mintPainting ? (
-        <MintModal
+        <MintModalWithProviders
           isOpen={isMintModalOpen}
           onClose={() => {
             setIsMintModalOpen(false);

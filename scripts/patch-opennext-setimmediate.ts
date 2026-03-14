@@ -9,33 +9,19 @@
  * This patch wraps the problematic assignments in try-catch blocks.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const targetFile = path.resolve(__dirname, "..", ".open-next", "server-functions", "default", "handler.mjs");
+const serverFunctionsDir = path.resolve(__dirname, "..", ".open-next", "server-functions");
 
-if (!existsSync(targetFile)) {
-  console.warn(`[patch-setimmediate] Skipped: ${targetFile} not found (run build:cf first)`);
+if (!existsSync(serverFunctionsDir)) {
+  console.warn(`[patch-setimmediate] Skipped: ${serverFunctionsDir} not found (run build:cf first)`);
   process.exit(0);
 }
-
-const original = readFileSync(targetFile, "utf8");
-
-// Check if already patched
-if (original.includes("/* CF_PATCHED: setImmediate */")) {
-  console.info("[patch-setimmediate] Already applied");
-  process.exit(0);
-}
-
-// Patch the install() function to wrap assignments in try-catch
-// The minified code pattern is:
-//   globalThis.setImmediate=nodeTimers.setImmediate=patchedSetImmediate,
-//   globalThis.clearImmediate=nodeTimers.clearImmediate=patchedClearImmediate
-//   nodeTimersPromises.setImmediate=patchedSetImmediatePromise
 
 const replacements: Array<[RegExp, string]> = [
   // Match minified setImmediate assignment chain (comma-separated statements)
@@ -68,27 +54,52 @@ const replacements: Array<[RegExp, string]> = [
   ],
 ];
 
-let updated = original;
-let patchesApplied = 0;
+const handlerFiles = readdirSync(serverFunctionsDir, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => path.join(serverFunctionsDir, entry.name, "handler.mjs"))
+  .filter((filePath) => existsSync(filePath));
 
-for (const [pattern, replacement] of replacements) {
-  const before = updated;
-  updated = updated.replace(pattern, replacement);
-  if (updated !== before) {
-    patchesApplied++;
-  }
-}
-
-if (patchesApplied === 0) {
-  console.warn("[patch-setimmediate] No patches applied; source may have different structure or already patched");
-  // Show what patterns exist in the file for debugging
-  const debugPatterns = [/globalThis\.setImmediate/, /nodeTimers\.setImmediate/, /patchedSetImmediate/];
-  for (const p of debugPatterns) {
-    const match = original.match(p);
-    console.warn(`  Pattern ${p.source}: ${match ? "found" : "not found"}`);
-  }
+if (handlerFiles.length === 0) {
+  console.warn("[patch-setimmediate] No handler.mjs files found under .open-next/server-functions");
   process.exit(0);
 }
 
-writeFileSync(targetFile, updated, "utf8");
-console.info(`[patch-setimmediate] Applied ${String(patchesApplied)} patch(es) for Cloudflare Workers compatibility`);
+let patchedFiles = 0;
+let patchedPatterns = 0;
+
+for (const targetFile of handlerFiles) {
+  const original = readFileSync(targetFile, "utf8");
+
+  if (original.includes("/* CF_PATCHED: setImmediate */")) {
+    continue;
+  }
+
+  let updated = original;
+  let filePatchesApplied = 0;
+
+  for (const [pattern, replacement] of replacements) {
+    const before = updated;
+    updated = updated.replace(pattern, replacement);
+    if (updated !== before) {
+      filePatchesApplied++;
+    }
+  }
+
+  if (filePatchesApplied === 0) {
+    console.warn(`[patch-setimmediate] No patches applied for ${targetFile}`);
+    continue;
+  }
+
+  writeFileSync(targetFile, updated, "utf8");
+  patchedFiles++;
+  patchedPatterns += filePatchesApplied;
+}
+
+if (patchedFiles === 0) {
+  console.info("[patch-setimmediate] No updates needed");
+  process.exit(0);
+}
+
+console.info(
+  `[patch-setimmediate] Applied ${String(patchedPatterns)} patch(es) across ${String(patchedFiles)} handler(s)`,
+);

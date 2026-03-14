@@ -18,7 +18,6 @@ import type { PaginationOptions } from "@/types/domain";
 import type { PaintingMetadata } from "@/types/paintings";
 import type { Result } from "neverthrow";
 import * as list from "./list";
-import * as storage from "./storage";
 
 interface PaintingsServiceDeps {
   assetsFetcher?: Fetcher;
@@ -74,13 +73,15 @@ export function createPaintingsService({
   const repo = archiveRepository ?? createPaintingsRepository({ d1Binding });
 
   return {
-    storePaintingAssets: async (params) =>
-      storage.storePaintingAssets({
+    storePaintingAssets: async (params) => {
+      const storage = await import("./storage");
+      return storage.storePaintingAssets({
         assetsFetcher,
         imageBuffer: params.imageBuffer,
         imageContentType: params.imageContentType,
         paintingId: params.paintingId,
-      }),
+      });
+    },
 
     listImages: async (options) => list.listImages(d1Binding, options, repo),
 

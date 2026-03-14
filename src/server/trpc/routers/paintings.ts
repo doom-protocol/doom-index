@@ -1,6 +1,6 @@
 import { get, set } from "@/lib/cache";
-import { createPaintingsService } from "@/server/services/paintings";
 import { CACHE_TTL_SECONDS } from "@/constants";
+import { listImages } from "@/server/services/paintings/list";
 import { TRPCError } from "@trpc/server";
 import * as v from "valibot";
 import { resultOrThrow } from "../helpers";
@@ -30,13 +30,7 @@ export const paintingsRouter = router({
         return cached;
       }
 
-      const d1Binding = ctx.env?.DB;
-      const archiveService = createPaintingsService({
-        d1Binding,
-      });
-
-      // List images
-      const listResult = await archiveService.listImages({
+      const listResult = await listImages(ctx.env?.DB, {
         limit,
         cursor,
         from,

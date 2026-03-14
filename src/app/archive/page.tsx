@@ -1,4 +1,4 @@
-import { ArchiveContent } from "@/components/archive/archive-content";
+import { ArchiveContentShell } from "@/components/archive/archive-content-shell";
 import { Header } from "@/components/ui/header";
 import { listImages } from "@/server/services/paintings/list";
 import type { Painting } from "@/types/paintings";
@@ -59,7 +59,7 @@ const ArchivePage: NextPage<ArchivePageProps> = async ({ searchParams }) => {
   return (
     <main className="relative h-screen w-full overflow-hidden">
       <Header showProgress={false} />
-      <ArchiveContent items={items} hasNextPage={hasMore} page={page} from={from} to={to} />
+      <ArchiveContentShell items={items} hasNextPage={hasMore} page={page} from={from} to={to} />
     </main>
   );
 };

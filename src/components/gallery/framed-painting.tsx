@@ -2,6 +2,7 @@
 
 import { FrameModel, PaintingGroup } from "@/components/ui/framed-painting-base";
 import type { PaintingContentProps } from "@/components/ui/framed-painting-base";
+import { useHapticFeedback } from "@/hooks/use-haptic-feedback";
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import {
   calculatePlaneDimensions,
@@ -32,7 +33,6 @@ import {
   SRGBColorSpace,
 } from "three";
 import type { MeshStandardMaterial, Group, LineSegments, Mesh, Texture } from "three";
-import { useHaptic } from "use-haptic";
 
 interface FramedPaintingProps {
   onTextureReady?: () => void;
@@ -76,7 +76,7 @@ const PaintingContent: FC<PaintingContentProps> = ({
   // Per-instance texture load timing (not module-scope for accurate measurement)
   const textureLoadStartRef = useRef<number>(getTimestampMs());
 
-  const { triggerHaptic } = useHaptic();
+  const { triggerHaptic } = useHapticFeedback();
 
   const dpr = getDevicePixelRatio();
   const transformedTextureUrl = getTransformedTextureUrl(thumbnailUrl, "galleryTexture", dpr);

@@ -4,18 +4,6 @@ import type { NextConfig } from "next";
 import { resolve as resolvePath } from "node:path";
 import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "./src/constants/arweave";
 
-interface MutableWebpackConfig {
-  optimization?: {
-    splitChunks?: {
-      cacheGroups?: Record<string, { name: string; priority: number; test: RegExp }>;
-      chunks?: "all";
-    };
-  };
-  resolve?: {
-    alias?: Record<string, string | false>;
-  };
-}
-
 const serverBundleStubbedModules = [
   "three",
   "three-stdlib",
@@ -37,66 +25,27 @@ const serverBundleStubbedModules = [
 ] as const;
 
 const isNextDev = process.env.npm_lifecycle_event === "dev" || process.argv[2] === "dev";
-const isCloudflareBuild = process.env.npm_lifecycle_event === "build:cf";
 const arweaveGatewayUrl = new URL(DEFAULT_ARWEAVE_GATEWAY_BASE_URL);
-
-function customizeWebpack(config: MutableWebpackConfig, { isServer }: { isServer: boolean }): MutableWebpackConfig {
-  config.resolve ??= {};
-  config.resolve.alias ??= {};
-
-  if (isServer && isCloudflareBuild) {
-    // Only the OpenNext worker build needs these stubs.
-    // Normal Next.js server renders must keep the real modules available for SSR.
-    const stub = resolvePath(process.cwd(), "scripts/webpack/stub.cjs");
-    Object.assign(config.resolve.alias, Object.fromEntries(serverBundleStubbedModules.map((name) => [name, stub])));
-  }
-
-  if (!isServer) {
-    config.resolve.alias["@solana/wallet-adapter-react-ui/styles.css"] = resolvePath(
-      process.cwd(),
-      "node_modules/@solana/wallet-adapter-react-ui/styles.css",
-    );
-
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        ...config.optimization?.splitChunks,
-        chunks: "all",
-        cacheGroups: {
-          ...config.optimization?.splitChunks?.cacheGroups,
-          react: {
-            test: /[\\/]node_modules[\\/](react|react-dom|@react-three\/fiber|@react-three\/drei|three|three-stdlib)[\\/]/,
-            name: "react-vendor",
-            priority: 10,
-          },
-          solana: {
-            test: /[\\/]node_modules[\\/](@solana\/|@metaplex-foundation\/)[\\/]/,
-            name: "solana-vendor",
-            priority: 10,
-          },
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: "vendor",
-            priority: 5,
-          },
-        },
-      },
-    };
-  }
-
-  return config;
-}
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
   output: "standalone",
   transpilePackages: ["@t3-oss/env-nextjs", "@t3-oss/env-core"],
+  serverExternalPackages: [...serverBundleStubbedModules],
   experimental: {
     viewTransition: true,
     scrollRestoration: true,
     cssChunking: true,
     mdxRs: {
       mdxType: "gfm",
+    },
+  },
+  turbopack: {
+    resolveAlias: {
+      "@solana/wallet-adapter-react-ui/styles.css": resolvePath(
+        process.cwd(),
+        "node_modules/@solana/wallet-adapter-react-ui/styles.css",
+      ),
     },
   },
   pageExtensions: ["ts", "tsx", "mdx"],
@@ -113,7 +62,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  webpack: customizeWebpack as NextConfig["webpack"],
 };
 
 const withMDX = createMDX();

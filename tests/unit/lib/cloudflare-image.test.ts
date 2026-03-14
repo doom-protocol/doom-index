@@ -79,6 +79,21 @@ describe("cloudflare-image", () => {
       expect(result).toContain("fit=cover");
       expect(result).toContain("format=webp");
     });
+
+    it("should transform remote Arweave URLs through same-origin cdn-cgi in production", async () => {
+      void mock.module("@/utils/url", () => ({
+        getBaseUrl: () => "https://doomindex.fun",
+      }));
+
+      const { transformImageUrl } = await import("@/lib/cloudflare-image");
+      const result = transformImageUrl("https://permagate.io/test-painting-image-tx", {
+        width: 320,
+        quality: 70,
+        fit: "cover",
+      });
+
+      expect(result).toBe("/cdn-cgi/image/width=320,quality=70,fit=cover/https://permagate.io/test-painting-image-tx");
+    });
   });
 
   describe("getImageUrlWithDpr", () => {

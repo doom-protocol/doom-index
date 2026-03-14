@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
 import type { FC, SVGProps } from "react";
-import { useHaptic } from "use-haptic";
 
 import { ArchiveIcon } from "@/components/icons/archive-icon";
 import { GitHubIcon } from "@/components/icons/github-icon";
@@ -11,10 +11,20 @@ import { InfoIcon } from "@/components/icons/info-icon";
 import { PumpFunIcon } from "@/components/icons/pump-fun-icon";
 import { XIcon } from "@/components/icons/x-icon";
 import { GITHUB_URL, PUMP_FUN_URL, X_URL } from "@/constants";
+import { useHapticFeedback } from "@/hooks/use-haptic-feedback";
 
 import { useClickOutside, useEscapeKey } from "@/hooks/use-click-outside";
-import { HeaderProgress } from "./header-progress";
 import { ViewerCountBadge } from "./viewer-count-badge";
+
+const HeaderProgress = dynamic(
+  async () =>
+    import("./header-progress").then((mod) => ({
+      default: mod.HeaderProgress,
+    })),
+  {
+    ssr: false,
+  },
+);
 
 interface NavLinkConfig {
   href: string;
@@ -50,7 +60,7 @@ interface HeaderProps {
 export const Header: FC<HeaderProps> = ({ showProgress = true }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
-  const { triggerHaptic } = useHaptic();
+  const { triggerHaptic } = useHapticFeedback();
 
   const toggleMenu = useCallback(() => {
     triggerHaptic();

@@ -7,6 +7,7 @@
  */
 
 import { MintPaintingPreviewScene } from "@/components/ui/mint-painting-preview-scene";
+import { useHapticFeedback } from "@/hooks/use-haptic-feedback";
 import { useSolanaMint } from "@/hooks/use-solana-mint";
 import { useSolanaWallet } from "@/hooks/use-solana-wallet";
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
@@ -18,7 +19,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
 import { toast } from "sonner";
 import type { Group } from "three";
-import { useHaptic } from "use-haptic";
 
 export interface MintModalProps {
   isOpen: boolean;
@@ -54,7 +54,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
   const { connectWallet, connected, connecting: isWalletConnecting, publicKey } = useSolanaWallet();
   const { setVisible } = useWalletModal();
   const { mint, isMinting, nextTokenId } = useSolanaMint();
-  const { triggerHaptic } = useHaptic();
+  const { triggerHaptic } = useHapticFeedback();
   const hasOpenedRef = useRef(false);
 
   // Mock price (in SOL)
