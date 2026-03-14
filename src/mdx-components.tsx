@@ -12,6 +12,23 @@ function stripWhitespace(children: ReactNode): ReactNode[] {
   return arr.filter((child) => !(typeof child === "string" && child.trim() === ""));
 }
 
+function MdxImage({ src, alt }: { src?: string; alt?: string }) {
+  return (
+    <figure className="my-6 flex flex-col items-center">
+      <Image
+        src={src ?? ""}
+        alt={alt ?? ""}
+        width={320}
+        height={240}
+        unoptimized
+        loading="lazy"
+        className="h-auto max-w-xs border border-[#ddd]"
+      />
+      {alt && <figcaption className="mt-2 text-center text-sm text-[#666] italic">{alt}</figcaption>}
+    </figure>
+  );
+}
+
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
     h1: ({ children }: { children?: ReactNode }) => (
@@ -39,7 +56,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
             return ["figure", "div", "img"].includes(type);
           }
           if (typeof type === "function") {
-            return type.name === "img" || type.name === "Image";
+            return type.name === "img" || type.name === "MdxImage";
           }
         }
         return false;
@@ -100,18 +117,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     td: ({ children }: { children?: ReactNode }) => (
       <td className="border border-gray-300 px-2 py-2 text-xs text-gray-700 md:px-4 md:py-3 md:text-sm">{children}</td>
     ),
-    img: ({ src, alt }: { src?: string; alt?: string }) => (
-      <figure className="my-6 flex flex-col items-center">
-        <Image
-          src={src || ""}
-          alt={alt || ""}
-          width={320}
-          height={240}
-          className="h-auto max-w-xs border border-[#ddd]"
-        />
-        {alt && <figcaption className="mt-2 text-center text-sm text-[#666] italic">{alt}</figcaption>}
-      </figure>
-    ),
+    img: MdxImage,
     hr: () => <hr className="my-8 border-t border-[#ccc]" />,
     ...components,
   };

@@ -1,34 +1,9 @@
 import "../../../preload";
 
 import { fireEvent, render } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-import { createElement } from "react";
-import type { ReactEventHandler } from "react";
+import { describe, expect, it } from "bun:test";
 
 describe("ProgressiveImage", () => {
-  beforeEach(() => {
-    mock.restore();
-    void mock.module("next/image", () => ({
-      default: ({
-        alt,
-        className,
-        onError,
-        onLoad,
-        src,
-      }: {
-        alt: string;
-        className?: string;
-        onError?: ReactEventHandler<HTMLImageElement>;
-        onLoad?: ReactEventHandler<HTMLImageElement>;
-        src: string;
-      }) => createElement("img", { alt, className, onError, onLoad, src }),
-    }));
-  });
-
-  afterEach(() => {
-    mock.restore();
-  });
-
   it("retries the next source before showing the failure fallback", async () => {
     const { ProgressiveImage } = await import("@/components/ui/progressive-image");
 
@@ -37,6 +12,8 @@ describe("ProgressiveImage", () => {
         alt="Archive item"
         sources={["https://permagate.io/painting-1", "https://arweave.net/painting-1"]}
         src="https://permagate.io/painting-1"
+        width={320}
+        height={320}
       />,
     );
 
@@ -56,6 +33,8 @@ describe("ProgressiveImage", () => {
         alt="Archive item"
         sources={["https://permagate.io/painting-1", "https://arweave.net/painting-1"]}
         src="https://permagate.io/painting-1"
+        width={320}
+        height={320}
       />,
     );
 
