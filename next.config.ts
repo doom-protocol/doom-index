@@ -1,6 +1,6 @@
-import createMDX from "@next/mdx";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import type { NextConfig } from "next";
+import { createRequire } from "node:module";
 import { resolve as resolvePath } from "node:path";
 import { buildArweaveGatewayBaseUrls } from "./src/lib/pure/arweave-gateway";
 
@@ -15,6 +15,13 @@ interface MutableWebpackConfig {
     alias?: Record<string, string | false>;
   };
 }
+
+type NextConfigEnhancer = (config: NextConfig) => NextConfig;
+type CreateMDX = () => NextConfigEnhancer;
+
+const require = createRequire(import.meta.url);
+const createMDXModule: unknown = require("@next/mdx");
+const createMDX = createMDXModule as CreateMDX;
 
 const serverBundleStubbedModules = [
   "three",
