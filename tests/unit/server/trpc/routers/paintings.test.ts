@@ -16,15 +16,37 @@ describe("Paintings Router", () => {
     mock.restore();
   });
 
-  it("loads the archive list route without importing upload/storage dependencies", async () => {
-    void mock.module("@/server/services/paintings/storage", () => {
-      throw new Error("paintings router must not import storage for archive list reads");
+  it("loads the archive list route without importing upload/storage dependencies", () => {
+    const result = Bun.spawnSync({
+      cmd: [
+        "bun",
+        "--eval",
+        `
+          import { mock } from "bun:test";
+
+          mock.module("@/server/services/paintings/storage", () => {
+            throw new Error("paintings router must not import storage for archive list reads");
+          });
+
+          const { paintingsRouter } = await import("@/server/trpc/routers/paintings");
+          const { createMockContext } = await import("${join(process.cwd(), "tests/unit/server/trpc/helpers.ts")}");
+          const caller = paintingsRouter.createCaller(createMockContext());
+
+          console.log(JSON.stringify({ listType: typeof caller.list }));
+        `,
+      ],
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+      },
+      stderr: "pipe",
+      stdout: "pipe",
     });
 
-    const { paintingsRouter } = await loadPaintingsRouterModule();
-    const caller = paintingsRouter.createCaller(createMockContext());
+    expect(result.exitCode).toBe(0);
 
-    expect(typeof caller.list).toBe("function");
+    const output = JSON.parse(new TextDecoder().decode(result.stdout).trim()) as { listType: string };
+    expect(output.listType).toBe("function");
   });
 
   it("delegates prepareMintMetadata through the paintings service boundary", async () => {
