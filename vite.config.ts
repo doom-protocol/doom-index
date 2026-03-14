@@ -2,6 +2,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import mdx from "@mdx-js/rollup";
 import tailwindcss from "@tailwindcss/vite";
 import vinext from "vinext";
+import { fileURLToPath } from "node:url";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
 
@@ -56,4 +57,10 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    alias: {
+      buffer: fileURLToPath(new URL("./node_modules/buffer/index.js", import.meta.url)),
+      "node:buffer": fileURLToPath(new URL("./node_modules/buffer/index.js", import.meta.url)),
+    },
+  },
 });

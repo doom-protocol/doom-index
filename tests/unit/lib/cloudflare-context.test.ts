@@ -1,9 +1,21 @@
-import { describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
-import { resolveCloudflareEnvFromLoaders } from "@/lib/cloudflare-context";
+async function loadCloudflareContextModule() {
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/lib/cloudflare-context.ts"));
+  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+
+  return import(moduleUrl.href) as Promise<typeof import("@/lib/cloudflare-context")>;
+}
 
 describe("resolveCloudflareEnvFromLoaders", () => {
+  beforeEach(() => {
+    mock.restore();
+  });
+
   it("prefers cloudflare:workers bindings when available", async () => {
+    const { resolveCloudflareEnvFromLoaders } = await loadCloudflareContextModule();
     const workersEnv = { DB: { prepare: () => null } } as unknown as CloudflareEnv;
     let globalOverrideCalls = 0;
 
@@ -20,6 +32,7 @@ describe("resolveCloudflareEnvFromLoaders", () => {
   });
 
   it("falls back to an explicit runtime override when cloudflare:workers bindings are unavailable", async () => {
+    const { resolveCloudflareEnvFromLoaders } = await loadCloudflareContextModule();
     const overrideEnv = {
       VIEWER_KV: {
         get: async () => Promise.resolve(null),
@@ -35,6 +48,7 @@ describe("resolveCloudflareEnvFromLoaders", () => {
   });
 
   it("returns undefined when neither runtime exposes Cloudflare bindings", async () => {
+    const { resolveCloudflareEnvFromLoaders } = await loadCloudflareContextModule();
     const env = await resolveCloudflareEnvFromLoaders({
       loadCloudflareWorkersEnv: async () => Promise.resolve(undefined),
       loadGlobalEnvOverride: () => undefined,
