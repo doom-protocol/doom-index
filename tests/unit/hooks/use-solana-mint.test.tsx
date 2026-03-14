@@ -2,8 +2,10 @@ import "../../preload";
 
 import { DOOM_NFT_PROGRAM_ID, deriveGlobalConfigPda } from "@/lib/anchor/doom-nft-program";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { afterAll, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import type { Buffer } from "node:buffer";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { PublicKey } from "@solana/web3.js";
 
 mock.restore();
@@ -101,11 +103,6 @@ const prepareMintMetadataMutateMock = mock(async () => {
   };
 });
 
-void mock.module("@solana/wallet-adapter-react", () => ({
-  useConnection: readConnectionState,
-  useWallet: readWalletState,
-}));
-
 const readTRPCClient = () => ({
   paintings: {
     prepareMintMetadata: {
@@ -114,21 +111,38 @@ const readTRPCClient = () => ({
   },
 });
 
-void mock.module("@/lib/trpc/client", () => ({
-  useTRPCClient: readTRPCClient,
-}));
+function registerUseSolanaMintMocks() {
+  void mock.module("@solana/wallet-adapter-react", () => ({
+    ConnectionProvider: ({ children }: { children: unknown }) => children,
+    WalletProvider: ({ children }: { children: unknown }) => children,
+    useConnection: readConnectionState,
+    useWallet: readWalletState,
+  }));
 
-void mock.module("@/utils/logger", () => ({
-  logger: {
-    debug: mock(() => {}),
-    error: mock(() => {}),
-    info: mock(() => {}),
-    warn: mock(() => {}),
-  },
-}));
+  void mock.module("@/lib/trpc/client", () => ({
+    useTRPCClient: readTRPCClient,
+  }));
+
+  void mock.module("@/utils/logger", () => ({
+    logger: {
+      debug: mock(() => {}),
+      error: mock(() => {}),
+      info: mock(() => {}),
+      warn: mock(() => {}),
+    },
+  }));
+}
+
+async function loadUseSolanaMintModule() {
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/hooks/use-solana-mint.ts"));
+  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+  return import(moduleUrl.href) as Promise<typeof import("../../../src/hooks/use-solana-mint")>;
+}
 
 describe("unit/hooks/use-solana-mint", () => {
   beforeEach(() => {
+    mock.restore();
+    registerUseSolanaMintMocks();
     prepareMintMetadataMutateMock.mockReset();
     prepareMintMetadataMutateMock.mockImplementation(async () => {
       await Promise.resolve();
@@ -188,6 +202,10 @@ describe("unit/hooks/use-solana-mint", () => {
     });
   });
 
+  afterEach(() => {
+    mock.restore();
+  });
+
   afterAll(() => {
     mock.restore();
   });
@@ -215,7 +233,7 @@ describe("unit/hooks/use-solana-mint", () => {
       };
     });
 
-    const { useSolanaMint } = await import("../../../src/hooks/use-solana-mint");
+    const { useSolanaMint } = await loadUseSolanaMintModule();
     const { result } = renderHook(() => useSolanaMint());
 
     await waitFor(() => {
@@ -262,7 +280,7 @@ describe("unit/hooks/use-solana-mint", () => {
       throw new Error("custom program error: 0x1771");
     });
 
-    const { useSolanaMint } = await import("../../../src/hooks/use-solana-mint");
+    const { useSolanaMint } = await loadUseSolanaMintModule();
     const { result } = renderHook(() => useSolanaMint());
 
     await waitFor(() => {
@@ -316,7 +334,7 @@ describe("unit/hooks/use-solana-mint", () => {
       return "sig-2";
     });
 
-    const { useSolanaMint } = await import("../../../src/hooks/use-solana-mint");
+    const { useSolanaMint } = await loadUseSolanaMintModule();
     const { result } = renderHook(() => useSolanaMint());
 
     await waitFor(() => {
