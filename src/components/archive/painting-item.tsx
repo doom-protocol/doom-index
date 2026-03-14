@@ -1,9 +1,11 @@
 "use client";
 
 import { ProgressiveImage } from "@/components/ui/progressive-image";
+import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import { getArchiveImageSources } from "@/lib/archive-image-sources";
 import type { ResponsiveSizes } from "@/types/domain";
 import type { Painting } from "@/types/paintings";
+import Link from "next/link";
 import { useMemo } from "react";
 import type { FC } from "react";
 import { PaintingSkeleton } from "./painting-item-skeleton";
@@ -19,10 +21,9 @@ const ARCHIVE_GRID_SIZES: ResponsiveSizes = [
 interface PaintingProps {
   item: Painting;
   loading?: "eager" | "lazy";
-  onClick?: () => void;
 }
 
-export const PaintingComponent: FC<PaintingProps> = ({ item, loading, onClick }) => {
+export const PaintingComponent: FC<PaintingProps> = ({ item, loading }) => {
   const imageSources = useMemo(() => getArchiveImageSources(item.imageUrl), [item.imageUrl]);
   const timeLabel = (() => {
     const date = new Date(item.timestamp);
@@ -35,19 +36,13 @@ export const PaintingComponent: FC<PaintingProps> = ({ item, loading, onClick })
   })();
 
   return (
-    <div
+    <Link
+      href={`/archive/${item.id}`}
       className="group relative aspect-square w-full cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-black/20 transition-all hover:border-white/20"
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick?.();
-        }
+      onClick={() => {
+        sendGAEvent(GA_EVENTS.ARCHIVE_PAINTING_CLICK, { painting_id: item.id });
       }}
     >
-      {/* time label */}
       <div className="pointer-events-none absolute top-1 left-1 z-20 rounded bg-black/60 px-1.5 py-0.5 text-[10px] leading-none text-white/80 backdrop-blur-sm">
         {timeLabel}
       </div>
@@ -65,6 +60,6 @@ export const PaintingComponent: FC<PaintingProps> = ({ item, loading, onClick })
           imageUrl: item.imageUrl,
         }}
       />
-    </div>
+    </Link>
   );
 };

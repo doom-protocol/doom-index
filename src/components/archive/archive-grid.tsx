@@ -9,12 +9,11 @@ interface ArchiveGridProps {
   items: Painting[];
   isLoading?: boolean;
   skeletonCount?: number;
-  onItemClick?: (item: Painting) => void;
 }
 
 const EAGER_ARCHIVE_IMAGE_COUNT = 6;
 
-export const ArchiveGrid: FC<ArchiveGridProps> = ({ items, isLoading = false, skeletonCount = 20, onItemClick }) => {
+export const ArchiveGrid: FC<ArchiveGridProps> = ({ items, isLoading = false, skeletonCount = 20 }) => {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
       {items.map((item, index) => (
@@ -22,7 +21,6 @@ export const ArchiveGrid: FC<ArchiveGridProps> = ({ items, isLoading = false, sk
           key={item.id}
           item={item}
           loading={index < EAGER_ARCHIVE_IMAGE_COUNT ? "eager" : undefined}
-          onClick={() => onItemClick?.(item)}
         />
       ))}
       {isLoading &&

@@ -1,19 +1,12 @@
 "use client";
 
-import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
 import { formatDateShort } from "@/utils/time";
-import { useMemo, useRef, useState, Suspense, lazy } from "react";
+import { useMemo } from "react";
 import type { FC } from "react";
 import { ArchiveGrid } from "./archive-grid";
 import { DateFilter } from "./date-filter";
 import { PaginationControls } from "./pagination-controls";
-
-const ArchiveDetailView = lazy(async () =>
-  import("./archive-detail-view").then((mod) => ({
-    default: mod.ArchiveDetailView,
-  })),
-);
 
 interface ArchiveContentProps {
   items: Painting[];
@@ -24,11 +17,6 @@ interface ArchiveContentProps {
 }
 
 export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, page, from, to }) => {
-  const [selectedItem, setSelectedItem] = useState<Painting | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [savedScrollTop, setSavedScrollTop] = useState(0);
-  const listRef = useRef<HTMLDivElement | null>(null);
-
   const itemsPerPage = 24;
   const hasPreviousPage = page > 1;
 
@@ -46,35 +34,10 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
     };
   }, [items]);
 
-  const handleItemClick = (item: Painting) => {
-    // Save scroll position before opening detail view
-    if (listRef.current) {
-      setSavedScrollTop(listRef.current.scrollTop);
-    }
-    setIsTransitioning(true);
-    sendGAEvent(GA_EVENTS.ARCHIVE_PAINTING_CLICK, { painting_id: item.id });
-    // Wait for fade out animation to complete before showing detail view
-    setTimeout(() => {
-      setSelectedItem(item);
-    }, 300); // Match CSS transition duration
-  };
-
-  const handleClose = () => {
-    // Restore scroll position immediately (list stays mounted)
-    if (listRef.current) {
-      listRef.current.scrollTop = savedScrollTop;
-    }
-    setSelectedItem(null);
-    setIsTransitioning(false);
-  };
-
   return (
     <>
       <div
-        ref={listRef}
-        className={`h-screen overflow-y-auto px-8 pt-28 pb-[200px] font-sans transition-opacity duration-300 sm:pt-32 ${
-          isTransitioning ? "opacity-0" : "opacity-100"
-        }`}
+        className="h-screen overflow-y-auto px-8 pt-28 pb-[200px] font-sans sm:pt-32"
         style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
       >
         <h1 className="mb-4 normal-case" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
@@ -93,30 +56,18 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
             </p>
           )}
         </div>
-        <ArchiveGrid items={items} isLoading={false} skeletonCount={itemsPerPage} onItemClick={handleItemClick} />
+        <ArchiveGrid items={items} isLoading={false} skeletonCount={itemsPerPage} />
       </div>
-      <div className={`transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
-        <PaginationControls
-          currentPage={page}
-          itemsPerPage={itemsPerPage}
-          totalItems={items.length}
-          hasNextPage={hasNextPage}
-          hasPreviousPage={hasPreviousPage}
-          from={from}
-          to={to}
-        />
-      </div>
-      <div className={`transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
-        <DateFilter from={from} to={to} />
-      </div>
-
-      {selectedItem && (
-        <div className="fixed inset-0 z-50">
-          <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
-            <ArchiveDetailView item={selectedItem} onClose={handleClose} />
-          </Suspense>
-        </div>
-      )}
+      <PaginationControls
+        currentPage={page}
+        itemsPerPage={itemsPerPage}
+        totalItems={items.length}
+        hasNextPage={hasNextPage}
+        hasPreviousPage={hasPreviousPage}
+        from={from}
+        to={to}
+      />
+      <DateFilter from={from} to={to} />
     </>
   );
 };
