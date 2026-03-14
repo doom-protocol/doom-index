@@ -7,11 +7,11 @@
  */
 
 import { CACHE_TTL_SECONDS } from "@/constants";
+import { resolveCloudflareEnv } from "@/lib/cloudflare-context";
 import { createPaintingsRepository } from "@/server/repositories/paintings-repository";
 import { arrayBufferToDataUrl, base64ToArrayBuffer } from "@/utils/image";
 import { logger } from "@/utils/logger";
 import { getBaseUrl } from "@/utils/url";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 // Route Segment Config
 export const dynamic = "force-dynamic";
@@ -399,8 +399,10 @@ export default async function Image(): Promise<Response> {
 
   try {
     logger.info("ogp.step-init-context");
-    // Get Cloudflare context
-    const { env } = await getCloudflareContext({ async: true });
+    const env = await resolveCloudflareEnv();
+    if (!env) {
+      throw new Error("Cloudflare context not available");
+    }
     const db = env.DB;
     const assetsFetcher = env.ASSETS;
     const imagesBinding = env.IMAGES;
@@ -452,8 +454,10 @@ export default async function Image(): Promise<Response> {
     });
 
     try {
-      // Get ASSETS fetcher for fallback image
-      const { env } = await getCloudflareContext({ async: true });
+      const env = await resolveCloudflareEnv();
+      if (!env) {
+        throw new Error("Cloudflare context not available");
+      }
       const fallbackAssetsFetcher = env.ASSETS;
       const fallbackImagesBinding = env.IMAGES;
 

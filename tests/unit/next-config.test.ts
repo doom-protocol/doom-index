@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
-const originalLifecycleEvent = process.env.npm_lifecycle_event;
-
 interface NextConfigImageSettings {
   loader?: string;
   loaderFile?: string;
@@ -13,14 +11,10 @@ interface NextConfigImageSettings {
 }
 
 async function loadNextConfig() {
-  process.env.npm_lifecycle_event = "dev";
-  void mock.module("@opennextjs/cloudflare", () => ({
-    getCloudflareContext: async () => Promise.resolve({ env: {} }),
-    initOpenNextCloudflareForDev: () => undefined,
-  }));
   const modulePath = `@/../next.config.ts?cacheBust=${String(Date.now())}`;
   const importedConfig = (await import(modulePath)) as {
     default: {
+      typedRoutes?: boolean;
       images?: NextConfigImageSettings;
     };
   };
@@ -31,17 +25,10 @@ async function loadNextConfig() {
 describe("next.config", () => {
   beforeEach(() => {
     mock.restore();
-    process.env.npm_lifecycle_event = "dev";
   });
 
   afterEach(() => {
     mock.restore();
-    if (originalLifecycleEvent === undefined) {
-      delete process.env.npm_lifecycle_event;
-      return;
-    }
-
-    process.env.npm_lifecycle_event = originalLifecycleEvent;
   });
 
   it("uses the standard next/image optimizer and permits the archive gateway hosts", async () => {
@@ -58,5 +45,6 @@ describe("next.config", () => {
     expect(images.loaderFile).toBeUndefined();
     expect(hasPermagatePattern).toBe(true);
     expect(hasArweaveNetPattern).toBe(true);
+    expect(config.typedRoutes).toBeUndefined();
   });
 });

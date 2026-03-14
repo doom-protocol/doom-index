@@ -1,11 +1,15 @@
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import * as matchers from "@testing-library/jest-dom/matchers";
 import { cleanup } from "@testing-library/react";
-import { afterEach, beforeEach, expect, mock } from "bun:test";
+import { afterEach, beforeEach, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import * as dbSchema from "@/server/db/schema";
+
+type CloudflareTestGlobal = typeof globalThis & {
+  __DOOM_INDEX_CLOUDFLARE_ENV__?: CloudflareEnv;
+};
 
 // Create in-memory SQLite database for D1 tests
 let testD1Db: BunSQLiteDatabase<typeof dbSchema> & {
@@ -111,19 +115,14 @@ beforeEach(() => {
     }
     return results;
   };
-});
 
-// Mock @opennextjs/cloudflare to provide test D1 binding
-void mock.module("@opennextjs/cloudflare", () => ({
-  getCloudflareContext: () => ({
-    env: {
-      DB: testD1Db,
-      ASSETS: {} as Fetcher,
-      VIEWER_KV: {} as KVNamespace,
-      AI: {} as Ai,
-    },
-  }),
-}));
+  (globalThis as CloudflareTestGlobal).__DOOM_INDEX_CLOUDFLARE_ENV__ = {
+    DB: testD1Db as unknown as D1Database,
+    ASSETS: {} as Fetcher,
+    VIEWER_KV: {} as KVNamespace,
+    AI: {} as Ai,
+  } as CloudflareEnv;
+});
 
 // Register happy-dom globals
 GlobalRegistrator.register();

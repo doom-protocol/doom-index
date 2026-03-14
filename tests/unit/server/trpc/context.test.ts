@@ -6,10 +6,8 @@ import { pathToFileURL } from "node:url";
 type TrpcContextModule = typeof import("@/server/trpc/context");
 
 function mockCloudflareContextUnavailable() {
-  void mock.module("@opennextjs/cloudflare", () => ({
-    getCloudflareContext: (_options?: { async?: boolean }) => {
-      throw new Error("Cloudflare context not available");
-    },
+  void mock.module("@/lib/cloudflare-context", () => ({
+    resolveCloudflareEnv: async () => Promise.resolve(undefined),
   }));
 }
 

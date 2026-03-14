@@ -7,8 +7,8 @@ updated: 2026-03-13
 ## 全体アーキテクチャ
 
 - フロントエンド: Next.js 16（App Router, Edge Runtime, React Compiler）
-- バンドラー: **next-rspack** - Rust ベース高速バンドラー
-- 実行/配信: Cloudflare Pages + Workers（Cron Triggers: 10分ごと）
+- バンドラー: **Vite + vinext** - Next.js App Router を Vite ベースでビルド
+- 実行/配信: Cloudflare Workers（Web + Cron）
 - ストレージ: Arweave（Turbo SDK 経由アップロード、gateway 読み取り。定期生成は image-only、GLB は mint 時に upload）
 - **データベース: Cloudflare D1（SQLite 互換）** - アーカイブインデックスとトークンコンテキストキャッシュ
 - ランタイム: ローカル Bun / 本番 workerd
@@ -41,7 +41,7 @@ updated: 2026-03-13
 - `src/components` UI/3D/ユーティリティ
   - `src/components/archive` アーカイブページコンポーネント
 - `src/constants` プロンプト・トークン定数
-- `src/types` クライアント共有型（API 応答 DTO、ドメイン型、OpenNext、エラー、ワーカー設定 等）
+- `src/types` クライアント共有型（API 応答 DTO、ドメイン型、エラー、ワーカー設定 等）
 - `src/workers` Worker エントリ・処理
 - `tests/` unit/integration テスト
 
@@ -57,13 +57,13 @@ updated: 2026-03-13
 - Cloudflare Workers（Cron: 10分ごとトリガ - `*/10 * * * *`）
 - Turbo SDK / Arweave gateway 連携
 - recurring generation では image upload のみを行い、mint preparation で GLB + metadata + manifest を補完
-- OpenNext for Cloudflare によるビルド/デプロイ（`@opennextjs/cloudflare@^1.17.1`）
+- `vinext build` + Cloudflare Vite plugin による Workers 向けビルド
 
 ## 依存関係（主要）
 
 - ランタイム/フレームワーク: `next@16.1.6`, `react@19.2.0`, `typescript@^5.9.3`, `bun@1.3.10`
 - **型チェック: `@typescript/native-preview` (tsgo)** - TypeScript Native Preview による高速型チェック
-- **バンドラー: `next-rspack@^16.1.6`** - Rust ベース高速バンドラー
+- **バンドラー: `vinext@^0.0.30`, `vite@^8.0.0`** - Vite ベースの Next.js App Router ビルド
 - 描画/3D: `three@^0.181.2`, `@react-three/fiber@^9.4.2`, `@react-three/drei@^10.7.7`
 - **API/型安全: `@trpc/server@^11.7.2`, `@trpc/client@^11.7.2`, `@trpc/react-query@^11.7.2`, `@trpc/tanstack-react-query@^11.7.2`**
 - **データベース: `drizzle-orm@^0.44.7`** - D1（SQLite）用 ORM
@@ -72,7 +72,7 @@ updated: 2026-03-13
 - **NFT/ブロックチェーン: `@metaplex-foundation/*`, `@solana/web3.js@^1.98.4`, `@solana/wallet-adapter-*`**
 - **Arweave: `@ardrive/turbo-sdk`** - Turbo SDK for Arweave uploads
 - **環境変数管理: `@t3-oss/env-nextjs@^0.13.8`** - valibot ベースの型安全な環境変数検証
-- 開発/CF: `wrangler@^4.71.0`, `@cloudflare/workers-types@^4.20260310.1`, `@opennextjs/cloudflare@^1.17.1`
+- 開発/CF: `wrangler@^4.73.0`, `@cloudflare/workers-types@^4.20260313.1`, `@cloudflare/vite-plugin@^1.28.0`
 - 品質: `eslint@^9.39.1`, `eslint-config-next@16.1.6`, `oxfmt`
 
 ## 環境変数
@@ -94,7 +94,7 @@ updated: 2026-03-13
   - `CLOUDFLARE_ACCOUNT_ID`（本番マイグレーション用）
   - `CLOUDFLARE_DATABASE_ID`（本番マイグレーション用）
   - `CLOUDFLARE_D1_TOKEN`（本番マイグレーション用）
-- 任意（高速バッチアップロード: OpenNext Build/Deploy）
+- 任意（Cloudflare deploy / migration 用）
   - `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `CF_ACCOUNT_ID`
 
 ## ポート/実行
@@ -109,7 +109,7 @@ updated: 2026-03-13
 # 開発（Next.js）
 bun run dev
 
-# Cloudflare プレビュー（Cron テスト有）
+# Cloudflare Web Worker dry-run + ローカル preview
 bun run build:cf && bun run preview
 
 # Cron ローカル監視
@@ -127,8 +127,8 @@ bun run typecheck      # tsgo による高速型チェック
 bun run test           # 全テスト実行
 bun run test:unit      # ユニットテストのみ
 bun run test:integration # インテグレーションテストのみ
-bun run build          # Next.js ビルド
-bun run build:cf       # OpenNext for Cloudflare ビルド
+bun run build          # vinext ビルド
+bun run build:cf       # Cloudflare Worker package の dry-run 検証
 bun run deploy         # Cloudflare へデプロイ
 ```
 
@@ -148,10 +148,9 @@ bun run deploy         # Cloudflare へデプロイ
 
 ## ビルド/デプロイ
 
-- OpenNext for Cloudflare（`opennextjs-cloudflare`）
-  - `build`, `preview`, `upload`, `deploy`
-- Workers: `wrangler`（型生成/デプロイ）
-- Pages: `deploy`（OpenNext 出力）
+- Web: `vinext build` が `dist/server/wrangler.json` を生成し、`wrangler deploy` はその出力を使う
+- Workers: `wrangler`（型生成/デプロイ、Cron worker 含む）
+- 設定ソース: `wrangler.jsonc`, `vite.config.ts`
 
 ## 実装ポリシー（抜粋）
 

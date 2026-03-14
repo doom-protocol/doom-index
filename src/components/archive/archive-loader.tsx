@@ -26,7 +26,7 @@ export const ArchiveLoader: FC = () => {
             <SkeletonBar className="h-4 w-24 rounded-full" />
           </p>
         </div>
-        <ArchiveGrid items={[]} isLoading skeletonCount={ITEMS_PER_PAGE} />
+        <ArchiveGrid items={[]} page={1} isLoading skeletonCount={ITEMS_PER_PAGE} />
       </div>
 
       <div className="fixed right-0 bottom-0 left-0 z-40 border-t border-white/10 bg-black/40 px-1.5 py-3 backdrop-blur-md md:p-3">

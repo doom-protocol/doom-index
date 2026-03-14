@@ -8,8 +8,8 @@ interface DbIndexModule {
 
 async function importDbIndex(): Promise<DbIndexModule> {
   mock.restore();
-  void mock.module("@opennextjs/cloudflare", () => ({
-    getCloudflareContext: async () => Promise.resolve({ env: {} }),
+  void mock.module("@/lib/cloudflare-context", () => ({
+    resolveCloudflareEnv: async () => Promise.resolve({}),
   }));
   const moduleUrl = pathToFileURL(join(process.cwd(), "src/server/db/index.ts"));
   moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
@@ -29,7 +29,7 @@ describe("getDB", () => {
 
     expect(thrown).toBeInstanceOf(Error);
     if (thrown instanceof Error) {
-      expect(thrown.message).toBe("D1 DB binding not found (env.DB). Check wrangler.toml [[d1_databases]].");
+      expect(thrown.message).toBe("D1 DB binding not found (env.DB). Check the Wrangler D1 bindings configuration.");
     }
   });
 });

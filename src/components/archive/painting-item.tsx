@@ -19,12 +19,29 @@ const ARCHIVE_GRID_SIZES: ResponsiveSizes = [
 ];
 
 interface PaintingProps {
+  from?: string;
   item: Painting;
   loading?: "eager" | "lazy";
+  page: number;
+  to?: string;
 }
 
-export const PaintingComponent: FC<PaintingProps> = ({ item, loading }) => {
+export const PaintingComponent: FC<PaintingProps> = ({ from, item, loading, page, to }) => {
   const imageSources = useMemo(() => getArchiveImageSources(item.imageUrl), [item.imageUrl]);
+  const detailHref = useMemo(() => {
+    const params = new URLSearchParams();
+    if (page > 1) {
+      params.set("page", String(page));
+    }
+    if (from) {
+      params.set("from", from);
+    }
+    if (to) {
+      params.set("to", to);
+    }
+    params.set("selected", item.id);
+    return `/archive?${params.toString()}`;
+  }, [from, item.id, page, to]);
   const timeLabel = (() => {
     const date = new Date(item.timestamp);
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -37,7 +54,7 @@ export const PaintingComponent: FC<PaintingProps> = ({ item, loading }) => {
 
   return (
     <Link
-      href={`/archive/${encodeURIComponent(item.id)}`}
+      href={detailHref}
       prefetch={false}
       className="group relative aspect-square w-full cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-black/20 transition-all hover:border-white/20"
       onClick={() => {

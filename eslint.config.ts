@@ -58,11 +58,9 @@ const config = defineConfig([
       ".agents/**",
       ".codex/**",
       ".moltworker/**",
-      ".open-next/**",
       ".wrangler/**",
       ".claude/**",
       "wt-*/**",
-      "open-next.config.ts",
     ],
   },
 ]);

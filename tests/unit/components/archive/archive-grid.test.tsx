@@ -54,7 +54,7 @@ describe("ArchiveGrid", () => {
     const { ArchiveGrid } = await import("@/components/archive/archive-grid");
     const items = Array.from({ length: 8 }, (_, index) => createPainting(index + 1));
 
-    const { getAllByRole } = render(<ArchiveGrid items={items} />);
+    const { getAllByRole } = render(<ArchiveGrid items={items} page={1} />);
 
     const images = getAllByRole("img");
 

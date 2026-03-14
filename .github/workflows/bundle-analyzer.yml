@@ -38,17 +38,19 @@ jobs:
         if: steps.bun-cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
-      - name: Build with opennextjs-cloudflare
+      - name: Build Worker package
         run: bun --env-file=.example.vars run build:cf
 
-      - name: Analyze esbuild bundle size
-        uses: exoego/esbuild-bundle-analyzer@v1
-        with:
-          metafiles: ".open-next/server-functions/default/handler.mjs.meta.json"
-          name: doom-index
-          analyze_directory: .analyzer
-          include_extensions: .js,.cjs,.mjs
-          percent_extra_attention: 20
-          include_size_comparison: added,deleted,increased,decreased,no-change
-          show_details: true
-          top_n_largest_paths: 20
+      - name: Summarize vinext server output
+        run: |
+          {
+            echo "## vinext Worker build"
+            echo
+            echo "- build: \`bun run build:cf\`"
+            echo "- deploy artifact: \`dist/server/wrangler.json\`"
+            echo "- largest server modules:"
+            find dist/server -type f -name '*.js' -printf '%s %p\n' | sort -nr | head -20 | awk '{printf "  - %s bytes %s\n", $1, $2}'
+            echo
+            total_bytes=$(find dist/server -type f -name '*.js' -printf '%s\n' | awk '{s+=$1} END {print s+0}')
+            echo "- total server js bytes: ${total_bytes}"
+          } >> "$GITHUB_STEP_SUMMARY"

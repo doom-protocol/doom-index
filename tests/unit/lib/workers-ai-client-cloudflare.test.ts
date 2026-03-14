@@ -42,11 +42,8 @@ interface WorkersAiClientModule {
 
 async function importWorkersAiClient(): Promise<WorkersAiClientModule> {
   mock.restore();
-  void mock.module("@opennextjs/cloudflare", () => ({
-    getCloudflareContext: async () =>
-      Promise.resolve({
-        env: {},
-      }),
+  void mock.module("@/lib/cloudflare-context", () => ({
+    resolveCloudflareEnv: async () => Promise.resolve({}),
   }));
   const moduleUrl = pathToFileURL(join(process.cwd(), "src/lib/workers-ai-client.ts"));
   moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);

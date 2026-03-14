@@ -14,7 +14,7 @@ updated: 2026-03-13
   - `PRODUCT.md`, `TECH.md`, `STRUCTURE.md` - プロジェクトの基準ドキュメント
   - `architecture/`, `guides/`, `reference/`, `analysis/`, `legacy/` - 用途別ドキュメント
   - `specs/` - 機能別の requirements / design / tasks
-- 構成ファイル: `package.json`, `tsconfig.json`, `wrangler.toml`, `open-next.config.ts`, `eslint.config.mjs`, `postcss.config.mjs`
+- 構成ファイル: `package.json`, `tsconfig.json`, `vite.config.ts`, `wrangler.jsonc`, `eslint.config.ts`, `postcss.config.mjs`
 
 ## `src/` 詳細
 
@@ -67,11 +67,11 @@ updated: 2026-03-13
     - domain logic に直結する数値計算や、小さく切り出して testability を高める必要がある複雑な検証・計算ロジックを配置
     - プロンプト合成/正規化/量子化/ハッシュ等の純粋関数
   - 共通: `runware-client.ts`, `kv.ts`, `workers-ai-client.ts`, `tavily-client.ts`, `coingecko-client.ts`, `alternative-me-client.ts`
-- `types/` 型定義（ドメイン、共有 API 応答 DTO、OpenNext、エラー、ワーカー設定 等）
+- `types/` 型定義（ドメイン、共有 API 応答 DTO、エラー、ワーカー設定 等）
 - `utils/` 画像/URL/UA/ロガー/エラー ユーティリティ
 - `workers/` **Web Worker / Service Worker 実装**
   - Web Worker や Service Worker などを TypeScript で実装したものを格納（例: viewer.worker.ts）
-- `worker.ts` エントリ
+- `proxy.ts` Web runtime 用 proxy 設定
 - `cron.ts` Cloudflare Workers Cron Handler
 
 ## 命名規約・配置
@@ -124,6 +124,7 @@ updated: 2026-03-13
 - コンポーネント: 近接配置（styles/hooks/utils を隣接）
 - テスト: `tests/unit/..`, `tests/integration/..` に対応配置（tRPC ルーター/コンテキストの統合テスト含む）
 - OGP/公開物: 既定は `public/`、動的は `app/opengraph-image.tsx`
+- Cloudflare web deploy 出力: `vinext build` 後の `dist/server/` と `dist/client/`
 
 ## 変更の指針
 

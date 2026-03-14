@@ -54,8 +54,8 @@ interface WorkersAiClientModule {
 }
 
 function mockCloudflareEmptyEnv() {
-  void mock.module("@opennextjs/cloudflare", () => ({
-    getCloudflareContext: async (_options?: { async?: boolean }) => Promise.resolve({ env: {} }),
+  void mock.module("@/lib/cloudflare-context", () => ({
+    resolveCloudflareEnv: async () => Promise.resolve({}),
   }));
 }
 

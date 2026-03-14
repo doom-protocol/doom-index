@@ -97,13 +97,6 @@ describe("Cache Helper - get", () => {
       delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
 
-    void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () =>
-        Promise.resolve({
-          env: {},
-        }),
-    }));
-
     // Mock globalThis.caches with default property
     originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
     (globalThis as unknown as { caches?: CacheStorage }).caches = {
@@ -141,16 +134,17 @@ describe("Cache Helper - get", () => {
   });
 
   it("should return null when cache is unavailable", async () => {
-    void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () => {
-        return Promise.reject(new Error("Cache unavailable"));
-      },
-    }));
+    const cachesBeforeTest = (globalThis as unknown as { caches?: CacheStorage }).caches;
+    (globalThis as unknown as { caches?: CacheStorage }).caches = undefined;
 
-    const { get } = await import("@/lib/cache");
-    const result = await get<string>("test-key");
+    try {
+      const { get } = await import("@/lib/cache");
+      const result = await get<string>("test-key");
 
-    expect(result).toBeNull();
+      expect(result).toBeNull();
+    } finally {
+      (globalThis as unknown as { caches?: CacheStorage }).caches = cachesBeforeTest;
+    }
   });
 
   it("should return null when cache.match throws", async () => {
@@ -186,13 +180,6 @@ describe("Cache Helper - set", () => {
       delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
 
-    void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () =>
-        Promise.resolve({
-          env: {},
-        }),
-    }));
-
     // Mock globalThis.caches with default property
     originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
     (globalThis as unknown as { caches?: CacheStorage }).caches = {
@@ -220,17 +207,18 @@ describe("Cache Helper - set", () => {
   });
 
   it("should skip caching when cache is unavailable", async () => {
-    void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: () => {
-        throw new Error("Cache unavailable");
-      },
-    }));
+    const cachesBeforeTest = (globalThis as unknown as { caches?: CacheStorage }).caches;
+    (globalThis as unknown as { caches?: CacheStorage }).caches = undefined;
 
-    const { set } = await import("@/lib/cache");
-    await set("test-key", { foo: "bar" }, { ttlSeconds: 60 });
+    try {
+      const { set } = await import("@/lib/cache");
+      await set("test-key", { foo: "bar" }, { ttlSeconds: 60 });
 
-    // Should not throw
-    expect(true).toBe(true);
+      // Should not throw
+      expect(true).toBe(true);
+    } finally {
+      (globalThis as unknown as { caches?: CacheStorage }).caches = cachesBeforeTest;
+    }
   });
 
   it("should use namespace in cache key when provided", async () => {
@@ -353,20 +341,21 @@ describe("Cache Helper - getOrSet", () => {
   });
 
   it("should execute compute function when cache is unavailable", async () => {
-    void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () => {
-        return Promise.reject(new Error("Cache unavailable"));
-      },
-    }));
+    const cachesBeforeTest = (globalThis as unknown as { caches?: CacheStorage }).caches;
+    (globalThis as unknown as { caches?: CacheStorage }).caches = undefined;
 
-    const computedValue = { foo: "baz" };
-    const computeFn = mock(async () => Promise.resolve(computedValue));
+    try {
+      const computedValue = { foo: "baz" };
+      const computeFn = mock(async () => Promise.resolve(computedValue));
 
-    const { getOrSet } = await import("@/lib/cache");
-    const result = await getOrSet("test-key", computeFn, { ttlSeconds: 60 });
+      const { getOrSet } = await import("@/lib/cache");
+      const result = await getOrSet("test-key", computeFn, { ttlSeconds: 60 });
 
-    expect(result).toEqual(computedValue);
-    expect(computeFn).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(computedValue);
+      expect(computeFn).toHaveBeenCalledTimes(1);
+    } finally {
+      (globalThis as unknown as { caches?: CacheStorage }).caches = cachesBeforeTest;
+    }
   });
 
   it("should propagate compute function errors", async () => {
@@ -404,13 +393,6 @@ describe("Cache Helper - remove", () => {
       delete: mockDelete,
     } as unknown as Cache;
 
-    void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () =>
-        Promise.resolve({
-          env: {},
-        }),
-    }));
-
     // Mock globalThis.caches with default property
     originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
     (globalThis as unknown as { caches?: CacheStorage }).caches = {
@@ -444,16 +426,17 @@ describe("Cache Helper - remove", () => {
   });
 
   it("should return false when cache is unavailable", async () => {
-    void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: () => {
-        throw new Error("Cache unavailable");
-      },
-    }));
+    const cachesBeforeTest = (globalThis as unknown as { caches?: CacheStorage }).caches;
+    (globalThis as unknown as { caches?: CacheStorage }).caches = undefined;
 
-    const { remove } = await import("@/lib/cache");
-    const result = await remove("test-key");
+    try {
+      const { remove } = await import("@/lib/cache");
+      const result = await remove("test-key");
 
-    expect(result).toBe(false);
+      expect(result).toBe(false);
+    } finally {
+      (globalThis as unknown as { caches?: CacheStorage }).caches = cachesBeforeTest;
+    }
   });
 
   it("should return false when cache.delete throws", async () => {
@@ -490,13 +473,6 @@ describe("Cache Helper - getOrSet deduplication", () => {
       put: mockPut,
       delete: mock(async () => Promise.resolve(false)),
     } as unknown as Cache;
-
-    void mock.module("@opennextjs/cloudflare", () => ({
-      getCloudflareContext: async () =>
-        Promise.resolve({
-          env: {},
-        }),
-    }));
 
     // Mock globalThis.caches with default property
     originalCaches = (globalThis as unknown as { caches?: CacheStorage }).caches;
