@@ -32,7 +32,7 @@ export const paintingsListSchema = v.pipe(
 );
 
 export const paintingGetByIdSchema = v.object({
-  id: v.pipe(v.string(), v.minLength(1, "Painting ID is required")),
+  id: v.pipe(v.string(), v.minLength(1, "Painting ID is required"), v.maxLength(128, "Painting ID is too long")),
 });
 
 export const prepareMintMetadataSchema = v.object({

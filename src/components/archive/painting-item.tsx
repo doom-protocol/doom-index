@@ -37,7 +37,7 @@ export const PaintingComponent: FC<PaintingProps> = ({ item, loading }) => {
 
   return (
     <Link
-      href={`/archive/${item.id}`}
+      href={`/archive/${encodeURIComponent(item.id)}`}
       className="group relative aspect-square w-full cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-black/20 transition-all hover:border-white/20"
       onClick={() => {
         sendGAEvent(GA_EVENTS.ARCHIVE_PAINTING_CLICK, { painting_id: item.id });

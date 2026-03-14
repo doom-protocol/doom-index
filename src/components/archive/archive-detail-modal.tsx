@@ -3,7 +3,7 @@
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import type { FC } from "react";
 import { ArchiveDetailView } from "./archive-detail-view";
 
@@ -21,10 +21,11 @@ export const ArchiveDetailModal: FC<ArchiveDetailModalProps> = ({ id }) => {
     router.back();
   }, [router]);
 
-  if (isError) {
-    router.back();
-    return null;
-  }
+  useEffect(() => {
+    if (isError) {
+      router.back();
+    }
+  }, [isError, router]);
 
   if (isLoading || !item) {
     return (
