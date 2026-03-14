@@ -1,59 +1,86 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { describe, expect, it } from "bun:test";
 
-async function loadCloudflareContextModule() {
-  const moduleUrl = pathToFileURL(join(process.cwd(), "src/lib/cloudflare-context.ts"));
-  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+function runCloudflareContextCheck(script: string) {
+  const result = Bun.spawnSync({
+    cmd: [
+      "bun",
+      "--eval",
+      `
+        const { resolveCloudflareEnvFromLoaders } = await import("@/lib/cloudflare-context");
 
-  return import(moduleUrl.href) as Promise<typeof import("@/lib/cloudflare-context")>;
+        ${script}
+      `,
+    ],
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+    },
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  expect(result.exitCode).toBe(0);
+
+  return JSON.parse(new TextDecoder().decode(result.stdout).trim()) as Record<string, boolean | number>;
 }
 
 describe("resolveCloudflareEnvFromLoaders", () => {
-  beforeEach(() => {
-    mock.restore();
+  it("prefers cloudflare:workers bindings when available", () => {
+    const output = runCloudflareContextCheck(`
+      const workersEnv = { DB: { prepare: () => null } };
+      let globalOverrideCalls = 0;
+
+      const env = await resolveCloudflareEnvFromLoaders({
+        loadCloudflareWorkersEnv: async () => workersEnv,
+        loadGlobalEnvOverride: () => {
+          globalOverrideCalls += 1;
+          return undefined;
+        },
+      });
+
+      console.log(JSON.stringify({
+        globalOverrideCalls,
+        isWorkersEnv: env === workersEnv,
+      }));
+    `);
+
+    expect(output.isWorkersEnv).toBe(true);
+    expect(output.globalOverrideCalls).toBe(0);
   });
 
-  it("prefers cloudflare:workers bindings when available", async () => {
-    const { resolveCloudflareEnvFromLoaders } = await loadCloudflareContextModule();
-    const workersEnv = { DB: { prepare: () => null } } as unknown as CloudflareEnv;
-    let globalOverrideCalls = 0;
+  it("falls back to an explicit runtime override when cloudflare:workers bindings are unavailable", () => {
+    const output = runCloudflareContextCheck(`
+      const overrideEnv = {
+        VIEWER_KV: {
+          get: async () => null,
+        },
+      };
 
-    const env = await resolveCloudflareEnvFromLoaders({
-      loadCloudflareWorkersEnv: async () => Promise.resolve(workersEnv),
-      loadGlobalEnvOverride: () => {
-        globalOverrideCalls += 1;
-        return undefined;
-      },
-    });
+      const env = await resolveCloudflareEnvFromLoaders({
+        loadCloudflareWorkersEnv: async () => undefined,
+        loadGlobalEnvOverride: () => overrideEnv,
+      });
 
-    expect(env).toBe(workersEnv);
-    expect(globalOverrideCalls).toBe(0);
+      console.log(JSON.stringify({
+        isOverrideEnv: env === overrideEnv,
+      }));
+    `);
+
+    expect(output.isOverrideEnv).toBe(true);
   });
 
-  it("falls back to an explicit runtime override when cloudflare:workers bindings are unavailable", async () => {
-    const { resolveCloudflareEnvFromLoaders } = await loadCloudflareContextModule();
-    const overrideEnv = {
-      VIEWER_KV: {
-        get: async () => Promise.resolve(null),
-      },
-    } as unknown as CloudflareEnv;
+  it("returns undefined when neither runtime exposes Cloudflare bindings", () => {
+    const output = runCloudflareContextCheck(`
+      const env = await resolveCloudflareEnvFromLoaders({
+        loadCloudflareWorkersEnv: async () => undefined,
+        loadGlobalEnvOverride: () => undefined,
+      });
 
-    const env = await resolveCloudflareEnvFromLoaders({
-      loadCloudflareWorkersEnv: async () => Promise.resolve(undefined),
-      loadGlobalEnvOverride: () => overrideEnv,
-    });
+      console.log(JSON.stringify({
+        isUndefined: env === undefined,
+      }));
+    `);
 
-    expect(env).toBe(overrideEnv);
-  });
-
-  it("returns undefined when neither runtime exposes Cloudflare bindings", async () => {
-    const { resolveCloudflareEnvFromLoaders } = await loadCloudflareContextModule();
-    const env = await resolveCloudflareEnvFromLoaders({
-      loadCloudflareWorkersEnv: async () => Promise.resolve(undefined),
-      loadGlobalEnvOverride: () => undefined,
-    });
-
-    expect(env).toBeUndefined();
+    expect(output.isUndefined).toBe(true);
   });
 });
