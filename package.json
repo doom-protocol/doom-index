@@ -8,8 +8,6 @@
     "dev": "bunx vinext dev --port 8787",
     "build": "bunx vinext build",
     "build:cf": "bunx vinext build && bunx wrangler deploy --config dist/server/wrangler.json --dry-run",
-    "preview": "bunx vinext start --port 8787",
-    "preview:cron": "bunx vinext build && bunx wrangler dev --config dist/server/wrangler.json --test-scheduled",
     "start": "bunx vinext start --port 8787",
     "lint": "eslint . --cache --cache-location .cache/eslint/.eslintcache --cache-strategy content",
     "lint:fix": "eslint . --fix --cache --cache-location .cache/eslint/.eslintcache --cache-strategy content",

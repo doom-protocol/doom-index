@@ -61,11 +61,10 @@ Run the Next.js app:
 bun run dev
 ```
 
-Run the Cloudflare preview build:
+Run the Cloudflare Worker dry-run build:
 
 ```bash
 bun run build:cf
-bun run preview
 ```
 
 Trigger the cron loop locally:

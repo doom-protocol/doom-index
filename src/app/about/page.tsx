@@ -1,14 +1,8 @@
+import { AboutScene } from "@/components/about/about-scene";
 import MDXArticle from "@/components/about/mdx-article";
 import { Header } from "@/components/ui/header";
-import dynamic from "next/dynamic";
 import { getBaseUrl } from "@/utils/url";
 import type { Metadata, NextPage } from "next";
-
-const AboutScene = dynamic(async () =>
-  import("@/components/about/about-scene").then((mod) => ({
-    default: mod.AboutScene,
-  })),
-);
 
 const metadataBase = new URL(getBaseUrl());
 

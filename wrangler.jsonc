@@ -5,7 +5,12 @@
   "workers_dev": true,
   "preview_urls": true,
   "compatibility_date": "2025-03-25",
-  "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env", "global_fetch_strictly_public"],
+  "compatibility_flags": [
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env",
+    "global_fetch_strictly_public",
+    "enable_weak_ref",
+  ],
   "triggers": {
     "crons": ["0 * * * *"],
   },

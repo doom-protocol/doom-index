@@ -99,8 +99,7 @@ updated: 2026-03-13
 
 ## ポート/実行
 
-- Next.js 開発: 既定 3000
-- Workers プレビュー: 既定 8787（`bun run preview`）
+- vinext 開発: 既定 8787（`bun run dev`）
 - 生成間隔: 10分ごと（`NEXT_PUBLIC_GENERATION_INTERVAL_MS=600000`）
 
 ## よく使うコマンド（package.json）
@@ -109,8 +108,8 @@ updated: 2026-03-13
 # 開発（Next.js）
 bun run dev
 
-# Cloudflare Web Worker dry-run + ローカル preview
-bun run build:cf && bun run preview
+# Cloudflare Web Worker dry-run
+bun run build:cf
 
 # Cron ローカル監視
 bun run watch-cron

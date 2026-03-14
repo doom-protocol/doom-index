@@ -23,7 +23,7 @@ DOOM INDEX は、CoinGecko から取得したトレンドトークンの市場�
 - **型安全な API 通信（tRPC v11）** - エンドツーエンドの型安全性を実現
 - **Solana NFT ミント機能** - Doom NFT program と Arweave メタデータ/GLB ストレージによるオンチェーン NFT 発行
 - CLI ツールによるローカル生成・検証（`scripts/gen-img.ts`）
-- ローカル開発用のスケジュール実行・プレビュー（Workers Preview + Cron）
+- ローカル開発用のスケジュール実行（Cron）
 - **Cloudflare Cache API 統合** - Edge キャッシュによるレイテンシ低減とコスト最適化
 
 ## 代表的なユースケース
