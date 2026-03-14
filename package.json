@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "bunx vinext dev --port 8787",
     "build": "bunx --bun vinext build",
+    "build:cf": "bun run build",
     "start": "bunx vinext start --port 8787",
     "lint": "eslint . --cache --cache-location .cache/eslint/.eslintcache --cache-strategy content",
     "lint:fix": "eslint . --fix --cache --cache-location .cache/eslint/.eslintcache --cache-strategy content",
