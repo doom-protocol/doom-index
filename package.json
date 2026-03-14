@@ -17,7 +17,7 @@
     "test": "bun test --env-file=.example.vars --preload=./tests/preload.ts",
     "test:unit": "bun test --env-file=.example.vars --grep 'unit' --preload=./tests/preload.ts",
     "test:integration": "bun test --env-file=.example.vars --grep 'integration' --preload=./tests/preload.ts",
-    "cf-typegen": "wrangler types --config wrangler.jsonc --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "cf-typegen": "wrangler types --config wrangler.jsonc --env-interface CloudflareEnv src/types/cloudflare-env.d.ts",
     "generate:img": "bun --env-file=.dev.vars scripts/gen-img.ts",
     "generate:framed-glb": "bun scripts/generate-framed-glb.ts",
     "watch-cron": "bun scripts/watch-cron.ts",

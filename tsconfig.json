@@ -22,7 +22,13 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["./cloudflare-env.d.ts", "./src/types/mdx.d.ts", "bun-types", "node", "@testing-library/jest-dom"]
+    "types": [
+      "./src/types/cloudflare-env.d.ts",
+      "./src/types/mdx.d.ts",
+      "bun-types",
+      "node",
+      "@testing-library/jest-dom"
+    ]
   },
   "include": [
     "next-env.d.ts",

@@ -5,8 +5,8 @@ import { getBaseUrl } from "@/utils/url";
  * Combines ImageTransform fields (width, height, fit, sharpen) with
  * ImageOutputOptions fields (quality) plus client-side extras (dpr, format with "auto").
  *
- * @see ImageTransform - from cloudflare-env.d.ts (IMAGES binding)
- * @see ImageOutputOptions - from cloudflare-env.d.ts (IMAGES binding)
+ * @see ImageTransform - from src/types/cloudflare-env.d.ts (IMAGES binding)
+ * @see ImageOutputOptions - from src/types/cloudflare-env.d.ts (IMAGES binding)
  */
 export interface CloudflareImageOptions
   extends Pick<ImageTransform, "width" | "height" | "fit" | "sharpen">, Pick<ImageOutputOptions, "quality"> {

@@ -60,6 +60,7 @@ const config = defineConfig([
       ".moltworker/**",
       ".wrangler/**",
       ".claude/**",
+      "src/types/cloudflare-env.d.ts",
       "wt-*/**",
     ],
   },
