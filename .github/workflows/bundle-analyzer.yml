@@ -39,14 +39,14 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build Worker package
-        run: bun --env-file=.env.example run build:cf
+        run: bun --env-file=.env.example run build
 
       - name: Summarize vinext server output
         run: |
           {
             echo "## vinext Worker build"
             echo
-            echo "- build: \`bun run build:cf\`"
+            echo "- build: \`bun run build\`"
             echo "- deploy artifact: \`dist/server/wrangler.json\`"
             echo "- largest server modules:"
             find dist/server -type f -name '*.js' -printf '%s %p\n' | sort -nr | head -20 | awk '{printf "  - %s bytes %s\n", $1, $2}'
