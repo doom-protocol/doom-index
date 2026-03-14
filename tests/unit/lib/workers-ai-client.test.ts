@@ -1,7 +1,71 @@
-import type { JsonGenerationRequest, TextGenerationRequest } from "@/lib/workers-ai-client";
-import { createWorkersAiClient } from "@/lib/workers-ai-client";
 import type { Ai, AiModels, AiTextGenerationOutput } from "@cloudflare/workers-types";
 import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+
+interface TextGenerationRequest {
+  model?: keyof AiModels;
+  systemPrompt: string;
+  userPrompt: string;
+}
+
+interface JsonGenerationRequest<_T> extends TextGenerationRequest {}
+
+interface WorkersAiTextResult {
+  modelId: keyof AiModels;
+  text: string;
+}
+
+interface WorkersAiJsonResult<T> {
+  modelId?: keyof AiModels;
+  value: T;
+}
+
+interface WorkersAiError {
+  message: string;
+  missingVar?: string;
+  provider?: string;
+  rawValue?: string;
+  timeoutMs?: number;
+  type: "ConfigurationError" | "ExternalApiError" | "ParsingError" | "TimeoutError";
+}
+
+interface TestOkResult<T> {
+  error?: never;
+  isErr: () => this is TestErrResult;
+  isOk: () => this is TestOkResult<T>;
+  value: T;
+}
+
+interface TestErrResult {
+  error: WorkersAiError;
+  isErr: () => this is TestErrResult;
+  isOk: () => this is TestOkResult<never>;
+  value?: never;
+}
+
+type TestResult<T> = TestOkResult<T> | TestErrResult;
+
+interface WorkersAiClientModule {
+  createWorkersAiClient: (deps?: { aiBinding?: Ai; defaultModel?: keyof AiModels; timeoutMs?: number }) => {
+    generateJson: <T>(input: JsonGenerationRequest<T>) => Promise<TestResult<WorkersAiJsonResult<T>>>;
+    generateText: (input: TextGenerationRequest) => Promise<TestResult<WorkersAiTextResult>>;
+  };
+}
+
+function mockCloudflareEmptyEnv() {
+  void mock.module("@opennextjs/cloudflare", () => ({
+    getCloudflareContext: async (_options?: { async?: boolean }) => Promise.resolve({ env: {} }),
+  }));
+}
+
+async function importWorkersAiClient(): Promise<WorkersAiClientModule> {
+  mock.restore();
+  mockCloudflareEmptyEnv();
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/lib/workers-ai-client.ts"));
+  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+  return (await import(moduleUrl.href)) as WorkersAiClientModule;
+}
 
 /**
  * Create a mock AI binding that satisfies the Ai interface
@@ -32,6 +96,9 @@ describe("WorkersAiClient", () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
+    mock.restore();
+    mockCloudflareEmptyEnv();
+
     // Create mock run function
     mockRun = mock(async () => Promise.resolve({ response: "Generated text" }));
 
@@ -46,10 +113,10 @@ describe("WorkersAiClient", () => {
 
   describe("generateText", () => {
     it("should generate text successfully with explicit model ID", async () => {
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
       const request: TextGenerationRequest = {
-        modelId: "@cf/meta/llama-3-8b-instruct",
+        model: "@cf/meta/llama-3-8b-instruct",
         systemPrompt: "You are a helpful assistant.",
         userPrompt: "Say hello",
       };
@@ -65,7 +132,7 @@ describe("WorkersAiClient", () => {
     });
 
     it("should use default model ID when not specified", async () => {
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
       const request: TextGenerationRequest = {
         systemPrompt: "You are a helpful assistant.",
@@ -83,7 +150,7 @@ describe("WorkersAiClient", () => {
     it("should return ExternalApiError when AI binding throws error", async () => {
       const errorMock = mock(async () => Promise.reject(new Error("Network error")));
       mockAiBinding = createMockAiBinding(errorMock);
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
       const request: TextGenerationRequest = {
         systemPrompt: "You are a helpful assistant.",
@@ -101,7 +168,7 @@ describe("WorkersAiClient", () => {
 
     it("should use hardcoded default model when environment variable is not set", async () => {
       delete process.env.WORKERS_AI_DEFAULT_MODEL;
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
       const request: TextGenerationRequest = {
         systemPrompt: "You are a helpful assistant.",
@@ -128,8 +195,8 @@ describe("WorkersAiClient", () => {
           ),
       );
       mockAiBinding = createMockAiBinding(timeoutMock);
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({
-        // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
         aiBinding: mockAiBinding,
         timeoutMs: 500,
       });
@@ -166,7 +233,7 @@ describe("WorkersAiClient", () => {
       // Cast to AiTextGenerationOutput since our client now handles both formats
       const openAiMock = mock(async () => Promise.resolve(openAiResponse as unknown as AiTextGenerationOutput));
       mockAiBinding = createMockAiBinding(openAiMock);
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
       const request: TextGenerationRequest = {
         systemPrompt: "You are a helpful assistant.",
@@ -193,7 +260,7 @@ describe("WorkersAiClient", () => {
       };
       const jsonMock = mock(async () => Promise.resolve({ response: JSON.stringify(jsonResponse) }));
       mockAiBinding = createMockAiBinding(jsonMock);
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
       const request: JsonGenerationRequest<{
         short_context: string;
@@ -215,7 +282,7 @@ describe("WorkersAiClient", () => {
     it("should return ParsingError when response is not valid JSON", async () => {
       const invalidJsonMock = mock(async () => Promise.resolve({ response: "Not JSON text" }));
       mockAiBinding = createMockAiBinding(invalidJsonMock);
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
       const request: JsonGenerationRequest<unknown> = {
         systemPrompt: "Return JSON only.",
@@ -239,7 +306,7 @@ describe("WorkersAiClient", () => {
       const wrappedResponse = "```json\n" + JSON.stringify(jsonResponse) + "\n```";
       const markdownMock = mock(async () => Promise.resolve({ response: wrappedResponse }));
       mockAiBinding = createMockAiBinding(markdownMock);
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
       const request: JsonGenerationRequest<unknown> = {
         systemPrompt: "Return JSON only.",
@@ -263,7 +330,7 @@ describe("WorkersAiClient", () => {
       const wrappedResponse = "Here is the JSON:\n" + JSON.stringify(jsonResponse) + "\nThat's it.";
       const textWrappedMock = mock(async () => Promise.resolve({ response: wrappedResponse }));
       mockAiBinding = createMockAiBinding(textWrappedMock);
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
       const request: JsonGenerationRequest<unknown> = {
         systemPrompt: "Return JSON only.",
@@ -283,7 +350,7 @@ describe("WorkersAiClient", () => {
       const incompleteJson = '{"short_context": "Test", "category":';
       const incompleteMock = mock(async () => Promise.resolve({ response: incompleteJson }));
       mockAiBinding = createMockAiBinding(incompleteMock);
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
       const request: JsonGenerationRequest<unknown> = {
         systemPrompt: "Return JSON only.",
@@ -303,7 +370,7 @@ describe("WorkersAiClient", () => {
       const malformedJson = '{"short_context": "Test", "category": "test",,}';
       const malformedMock = mock(async () => Promise.resolve({ response: malformedJson }));
       mockAiBinding = createMockAiBinding(malformedMock);
-      // @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+      const { createWorkersAiClient } = await importWorkersAiClient();
       const client = createWorkersAiClient({ aiBinding: mockAiBinding });
       const request: JsonGenerationRequest<unknown> = {
         systemPrompt: "Return JSON only.",

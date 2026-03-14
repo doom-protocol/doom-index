@@ -5,12 +5,30 @@
  * These tests require ENABLE_EXTERNAL_API_TESTS=true and AI binding.
  */
 
-import type { JsonGenerationRequest, TextGenerationRequest } from "@/lib/workers-ai-client";
-import { createWorkersAiClient } from "@/lib/workers-ai-client";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { beforeEach, describe, expect, it } from "bun:test";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const ENABLE_EXTERNAL_API_TESTS = process.env.ENABLE_EXTERNAL_API_TESTS === "true";
+
+type WorkersAiClientModule = typeof import("@/lib/workers-ai-client");
+
+async function getCloudflareContextFn() {
+  try {
+    const cloudflareModule = await import("@opennextjs/cloudflare");
+    return "getCloudflareContext" in cloudflareModule && typeof cloudflareModule.getCloudflareContext === "function"
+      ? cloudflareModule.getCloudflareContext
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+async function importWorkersAiClientModule(): Promise<WorkersAiClientModule> {
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/lib/workers-ai-client.ts"));
+  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+  return (await import(moduleUrl.href)) as WorkersAiClientModule;
+}
 
 // Helper to check if AI binding is available
 async function isAiBindingAvailable(): Promise<boolean> {
@@ -19,6 +37,10 @@ async function isAiBindingAvailable(): Promise<boolean> {
   }
 
   try {
+    const getCloudflareContext = await getCloudflareContextFn();
+    if (!getCloudflareContext) {
+      return false;
+    }
     const { env } = await getCloudflareContext({ async: true });
     const binding = env.AI;
     return !!binding;
@@ -41,8 +63,9 @@ describe("WorkersAiClient Integration (External API)", () => {
         return;
       }
 
+      const { createWorkersAiClient } = await importWorkersAiClientModule();
       const client = createWorkersAiClient();
-      const request: TextGenerationRequest = {
+      const request = {
         systemPrompt: "You are a helpful assistant. Respond concisely.",
         userPrompt: "What is the capital of France? Answer in one word.",
       };
@@ -71,9 +94,10 @@ describe("WorkersAiClient Integration (External API)", () => {
         return;
       }
 
+      const { createWorkersAiClient } = await importWorkersAiClientModule();
       // Use a very short timeout to test timeout handling
       const client = createWorkersAiClient({ timeoutMs: 1 });
-      const request: TextGenerationRequest = {
+      const request = {
         systemPrompt: "You are a helpful assistant.",
         userPrompt: "Say hello",
       };
@@ -98,12 +122,9 @@ describe("WorkersAiClient Integration (External API)", () => {
           return;
         }
 
+        const { createWorkersAiClient } = await importWorkersAiClientModule();
         const client = createWorkersAiClient();
-        const request: JsonGenerationRequest<{
-          short_context: string;
-          category: string;
-          tags: string[];
-        }> = {
+        const request = {
           systemPrompt:
             "You are a cryptocurrency token analyst. Generate a JSON response with short_context (2-4 sentences), category (single word), and tags (array of 2-5 strings).",
           userPrompt: "Analyze Bitcoin (BTC). Generate token context JSON.",
@@ -153,9 +174,10 @@ describe("WorkersAiClient Integration (External API)", () => {
         return;
       }
 
+      const { createWorkersAiClient } = await importWorkersAiClientModule();
       const client = createWorkersAiClient();
       // Request that might return invalid JSON
-      const request: JsonGenerationRequest<unknown> = {
+      const request = {
         systemPrompt: "You are a helpful assistant. Respond with plain text, not JSON.",
         userPrompt: "Say hello",
       };

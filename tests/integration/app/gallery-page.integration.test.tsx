@@ -14,6 +14,8 @@ import "../../preload";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, mock } from "bun:test";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { JSX } from "react";
 import {
   createUrlMock,
@@ -30,23 +32,7 @@ import {
   createUseSolanaWalletMock,
 } from "../../mocks";
 
-import Page from "@/app/page";
-
-// Setup mocks before importing modules
-void mock.module("@/utils/url", createUrlMock());
-
 const { mockFactory: loggerMockFactory } = createLoggerMockFactory();
-void mock.module("@/utils/logger", loggerMockFactory);
-
-void mock.module("@/env", createEnvMock());
-void mock.module("use-haptic", createUseHapticMock());
-void mock.module("use-sound", createUseSoundMock());
-void mock.module("@/lib/analytics", createAnalyticsMock());
-void mock.module("sonner", createSonnerMock());
-void mock.module("@/hooks/use-viewer", createUseViewerMock());
-void mock.module("@/lib/viewer-count-store", createViewerCountStoreMock());
-void mock.module("@/hooks/use-transformed-texture-url", createUseTransformedTextureUrlMock());
-void mock.module("@/hooks/use-safe-texture", createUseSafeTextureMock());
 
 // Create mock function for use-latest-painting that can be configured per-test
 let mockUseLatestPaintingFn: ReturnType<typeof mock> | null = null;
@@ -66,14 +52,6 @@ const latestPaintingHook = (): LatestPaintingHookResult => {
   } as LatestPaintingHookResult;
 };
 const latestPaintingRefetch = () => async () => Promise.resolve(undefined);
-void mock.module("@/hooks/use-latest-painting", () => ({
-  ...realUseLatestPainting,
-  useLatestPainting: latestPaintingHook,
-  useLatestPaintingRefetch: latestPaintingRefetch,
-}));
-
-// Mock useSolanaWallet at module level
-void mock.module("@/hooks/use-solana-wallet", createUseSolanaWalletMock());
 
 // Mock server caller to avoid Cloudflare context dependency in tests
 const mockCallerResult = {
@@ -84,14 +62,44 @@ const mockCallerResult = {
     },
   },
 };
-void mock.module("@/server/trpc/server-caller", () => ({
-  createStaticServerCaller: async () => {
-    await Promise.resolve();
-    return mockCallerResult;
-  },
-}));
+
+type GalleryPageModule = typeof import("@/app/page");
+
+function registerGalleryPageMocks() {
+  void mock.module("@/utils/url", createUrlMock());
+  void mock.module("@/utils/logger", loggerMockFactory);
+  void mock.module("@/env", createEnvMock());
+  void mock.module("use-haptic", createUseHapticMock());
+  void mock.module("use-sound", createUseSoundMock());
+  void mock.module("@/lib/analytics", createAnalyticsMock());
+  void mock.module("sonner", createSonnerMock());
+  void mock.module("@/hooks/use-viewer", createUseViewerMock());
+  void mock.module("@/lib/viewer-count-store", createViewerCountStoreMock());
+  void mock.module("@/hooks/use-transformed-texture-url", createUseTransformedTextureUrlMock());
+  void mock.module("@/hooks/use-safe-texture", createUseSafeTextureMock());
+  void mock.module("@/hooks/use-latest-painting", () => ({
+    ...realUseLatestPainting,
+    useLatestPainting: latestPaintingHook,
+    useLatestPaintingRefetch: latestPaintingRefetch,
+  }));
+  void mock.module("@/hooks/use-solana-wallet", createUseSolanaWalletMock());
+  void mock.module("@/server/trpc/server-caller", () => ({
+    createStaticServerCaller: async () => {
+      await Promise.resolve();
+      return mockCallerResult;
+    },
+  }));
+}
+
+async function importGalleryPageModule(): Promise<GalleryPageModule> {
+  registerGalleryPageMocks();
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/app/page.tsx"));
+  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+  return (await import(moduleUrl.href)) as GalleryPageModule;
+}
 
 const renderGalleryPage = async () => {
+  const { default: Page } = await importGalleryPageModule();
   const pageFactory = Page as unknown as () => Promise<JSX.Element>;
   const result = await pageFactory();
   return result;
@@ -218,6 +226,8 @@ describe("Gallery Page Integration", () => {
   let mockUseLatestPainting: ReturnType<typeof mock>;
 
   beforeEach(() => {
+    mock.restore();
+    registerGalleryPageMocks();
     queryClient = createTestQueryClient();
     mockUseLatestPainting = mock(() => ({
       data: null,
@@ -230,6 +240,7 @@ describe("Gallery Page Integration", () => {
   });
 
   afterEach(() => {
+    mockUseLatestPaintingFn = null;
     mock.restore();
   });
 

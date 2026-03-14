@@ -5,14 +5,12 @@ import { Lights } from "@/components/gallery/lights";
 import { useEscapeKey } from "@/hooks/use-click-outside";
 import { sendGAEvent } from "@/lib/analytics";
 import type { Painting } from "@/types/paintings";
-import { Stats } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
 import { ACESFilmicToneMapping, Vector3 } from "three";
 import { useHaptic } from "use-haptic";
 import { ArchiveFramedPainting } from "./archive-framed-painting";
-import { isDevelopment } from "@/env";
 
 interface ArchiveDetailViewProps {
   item: Painting;
@@ -23,8 +21,6 @@ const DETAIL_FRAME_POSITION: [number, number, number] = [0, 0.8, 4.0];
 const INITIAL_CAMERA_POSITION: [number, number, number] = [0, 0.8, 0.8];
 const ZOOMED_CAMERA_POSITION: [number, number, number] = [0, 0.8, 2.5];
 const CAMERA_LERP_FACTOR = 0.05;
-
-const isDevMode = isDevelopment();
 
 // Camera animation component
 interface CameraAnimationProps {
@@ -170,12 +166,11 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
           }}
         >
           <CameraAnimation isZoomingOut={isClosing} />
-          <Lights />
+          <Lights disableDevControls />
           <GalleryRoom />
           <Suspense fallback={null}>
             <ArchiveFramedPainting item={item} framePosition={DETAIL_FRAME_POSITION} />
           </Suspense>
-          {isDevMode && <Stats />}
         </Canvas>
       </div>
 

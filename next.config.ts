@@ -1,8 +1,8 @@
 import createMDX from "@next/mdx";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import type { NextConfig } from "next";
-import withRspack from "next-rspack";
 import { resolve as resolvePath } from "node:path";
+import { buildArweaveGatewayBaseUrls } from "./src/lib/pure/arweave-gateway";
 
 interface MutableWebpackConfig {
   optimization?: {
@@ -38,6 +38,9 @@ const serverBundleStubbedModules = [
 
 const isNextDev = process.env.npm_lifecycle_event === "dev" || process.argv[2] === "dev";
 const isCloudflareBuild = process.env.npm_lifecycle_event === "build:cf";
+const arweaveGatewayUrls = buildArweaveGatewayBaseUrls({
+  preferredGatewayBaseUrl: process.env.ARWEAVE_GATEWAY_BASE_URL,
+});
 
 function customizeWebpack(config: MutableWebpackConfig, { isServer }: { isServer: boolean }): MutableWebpackConfig {
   config.resolve ??= {};
@@ -100,8 +103,15 @@ const nextConfig: NextConfig = {
   },
   pageExtensions: ["ts", "tsx", "mdx"],
   images: {
-    loader: "custom",
-    loaderFile: "./src/lib/image-loader.ts",
+    remotePatterns: arweaveGatewayUrls.map((gatewayUrl) => {
+      const parsedGatewayUrl = new URL(gatewayUrl);
+
+      return {
+        protocol: parsedGatewayUrl.protocol === "https:" ? "https" : "http",
+        hostname: parsedGatewayUrl.hostname,
+        pathname: "/**",
+      };
+    }),
   },
   typedRoutes: true,
   typescript: {
@@ -113,7 +123,7 @@ const nextConfig: NextConfig = {
 const withMDX = createMDX();
 const configWithMDX = withMDX(nextConfig);
 
-export default isNextDev ? configWithMDX : withRspack(configWithMDX);
+export default configWithMDX;
 
 // `initOpenNextCloudflareForDev()` is only for local `next dev`.
 // Tying it to a localhost public URL makes CI/production builds try to open Wrangler dev bindings.

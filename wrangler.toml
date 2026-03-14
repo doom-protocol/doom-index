@@ -7,11 +7,7 @@ workers_dev = true
 preview_urls = true
 
 compatibility_date = "2025-03-25"
-compatibility_flags = [
- "nodejs_compat",
- "nodejs_compat_populate_process_env",
- "global_fetch_strictly_public",
-]
+compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env", "global_fetch_strictly_public"]
 
 # This cause the redundant build when using opennextjs-cloudflare build in local
 # [build]
@@ -111,7 +107,7 @@ LOG_LEVEL = "DEBUG"
 NEXTJS_ENV = "development"
 NEXT_PUBLIC_BASE_URL = "http://localhost:8787"
 IMAGE_MODEL = "runware:400@1"
-NEXT_PUBLIC_GENERATION_INTERVAL_MS = "600000"  # 10 minutes
+NEXT_PUBLIC_GENERATION_INTERVAL_MS = "600000" # 10 minutes
 ARWEAVE_GATEWAY_BASE_URL = "https://permagate.io"
 
 [[env.dev.r2_buckets]]

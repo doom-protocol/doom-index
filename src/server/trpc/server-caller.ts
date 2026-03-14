@@ -1,3 +1,5 @@
+import "server-only"; // <-- ensure this file cannot be imported from the client
+
 import { appRouter } from "./routers/_app";
 import { createServerContext, createStaticServerContext } from "./context";
 import { createCallerFactory } from "./trpc";

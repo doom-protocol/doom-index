@@ -1,19 +1,30 @@
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
-import { createContext, createStaticServerContext } from "@/server/trpc/context";
+type TrpcContextModule = typeof import("@/server/trpc/context");
 
-// Mock must be set up before importing createContext so getCloudflareContext
-// is replaced when the module is evaluated
-void mock.module("@opennextjs/cloudflare", () => ({
-  getCloudflareContext: () => {
-    throw new Error("Cloudflare context not available");
-  },
-}));
+function mockCloudflareContextUnavailable() {
+  void mock.module("@opennextjs/cloudflare", () => ({
+    getCloudflareContext: (_options?: { async?: boolean }) => {
+      throw new Error("Cloudflare context not available");
+    },
+  }));
+}
+
+async function importTrpcContextModule(): Promise<TrpcContextModule> {
+  mock.restore();
+  mockCloudflareContextUnavailable();
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/server/trpc/context.ts"));
+  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+  return (await import(moduleUrl.href)) as TrpcContextModule;
+}
 
 describe("Context Creator", () => {
   beforeEach(() => {
-    // Cloudflare contextのモックをリセット
+    mock.restore();
+    mockCloudflareContextUnavailable();
   });
 
   afterEach(() => {
@@ -21,6 +32,7 @@ describe("Context Creator", () => {
   });
 
   it("should create context with headers", async () => {
+    const { createContext: makeTrpcContext } = await importTrpcContextModule();
     const mockReq = new Request("http://localhost", {
       headers: {
         "user-agent": "test-agent",
@@ -33,14 +45,15 @@ describe("Context Creator", () => {
       info: {} as unknown as FetchCreateContextFnOptions["info"],
     };
 
-    const TestAppContext = await createContext(opts);
+    const result = await makeTrpcContext(opts);
 
-    expect(TestAppContext.headers).toBeDefined();
-    expect(TestAppContext.logger).toBeDefined();
-    expect(TestAppContext.headers.get("user-agent")).toBe("test-agent");
+    expect(result.headers).toBeDefined();
+    expect(result.logger).toBeDefined();
+    expect(result.headers.get("user-agent")).toBe("test-agent");
   });
 
   it("should handle Cloudflare context unavailable gracefully", async () => {
+    const { createContext: makeTrpcContext } = await importTrpcContextModule();
     const mockReq = new Request("http://localhost");
     const opts: FetchCreateContextFnOptions = {
       req: mockReq,
@@ -48,19 +61,20 @@ describe("Context Creator", () => {
       info: {} as unknown as FetchCreateContextFnOptions["info"],
     };
 
-    const TestAppContext = await createContext(opts);
+    const result = await makeTrpcContext(opts);
 
-    expect(TestAppContext.headers).toBeDefined();
-    expect(TestAppContext.logger).toBeDefined();
-    expect(TestAppContext.kvNamespace).toBeUndefined();
+    expect(result.headers).toBeDefined();
+    expect(result.logger).toBeDefined();
+    expect(result.kvNamespace).toBeUndefined();
   });
 
   it("should create static server context without request headers", async () => {
-    const testAppContext = await createStaticServerContext();
+    const { createStaticServerContext } = await importTrpcContextModule();
+    const result = await createStaticServerContext();
 
-    expect(testAppContext.headers).toBeDefined();
-    expect(testAppContext.headers.get("user-agent")).toBeNull();
-    expect(testAppContext.logger).toBeDefined();
-    expect(testAppContext.kvNamespace).toBeUndefined();
+    expect(result.headers).toBeDefined();
+    expect(result.headers.get("user-agent")).toBeNull();
+    expect(result.logger).toBeDefined();
+    expect(result.kvNamespace).toBeUndefined();
   });
 });

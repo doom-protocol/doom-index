@@ -105,7 +105,9 @@ export class MarketDataService {
       logger.info(`[MarketDataService] Stored market snapshot for ${hourBucket}`);
       return ok(undefined);
     } catch (error) {
-      logger.error(`[MarketDataService] Failed to store market snapshot for ${hourBucket}`, { error });
+      logger.error(`[MarketDataService] Failed to store market snapshot for ${hourBucket}`, {
+        error,
+      });
       return err({
         type: "StorageError" as const,
         op: "put" as const,

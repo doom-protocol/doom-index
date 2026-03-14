@@ -168,7 +168,9 @@ import type { AppError } from "@/src/services/errors";
 
 export async function fetchPriceUsdByToken(address: string): Promise<Result<number, AppError>> {
   try {
-    const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`, { cache: "no-store" });
+    const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`, {
+      cache: "no-store",
+    });
     if (!res.ok)
       return err({
         type: "ExternalApiError",

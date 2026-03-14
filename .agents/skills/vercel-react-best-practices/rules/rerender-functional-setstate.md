@@ -25,7 +25,7 @@ function TodoList() {
 
   // Risk of stale closure if dependency is forgotten
   const removeItem = useCallback((id: string) => {
-    setItems(items.filter(item => item.id !== id));
+    setItems(items.filter((item) => item.id !== id));
   }, []); // ❌ Missing items dependency - will use stale items!
 
   return <ItemsEditor items={items} onAdd={addItems} onRemove={removeItem} />;
@@ -42,12 +42,12 @@ function TodoList() {
 
   // Stable callback, never recreated
   const addItems = useCallback((newItems: Item[]) => {
-    setItems(curr => [...curr, ...newItems]);
+    setItems((curr) => [...curr, ...newItems]);
   }, []); // ✅ No dependencies needed
 
   // Always uses latest state, no stale closure risk
   const removeItem = useCallback((id: string) => {
-    setItems(curr => curr.filter(item => item.id !== id));
+    setItems((curr) => curr.filter((item) => item.id !== id));
   }, []); // ✅ Safe and stable
 
   return <ItemsEditor items={items} onAdd={addItems} onRemove={removeItem} />;

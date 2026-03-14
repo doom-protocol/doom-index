@@ -1,8 +1,10 @@
 "use client";
 
 import { ProgressiveImage } from "@/components/ui/progressive-image";
+import { getArchiveImageSources } from "@/lib/archive-image-sources";
 import type { ResponsiveSizes } from "@/types/domain";
 import type { Painting } from "@/types/paintings";
+import { useMemo } from "react";
 import type { FC } from "react";
 import { PaintingSkeleton } from "./painting-item-skeleton";
 
@@ -16,10 +18,12 @@ const ARCHIVE_GRID_SIZES: ResponsiveSizes = [
 
 interface PaintingProps {
   item: Painting;
+  loading?: "eager" | "lazy";
   onClick?: () => void;
 }
 
-export const PaintingComponent: FC<PaintingProps> = ({ item, onClick }) => {
+export const PaintingComponent: FC<PaintingProps> = ({ item, loading, onClick }) => {
+  const imageSources = useMemo(() => getArchiveImageSources(item.imageUrl), [item.imageUrl]);
   const timeLabel = (() => {
     const date = new Date(item.timestamp);
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -49,9 +53,11 @@ export const PaintingComponent: FC<PaintingProps> = ({ item, onClick }) => {
       </div>
       <ProgressiveImage
         src={item.imageUrl}
+        sources={imageSources}
         alt={`Archive item ${item.id}`}
         fill
         sizes={ARCHIVE_GRID_SIZES}
+        loading={loading}
         className="object-cover transition-opacity"
         skeleton={<PaintingSkeleton />}
         logContext={{

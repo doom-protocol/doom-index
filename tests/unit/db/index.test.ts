@@ -1,17 +1,24 @@
 import { describe, expect, it, mock } from "bun:test";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
-let cloudflareEnv: { DB?: D1Database } = {};
+interface DbIndexModule {
+  getDB: (d1Binding?: D1Database) => Promise<unknown>;
+}
 
-void mock.module("@opennextjs/cloudflare", () => ({
-  getCloudflareContext: async (_options?: { async?: boolean }) => Promise.resolve({ env: cloudflareEnv }),
-}));
+async function importDbIndex(): Promise<DbIndexModule> {
+  mock.restore();
+  void mock.module("@opennextjs/cloudflare", () => ({
+    getCloudflareContext: async () => Promise.resolve({ env: {} }),
+  }));
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/server/db/index.ts"));
+  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+  return (await import(moduleUrl.href)) as DbIndexModule;
+}
 
 describe("getDB", () => {
   it("throws a clear error when the DB binding is missing from Cloudflare context", async () => {
-    cloudflareEnv = {};
-
-    const { getDB, resetDBForTests } = await import("@/server/db/index");
-    resetDBForTests();
+    const { getDB } = await importDbIndex();
 
     let thrown: unknown;
     try {

@@ -21,18 +21,18 @@ npm install @metaplex-foundation/mpl-token-metadata-kit @solana/kit
 ## Basic Setup
 
 ```typescript
-import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/kit';
-import { generateKeyPairSigner, createKeyPairSignerFromBytes } from '@solana/signers';
-import fs from 'fs';
+import { createSolanaRpc, createSolanaRpcSubscriptions } from "@solana/kit";
+import { generateKeyPairSigner, createKeyPairSignerFromBytes } from "@solana/signers";
+import fs from "fs";
 
-const rpc = createSolanaRpc('https://api.devnet.solana.com');
-const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com");
 
 // Generate a new random keypair
 const newKeypair = await generateKeyPairSigner();
 
 // Or load from file (Node.js scripts)
-const secretKey = new Uint8Array(JSON.parse(fs.readFileSync('/path/to/keypair.json', 'utf-8')));
+const secretKey = new Uint8Array(JSON.parse(fs.readFileSync("/path/to/keypair.json", "utf-8")));
 const authority = await createKeyPairSignerFromBytes(secretKey);
 ```
 
@@ -43,8 +43,8 @@ const authority = await createKeyPairSignerFromBytes(secretKey);
 ### Convenience Helpers (Recommended)
 
 ```typescript
-import { createNft, createProgrammableNft, createFungible } from '@metaplex-foundation/mpl-token-metadata-kit';
-import { generateKeyPairSigner } from '@solana/signers';
+import { createNft, createProgrammableNft, createFungible } from "@metaplex-foundation/mpl-token-metadata-kit";
+import { generateKeyPairSigner } from "@solana/signers";
 
 const mint = await generateKeyPairSigner();
 const authority = await generateKeyPairSigner();
@@ -54,9 +54,9 @@ const [createIx, mintIx] = await createNft({
   mint,
   authority,
   payer: authority,
-  name: 'My NFT',
-  uri: 'https://example.com/nft.json',
-  sellerFeeBasisPoints: 550,  // 5.5%
+  name: "My NFT",
+  uri: "https://example.com/nft.json",
+  sellerFeeBasisPoints: 550, // 5.5%
 });
 
 // pNFT — returns [createIx, mintIx]
@@ -64,8 +64,8 @@ const [createIx, mintIx] = await createProgrammableNft({
   mint,
   authority,
   payer: authority,
-  name: 'My pNFT',
-  uri: 'https://example.com/pnft.json',
+  name: "My pNFT",
+  uri: "https://example.com/pnft.json",
   sellerFeeBasisPoints: 500,
 });
 
@@ -73,9 +73,9 @@ const [createIx, mintIx] = await createProgrammableNft({
 const createIx = await createFungible({
   mint,
   payer: authority,
-  name: 'My Token',
-  symbol: 'MTK',
-  uri: 'https://arweave.net/xxx',
+  name: "My Token",
+  symbol: "MTK",
+  uri: "https://arweave.net/xxx",
   sellerFeeBasisPoints: 0,
   decimals: 9,
 });
@@ -86,15 +86,15 @@ Also available: `createFungibleAsset()` for semi-fungible tokens.
 ### Low-Level: Async Version (Auto-resolves PDAs)
 
 ```typescript
-import { getCreateV1InstructionAsync, TokenStandard } from '@metaplex-foundation/mpl-token-metadata-kit';
+import { getCreateV1InstructionAsync, TokenStandard } from "@metaplex-foundation/mpl-token-metadata-kit";
 
 const createIx = await getCreateV1InstructionAsync({
   mint,
   authority,
   payer: authority,
-  name: 'My NFT',
-  uri: 'https://example.com/nft.json',
-  sellerFeeBasisPoints: 550,  // 5.5%
+  name: "My NFT",
+  uri: "https://example.com/nft.json",
+  sellerFeeBasisPoints: 550, // 5.5%
   tokenStandard: TokenStandard.NonFungible,
 });
 ```
@@ -102,7 +102,11 @@ const createIx = await getCreateV1InstructionAsync({
 ### Low-Level: Sync Version (Provide all addresses)
 
 ```typescript
-import { getCreateV1Instruction, findMetadataPda, findMasterEditionPda } from '@metaplex-foundation/mpl-token-metadata-kit';
+import {
+  getCreateV1Instruction,
+  findMetadataPda,
+  findMasterEditionPda,
+} from "@metaplex-foundation/mpl-token-metadata-kit";
 
 const metadataPda = await findMetadataPda({ mint: mint.address });
 const editionPda = await findMasterEditionPda({ mint: mint.address });
@@ -113,8 +117,8 @@ const createIx = getCreateV1Instruction({
   mint,
   authority,
   payer: authority,
-  name: 'My NFT',
-  uri: 'https://example.com/nft.json',
+  name: "My NFT",
+  uri: "https://example.com/nft.json",
   sellerFeeBasisPoints: 550,
   tokenStandard: TokenStandard.NonFungible,
 });
@@ -125,7 +129,7 @@ const createIx = getCreateV1Instruction({
 ## Transfers
 
 ```typescript
-import { getTransferV1InstructionAsync, TokenStandard } from '@metaplex-foundation/mpl-token-metadata-kit';
+import { getTransferV1InstructionAsync, TokenStandard } from "@metaplex-foundation/mpl-token-metadata-kit";
 
 // Regular NFT
 const transferIx = await getTransferV1InstructionAsync({
@@ -155,15 +159,15 @@ const transferIx = await getTransferV1InstructionAsync({
 ## Transaction Flow
 
 ```typescript
-import { pipe } from '@solana/functional';
+import { pipe } from "@solana/functional";
 import {
   createTransactionMessage,
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
   appendTransactionMessageInstructions,
-} from '@solana/transaction-messages';
-import { compileTransaction, signTransaction, assertIsTransactionWithBlockhashLifetime } from '@solana/transactions';
-import { sendAndConfirmTransactionFactory } from '@solana/kit';
+} from "@solana/transaction-messages";
+import { compileTransaction, signTransaction, assertIsTransactionWithBlockhashLifetime } from "@solana/transactions";
+import { sendAndConfirmTransactionFactory } from "@solana/kit";
 
 // Create send function
 const sendAndConfirm = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
@@ -183,7 +187,7 @@ const transactionMessage = pipe(
 const transaction = compileTransaction(transactionMessage);
 assertIsTransactionWithBlockhashLifetime(transaction);
 const signedTx = await signTransaction([mint.keyPair, authority.keyPair], transaction);
-await sendAndConfirm(signedTx, { commitment: 'confirmed' });
+await sendAndConfirm(signedTx, { commitment: "confirmed" });
 ```
 
 ---
@@ -191,7 +195,7 @@ await sendAndConfirm(signedTx, { commitment: 'confirmed' });
 ## PDAs
 
 ```typescript
-import { findMetadataPda, findMasterEditionPda, findTokenRecordPda } from '@metaplex-foundation/mpl-token-metadata-kit';
+import { findMetadataPda, findMasterEditionPda, findTokenRecordPda } from "@metaplex-foundation/mpl-token-metadata-kit";
 
 // PDA derivation (async — returns Promise<ProgramDerivedAddress>)
 const metadataPda = await findMetadataPda({ mint: mintAddress });
@@ -206,7 +210,7 @@ Note: Kit PDAs are async (unlike Umi's sync PDAs). The async instruction variant
 ## Fetching Metadata
 
 ```typescript
-import { fetchMetadata, fetchMasterEdition } from '@metaplex-foundation/mpl-token-metadata-kit';
+import { fetchMetadata, fetchMasterEdition } from "@metaplex-foundation/mpl-token-metadata-kit";
 
 const metadata = await fetchMetadata(rpc, metadataPda);
 console.log(metadata.data.name, metadata.data.uri);
@@ -220,13 +224,13 @@ console.log(edition.data.supply, edition.data.maxSupply);
 ## Fetching Digital Assets
 
 ```typescript
-import { fetchDigitalAsset } from '@metaplex-foundation/mpl-token-metadata-kit';
+import { fetchDigitalAsset } from "@metaplex-foundation/mpl-token-metadata-kit";
 
 // Fetches mint, metadata, and edition in one call
 const asset = await fetchDigitalAsset(rpc, mintAddress);
-console.log(asset.metadata.name);    // Metadata account
-console.log(asset.mint);             // Mint account
-console.log(asset.edition);          // MasterEdition or Edition (if NFT)
+console.log(asset.metadata.name); // Metadata account
+console.log(asset.mint); // Mint account
+console.log(asset.edition); // MasterEdition or Edition (if NFT)
 ```
 
 Also available: `fetchDigitalAssetByMetadata()`, `fetchAllDigitalAsset()`.
@@ -251,7 +255,12 @@ Also available: `fetchDigitalAssetByMetadata()`, `fetchAllDigitalAsset()`.
 If you need to mix Kit and Umi:
 
 ```typescript
-import { fromKitAddress, toKitAddress, toKitInstruction, fromKitInstruction } from '@metaplex-foundation/umi-kit-adapters';
+import {
+  fromKitAddress,
+  toKitAddress,
+  toKitInstruction,
+  fromKitInstruction,
+} from "@metaplex-foundation/umi-kit-adapters";
 
 // Convert addresses
 const umiPublicKey = fromKitAddress(kitAddress);

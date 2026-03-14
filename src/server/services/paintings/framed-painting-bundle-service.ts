@@ -27,7 +27,9 @@ export async function buildFramedPaintingGlbFromPublicFrame(params: {
     path: "/frame.glb",
   });
   if (frameAsset.isErr()) {
-    logger.error("[buildFramedPaintingGlbFromPublicFrame] Failed to load frame.glb", { error: frameAsset.error });
+    logger.error("[buildFramedPaintingGlbFromPublicFrame] Failed to load frame.glb", {
+      error: frameAsset.error,
+    });
     return err(frameAsset.error);
   }
 

@@ -245,14 +245,12 @@ Note: 1 SOL = 1,000,000,000 lamports
 To generate the Merkle root from a list of wallet addresses, use the Umi SDK:
 
 ```typescript
-import { getMerkleRoot } from '@metaplex-foundation/mpl-core-candy-machine';
+import { getMerkleRoot } from "@metaplex-foundation/mpl-core-candy-machine";
 
-const allowedWallets = [
-  'Addr1...', 'Addr2...', 'Addr3...',
-];
+const allowedWallets = ["Addr1...", "Addr2...", "Addr3..."];
 const merkleRoot = getMerkleRoot(allowedWallets);
 // Returns a Uint8Array — convert to hex string for cm-config.json:
-const merkleRootHex = Buffer.from(merkleRoot).toString('hex');
+const merkleRootHex = Buffer.from(merkleRoot).toString("hex");
 ```
 
 When minting with an allowlist, the minter must provide a Merkle proof (see Minting section below).
@@ -303,10 +301,10 @@ npm install @metaplex-foundation/mpl-core-candy-machine @metaplex-foundation/umi
 > **Umi setup required** — see `./sdk-umi.md` "Basic Setup" for full Umi initialization (createUmi, keypairIdentity, etc.)
 
 ```typescript
-import { mintV1 } from '@metaplex-foundation/mpl-core-candy-machine';
-import { some } from '@metaplex-foundation/umi';
+import { mintV1 } from "@metaplex-foundation/mpl-core-candy-machine";
+import { some } from "@metaplex-foundation/umi";
 
-import { generateSigner } from '@metaplex-foundation/umi';
+import { generateSigner } from "@metaplex-foundation/umi";
 
 // Simple mint (no guard groups)
 const asset = generateSigner(umi);
@@ -322,7 +320,7 @@ await mintV1(umi, {
   candyMachine: candyMachineAddress,
   collection: collectionAddress,
   asset: asset2,
-  group: some('public'),
+  group: some("public"),
   mintArgs: {
     solPayment: some({ destination: paymentWallet }),
   },
@@ -332,7 +330,7 @@ await mintV1(umi, {
 For allowlist minting, pass the Merkle proof in `mintArgs`:
 
 ```typescript
-import { getMerkleProof } from '@metaplex-foundation/mpl-core-candy-machine';
+import { getMerkleProof } from "@metaplex-foundation/mpl-core-candy-machine";
 
 const proof = getMerkleProof(allowedWallets, minterAddress);
 
@@ -341,7 +339,7 @@ await mintV1(umi, {
   candyMachine: candyMachineAddress,
   collection: collectionAddress,
   asset: asset3,
-  group: some('wl'),
+  group: some("wl"),
   mintArgs: {
     allowList: some({ merkleProof: proof }),
     solPayment: some({ destination: paymentWallet }),

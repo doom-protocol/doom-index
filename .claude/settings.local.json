@@ -18,6 +18,21 @@
       "Bash(gh issue view 37)",
       "Bash(pnpm add:*)",
       "Bash(npx:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./.dev.vars)",
+      "Read(./.prod.vars)",
+      "Read(./.env.keys)",
+      "Bash(env)",
+      "Bash(printenv)",
+      "Bash(export -p)",
+      "Bash(cat .env)",
+      "Bash(cat .env.*)",
+      "Bash(cat .dev.vars)",
+      "Bash(cat .prod.vars)",
+      "Bash(cat .env.keys)"
     ]
   }
 }

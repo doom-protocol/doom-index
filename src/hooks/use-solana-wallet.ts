@@ -1,17 +1,4 @@
-/**
- * useSolanaWallet Hook
- *
- * Provides Solana wallet connection using @solana/wallet-adapter-react
- * and integrates with Metaplex Umi for NFT operations
- *
- * @see https://developers.metaplex.com/
- * @see https://github.com/metaplex-foundation/umi
- */
-
-import { useUmi } from "@/components/providers/umi-provider";
-import { getErrorMessage } from "@/utils/error";
 import { logger } from "@/utils/logger";
-import type { Transaction } from "@metaplex-foundation/umi";
 import { useWallet } from "@solana/wallet-adapter-react";
 import * as nt from "neverthrow";
 import { useCallback, useState } from "react";
@@ -52,8 +39,6 @@ export interface WalletState {
  * useSolanaWallet hook result
  */
 export interface UseSolanaWalletResult extends WalletState {
-  umi: ReturnType<typeof useUmi>;
-  signAndSendTransaction: (transaction: Transaction) => Promise<string>;
   connectWallet: () => Promise<WalletConnectionResult>;
   disconnectWallet: () => Promise<void>;
   connectionError: WalletConnectionErrorType | null;
@@ -67,7 +52,16 @@ export interface UseSolanaWalletResult extends WalletState {
 export function useSolanaWallet(): UseSolanaWalletResult {
   const [connectionError, setConnectionError] = useState<WalletConnectionErrorType | null>(null);
   const wallet = useWallet();
-  const umi = useUmi();
+
+  const getWalletDebugState = useCallback(
+    () => ({
+      connected: wallet.connected,
+      connecting: wallet.connecting,
+      publicKey: wallet.publicKey?.toString() ?? null,
+      walletName: wallet.wallet?.adapter.name ?? null,
+    }),
+    [wallet],
+  );
 
   const connectWallet = useCallback(async (): Promise<WalletConnectionResult> => {
     // Clear previous error
@@ -79,7 +73,7 @@ export function useSolanaWallet(): UseSolanaWalletResult {
         type: "wallet_not_selected",
         message: "No wallet selected",
       };
-      logger.warn("wallet.connection.no_wallet_selected");
+      logger.warn("wallet.connection.no_wallet_selected", getWalletDebugState());
       toast.error("Please select a wallet first");
       setConnectionError(error.type);
       return nt.err(error);
@@ -87,18 +81,20 @@ export function useSolanaWallet(): UseSolanaWalletResult {
 
     // Check if already connected
     if (wallet.connected) {
-      logger.info("wallet.connection.already_connected");
+      logger.info("wallet.connection.already_connected", getWalletDebugState());
       return nt.ok(true);
     }
 
     logger.info("wallet.connection.starting", {
-      walletName: wallet.wallet.adapter.name,
+      ...getWalletDebugState(),
     });
 
     try {
+      logger.debug("wallet.connection.adapter-connect.start", getWalletDebugState());
       await wallet.connect();
+      logger.debug("wallet.connection.adapter-connect.success", getWalletDebugState());
       logger.info("wallet.connection.success", {
-        walletName: wallet.wallet.adapter.name,
+        ...getWalletDebugState(),
       });
       toast.success("Wallet connected successfully");
       return nt.ok(true);
@@ -128,15 +124,15 @@ export function useSolanaWallet(): UseSolanaWalletResult {
       };
 
       logger.error("wallet.connection.failed", {
+        ...getWalletDebugState(),
         error: err.message,
         errorType,
-        walletName: wallet.wallet.adapter.name,
       });
 
       setConnectionError(errorType);
       return nt.err(errorObj);
     }
-  }, [wallet]);
+  }, [getWalletDebugState, wallet]);
 
   const disconnectWallet = useCallback(async (): Promise<void> => {
     setConnectionError(null);
@@ -152,35 +148,10 @@ export function useSolanaWallet(): UseSolanaWalletResult {
     }
   }, [wallet]);
 
-  const signAndSendTransaction = async (transaction: Transaction): Promise<string> => {
-    if (!wallet.connected) {
-      throw new Error("Wallet not connected");
-    }
-
-    try {
-      logger.info("solana.transaction.signing");
-
-      // Send and confirm transaction using Umi
-      const result = await umi.rpc.sendTransaction(transaction);
-      const signature = result.toString();
-
-      logger.info("solana.transaction.sent", { signature });
-
-      return signature;
-    } catch (error) {
-      logger.error("solana.transaction.failed", {
-        error: getErrorMessage(error),
-      });
-      throw error;
-    }
-  };
-
   return {
-    umi,
     publicKey: wallet.publicKey?.toString() ?? null,
     connected: wallet.connected,
     connecting: wallet.connecting,
-    signAndSendTransaction,
     connectWallet,
     disconnectWallet,
     connectionError,

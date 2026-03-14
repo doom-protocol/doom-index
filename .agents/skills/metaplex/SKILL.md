@@ -5,7 +5,13 @@ license: Apache-2.0
 metadata:
   author: metaplex-foundation
   version: "0.1.0"
-  openclaw: {"emoji":"💎","os":["darwin","linux","win32"],"requires":{"bins":["node"]},"homepage":"https://developers.metaplex.com"}
+  openclaw:
+    {
+      "emoji": "💎",
+      "os": ["darwin", "linux", "win32"],
+      "requires": { "bins": ["node"] },
+      "homepage": "https://developers.metaplex.com",
+    }
 ---
 
 # Metaplex Development Skill

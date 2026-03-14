@@ -1,5 +1,7 @@
 import { DEFAULT_ARWEAVE_GATEWAY_BASE_URL } from "@/constants/arweave";
+import { buildDoomNftName } from "@/constants/nft";
 import type { ArdriveClient, Tag } from "@/lib/ardrive-client";
+import { buildArweaveGatewayBaseUrls, normalizeArweaveGatewayBaseUrl } from "@/lib/pure/arweave-gateway";
 import { sendSlackMessage } from "@/lib/slack-client";
 import type { AppError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
@@ -99,37 +101,14 @@ function appendUrlSegment(baseUrl: string, segment: string): string {
 }
 
 export function normalizeGatewayBaseUrl(gatewayBaseUrl: string): string {
-  const normalized = gatewayBaseUrl.trim().replace(/\/+$/u, "");
-
-  if (!normalized) {
-    throw new Error("Gateway base URL must not be empty");
-  }
-
-  return new URL(normalized).toString().replace(/\/+$/u, "");
+  return normalizeArweaveGatewayBaseUrl(gatewayBaseUrl);
 }
 
 export function buildGatewayBaseUrls(params: { explicitGatewayBaseUrl?: string }): string[] {
-  const seen = new Set<string>();
-  const gateways: string[] = [];
-
-  const pushGateway = (value: string | undefined): void => {
-    if (!value) {
-      return;
-    }
-
-    const normalized = normalizeGatewayBaseUrl(value);
-    if (seen.has(normalized)) {
-      return;
-    }
-
-    seen.add(normalized);
-    gateways.push(normalized);
-  };
-
-  pushGateway(params.explicitGatewayBaseUrl);
-  pushGateway(DEFAULT_ARWEAVE_GATEWAY_BASE_URL);
-
-  return gateways;
+  return buildArweaveGatewayBaseUrls({
+    fallbackGatewayBaseUrls: [],
+    preferredGatewayBaseUrl: params.explicitGatewayBaseUrl,
+  });
 }
 
 export function buildTransactionUrl(params: { gatewayBaseUrl?: string; txId: string }): string {
@@ -161,7 +140,7 @@ export function buildMetadataJson(params: {
     description: METADATA_DESCRIPTION,
     external_url: `https://doomindex.fun/artworks/${normalizedTokenId}`,
     image: params.imageUrl,
-    name: `DOOM INDEX #${normalizedTokenId}`,
+    name: buildDoomNftName(normalizedTokenId),
     properties: {
       category: "vr",
       files: [
@@ -208,7 +187,9 @@ export function buildPreferredAssetUrl(params: {
   explicitGatewayBaseUrl?: string;
   uploadResult: { id: string };
 }): string {
-  const [gatewayBaseUrl] = buildGatewayBaseUrls({ explicitGatewayBaseUrl: params.explicitGatewayBaseUrl });
+  const [gatewayBaseUrl] = buildGatewayBaseUrls({
+    explicitGatewayBaseUrl: params.explicitGatewayBaseUrl,
+  });
 
   return buildTransactionUrl({
     gatewayBaseUrl,
@@ -242,7 +223,9 @@ export async function resolveTokenMetadataGateway(params: {
   manifestUploadResult: { id: string };
   tokenId: TokenId;
 }): Promise<{ baseMetadataUrl: string; resolvedFromProbe: boolean; tokenMetadataUrl: string }> {
-  const gatewayBaseUrls = buildGatewayBaseUrls({ explicitGatewayBaseUrl: params.explicitGatewayBaseUrl });
+  const gatewayBaseUrls = buildGatewayBaseUrls({
+    explicitGatewayBaseUrl: params.explicitGatewayBaseUrl,
+  });
 
   for (const gatewayBaseUrl of gatewayBaseUrls) {
     const tokenMetadataUrl = buildTokenMetadataUrl({
@@ -494,7 +477,9 @@ async function uploadPaintingAsset(params: {
     { name: "File-Type", value: params.fileType },
   ]);
   if (uploadResult.isErr()) {
-    logger.error(`[uploadPainting${params.logPrefix}Asset] Upload failed`, { error: uploadResult.error });
+    logger.error(`[uploadPainting${params.logPrefix}Asset] Upload failed`, {
+      error: uploadResult.error,
+    });
     return err(uploadResult.error);
   }
 
@@ -591,10 +576,14 @@ export async function uploadNftMetadataBundle(params: {
     { name: "File-Type", value: "metadata" },
   ]);
   if (metadataUploadResult.isErr()) {
-    logger.error("[uploadNftMetadataBundle] Metadata upload failed", { error: metadataUploadResult.error });
+    logger.error("[uploadNftMetadataBundle] Metadata upload failed", {
+      error: metadataUploadResult.error,
+    });
     return err(metadataUploadResult.error);
   }
-  logger.info("[uploadNftMetadataBundle] Metadata uploaded", { metadataTxId: metadataUploadResult.value.id });
+  logger.info("[uploadNftMetadataBundle] Metadata uploaded", {
+    metadataTxId: metadataUploadResult.value.id,
+  });
 
   const manifestJson = buildManifestJson({
     metadataId: metadataUploadResult.value.id,
@@ -608,10 +597,14 @@ export async function uploadNftMetadataBundle(params: {
     [...baseTags, { name: "File-Type", value: "manifest" }],
   );
   if (manifestUploadResult.isErr()) {
-    logger.error("[uploadNftMetadataBundle] Manifest upload failed", { error: manifestUploadResult.error });
+    logger.error("[uploadNftMetadataBundle] Manifest upload failed", {
+      error: manifestUploadResult.error,
+    });
     return err(manifestUploadResult.error);
   }
-  logger.info("[uploadNftMetadataBundle] Manifest uploaded", { manifestTxId: manifestUploadResult.value.id });
+  logger.info("[uploadNftMetadataBundle] Manifest uploaded", {
+    manifestTxId: manifestUploadResult.value.id,
+  });
 
   const gatewayResolution = await resolveTokenMetadataGateway({
     explicitGatewayBaseUrl: params.explicitGatewayBaseUrl,

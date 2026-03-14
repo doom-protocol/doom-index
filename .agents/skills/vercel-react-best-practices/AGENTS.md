@@ -425,7 +425,7 @@ function AnimationPlayer({
 
   useEffect(() => {
     if (enabled && !frames && typeof window !== "undefined") {
-      import("./animation-frames.js").then(mod => setFrames(mod.frames)).catch(() => setEnabled(false));
+      import("./animation-frames.js").then((mod) => setFrames(mod.frames)).catch(() => setEnabled(false));
     }
   }, [enabled, frames]);
 
@@ -464,7 +464,9 @@ export default function RootLayout({ children }) {
 ```tsx
 import dynamic from "next/dynamic";
 
-const Analytics = dynamic(() => import("@vercel/analytics/react").then(m => m.Analytics), { ssr: false });
+const Analytics = dynamic(() => import("@vercel/analytics/react").then((m) => m.Analytics), {
+  ssr: false,
+});
 
 export default function RootLayout({ children }) {
   return (
@@ -499,7 +501,9 @@ function CodePanel({ code }: { code: string }) {
 ```tsx
 import dynamic from "next/dynamic";
 
-const MonacoEditor = dynamic(() => import("./monaco-editor").then(m => m.MonacoEditor), { ssr: false });
+const MonacoEditor = dynamic(() => import("./monaco-editor").then((m) => m.MonacoEditor), {
+  ssr: false,
+});
 
 function CodePanel({ code }: { code: string }) {
   return <MonacoEditor value={code} />;
@@ -536,7 +540,7 @@ function EditorButton({ onClick }: { onClick: () => void }) {
 function FlagsProvider({ children, flags }: Props) {
   useEffect(() => {
     if (flags.editorEnabled && typeof window !== "undefined") {
-      void import("./monaco-editor").then(mod => mod.init());
+      void import("./monaco-editor").then((mod) => mod.init());
     }
   }, [flags.editorEnabled]);
 
@@ -906,7 +910,7 @@ function useKeyboardShortcut(key: string, callback: () => void) {
   useSWRSubscription("global-keydown", () => {
     const handler = (e: KeyboardEvent) => {
       if (e.metaKey && keyCallbacks.has(e.key)) {
-        keyCallbacks.get(e.key)!.forEach(cb => cb());
+        keyCallbacks.get(e.key)!.forEach((cb) => cb());
       }
     };
     window.addEventListener("keydown", handler);
@@ -983,7 +987,7 @@ function UserList() {
   const [users, setUsers] = useState([]);
   useEffect(() => {
     fetch("/api/users")
-      .then(r => r.json())
+      .then((r) => r.json())
       .then(setUsers);
   }, []);
 }
@@ -1266,7 +1270,7 @@ function TodoList() {
 
   // Risk of stale closure if dependency is forgotten
   const removeItem = useCallback((id: string) => {
-    setItems(items.filter(item => item.id !== id));
+    setItems(items.filter((item) => item.id !== id));
   }, []); // ❌ Missing items dependency - will use stale items!
 
   return <ItemsEditor items={items} onAdd={addItems} onRemove={removeItem} />;
@@ -1283,12 +1287,12 @@ function TodoList() {
 
   // Stable callback, never recreated
   const addItems = useCallback((newItems: Item[]) => {
-    setItems(curr => [...curr, ...newItems]);
+    setItems((curr) => [...curr, ...newItems]);
   }, []); // ✅ No dependencies needed
 
   // Always uses latest state, no stale closure risk
   const removeItem = useCallback((id: string) => {
-    setItems(curr => curr.filter(item => item.id !== id));
+    setItems((curr) => curr.filter((item) => item.id !== id));
   }, []); // ✅ Safe and stable
 
   return <ItemsEditor items={items} onAdd={addItems} onRemove={removeItem} />;
@@ -1476,7 +1480,7 @@ Apply `content-visibility: auto` to defer off-screen rendering.
 function MessageList({ messages }: { messages: Message[] }) {
   return (
     <div className="h-screen overflow-y-auto">
-      {messages.map(msg => (
+      {messages.map((msg) => (
         <div key={msg.id} className="message-item">
           <Avatar user={msg.author} />
           <div>{msg.content}</div>
@@ -1656,13 +1660,7 @@ function Badge({ count }: { count: number }) {
 
 ```tsx
 function Badge({ count }: { count: number }) {
-  return (
-    <div>
-      {count > 0 ?
-        <span className="badge">{count}</span>
-      : null}
-    </div>
-  );
+  return <div>{count > 0 ? <span className="badge">{count}</span> : null}</div>;
 }
 
 // When count = 0, renders: <div></div>
@@ -1761,9 +1759,9 @@ Multiple `.find()` calls by the same key should use a Map.
 
 ```typescript
 function processOrders(orders: Order[], users: User[]) {
-  return orders.map(order => ({
+  return orders.map((order) => ({
     ...order,
-    user: users.find(u => u.id === order.userId),
+    user: users.find((u) => u.id === order.userId),
   }));
 }
 ```
@@ -1772,9 +1770,9 @@ function processOrders(orders: Order[], users: User[]) {
 
 ```typescript
 function processOrders(orders: Order[], users: User[]) {
-  const userById = new Map(users.map(u => [u.id, u]));
+  const userById = new Map(users.map((u) => [u.id, u]));
 
-  return orders.map(order => ({
+  return orders.map((order) => ({
     ...order,
     user: userById.get(order.userId),
   }));
@@ -1927,7 +1925,7 @@ let cookieCache: Record<string, string> | null = null;
 
 function getCookie(name: string) {
   if (!cookieCache) {
-    cookieCache = Object.fromEntries(document.cookie.split("; ").map(c => c.split("=")));
+    cookieCache = Object.fromEntries(document.cookie.split("; ").map((c) => c.split("=")));
   }
   return cookieCache[name];
 }
@@ -1936,7 +1934,7 @@ function getCookie(name: string) {
 **Important: invalidate on external changes**
 
 ```typescript
-window.addEventListener("storage", e => {
+window.addEventListener("storage", (e) => {
   if (e.key) storageCache.delete(e.key);
 });
 
@@ -1958,9 +1956,9 @@ Multiple `.filter()` or `.map()` calls iterate the array multiple times. Combine
 **Incorrect: 3 iterations**
 
 ```typescript
-const admins = users.filter(u => u.isAdmin);
-const testers = users.filter(u => u.isTester);
-const inactive = users.filter(u => !u.isActive);
+const admins = users.filter((u) => u.isAdmin);
+const testers = users.filter((u) => u.isTester);
+const inactive = users.filter((u) => !u.isActive);
 ```
 
 **Correct: 1 iteration**

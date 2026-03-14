@@ -47,7 +47,7 @@ const WS_URL = `wss://your-worker.workers.dev/cdp?secret=${encodeURIComponent(CD
 const ws = new WebSocket(WS_URL);
 let targetId = null;
 
-ws.on("message", data => {
+ws.on("message", (data) => {
   const msg = JSON.parse(data.toString());
   if (msg.method === "Target.targetCreated" && msg.params?.targetInfo?.type === "page") {
     targetId = msg.params.targetInfo.targetId;
@@ -70,7 +70,7 @@ ws.on("message", data => {
 
 ```javascript
 await send("Page.navigate", { url: "https://example.com" });
-await new Promise(r => setTimeout(r, 3000)); // Wait for render
+await new Promise((r) => setTimeout(r, 3000)); // Wait for render
 const { data } = await send("Page.captureScreenshot", { format: "png" });
 fs.writeFileSync("out.png", Buffer.from(data, "base64"));
 ```

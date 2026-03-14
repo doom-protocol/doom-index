@@ -1,8 +1,7 @@
-import { Header } from "@/components/ui/header";
+import { HomeView } from "@/components/home/home-view";
 import { createStaticServerCaller } from "@/server/trpc/server-caller";
 import type { PaintingMetadata } from "@/types/paintings";
 import { logger } from "@/utils/logger";
-import { HomeClient } from "./home-client";
 
 export default async function HomePage() {
   let initialPainting: PaintingMetadata | null = null;
@@ -17,18 +16,5 @@ export default async function HomePage() {
     });
   }
 
-  return (
-    <main
-      style={{
-        width: "100%",
-        height: "100%",
-        margin: 0,
-        padding: 0,
-        overflow: "hidden",
-      }}
-    >
-      <Header />
-      <HomeClient initialPainting={initialPainting} />
-    </main>
-  );
+  return <HomeView initialPainting={initialPainting} />;
 }

@@ -10,16 +10,16 @@ Umi SDK operations for creating and managing Token Metadata NFTs, pNFTs, and fun
 ## Create Fungible Token
 
 ```typescript
-import { createFungible } from '@metaplex-foundation/mpl-token-metadata';
-import { generateSigner, percentAmount } from '@metaplex-foundation/umi';
+import { createFungible } from "@metaplex-foundation/mpl-token-metadata";
+import { generateSigner, percentAmount } from "@metaplex-foundation/umi";
 
 const mint = generateSigner(umi);
 
 await createFungible(umi, {
   mint,
-  name: 'My Token',
-  symbol: 'MTK',
-  uri: 'https://arweave.net/xxx',
+  name: "My Token",
+  symbol: "MTK",
+  uri: "https://arweave.net/xxx",
   sellerFeeBasisPoints: percentAmount(0),
   decimals: 9,
 }).sendAndConfirm(umi);
@@ -28,15 +28,15 @@ await createFungible(umi, {
 ## Create NFT
 
 ```typescript
-import { createNft } from '@metaplex-foundation/mpl-token-metadata';
-import { generateSigner, percentAmount } from '@metaplex-foundation/umi';
+import { createNft } from "@metaplex-foundation/mpl-token-metadata";
+import { generateSigner, percentAmount } from "@metaplex-foundation/umi";
 
 const mint = generateSigner(umi);
 
 await createNft(umi, {
   mint,
-  name: 'My NFT',
-  uri: 'https://arweave.net/xxx',
+  name: "My NFT",
+  uri: "https://arweave.net/xxx",
   sellerFeeBasisPoints: percentAmount(5.5),
   creators: [{ address: umi.identity.publicKey, share: 100, verified: false }],
 }).sendAndConfirm(umi);
@@ -45,15 +45,15 @@ await createNft(umi, {
 ## Create pNFT (Programmable)
 
 ```typescript
-import { createProgrammableNft } from '@metaplex-foundation/mpl-token-metadata';
-import { generateSigner, percentAmount } from '@metaplex-foundation/umi';
+import { createProgrammableNft } from "@metaplex-foundation/mpl-token-metadata";
+import { generateSigner, percentAmount } from "@metaplex-foundation/umi";
 
 const mint = generateSigner(umi);
 
 await createProgrammableNft(umi, {
   mint,
-  name: 'My pNFT',
-  uri: 'https://arweave.net/xxx',
+  name: "My pNFT",
+  uri: "https://arweave.net/xxx",
   sellerFeeBasisPoints: percentAmount(5),
   creators: [{ address: umi.identity.publicKey, share: 100, verified: false }],
 }).sendAndConfirm(umi);
@@ -66,15 +66,15 @@ pNFTs enforce royalties at the protocol level — the Token Metadata program con
 In Token Metadata, a collection is itself an NFT. Use `isCollection: true`:
 
 ```typescript
-import { createNft } from '@metaplex-foundation/mpl-token-metadata';
-import { generateSigner, percentAmount } from '@metaplex-foundation/umi';
+import { createNft } from "@metaplex-foundation/mpl-token-metadata";
+import { generateSigner, percentAmount } from "@metaplex-foundation/umi";
 
 const collectionMint = generateSigner(umi);
 
 await createNft(umi, {
   mint: collectionMint,
-  name: 'My Collection',
-  uri: 'https://arweave.net/xxx',
+  name: "My Collection",
+  uri: "https://arweave.net/xxx",
   sellerFeeBasisPoints: percentAmount(5),
   isCollection: true,
 }).sendAndConfirm(umi);
@@ -85,15 +85,15 @@ await createNft(umi, {
 Pass the `collection` field when creating. Items start **unverified** — call `verifyCollectionV1` afterward:
 
 ```typescript
-import { createProgrammableNft, verifyCollectionV1, findMetadataPda } from '@metaplex-foundation/mpl-token-metadata';
-import { generateSigner, percentAmount } from '@metaplex-foundation/umi';
+import { createProgrammableNft, verifyCollectionV1, findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
+import { generateSigner, percentAmount } from "@metaplex-foundation/umi";
 
 const mint = generateSigner(umi);
 
 await createProgrammableNft(umi, {
   mint,
-  name: 'My pNFT #1',
-  uri: 'https://arweave.net/xxx',
+  name: "My pNFT #1",
+  uri: "https://arweave.net/xxx",
   sellerFeeBasisPoints: percentAmount(5),
   creators: [{ address: umi.identity.publicKey, share: 100, verified: false }],
   collection: { key: collectionMint.publicKey, verified: false },
@@ -110,7 +110,7 @@ await verifyCollectionV1(umi, {
 ## Update Metadata
 
 ```typescript
-import { updateV1, fetchDigitalAsset, TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
+import { updateV1, fetchDigitalAsset, TokenStandard } from "@metaplex-foundation/mpl-token-metadata";
 
 const da = await fetchDigitalAsset(umi, mintAddress);
 
@@ -118,8 +118,8 @@ await updateV1(umi, {
   mint: mintAddress,
   authority: updateAuthority,
   data: {
-    ...da.metadata,              // spread existing fields
-    name: 'Updated Name',       // override what you want
+    ...da.metadata, // spread existing fields
+    name: "Updated Name", // override what you want
   },
   primarySaleHappened: true,
 }).sendAndConfirm(umi);
@@ -130,14 +130,14 @@ To update URI only:
 ```typescript
 await updateV1(umi, {
   mint: mintAddress,
-  data: { ...da.metadata, uri: 'https://arweave.net/new-uri' },
+  data: { ...da.metadata, uri: "https://arweave.net/new-uri" },
 }).sendAndConfirm(umi);
 ```
 
 ## Burn
 
 ```typescript
-import { burnV1, TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
+import { burnV1, TokenStandard } from "@metaplex-foundation/mpl-token-metadata";
 
 // NFT
 await burnV1(umi, {
@@ -170,7 +170,7 @@ await burnV1(umi, {
 pNFTs can be locked by a delegate to prevent transfers. Used for staking, escrowless listings, etc.
 
 ```typescript
-import { lockV1, unlockV1, TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
+import { lockV1, unlockV1, TokenStandard } from "@metaplex-foundation/mpl-token-metadata";
 
 // Lock (requires Utility, Staking, or Standard delegate)
 await lockV1(umi, {
@@ -192,7 +192,7 @@ await unlockV1(umi, {
 ## Transfer NFT
 
 ```typescript
-import { transferV1, TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
+import { transferV1, TokenStandard } from "@metaplex-foundation/mpl-token-metadata";
 
 // Regular NFT
 await transferV1(umi, {
@@ -222,7 +222,7 @@ import {
   fetchAllDigitalAssetByOwner,
   fetchAllDigitalAssetByCreator,
   fetchAllDigitalAssetByVerifiedCollection,
-} from '@metaplex-foundation/mpl-token-metadata';
+} from "@metaplex-foundation/mpl-token-metadata";
 
 // Single asset (metadata + mint + edition)
 const da = await fetchDigitalAsset(umi, mintAddress);
@@ -264,7 +264,7 @@ import {
   delegateStakingV1,
   delegateLockedTransferV1,
   TokenStandard,
-} from '@metaplex-foundation/mpl-token-metadata';
+} from "@metaplex-foundation/mpl-token-metadata";
 
 // Standard delegate (basic approval, no special permissions)
 await delegateStandardV1(umi, {
@@ -335,7 +335,7 @@ import {
   revokeStakingV1,
   revokeLockedTransferV1,
   TokenStandard,
-} from '@metaplex-foundation/mpl-token-metadata';
+} from "@metaplex-foundation/mpl-token-metadata";
 
 await revokeTransferV1(umi, {
   mint: mintAddress,
@@ -351,8 +351,8 @@ await revokeTransferV1(umi, {
 Create numbered prints from a Master Edition NFT:
 
 ```typescript
-import { printV1, TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
-import { generateSigner } from '@metaplex-foundation/umi';
+import { printV1, TokenStandard } from "@metaplex-foundation/mpl-token-metadata";
+import { generateSigner } from "@metaplex-foundation/umi";
 
 const editionMint = generateSigner(umi);
 
@@ -371,7 +371,7 @@ await printV1(umi, {
 ### Creator Verification
 
 ```typescript
-import { verifyCreatorV1, unverifyCreatorV1, findMetadataPda } from '@metaplex-foundation/mpl-token-metadata';
+import { verifyCreatorV1, unverifyCreatorV1, findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 
 // Verify (signer must be the creator being verified)
 await verifyCreatorV1(umi, {
@@ -389,7 +389,7 @@ await unverifyCreatorV1(umi, {
 ### Collection Verification
 
 ```typescript
-import { verifyCollectionV1, unverifyCollectionV1, findMetadataPda } from '@metaplex-foundation/mpl-token-metadata';
+import { verifyCollectionV1, unverifyCollectionV1, findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 
 // Verify (signer must be collection update authority)
 await verifyCollectionV1(umi, {
@@ -413,9 +413,12 @@ await unverifyCollectionV1(umi, {
 After creating a fungible token with `createFungible`, mint supply using `mintTokensTo` from `mpl-toolbox`:
 
 ```typescript
-import { mintTokensTo, findAssociatedTokenPda } from '@metaplex-foundation/mpl-toolbox';
+import { mintTokensTo, findAssociatedTokenPda } from "@metaplex-foundation/mpl-toolbox";
 
-const tokenAccount = findAssociatedTokenPda(umi, { mint: mint.publicKey, owner: umi.identity.publicKey });
+const tokenAccount = findAssociatedTokenPda(umi, {
+  mint: mint.publicKey,
+  owner: umi.identity.publicKey,
+});
 
 await mintTokensTo(umi, {
   mint: mint.publicKey,
@@ -427,7 +430,7 @@ await mintTokensTo(umi, {
 ## Transfer Fungible Token
 
 ```typescript
-import { transferTokens } from '@metaplex-foundation/mpl-toolbox';
+import { transferTokens } from "@metaplex-foundation/mpl-toolbox";
 
 // Use mpl-toolbox for fungible transfers, NOT Token Metadata
 await transferTokens(umi, {
@@ -442,11 +445,7 @@ await transferTokens(umi, {
 ## PDAs
 
 ```typescript
-import {
-  findMetadataPda,
-  findMasterEditionPda,
-  findTokenRecordPda
-} from '@metaplex-foundation/mpl-token-metadata';
+import { findMetadataPda, findMasterEditionPda, findTokenRecordPda } from "@metaplex-foundation/mpl-token-metadata";
 
 // Metadata PDA
 const [metadataPda] = findMetadataPda(umi, { mint });

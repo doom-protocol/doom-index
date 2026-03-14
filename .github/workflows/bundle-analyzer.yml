@@ -14,11 +14,6 @@ jobs:
       contents: read # for checkout repository
       actions: read # for fetching base branch bundle stats
       pull-requests: write # for comments
-    env:
-      NEXT_PUBLIC_BASE_URL: https://doomindex.fun
-      NEXT_PUBLIC_R2_URL: /api/r2
-      NEXT_PUBLIC_GENERATION_INTERVAL_MS: "600000"
-      RUNWARE_API_KEY: dummy_runware_api_key
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -44,7 +39,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build with opennextjs-cloudflare
-        run: bun run build:cf
+        run: bun --env-file=.example.vars run build:cf
 
       - name: Analyze esbuild bundle size
         uses: exoego/esbuild-bundle-analyzer@v1

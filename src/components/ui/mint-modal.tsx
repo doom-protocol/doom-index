@@ -7,6 +7,7 @@
  */
 
 import { MintPaintingPreviewScene } from "@/components/ui/mint-painting-preview-scene";
+import { buildDoomNftName } from "@/constants/nft";
 import { useSolanaMint } from "@/hooks/use-solana-mint";
 import { useSolanaWallet } from "@/hooks/use-solana-wallet";
 import { GA_EVENTS, sendGAEvent } from "@/lib/analytics";
@@ -14,7 +15,7 @@ import { getErrorMessage } from "@/utils/error";
 import { logger } from "@/utils/logger";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
 import { toast } from "sonner";
 import type { Group } from "three";
@@ -30,6 +31,20 @@ export interface MintModalProps {
   };
 }
 
+function maskPublicKey(publicKey: string | null): string | null {
+  if (!publicKey) {
+    return null;
+  }
+
+  const normalizedPublicKey = publicKey.trim();
+
+  if (normalizedPublicKey.length <= 8) {
+    return normalizedPublicKey;
+  }
+
+  return `${normalizedPublicKey.slice(0, 4)}...${normalizedPublicKey.slice(-4)}`;
+}
+
 const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isMintCompleted, setIsMintCompleted] = useState(false);
@@ -41,22 +56,68 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
   const { setVisible } = useWalletModal();
   const { mint, isMinting, nextTokenId } = useSolanaMint();
   const { triggerHaptic } = useHaptic();
+  const hasOpenedRef = useRef(false);
 
   // Mock price (in SOL)
   const MINT_PRICE = 0.1;
+  const selectedWalletName = wallet.wallet?.adapter.name ?? null;
+  const maskedPublicKey = maskPublicKey(publicKey);
+  const walletDebugStateRef = useRef({
+    connected,
+    connecting: isWalletConnecting,
+    hasSelectedWallet: wallet.wallet !== null,
+    publicKey: maskedPublicKey,
+    selectedWalletName,
+  });
+
+  walletDebugStateRef.current = {
+    connected,
+    connecting: isWalletConnecting,
+    hasSelectedWallet: wallet.wallet !== null,
+    publicKey: maskedPublicKey,
+    selectedWalletName,
+  };
+
+  useEffect(() => {
+    logger.debug("mint.modal.wallet-state", {
+      ...walletDebugStateRef.current,
+      isOpen,
+    });
+  }, [connected, isOpen, isWalletConnecting, maskedPublicKey, selectedWalletName, wallet.wallet]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    logger.debug("mint.modal.opened", {
+      ...walletDebugStateRef.current,
+      openReason: hasOpenedRef.current ? "reopen" : "initial-open",
+    });
+    hasOpenedRef.current = true;
+  }, [isOpen]);
 
   // Handle wallet connection
   const handleConnectWallet = useCallback(async () => {
+    const currentWalletDebugState = walletDebugStateRef.current;
+
+    triggerHaptic();
+    logger.debug("mint.modal.connect-clicked", currentWalletDebugState);
+    sendGAEvent(GA_EVENTS.MINT_WALLET_CONNECT);
+
     if (!wallet.wallet) {
+      logger.debug("mint.modal.wallet-selector.opened", currentWalletDebugState);
       setVisible(true);
       return;
     }
 
     await connectWallet();
-  }, [connectWallet, setVisible, wallet.wallet]);
+  }, [connectWallet, setVisible, triggerHaptic, wallet.wallet]);
 
   // Handle complete mint flow
   const handleMint = useCallback(async () => {
+    triggerHaptic();
+
     if (!connected) {
       setVisible(true);
       return;
@@ -66,7 +127,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
 
     try {
       sendGAEvent(GA_EVENTS.MINT_TRANSACTION_START);
-      const result = await mint();
+      const result = await mint(paintingMetadata.paintingHash);
 
       logger.info("mint.success", {
         assetAddress: result.assetAddress,
@@ -92,7 +153,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
     } finally {
       setIsProcessing(false);
     }
-  }, [connected, setVisible, mint, onClose, publicKey]);
+  }, [connected, mint, onClose, paintingMetadata.paintingHash, publicKey, setVisible, triggerHaptic]);
 
   // Handle modal close
   const handleClose = useCallback(() => {
@@ -105,7 +166,7 @@ const MintModalBody: FC<MintModalProps> = ({ isOpen, onClose, paintingMetadata }
   const displayTokenId = mintedTokenId ?? (typeof nextTokenId === "bigint" ? nextTokenId : null);
   const mintStatusLabel = displayTokenId === null ? "Loading next token id..." : "Ready to mint on Solana";
 
-  const collectionName = displayTokenId === null ? "DOOM INDEX NFT" : `DOOM INDEX #${displayTokenId.toString()}`;
+  const collectionName = buildDoomNftName(displayTokenId);
 
   return (
     <div

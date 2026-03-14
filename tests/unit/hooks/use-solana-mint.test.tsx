@@ -2,8 +2,10 @@ import "../../preload";
 
 import { DOOM_NFT_PROGRAM_ID, deriveGlobalConfigPda } from "@/lib/anchor/doom-nft-program";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { afterAll, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import type { Buffer } from "node:buffer";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { PublicKey } from "@solana/web3.js";
 
 mock.restore();
@@ -90,23 +92,68 @@ const readConnectionState = () => ({
   connection: connectionState,
 });
 const readWalletState = () => walletState;
+const prepareMintMetadataMutateMock = mock(async () => {
+  await Promise.resolve();
+  return {
+    baseMetadataUrl: "https://permagate.io/manifest",
+    manifestTxId: "manifest-tx",
+    metadataTxId: "metadata-tx",
+    resolvedFromProbe: false,
+    tokenMetadataUrl: "https://permagate.io/manifest/42",
+  };
+});
 
-void mock.module("@solana/wallet-adapter-react", () => ({
-  useConnection: readConnectionState,
-  useWallet: readWalletState,
-}));
-
-void mock.module("@/utils/logger", () => ({
-  logger: {
-    debug: mock(() => {}),
-    error: mock(() => {}),
-    info: mock(() => {}),
-    warn: mock(() => {}),
+const readTRPCClient = () => ({
+  paintings: {
+    prepareMintMetadata: {
+      mutate: prepareMintMetadataMutateMock,
+    },
   },
-}));
+});
+
+function registerUseSolanaMintMocks() {
+  void mock.module("@solana/wallet-adapter-react", () => ({
+    ConnectionProvider: ({ children }: { children: unknown }) => children,
+    WalletProvider: ({ children }: { children: unknown }) => children,
+    useConnection: readConnectionState,
+    useWallet: readWalletState,
+  }));
+
+  void mock.module("@/lib/trpc/client", () => ({
+    useTRPCClient: readTRPCClient,
+  }));
+
+  void mock.module("@/utils/logger", () => ({
+    logger: {
+      debug: mock(() => {}),
+      error: mock(() => {}),
+      info: mock(() => {}),
+      warn: mock(() => {}),
+    },
+  }));
+}
+
+async function loadUseSolanaMintModule() {
+  const moduleUrl = pathToFileURL(join(process.cwd(), "src/hooks/use-solana-mint.ts"));
+  moduleUrl.searchParams.set("test", `${String(Date.now())}-${String(Math.random())}`);
+  return import(moduleUrl.href) as Promise<typeof import("../../../src/hooks/use-solana-mint")>;
+}
 
 describe("unit/hooks/use-solana-mint", () => {
   beforeEach(() => {
+    mock.restore();
+    registerUseSolanaMintMocks();
+    prepareMintMetadataMutateMock.mockReset();
+    prepareMintMetadataMutateMock.mockImplementation(async () => {
+      await Promise.resolve();
+      return {
+        baseMetadataUrl: "https://permagate.io/manifest",
+        manifestTxId: "manifest-tx",
+        metadataTxId: "metadata-tx",
+        resolvedFromProbe: false,
+        tokenMetadataUrl: "https://permagate.io/manifest/42",
+      };
+    });
     sendTransactionMock.mockReset();
     sendTransactionMock.mockImplementation(async () => {
       await Promise.resolve();
@@ -155,6 +202,10 @@ describe("unit/hooks/use-solana-mint", () => {
     });
   });
 
+  afterEach(() => {
+    mock.restore();
+  });
+
   afterAll(() => {
     mock.restore();
   });
@@ -182,7 +233,7 @@ describe("unit/hooks/use-solana-mint", () => {
       };
     });
 
-    const { useSolanaMint } = await import("../../../src/hooks/use-solana-mint");
+    const { useSolanaMint } = await loadUseSolanaMintModule();
     const { result } = renderHook(() => useSolanaMint());
 
     await waitFor(() => {
@@ -191,9 +242,13 @@ describe("unit/hooks/use-solana-mint", () => {
 
     let mintResult: Awaited<ReturnType<typeof result.current.mint>> | undefined;
     await act(async () => {
-      mintResult = await result.current.mint();
+      mintResult = await result.current.mint("painting-42");
     });
 
+    expect(prepareMintMetadataMutateMock).toHaveBeenCalledWith({
+      paintingId: "painting-42",
+      tokenId: INITIAL_TOKEN_ID.toString(),
+    });
     expect(sendTransactionMock).toHaveBeenCalledTimes(1);
     const [transaction, _connection, options] = sendTransactionMock.mock.calls[0] as unknown as [
       {
@@ -225,7 +280,7 @@ describe("unit/hooks/use-solana-mint", () => {
       throw new Error("custom program error: 0x1771");
     });
 
-    const { useSolanaMint } = await import("../../../src/hooks/use-solana-mint");
+    const { useSolanaMint } = await loadUseSolanaMintModule();
     const { result } = renderHook(() => useSolanaMint());
 
     await waitFor(() => {
@@ -235,7 +290,7 @@ describe("unit/hooks/use-solana-mint", () => {
     let mintError: unknown;
     await act(async () => {
       try {
-        await result.current.mint();
+        await result.current.mint("painting-42");
       } catch (error) {
         mintError = error;
       }
@@ -279,7 +334,7 @@ describe("unit/hooks/use-solana-mint", () => {
       return "sig-2";
     });
 
-    const { useSolanaMint } = await import("../../../src/hooks/use-solana-mint");
+    const { useSolanaMint } = await loadUseSolanaMintModule();
     const { result } = renderHook(() => useSolanaMint());
 
     await waitFor(() => {
@@ -288,7 +343,7 @@ describe("unit/hooks/use-solana-mint", () => {
 
     let mintResult: Awaited<ReturnType<typeof result.current.mint>> | undefined;
     await act(async () => {
-      mintResult = await result.current.mint();
+      mintResult = await result.current.mint("painting-42");
     });
 
     expect(sendTransactionMock).toHaveBeenCalledTimes(2);

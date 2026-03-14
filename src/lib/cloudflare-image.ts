@@ -52,11 +52,14 @@ export const IMAGE_PRESETS = {
 export type ImagePreset = keyof typeof IMAGE_PRESETS;
 
 function isCloudflareTransformSupported(): boolean {
-  const base = getBaseUrl();
-  if (base.includes("localhost") || base.includes("127.0.0.1")) {
+  return isCloudflareTransformSupportedForBaseUrl(getBaseUrl());
+}
+
+export function isCloudflareTransformSupportedForBaseUrl(baseUrl: string): boolean {
+  if (baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1")) {
     return false;
   }
-  if (base.includes(".workers.dev")) {
+  if (baseUrl.includes(".workers.dev")) {
     return false;
   }
   return true;
@@ -77,7 +80,15 @@ function buildTransformParams(options: CloudflareImageOptions): string {
 }
 
 export function transformImageUrl(imageUrl: string, options: CloudflareImageOptions): string {
-  if (!isCloudflareTransformSupported()) {
+  return transformImageUrlWithBaseUrl(imageUrl, options, getBaseUrl());
+}
+
+export function transformImageUrlWithBaseUrl(
+  imageUrl: string,
+  options: CloudflareImageOptions,
+  baseUrl: string,
+): string {
+  if (!isCloudflareTransformSupportedForBaseUrl(baseUrl)) {
     return imageUrl;
   }
   if (Object.keys(options).length === 0) {
@@ -92,12 +103,10 @@ export function transformImageUrl(imageUrl: string, options: CloudflareImageOpti
     return imageUrl;
   }
 
-  const base = getBaseUrl();
-
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
     try {
       const url = new URL(imageUrl);
-      const baseHost = new URL(base).host;
+      const baseHost = new URL(baseUrl).host;
       if (url.host === baseHost || url.host.includes("doomindex")) {
         return `${url.origin}/cdn-cgi/image/${params}${url.pathname}${url.search}`;
       }
@@ -146,45 +155,6 @@ export function getDevicePixelRatio(): number {
     return 1;
   }
   return window.devicePixelRatio || 1;
-}
-
-/**
- * Build image URL for Next.js Image loader
- * Centralizes all bypass logic for local, preview, and special paths
- *
- * Keeps remote Arweave URLs and local public assets unchanged.
- * Same-origin non-public paths can still use Cloudflare Image Transformations.
- *
- * @param src - Source image URL
- * @param width - Target width
- * @param quality - Optional quality (1-100)
- * @returns Transformed URL or original if bypass conditions are met
- */
-export function buildLoaderImageUrl(src: string, width: number, quality?: number): string {
-  const base = getBaseUrl();
-  const isLocal = base.includes("localhost") || base.includes("127.0.0.1");
-
-  // Bypass conditions: local dev or absolute URLs
-  if (isLocal || src.startsWith("http://") || src.startsWith("https://")) {
-    return src;
-  }
-
-  if (src.startsWith("/")) {
-    return src;
-  }
-
-  // For other paths: Use /cdn-cgi/image/ prefix (only works on production domain)
-  const isPreview = base.includes(".workers.dev");
-  if (isPreview) {
-    return src;
-  }
-
-  return transformImageUrl(src, {
-    width,
-    quality,
-    fit: "scale-down",
-    format: "auto",
-  });
 }
 
 /**

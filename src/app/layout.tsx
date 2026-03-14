@@ -1,5 +1,4 @@
 import { Providers } from "@/app/providers";
-import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { getBaseUrl } from "@/utils/url";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
@@ -90,33 +89,32 @@ export const viewport: Viewport = {
 
 const RootLayout: FC<{ children: ReactNode }> = ({ children }) => {
   return (
-    <ViewTransition>
-      <html
-        lang="en"
+    <html
+      lang="en"
+      style={{
+        margin: 0,
+        padding: 0,
+        width: "100%",
+        height: "100%",
+        backgroundColor: "#000000",
+      }}
+    >
+      <body
+        className={`${cinzelDecorative.variable} antialiased`}
         style={{
           margin: 0,
           padding: 0,
           width: "100%",
           height: "100%",
-          backgroundColor: "#000000",
+          overflow: "hidden",
         }}
       >
-        <body
-          className={`${cinzelDecorative.variable} antialiased`}
-          style={{
-            margin: 0,
-            padding: 0,
-            width: "100%",
-            height: "100%",
-            overflow: "hidden",
-          }}
-        >
-          <LoadingIndicator />
-          <Providers>{children}</Providers>
-        </body>
-        <GoogleAnalytics gaId="G-RMLTMSSJ8T" />
-      </html>
-    </ViewTransition>
+        <Providers>
+          <ViewTransition>{children}</ViewTransition>
+        </Providers>
+      </body>
+      <GoogleAnalytics gaId="G-RMLTMSSJ8T" />
+    </html>
   );
 };
 
