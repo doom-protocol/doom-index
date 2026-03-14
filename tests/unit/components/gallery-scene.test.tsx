@@ -12,6 +12,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import { useMintFeatureStore } from "@/features/mint/store";
 import { useEffect, useState } from "react";
 import type { FC, ReactNode } from "react";
 import type { PublicKey } from "@solana/web3.js";
@@ -479,6 +480,7 @@ async function loadGallerySceneModule() {
 describe("unit/components/gallery-scene", () => {
   beforeEach(() => {
     mock.restore();
+    useMintFeatureStore.getState().resetMintFeature();
     registerGallerySceneMocks();
     // Reset mock time using shared helper
     resetMockTime();
@@ -496,6 +498,7 @@ describe("unit/components/gallery-scene", () => {
 
   afterEach(() => {
     cleanup();
+    useMintFeatureStore.getState().resetMintFeature();
     // Restore original performance
     globalThis.performance = originalPerformance;
     mock.restore();
