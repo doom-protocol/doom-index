@@ -4,7 +4,7 @@ import { ArchiveGrid } from "./archive-grid";
 const ITEMS_PER_PAGE = 24;
 
 const SkeletonBar: FC<{ className?: string }> = ({ className = "" }) => (
-  <div className={`animate-pulse rounded bg-white/10 ${className}`} aria-hidden="true" />
+  <span className={`block animate-pulse rounded bg-white/10 ${className}`} aria-hidden="true" />
 );
 
 export const ArchiveLoader: FC = () => {

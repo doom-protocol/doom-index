@@ -1,5 +1,4 @@
 import { ArchiveContent } from "@/components/archive/archive-content";
-import { Header } from "@/components/ui/header";
 import { listImages } from "@/server/services/paintings/list";
 import type { Painting } from "@/types/paintings";
 import { logger } from "@/utils/logger";
@@ -56,12 +55,7 @@ const ArchivePage: NextPage<ArchivePageProps> = async ({ searchParams }) => {
     logger.error("ArchivePage: Error fetching context or data", { error: e });
   }
 
-  return (
-    <main className="relative h-screen w-full overflow-hidden">
-      <Header showProgress={false} />
-      <ArchiveContent items={items} hasNextPage={hasMore} page={page} from={from} to={to} />
-    </main>
-  );
+  return <ArchiveContent items={items} hasNextPage={hasMore} page={page} from={from} to={to} />;
 };
 
 export default ArchivePage;

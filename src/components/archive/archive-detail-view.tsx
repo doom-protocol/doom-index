@@ -11,6 +11,7 @@ import type { FC } from "react";
 import { ACESFilmicToneMapping, Vector3 } from "three";
 import { useHaptic } from "use-haptic";
 import { ArchiveFramedPainting } from "./archive-framed-painting";
+import { ArchiveMetadataPanel } from "./archive-metadata-panel";
 
 interface ArchiveDetailViewProps {
   item: Painting;
@@ -22,7 +23,6 @@ const INITIAL_CAMERA_POSITION: [number, number, number] = [0, 0.8, 0.8];
 const ZOOMED_CAMERA_POSITION: [number, number, number] = [0, 0.8, 2.5];
 const CAMERA_LERP_FACTOR = 0.05;
 
-// Camera animation component
 interface CameraAnimationProps {
   isZoomingOut: boolean;
   onZoomOutComplete?: () => void;
@@ -37,12 +37,9 @@ const CameraAnimation: FC<CameraAnimationProps> = ({ isZoomingOut, onZoomOutComp
 
   useEffect(() => {
     if (isZoomingOut) {
-      // Start zoom out animation
       targetPositionRef.current = new Vector3(...INITIAL_CAMERA_POSITION);
       isAnimatingRef.current = true;
       hasCompletedZoomOutRef.current = false;
-
-      // Kick the frameloop once so useFrame runs again in demand mode
       invalidate();
     }
   }, [isZoomingOut, invalidate]);
@@ -55,17 +52,12 @@ const CameraAnimation: FC<CameraAnimationProps> = ({ isZoomingOut, onZoomOutComp
     const currentPos = camera.position;
     const targetPos = targetPositionRef.current;
 
-    // Lerp camera position
     currentPos.lerp(targetPos, CAMERA_LERP_FACTOR);
-
-    // Update look at
     camera.lookAt(targetLookAtRef.current);
 
-    // Check if animation is complete
     if (currentPos.distanceTo(targetPos) < 0.01) {
       isAnimatingRef.current = false;
 
-      // If zooming out and callback provided, call it
       if (isZoomingOut && !hasCompletedZoomOutRef.current && onZoomOutComplete) {
         hasCompletedZoomOutRef.current = true;
         onZoomOutComplete();
@@ -87,20 +79,16 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
     triggerHaptic();
     setIsClosing(true);
     setIsVisible(false);
-    // Wait for zoom out animation to complete
     window.setTimeout(() => {
       onClose();
-    }, 800); // Slightly longer than camera animation
+    }, 800);
   }, [onClose, triggerHaptic]);
 
-  // Disable scroll when detail view is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    // Trigger fade in after mount
     const timeoutId = window.setTimeout(() => {
       setIsVisible(true);
     }, 50);
-    // Track detail view
     sendGAEvent("archive_detail_view", { painting_id: item.id });
     return () => {
       window.clearTimeout(timeoutId);
@@ -108,26 +96,13 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
     };
   }, [item.id]);
 
-  // Handle ESC key
   useEscapeKey(handleClose);
-
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    const hh = String(date.getHours()).padStart(2, "0");
-    const mm = String(date.getMinutes()).padStart(2, "0");
-    const ss = String(date.getSeconds()).padStart(2, "0");
-    return `${String(y)}-${m}-${d} ${hh}:${mm}:${ss}`;
-  };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-sm lg:flex-row"
-      style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
+      className="fixed inset-0 flex flex-col bg-black/95 backdrop-blur-sm lg:flex-row"
+      style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif", zIndex: 1100 }}
     >
-      {/* Back Button - Liquid Glass Style */}
       <button
         type="button"
         onClick={handleClose}
@@ -139,7 +114,6 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
         </svg>
       </button>
 
-      {/* 3D Scene */}
       <div className="relative h-[50vh] w-full lg:h-full lg:w-[60%]">
         <Canvas
           frameloop="demand"
@@ -160,10 +134,7 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
             gl.toneMapping = ACESFilmicToneMapping;
             gl.setClearColor("#050505");
           }}
-          style={{
-            width: "100%",
-            height: "100%",
-          }}
+          style={{ width: "100%", height: "100%" }}
         >
           <CameraAnimation isZoomingOut={isClosing} />
           <Lights disableDevControls />
@@ -174,71 +145,12 @@ export const ArchiveDetailView: FC<ArchiveDetailViewProps> = ({ item, onClose })
         </Canvas>
       </div>
 
-      {/* Metadata Panel */}
       <div
         className={`flex h-[50vh] flex-col overflow-y-auto bg-black/80 p-6 transition-opacity duration-300 lg:h-full lg:w-[40%] lg:bg-black/60 ${
           isVisible && !isClosing ? "opacity-100" : "opacity-0"
         }`}
       >
-        {/* Metadata Content */}
-        <div className="space-y-6 text-white">
-          {/* Basic Info */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-white/90 normal-case">Basic information</h3>
-            <div className="space-y-2 rounded-lg bg-white/5 p-4">
-              <div>
-                <span className="text-sm text-white/70">Generated:</span>
-                <p className="text-sm">{formatTimestamp(item.timestamp)}</p>
-              </div>
-              <div>
-                <span className="text-sm text-white/70">ID:</span>
-                <p className="font-mono text-sm">{item.id}</p>
-              </div>
-              <div>
-                <span className="text-sm text-white/70">Seed:</span>
-                <p className="font-mono text-sm">{item.seed}</p>
-              </div>
-              <div>
-                <span className="text-sm text-white/70">Params Hash:</span>
-                <p className="font-mono text-sm">{item.paramsHash}</p>
-              </div>
-              <div>
-                <span className="text-sm text-white/70">File Size:</span>
-                <p className="text-sm">{(item.fileSize / 1024).toFixed(2)} KB</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Visual Parameters */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-white/90 normal-case">Visual parameters</h3>
-            <div className="space-y-1 rounded-lg bg-white/5 p-4">
-              {Object.entries(item.visualParams).map(([key, value]) => (
-                <div key={key} className="flex justify-between">
-                  <span className="text-sm text-white/70">{key}:</span>
-                  <span className="font-mono text-sm">{String(value)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Prompts */}
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-white/90 normal-case">Prompt</h3>
-            <div className="rounded-lg bg-white/5 p-4">
-              <p className="text-sm leading-relaxed text-white/90">{item.prompt}</p>
-            </div>
-          </div>
-
-          {item.negative && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-white/90 normal-case">Negative prompt</h3>
-              <div className="rounded-lg bg-white/5 p-4">
-                <p className="text-sm leading-relaxed text-white/90">{item.negative}</p>
-              </div>
-            </div>
-          )}
-        </div>
+        <ArchiveMetadataPanel item={item} />
       </div>
     </div>
   );
