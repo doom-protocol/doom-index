@@ -6,7 +6,7 @@
   "description": "A decentralized archive of financial emotions. AI generates one painting every minute, translating the collective psychology of 8 pump.fun tokens into visual art.",
   "scripts": {
     "dev": "bunx vinext dev --port 8787",
-    "build": "vinext build",
+    "build": "bunx --bun vinext build",
     "build:cf": "bun run build",
     "start": "bunx vinext start --port 8787",
     "lint": "eslint . --cache --cache-location .cache/eslint/.eslintcache --cache-strategy content",
