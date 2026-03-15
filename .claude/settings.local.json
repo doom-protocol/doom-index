@@ -22,16 +22,14 @@
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
-      "Read(./.dev.vars)",
-      "Read(./.prod.vars)",
+      "Read(./*.vars)",
       "Read(./.env.keys)",
       "Bash(env)",
       "Bash(printenv)",
       "Bash(export -p)",
       "Bash(cat .env)",
       "Bash(cat .env.*)",
-      "Bash(cat .dev.vars)",
-      "Bash(cat .prod.vars)",
+      "Bash(cat *.vars)",
       "Bash(cat .env.keys)"
     ]
   }

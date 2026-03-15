@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useLatestPainting } from "@/hooks/use-latest-painting";
 import {
   constrainOrbitControlsSnapshot,
@@ -31,13 +30,6 @@ interface GallerySceneProps {
   cameraPreset?: "dashboard" | "painting";
   initialPainting?: PaintingMetadata | null;
 }
-
-const MintFeatureRoot = dynamic(
-  async () => import("@/features/mint/mint-feature-root").then((mod) => mod.MintFeatureRoot),
-  {
-    ssr: false,
-  },
-);
 
 const DEFAULT_THUMBNAIL = "/placeholder-painting.webp";
 const HEADER_HEIGHT = 56;
@@ -76,6 +68,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
   cameraPreset: initialCameraPreset = "painting",
   initialPainting,
 }) => {
+  const [MintFeatureRootComponent, setMintFeatureRootComponent] = useState<FC | null>(null);
   const isDevMode = isDevelopment();
   const { data: latestPainting, isFetching } = useLatestPainting(initialPainting);
   const lastResolvedPaintingRef = useRef<PaintingMetadata | null>(initialPainting ?? null);
@@ -95,6 +88,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
   const thumbnailUrl = displayPainting?.imageUrl ?? DEFAULT_THUMBNAIL;
 
   const openMintFeature = useMintFeatureStore((state) => state.openMintFeature);
+  const isMintFeatureVisible = useMintFeatureStore((state) => state.isOpen || state.paintingMetadata !== null);
   const resetMintFeature = useMintFeatureStore((state) => state.resetMintFeature);
   const paintingRef = useRef<Group>(null);
   const isClampingCameraRef = useRef(false);
@@ -153,6 +147,26 @@ export const GalleryScene: FC<GallerySceneProps> = ({
       resetMintFeature();
     };
   }, [resetMintFeature]);
+
+  useEffect(() => {
+    if (!isMintFeatureVisible || MintFeatureRootComponent) {
+      return;
+    }
+
+    let isMounted = true;
+
+    void import("@/features/mint/mint-feature-root").then((mod) => {
+      if (!isMounted) {
+        return;
+      }
+
+      setMintFeatureRootComponent(() => mod.MintFeatureRoot);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [MintFeatureRootComponent, isMintFeatureVisible]);
 
   const handleOrbitControlsChange = (event?: OrbitControlsEvent) => {
     const controls = readOrbitControls(event);
@@ -276,7 +290,7 @@ export const GalleryScene: FC<GallerySceneProps> = ({
       >
         <MintButton onClick={handleMintClick} isLoading={false} disabled={!displayPainting} />
       </div>
-      <MintFeatureRoot />
+      {isMintFeatureVisible && MintFeatureRootComponent ? <MintFeatureRootComponent /> : null}
     </>
   );
 };

@@ -1,22 +1,9 @@
+import { AppViewTransition } from "@/components/app-view-transition";
 import { Providers } from "@/app/providers";
 import { getBaseUrl } from "@/utils/url";
-import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
-import { Cinzel_Decorative } from "next/font/google";
-import { ViewTransition } from "react";
 import type { FC, ReactNode } from "react";
 import "./globals.css";
-
-const cinzelDecorative = Cinzel_Decorative({
-  variable: "--font-cinzel-decorative",
-  weight: ["400", "700", "900"],
-  style: ["normal"],
-  display: "swap",
-  subsets: ["latin"],
-  preload: true,
-  fallback: ["serif"],
-  adjustFontFallback: true,
-});
 
 /**
  * Generate metadata with OGP image
@@ -100,7 +87,7 @@ const RootLayout: FC<{ children: ReactNode }> = ({ children }) => {
       }}
     >
       <body
-        className={`${cinzelDecorative.variable} antialiased`}
+        className="antialiased"
         style={{
           margin: 0,
           padding: 0,
@@ -110,10 +97,9 @@ const RootLayout: FC<{ children: ReactNode }> = ({ children }) => {
         }}
       >
         <Providers>
-          <ViewTransition>{children}</ViewTransition>
+          <AppViewTransition>{children}</AppViewTransition>
         </Providers>
       </body>
-      <GoogleAnalytics gaId="G-RMLTMSSJ8T" />
     </html>
   );
 };

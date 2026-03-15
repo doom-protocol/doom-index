@@ -1,5 +1,6 @@
 "use client";
 
+import { ArchiveDetailModal } from "@/components/archive/archive-detail-modal";
 import type { Painting } from "@/types/paintings";
 import { formatDateShort } from "@/utils/time";
 import { useMemo } from "react";
@@ -13,10 +14,11 @@ interface ArchiveContentProps {
   hasNextPage: boolean;
   page: number;
   from?: string;
+  selectedId?: string;
   to?: string;
 }
 
-export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, page, from, to }) => {
+export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, page, from, selectedId, to }) => {
   const itemsPerPage = 24;
   const hasPreviousPage = page > 1;
 
@@ -33,6 +35,22 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
       isSameDay: earliest.toDateString() === latest.toDateString(),
     };
   }, [items]);
+
+  const closeHref = useMemo(() => {
+    const params = new URLSearchParams();
+    if (page > 1) {
+      params.set("page", String(page));
+    }
+    if (from) {
+      params.set("from", from);
+    }
+    if (to) {
+      params.set("to", to);
+    }
+
+    const query = params.toString();
+    return query.length > 0 ? `/archive?${query}` : "/archive";
+  }, [from, page, to]);
 
   return (
     <>
@@ -56,7 +74,7 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
             </p>
           )}
         </div>
-        <ArchiveGrid items={items} isLoading={false} skeletonCount={itemsPerPage} />
+        <ArchiveGrid from={from} items={items} isLoading={false} page={page} skeletonCount={itemsPerPage} to={to} />
       </div>
       <PaginationControls
         currentPage={page}
@@ -68,6 +86,7 @@ export const ArchiveContent: FC<ArchiveContentProps> = ({ items, hasNextPage, pa
         to={to}
       />
       <DateFilter from={from} to={to} />
+      {selectedId ? <ArchiveDetailModal closeHref={closeHref} id={selectedId} /> : null}
     </>
   );
 };

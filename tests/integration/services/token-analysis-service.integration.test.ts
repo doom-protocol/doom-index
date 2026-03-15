@@ -9,15 +9,9 @@
 
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
-async function getCloudflareContextFn() {
-  try {
-    const cloudflareModule = await import("@opennextjs/cloudflare");
-    return "getCloudflareContext" in cloudflareModule && typeof cloudflareModule.getCloudflareContext === "function"
-      ? cloudflareModule.getCloudflareContext
-      : null;
-  } catch {
-    return null;
-  }
+async function getCloudflareEnv() {
+  const { resolveCloudflareEnv } = await import("@/lib/cloudflare-context");
+  return resolveCloudflareEnv();
 }
 
 // TODO: Fix D1 binding mock for integration tests
@@ -36,12 +30,11 @@ describe.skip("TokenAnalysisService Integration", () => {
       // Skip if D1 is not available in test environment
       let d1Binding: D1Database | null = null;
       try {
-        const getCloudflareContext = await getCloudflareContextFn();
-        if (!getCloudflareContext) {
-          console.log("Skipping test: Cloudflare context helper not available");
+        const env = await getCloudflareEnv();
+        if (!env) {
+          console.log("Skipping test: Cloudflare bindings not available");
           return;
         }
-        const { env } = await getCloudflareContext({ async: true });
         d1Binding = env.DB;
       } catch (error) {
         console.log("Skipping test: D1 database not available", error);
@@ -109,12 +102,11 @@ describe.skip("TokenAnalysisService Integration", () => {
       // Skip if not available in test environment
       let d1Binding: D1Database | null = null;
       try {
-        const getCloudflareContext = await getCloudflareContextFn();
-        if (!getCloudflareContext) {
-          console.log("Skipping test: Cloudflare context helper not available");
+        const env = await getCloudflareEnv();
+        if (!env) {
+          console.log("Skipping test: Cloudflare bindings not available");
           return;
         }
-        const { env } = await getCloudflareContext({ async: true });
         d1Binding = env.DB;
       } catch (error) {
         console.log("Skipping test: D1 database not available", error);
@@ -178,12 +170,11 @@ describe.skip("TokenAnalysisService Integration", () => {
     it("should handle errors gracefully when external APIs fail", async () => {
       let d1Binding: D1Database | null = null;
       try {
-        const getCloudflareContext = await getCloudflareContextFn();
-        if (!getCloudflareContext) {
-          console.log("Skipping test: Cloudflare context helper not available");
+        const env = await getCloudflareEnv();
+        if (!env) {
+          console.log("Skipping test: Cloudflare bindings not available");
           return;
         }
-        const { env } = await getCloudflareContext({ async: true });
         d1Binding = env.DB;
       } catch (error) {
         console.log("Skipping test: D1 database not available", error);

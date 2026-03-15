@@ -1,8 +1,8 @@
+import { resolveCloudflareEnv } from "@/lib/cloudflare-context";
 import type { AppError, ConfigurationError, TimeoutError } from "@/types/app-error";
 import { logger } from "@/utils/logger";
 import { parseJsonFromText } from "@/utils/text";
 import { createTimeoutPromise } from "@/utils/time";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { err, ok } from "neverthrow";
 import type { Result } from "neverthrow";
 
@@ -113,8 +113,10 @@ export function createWorkersAiClient({
     }
 
     try {
-      // Try to get binding from Cloudflare context
-      const { env } = await getCloudflareContext({ async: true });
+      const env = await resolveCloudflareEnv();
+      if (!env) {
+        throw new Error("Cloudflare context not available");
+      }
       const binding = (env as WorkersAiBindings).AI;
       if (!binding) {
         return err({

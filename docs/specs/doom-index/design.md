@@ -162,18 +162,18 @@ ApplyMaterial --> RenderFrame
 
 ## Requirements Traceability
 
-| Requirement | Summary                                                 | Components                                                       | Interfaces / Flows                                               |
-| ----------- | ------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
-| 1           | 8 トークン市場データの取得と正規化                      | `MarketCapService`, `lib/dexScreener`                            | `getMcMap`, `roundMc4`, `fetchPriceUsdByToken`, `FetchMc`        |
-| 2           | Cloudflare Workers Cron による分単位生成制御            | `GenerationService`, `workers/cron.ts`                           | `runMinuteGeneration`, `CronTrigger`, `CompareHash`              |
-| 3           | プロンプト合成と視覚パラメータ決定                      | `PromptService`, `ImageProvider`                                 | `composePrompt`, `generate`, `ComposePrompt`                     |
-| 4           | Cloudflare R2 永続化と Next.js API 公開                 | `StateService`, `lib/r2`, `app/api/*`, `share`                   | `putImageR2`, `GET /api/mc`, `StoreImageR2`, `UpdateStateR2`     |
-| 5           | 3D ミュージアムレンダリング UI                          | `GalleryScene`, `Lights`, `FramedPainting`                       | `GLB Texture Update Flow`                                        |
-| 6           | インタラクティブ制御とデータ同期                        | `CameraRig`, `useMc`, `useTokenImage`                            | `GLB Texture Update Flow`, `Minute Generation Flow`              |
-| 7           | OGP 更新と共有（SSR）                                   | `share/[ticker]`                                                 | `OGP Share SSR Flow`                                             |
-| 8           | GLB 額縁への画像はめ込み                                | `FramedPainting`                                                 | `GLB Texture Update Flow`                                        |
-| 9           | Cloudflare Pages デプロイと @opennextjs/cloudflare 統合 | `@opennextjs/cloudflare`, `wrangler.toml`, `open-next.config.ts` | `opennextjs-cloudflare build`, `wrangler deploy`                 |
-| 10          | Cloudflare Workers Secrets 管理                         | `wrangler secret put`, `env.PROVIDER_API_KEY`                    | `workers/cron.ts` での Secret 取得、`.dev.vars` でのローカル開発 |
+| Requirement | Summary                                                 | Components                                                       | Interfaces / Flows                                                |
+| ----------- | ------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
+| 1           | 8 トークン市場データの取得と正規化                      | `MarketCapService`, `lib/dexScreener`                            | `getMcMap`, `roundMc4`, `fetchPriceUsdByToken`, `FetchMc`         |
+| 2           | Cloudflare Workers Cron による分単位生成制御            | `GenerationService`, `workers/cron.ts`                           | `runMinuteGeneration`, `CronTrigger`, `CompareHash`               |
+| 3           | プロンプト合成と視覚パラメータ決定                      | `PromptService`, `ImageProvider`                                 | `composePrompt`, `generate`, `ComposePrompt`                      |
+| 4           | Cloudflare R2 永続化と Next.js API 公開                 | `StateService`, `lib/r2`, `app/api/*`, `share`                   | `putImageR2`, `GET /api/mc`, `StoreImageR2`, `UpdateStateR2`      |
+| 5           | 3D ミュージアムレンダリング UI                          | `GalleryScene`, `Lights`, `FramedPainting`                       | `GLB Texture Update Flow`                                         |
+| 6           | インタラクティブ制御とデータ同期                        | `CameraRig`, `useMc`, `useTokenImage`                            | `GLB Texture Update Flow`, `Minute Generation Flow`               |
+| 7           | OGP 更新と共有（SSR）                                   | `share/[ticker]`                                                 | `OGP Share SSR Flow`                                              |
+| 8           | GLB 額縁への画像はめ込み                                | `FramedPainting`                                                 | `GLB Texture Update Flow`                                         |
+| 9           | Cloudflare Pages デプロイと @opennextjs/cloudflare 統合 | `@opennextjs/cloudflare`, `wrangler.toml`, `open-next.config.ts` | `opennextjs-cloudflare build`, `wrangler deploy`                  |
+| 10          | Cloudflare Workers Secrets 管理                         | `wrangler secret put`, `env.PROVIDER_API_KEY`                    | `workers/cron.ts` での Secret 取得、`.env.local` でのローカル開発 |
 
 ## Components and Interfaces
 
@@ -587,7 +587,7 @@ export interface StateService {
 
 - `wrangler dev` でローカル Workers を起動し、`workers/cron.ts` の `scheduled` ハンドラを手動実行。
 - R2 Binding をローカル R2 エミュレータで代替し、画像保存と state 更新を確認。
-- `.dev.vars` でローカル Secrets を設定し、Provider API Key を取得できることを確認。
+- `.env.local` でローカル Secrets を設定し、Provider API Key を取得できることを確認。
 
 ### Performance / Load Tests
 

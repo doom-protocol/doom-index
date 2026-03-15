@@ -58,11 +58,10 @@ const config = defineConfig([
       ".agents/**",
       ".codex/**",
       ".moltworker/**",
-      ".open-next/**",
       ".wrangler/**",
       ".claude/**",
+      "src/types/cloudflare-env.d.ts",
       "wt-*/**",
-      "open-next.config.ts",
     ],
   },
 ]);

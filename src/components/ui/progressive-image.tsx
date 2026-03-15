@@ -64,6 +64,7 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
   const hasError = imageState.sourceKey === sourceKey ? imageState.hasError : false;
   const isLoading = imageState.sourceKey === sourceKey ? imageState.isLoading : true;
   const currentSrc = candidateSources[currentSourceIndex] ?? src;
+  const resolvedSizes = buildSizesAttr(sizes);
 
   const handleImageLoad = () => {
     logger.debug("progressive-image.loaded", {
@@ -134,8 +135,9 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
         fill={fill}
         width={!fill ? width : undefined}
         height={!fill ? height : undefined}
-        sizes={buildSizesAttr(sizes)}
-        loading={loading}
+        sizes={resolvedSizes}
+        unoptimized
+        loading={loading ?? "lazy"}
         className={`${className} ${isLoading ? "opacity-0" : "opacity-100"}`}
         onLoad={handleImageLoad}
         onError={handleImageError}

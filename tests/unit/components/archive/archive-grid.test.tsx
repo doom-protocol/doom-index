@@ -2,7 +2,7 @@ import "../../../preload";
 
 import type { Painting } from "@/types/paintings";
 import { render } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
 function createPainting(id: number): Painting {
   return {
@@ -37,29 +37,16 @@ function createPainting(id: number): Painting {
 }
 
 describe("ArchiveGrid", () => {
-  beforeEach(() => {
-    mock.restore();
-    void mock.module("next/image", () => ({
-      default: ({ alt, src, loading }: { alt: string; src: string; loading?: "eager" | "lazy" }) => (
-        <div aria-label={alt} data-loading={loading ?? "lazy"} data-src={src} role="img" />
-      ),
-    }));
-  });
-
-  afterEach(() => {
-    mock.restore();
-  });
-
   it("eager-loads only the first archive row images", async () => {
     const { ArchiveGrid } = await import("@/components/archive/archive-grid");
     const items = Array.from({ length: 8 }, (_, index) => createPainting(index + 1));
 
-    const { getAllByRole } = render(<ArchiveGrid items={items} />);
+    const { getAllByRole } = render(<ArchiveGrid items={items} page={1} />);
 
     const images = getAllByRole("img");
 
     expect(images).toHaveLength(8);
-    expect(images.slice(0, 6).every((image) => image.getAttribute("data-loading") === "eager")).toBe(true);
-    expect(images.slice(6).every((image) => image.getAttribute("data-loading") === "lazy")).toBe(true);
+    expect(images.slice(0, 6).every((image) => image.getAttribute("loading") === "eager")).toBe(true);
+    expect(images.slice(6).every((image) => image.getAttribute("loading") === "lazy")).toBe(true);
   });
 });

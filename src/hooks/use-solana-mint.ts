@@ -20,6 +20,7 @@ import { Keypair } from "@solana/web3.js";
 import { useCallback, useEffect, useState } from "react";
 
 const MAX_MINT_ATTEMPTS = 2;
+const GLOBAL_CONFIG_UNINITIALIZED_MESSAGE = "Doom NFT global config is not initialized.";
 
 /**
  * Mint result
@@ -55,6 +56,10 @@ function toMintError(error: unknown): Error {
   return new Error(getErrorMessage(error) || "Minting failed");
 }
 
+function isGlobalConfigUninitializedError(error: unknown): boolean {
+  return getErrorMessage(error) === GLOBAL_CONFIG_UNINITIALIZED_MESSAGE;
+}
+
 /**
  * Hook for minting NFTs using the custom Doom NFT program.
  *
@@ -73,6 +78,11 @@ export function useSolanaMint(): UseSolanaMintResult {
       const { globalConfig } = await fetchGlobalConfig(connection);
       setNextTokenId(globalConfig.nextTokenId);
     } catch (refreshError) {
+      if (isGlobalConfigUninitializedError(refreshError)) {
+        setNextTokenId(null);
+        return;
+      }
+
       logger.warn("solana.mint.state-refresh-failed", {
         error: getErrorMessage(refreshError),
       });

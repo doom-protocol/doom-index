@@ -1,5 +1,5 @@
+import { resolveCloudflareEnv } from "@/lib/cloudflare-context";
 import { logger } from "@/utils/logger";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 
 export interface Context {
@@ -14,7 +14,10 @@ export async function createContext(opts: FetchCreateContextFnOptions): Promise<
   const { req } = opts;
 
   try {
-    const { env } = await getCloudflareContext({ async: true });
+    const env = await resolveCloudflareEnv();
+    if (!env) {
+      throw new Error("Cloudflare context not available");
+    }
 
     return {
       headers: req.headers,
@@ -47,7 +50,10 @@ export async function createStaticServerContext(): Promise<Context> {
 
 async function createContextFromHeaders(headersList: Headers, source: string): Promise<Context> {
   try {
-    const { env } = await getCloudflareContext({ async: true });
+    const env = await resolveCloudflareEnv();
+    if (!env) {
+      throw new Error("Cloudflare context not available");
+    }
 
     return {
       headers: headersList,

@@ -10,7 +10,7 @@
  * 6. Generate image
  * 7. Store painting to Arweave and D1
  *
- * NOTE: The cron trigger in wrangler.toml must match NEXT_PUBLIC_GENERATION_INTERVAL_MS
+ * NOTE: The cron trigger in wrangler.jsonc must match NEXT_PUBLIC_GENERATION_INTERVAL_MS
  */
 
 import type { Result } from "neverthrow";

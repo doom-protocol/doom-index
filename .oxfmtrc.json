@@ -5,5 +5,5 @@
   "printWidth": 120,
   "sortTailwindcss": {},
   "sortPackageJson": false,
-  "ignorePatterns": [".claude/worktrees/**"]
+  "ignorePatterns": [".claude/worktrees/**", "dist/**", "src/types/cloudflare-env.d.ts"]
 }

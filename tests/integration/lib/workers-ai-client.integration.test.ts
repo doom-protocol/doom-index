@@ -13,15 +13,9 @@ const ENABLE_EXTERNAL_API_TESTS = process.env.ENABLE_EXTERNAL_API_TESTS === "tru
 
 type WorkersAiClientModule = typeof import("@/lib/workers-ai-client");
 
-async function getCloudflareContextFn() {
-  try {
-    const cloudflareModule = await import("@opennextjs/cloudflare");
-    return "getCloudflareContext" in cloudflareModule && typeof cloudflareModule.getCloudflareContext === "function"
-      ? cloudflareModule.getCloudflareContext
-      : null;
-  } catch {
-    return null;
-  }
+async function getCloudflareEnv() {
+  const { resolveCloudflareEnv } = await import("@/lib/cloudflare-context");
+  return resolveCloudflareEnv();
 }
 
 async function importWorkersAiClientModule(): Promise<WorkersAiClientModule> {
@@ -37,11 +31,10 @@ async function isAiBindingAvailable(): Promise<boolean> {
   }
 
   try {
-    const getCloudflareContext = await getCloudflareContextFn();
-    if (!getCloudflareContext) {
+    const env = await getCloudflareEnv();
+    if (!env) {
       return false;
     }
-    const { env } = await getCloudflareContext({ async: true });
     const binding = env.AI;
     return !!binding;
   } catch {

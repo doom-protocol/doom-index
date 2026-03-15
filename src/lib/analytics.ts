@@ -23,6 +23,19 @@ export type GAEventName = (typeof GA_EVENTS)[keyof typeof GA_EVENTS];
 type GAParameterValue = string | number | boolean | null | undefined;
 export type GAEventParameters = Record<string, GAParameterValue>;
 
+const isGoogleAnalyticsInitialized = (): boolean => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const windowWithDataLayer = window as Window & { dataLayer?: unknown };
+  return Array.isArray(windowWithDataLayer.dataLayer);
+};
+
 export const sendGAEvent = (eventName: GAEventName, parameters?: GAEventParameters): void => {
+  if (!isGoogleAnalyticsInitialized()) {
+    return;
+  }
+
   nextSendGAEvent("event", eventName, parameters || {});
 };

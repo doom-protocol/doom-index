@@ -4,9 +4,8 @@ import { appRouter } from "@/server/trpc/routers/_app";
 import { logger } from "@/utils/logger";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
-// Note: OpenNext Cloudflare requires edge runtime functions to be defined separately.
-// Since Cloudflare Workers run on edge runtime by default, we don't need to explicitly
-// set runtime = "edge" here. The function will be bundled correctly by OpenNext.
+// Cloudflare Workers runs this route on the edge by default, so we do not need
+// a separate runtime export here.
 
 const handler = async (req: Request): Promise<Response> => {
   const response = await fetchRequestHandler({

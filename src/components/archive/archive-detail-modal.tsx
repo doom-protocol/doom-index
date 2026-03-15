@@ -8,24 +8,35 @@ import type { FC } from "react";
 import { ArchiveDetailView } from "./archive-detail-view";
 
 interface ArchiveDetailModalProps {
+  closeHref?: string;
   id: string;
 }
 
-export const ArchiveDetailModal: FC<ArchiveDetailModalProps> = ({ id }) => {
+export const ArchiveDetailModal: FC<ArchiveDetailModalProps> = ({ closeHref, id }) => {
   const router = useRouter();
   const trpc = useTRPC();
 
   const { data: item, isLoading, isError } = useQuery(trpc.paintings.getById.queryOptions({ id }));
 
   const handleClose = useCallback(() => {
+    if (closeHref) {
+      router.replace(closeHref);
+      return;
+    }
+
     router.back();
-  }, [router]);
+  }, [closeHref, router]);
 
   useEffect(() => {
     if (isError) {
+      if (closeHref) {
+        router.replace(closeHref);
+        return;
+      }
+
       router.back();
     }
-  }, [isError, router]);
+  }, [closeHref, isError, router]);
 
   if (isLoading || !item) {
     return (

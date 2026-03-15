@@ -9,7 +9,7 @@
  * - Local file system writeout (instead of Arweave upload)
  *
  * Usage:
- *   bun run --env-file=.dev.vars scripts/gen-img.ts
+ *   bun run --env-file=.env.local scripts/gen-img.ts
  */
 
 import { DEFAULT_RUNWARE_MODEL } from "@/constants/runware";

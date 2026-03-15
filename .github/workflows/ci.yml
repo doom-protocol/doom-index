@@ -11,14 +11,15 @@ on:
       - "tsconfig.json"
       - "eslint.config.ts"
       - "next.config.ts"
-      - "open-next.config.ts"
-      - "wrangler.toml"
+      - "vite.config.ts"
+      - "wrangler.jsonc"
+      - "worker/**"
       - "drizzle.config.ts"
       - ".oxfmtrc.json"
       - "lefthook.yml"
       - "migrations/**"
       - ".github/workflows/ci.yml"
-      - ".example.vars"
+      - ".env.example"
   pull_request:
     branches: [main]
     paths:
@@ -29,14 +30,15 @@ on:
       - "tsconfig.json"
       - "eslint.config.ts"
       - "next.config.ts"
-      - "open-next.config.ts"
-      - "wrangler.toml"
+      - "vite.config.ts"
+      - "wrangler.jsonc"
+      - "worker/**"
       - "drizzle.config.ts"
       - ".oxfmtrc.json"
       - "lefthook.yml"
       - "migrations/**"
       - ".github/workflows/ci.yml"
-      - ".example.vars"
+      - ".env.example"
 
 jobs:
   format:
@@ -173,4 +175,4 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run tests
-        run: NODE_ENV=test bun test --env-file=.example.vars --preload=./tests/preload.ts --bail
+        run: NODE_ENV=test bun test --env-file=.env.example --preload=./tests/preload.ts --bail

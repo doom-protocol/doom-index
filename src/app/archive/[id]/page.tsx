@@ -1,8 +1,8 @@
 import { ArchiveDetailStandaloneLoader } from "@/components/archive/archive-detail-standalone-loader";
+import { resolveCloudflareEnv } from "@/lib/cloudflare-context";
 import { createPaintingsRepository } from "@/server/repositories/paintings-repository";
 import { getBaseUrl } from "@/utils/url";
 import { logger } from "@/utils/logger";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Metadata, NextPage } from "next";
 import { notFound } from "next/navigation";
 
@@ -15,7 +15,10 @@ export async function generateMetadata({ params }: ArchiveDetailPageProps): Prom
   const metadataBase = new URL(getBaseUrl());
 
   try {
-    const { env } = await getCloudflareContext({ async: true });
+    const env = await resolveCloudflareEnv();
+    if (!env) {
+      throw new Error("Cloudflare context not available");
+    }
     const repo = createPaintingsRepository({ d1Binding: env.DB });
     const result = await repo.findById(id);
 
@@ -47,7 +50,10 @@ export async function generateMetadata({ params }: ArchiveDetailPageProps): Prom
 
 async function fetchPainting(id: string) {
   try {
-    const { env } = await getCloudflareContext({ async: true });
+    const env = await resolveCloudflareEnv();
+    if (!env) {
+      throw new Error("Cloudflare context not available");
+    }
     const repo = createPaintingsRepository({ d1Binding: env.DB });
     const result = await repo.findById(id);
 

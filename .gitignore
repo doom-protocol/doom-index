@@ -20,6 +20,8 @@
 # production
 /build
 
+dist/
+
 # misc
 .DS_Store
 *.pem
@@ -40,8 +42,6 @@ yarn-error.log*
 .env.development.local
 .env.production.local
 .env.test.local
-.dev.vars
-.prod.vars
 
 # vercel
 .vercel
@@ -59,9 +59,10 @@ next-env.d.ts
 local-test.db
 local-test-*.db
 
-.env.local
 .env.development
 
 .agents/memory/
 
 ArDrive Wallet.json
+
+.dev.vars

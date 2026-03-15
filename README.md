@@ -5,7 +5,7 @@ DOOM INDEX is a Cloudflare-first generative art project. It turns live crypto ma
 ## Overview
 
 - Frontend: Next.js 16 App Router
-- Runtime: Cloudflare Workers via OpenNext
+- Runtime: Cloudflare Workers via `vinext` + Vite
 - Storage: Arweave for artwork assets, D1 for searchable metadata
 - Generation inputs: CoinGecko, Fear & Greed, Tavily, Runware
 - Minting: custom Doom NFT program on Solana
@@ -25,10 +25,10 @@ Install dependencies:
 bun install
 ```
 
-Copy `.example.vars` to `.dev.vars`, then fill in the required values:
+Use `.env.example` as the template and create `.env.local` with the required values:
 
 ```bash
-cp .example.vars .dev.vars
+cp .env.example .env.local
 ```
 
 Minimum local env:
@@ -47,11 +47,7 @@ TAVILY_API_KEY=your_tavily_api_key
 ARWEAVE_GATEWAY_BASE_URL=https://permagate.io
 ```
 
-`bun run dev` uses Next.js' native `.env.local` loading. Point `.env.local` at `.dev.vars` so Next.js and the Bun scripts share the same values:
-
-```bash
-ln -s .dev.vars .env.local
-```
+`bun run dev` and the Bun scripts now both read the standard local env file name, so no symlink step is needed.
 
 ## Development
 
@@ -61,11 +57,10 @@ Run the Next.js app:
 bun run dev
 ```
 
-Run the Cloudflare preview build:
+Run the Cloudflare Worker dry-run build:
 
 ```bash
 bun run build:cf
-bun run preview
 ```
 
 Trigger the cron loop locally:
@@ -77,7 +72,7 @@ bun run watch-cron
 Generate a painting locally:
 
 ```bash
-bun run generate
+bun run generate:img
 ```
 
 Generate the framed GLB directly:
@@ -91,7 +86,7 @@ bun run generate:framed-glb --image ./out/example.webp --out ./out/framed.glb
 Upload an explicit image + GLB bundle to Arweave:
 
 ```bash
-bun --env-file=.dev.vars scripts/upload-metadata-ardrive.ts \
+bun --env-file=.env.local scripts/upload-metadata-ardrive.ts \
   --token-id 1 \
   --thumbnail ./out/example.webp \
   --glb ./out/framed.glb
@@ -100,7 +95,7 @@ bun --env-file=.dev.vars scripts/upload-metadata-ardrive.ts \
 Upload the built-in placeholder fixture bundle:
 
 ```bash
-bun --env-file=.dev.vars scripts/upload-metadata-ardrive.ts \
+bun --env-file=.env.local scripts/upload-metadata-ardrive.ts \
   --token-id 1 \
   --fixture
 ```
