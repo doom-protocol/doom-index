@@ -110,6 +110,7 @@ const readTRPCClient = () => ({
     },
   },
 });
+const loggerWarnMock = mock(() => {});
 
 function registerUseSolanaMintMocks() {
   void mock.module("@solana/wallet-adapter-react", () => ({
@@ -128,7 +129,7 @@ function registerUseSolanaMintMocks() {
       debug: mock(() => {}),
       error: mock(() => {}),
       info: mock(() => {}),
-      warn: mock(() => {}),
+      warn: loggerWarnMock,
     },
   }));
 }
@@ -178,6 +179,7 @@ describe("unit/hooks/use-solana-mint", () => {
     });
     walletState.connected = true;
     walletState.publicKey = createPublicKey(9);
+    loggerWarnMock.mockReset();
 
     const globalConfig = deriveGlobalConfigPda();
     const collection = createPublicKey(21);
@@ -272,6 +274,22 @@ describe("unit/hooks/use-solana-mint", () => {
       signature: "sig-1",
       tokenId: INITIAL_TOKEN_ID,
     });
+  });
+
+  it("treats an uninitialized global config as an empty mint state without warning", async () => {
+    getAccountInfoMock.mockImplementation(async () => {
+      await Promise.resolve();
+      return null;
+    });
+
+    const { useSolanaMint } = await loadUseSolanaMintModule();
+    const { result } = renderHook(() => useSolanaMint());
+
+    await waitFor(() => {
+      expect(result.current.nextTokenId).toBeNull();
+    });
+
+    expect(loggerWarnMock).not.toHaveBeenCalled();
   });
 
   it("maps Doom program custom errors to user-facing mint errors", async () => {

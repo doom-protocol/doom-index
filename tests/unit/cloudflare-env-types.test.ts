@@ -7,5 +7,12 @@ describe("unit/cloudflare-env-types", () => {
     const cloudflareEnvTypes = readFileSync(join(process.cwd(), "src", "types", "cloudflare-env.d.ts"), "utf8");
 
     expect(cloudflareEnvTypes).not.toContain("NEXT_PUBLIC_R2_URL");
+    expect(cloudflareEnvTypes).toContain('mainModule: typeof import("../worker");');
+  });
+
+  it("keeps Wrangler pointed at src/worker.ts", () => {
+    const wranglerConfig = readFileSync(join(process.cwd(), "wrangler.jsonc"), "utf8");
+
+    expect(wranglerConfig).toContain('"main": "src/worker.ts"');
   });
 });

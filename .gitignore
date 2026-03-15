@@ -66,4 +66,3 @@ local-test-*.db
 ArDrive Wallet.json
 
 .dev.vars
-.example.vars

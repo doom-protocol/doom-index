@@ -1,7 +1,7 @@
+import { AppViewTransition } from "@/components/app-view-transition";
 import { Providers } from "@/app/providers";
 import { getBaseUrl } from "@/utils/url";
 import type { Metadata, Viewport } from "next";
-import { ViewTransition } from "react";
 import type { FC, ReactNode } from "react";
 import "./globals.css";
 
@@ -97,7 +97,7 @@ const RootLayout: FC<{ children: ReactNode }> = ({ children }) => {
         }}
       >
         <Providers>
-          <ViewTransition>{children}</ViewTransition>
+          <AppViewTransition>{children}</AppViewTransition>
         </Providers>
       </body>
     </html>

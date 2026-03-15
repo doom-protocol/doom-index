@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "doom-index",
-  "main": "worker/index.ts",
+  "main": "src/worker.ts",
   "workers_dev": true,
   "preview_urls": true,
   "compatibility_date": "2025-03-25",

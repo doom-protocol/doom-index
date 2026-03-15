@@ -1,17 +1,16 @@
 /**
- * Dynamic OGP Image Generator
+ * Dynamic OGP image route.
  *
- * Generates Open Graph Protocol images for social media sharing.
- * - Fetches latest painting from Arweave-backed storage
- * - Resizes image to 1200×630 with black background
+ * Serves the current Open Graph image through a plain App Router route so the
+ * runtime path matches the URL referenced from metadata.
  */
 
 import { CACHE_TTL_SECONDS } from "@/constants";
-import { resolveCloudflareEnv } from "@/lib/cloudflare-context";
 import { createPaintingsRepository } from "@/server/repositories/paintings-repository";
 import { arrayBufferToDataUrl, base64ToArrayBuffer } from "@/utils/image";
 import { logger } from "@/utils/logger";
 import { getBaseUrl } from "@/utils/url";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 // Route Segment Config
 export const dynamic = "force-dynamic";
@@ -217,6 +216,42 @@ async function getFallbackImageDataUrl(assetsFetcher: Fetcher): Promise<string> 
   }
 }
 
+async function getCloudflareEnvOrNull(): Promise<CloudflareEnv | null> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    return env;
+  } catch (error) {
+    logger.info("ogp.step-init-context-skip", {
+      reason: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
+async function getPublicFallbackBuffer(): Promise<ArrayBuffer | null> {
+  try {
+    const fallbackUrl = new URL("/og-fallback.png", getBaseUrl());
+    const response = await fetch(fallbackUrl);
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.arrayBuffer();
+  } catch {
+    return null;
+  }
+}
+
+function createImageResponse(buffer: ArrayBuffer, cacheControl: string): Response {
+  return new Response(buffer, {
+    status: 200,
+    headers: {
+      "Content-Type": "image/png",
+      "Cache-Control": cacheControl,
+    },
+  });
+}
+
 /**
  * Fetch current painting image from Arweave and return PNG ArrayBuffer with black background.
  * Uses Cloudflare Image Transformations to resize and add black background padding.
@@ -297,6 +332,11 @@ async function getCurrentPaintingImageBuffer(
     imageSizeBytes: imageBuffer.byteLength,
     imageSizeKB: (imageBuffer.byteLength / 1024).toFixed(2),
   });
+
+  if (process.env.NODE_ENV === "development") {
+    logger.info("ogp.step3-transform-skip-dev");
+    return imageBuffer;
+  }
 
   logger.info("ogp.step3-transform-image");
   let frameBuffer: ArrayBuffer | null = null;
@@ -393,19 +433,31 @@ export async function getFrameDataUrl(assetsFetcher: Fetcher): Promise<string | 
  * Generate OGP image by directly returning transformed PNG from Cloudflare Image Transformations.
  * Avoids using ImageResponse which requires fs.readFileSync (not available in Cloudflare Workers).
  */
-export default async function Image(): Promise<Response> {
+export async function GET(): Promise<Response> {
   const startTime = Date.now();
   logger.info("ogp.start");
+  const env = await getCloudflareEnvOrNull();
 
   try {
     logger.info("ogp.step-init-context");
-    const env = await resolveCloudflareEnv();
-    if (!env) {
-      throw new Error("Cloudflare context not available");
+    const db = env?.DB;
+    const assetsFetcher = env?.ASSETS;
+    const imagesBinding = env?.IMAGES;
+
+    if (!db || !imagesBinding) {
+      const publicFallbackBuffer = await getPublicFallbackBuffer();
+      if (publicFallbackBuffer) {
+        logger.info("ogp.fallback-public-completed", {
+          durationMs: Date.now() - startTime,
+        });
+        return createImageResponse(
+          publicFallbackBuffer,
+          `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}, stale-while-revalidate=30`,
+        );
+      }
+
+      throw new Error("Cloudflare OGP bindings are not available in environment");
     }
-    const db = env.DB;
-    const assetsFetcher = env.ASSETS;
-    const imagesBinding = env.IMAGES;
 
     logger.info("ogp.step-init-url");
     // Get request URL
@@ -425,13 +477,10 @@ export default async function Image(): Promise<Response> {
       arrayBufferSizeKB: (imageBuffer.byteLength / 1024).toFixed(2),
     });
 
-    const response = new Response(imageBuffer, {
-      status: 200,
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}, stale-while-revalidate=30`,
-      },
-    });
+    const response = createImageResponse(
+      imageBuffer,
+      `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}, stale-while-revalidate=30`,
+    );
 
     logger.info("ogp.completed", {
       durationMs: Date.now() - startTime,
@@ -450,72 +499,66 @@ export default async function Image(): Promise<Response> {
     });
 
     try {
-      const env = await resolveCloudflareEnv();
-      if (!env) {
-        throw new Error("Cloudflare context not available");
+      const fallbackAssetsFetcher = env?.ASSETS;
+      const fallbackImagesBinding = env?.IMAGES;
+
+      if (fallbackAssetsFetcher && fallbackImagesBinding) {
+        logger.info("ogp.fallback-load-image");
+        try {
+          const fallbackBuffer = await getFallbackImageBuffer(fallbackAssetsFetcher);
+          const [frameBuffer, backgroundBuffer] = await Promise.all([
+            getFrameImageBuffer(fallbackAssetsFetcher),
+            getBackgroundImageBuffer(fallbackAssetsFetcher),
+          ]);
+          const transformedFallback = await renderPaintingOnCanvas(
+            fallbackBuffer,
+            fallbackImagesBinding,
+            frameBuffer,
+            backgroundBuffer,
+          );
+
+          logger.info("ogp.fallback-completed", {
+            durationMs: Date.now() - startTime,
+          });
+
+          return createImageResponse(transformedFallback, `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`);
+        } catch (fallbackTransformError) {
+          const fallbackTransformErrorMessage =
+            fallbackTransformError instanceof Error ? fallbackTransformError.message : String(fallbackTransformError);
+          logger.error("ogp.fallback-transform-error", {
+            reason: `Fallback image transformation failed: ${fallbackTransformErrorMessage}`,
+            error: fallbackTransformErrorMessage,
+            willUseOriginalFallback: true,
+          });
+
+          const fallbackDataUrl = await getFallbackImageDataUrl(fallbackAssetsFetcher);
+          const fallbackBuffer = await fetch(fallbackDataUrl).then(async (r) => r.arrayBuffer());
+          const [frameBuffer, backgroundBuffer] = await Promise.all([
+            getFrameImageBuffer(fallbackAssetsFetcher),
+            getBackgroundImageBuffer(fallbackAssetsFetcher),
+          ]);
+
+          logger.info("ogp.fallback-completed", {
+            durationMs: Date.now() - startTime,
+          });
+
+          const transformedFallback = await renderPaintingOnCanvas(
+            fallbackBuffer,
+            fallbackImagesBinding,
+            frameBuffer,
+            backgroundBuffer,
+          );
+
+          return createImageResponse(transformedFallback, `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`);
+        }
       }
-      const fallbackAssetsFetcher = env.ASSETS;
-      const fallbackImagesBinding = env.IMAGES;
 
-      logger.info("ogp.fallback-load-image");
-      try {
-        const fallbackBuffer = await getFallbackImageBuffer(fallbackAssetsFetcher);
-        const [frameBuffer, backgroundBuffer] = await Promise.all([
-          getFrameImageBuffer(fallbackAssetsFetcher),
-          getBackgroundImageBuffer(fallbackAssetsFetcher),
-        ]);
-        const transformedFallback = await renderPaintingOnCanvas(
-          fallbackBuffer,
-          fallbackImagesBinding,
-          frameBuffer,
-          backgroundBuffer,
-        );
-
-        logger.info("ogp.fallback-completed", {
+      const publicFallbackBuffer = await getPublicFallbackBuffer();
+      if (publicFallbackBuffer) {
+        logger.info("ogp.fallback-public-completed", {
           durationMs: Date.now() - startTime,
         });
-
-        return new Response(transformedFallback, {
-          status: 200,
-          headers: {
-            "Content-Type": "image/png",
-            "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`,
-          },
-        });
-      } catch (fallbackTransformError) {
-        const fallbackTransformErrorMessage =
-          fallbackTransformError instanceof Error ? fallbackTransformError.message : String(fallbackTransformError);
-        logger.error("ogp.fallback-transform-error", {
-          reason: `Fallback image transformation failed: ${fallbackTransformErrorMessage}`,
-          error: fallbackTransformErrorMessage,
-          willUseOriginalFallback: true,
-        });
-
-        const fallbackDataUrl = await getFallbackImageDataUrl(fallbackAssetsFetcher);
-        const fallbackBuffer = await fetch(fallbackDataUrl).then(async (r) => r.arrayBuffer());
-        const [frameBuffer, backgroundBuffer] = await Promise.all([
-          getFrameImageBuffer(fallbackAssetsFetcher),
-          getBackgroundImageBuffer(fallbackAssetsFetcher),
-        ]);
-
-        logger.info("ogp.fallback-completed", {
-          durationMs: Date.now() - startTime,
-        });
-
-        const transformedFallback = await renderPaintingOnCanvas(
-          fallbackBuffer,
-          fallbackImagesBinding,
-          frameBuffer,
-          backgroundBuffer,
-        );
-
-        return new Response(transformedFallback, {
-          status: 200,
-          headers: {
-            "Content-Type": "image/png",
-            "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`,
-          },
-        });
+        return createImageResponse(publicFallbackBuffer, `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`);
       }
     } catch (fallbackError) {
       const fallbackErrorMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
@@ -542,12 +585,6 @@ export default async function Image(): Promise<Response> {
       durationMs: Date.now() - startTime,
     });
 
-    return new Response(blackBuffer, {
-      status: 200,
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`,
-      },
-    });
+    return createImageResponse(blackBuffer, `public, max-age=${String(CACHE_TTL_SECONDS.ONE_MINUTE)}`);
   }
 }
