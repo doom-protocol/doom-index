@@ -19,6 +19,8 @@ interface MintModalRenderState {
   paintingMetadata: MintPaintingMetadata | null;
 }
 
+type MintFeatureStoreState = ReturnType<typeof useMintFeatureStore.getState>;
+
 function getPaintingKey(paintingMetadata: MintPaintingMetadata | null | undefined): string | null {
   if (!paintingMetadata) {
     return null;
@@ -35,7 +37,7 @@ export function MintFeatureRoot() {
   const initialMintFeatureStateRef = useRef(useMintFeatureStore.getState());
   const [modalRenderState, setModalRenderState] = useState<MintModalRenderState>(() => ({
     isMounted: initialMintFeatureStateRef.current.paintingMetadata !== null,
-    isOpen: initialMintFeatureStateRef.current.isOpen && initialMintFeatureStateRef.current.paintingMetadata !== null,
+    isOpen: false,
     paintingMetadata: initialMintFeatureStateRef.current.paintingMetadata,
   }));
   const modalStateRef = useRef(modalRenderState);
@@ -116,7 +118,7 @@ export function MintFeatureRoot() {
   }, [clearMintFeature, commitModalRenderState]);
 
   useEffect(() => {
-    const unsubscribe = useMintFeatureStore.subscribe((state) => {
+    const syncWithMintFeatureState = (state: MintFeatureStoreState) => {
       if (state.isOpen && state.paintingMetadata) {
         openModal(state.paintingMetadata);
         return;
@@ -125,7 +127,10 @@ export function MintFeatureRoot() {
       if (modalStateRef.current.isMounted) {
         closeModal();
       }
-    });
+    };
+
+    syncWithMintFeatureState(useMintFeatureStore.getState());
+    const unsubscribe = useMintFeatureStore.subscribe(syncWithMintFeatureState);
 
     return () => {
       unsubscribe();
