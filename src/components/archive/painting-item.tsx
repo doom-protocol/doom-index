@@ -25,6 +25,11 @@ interface PaintingProps {
 
 export const PaintingComponent: FC<PaintingProps> = ({ item, loading }) => {
   const imageSources = useMemo(() => getArchiveImageSources(item.imageUrl), [item.imageUrl]);
+  // Temporary: production `/_next/image` requests against Arweave gateways still return 4xx/5xx intermittently.
+  // Keep archive thumbnails on direct browser fetches until the Cloudflare/OpenNext optimizer path is reliable.
+  const shouldBypassImageOptimizer = imageSources.some(
+    (imageSource) => imageSource.startsWith("http://") || imageSource.startsWith("https://"),
+  );
   const timeLabel = (() => {
     const date = new Date(item.timestamp);
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -50,6 +55,7 @@ export const PaintingComponent: FC<PaintingProps> = ({ item, loading }) => {
       <ProgressiveImage
         src={item.imageUrl}
         sources={imageSources}
+        unoptimized={shouldBypassImageOptimizer}
         alt={`Archive item ${item.id}`}
         fill
         sizes={ARCHIVE_GRID_SIZES}
