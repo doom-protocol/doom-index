@@ -10,6 +10,7 @@ import type { FC, ReactNode, SyntheticEvent } from "react";
 interface ProgressiveImageProps {
   src: string;
   sources?: string[];
+  unoptimized?: boolean;
   alt: string;
   className?: string;
   fill?: boolean;
@@ -33,6 +34,7 @@ interface ProgressiveImageProps {
 export const ProgressiveImage: FC<ProgressiveImageProps> = ({
   src,
   sources,
+  unoptimized = false,
   alt,
   className = "",
   fill = false,
@@ -131,6 +133,7 @@ export const ProgressiveImage: FC<ProgressiveImageProps> = ({
         key={currentSrc}
         src={currentSrc}
         alt={alt}
+        unoptimized={unoptimized}
         fill={fill}
         width={!fill ? width : undefined}
         height={!fill ? height : undefined}
