@@ -34,6 +34,7 @@ const serverSchema = {
 
 const clientSchema = {
   NEXT_PUBLIC_BASE_URL: v.pipe(v.string(), v.url()),
+  NEXT_PUBLIC_ARWEAVE_FALLBACK_GATEWAY_BASE_URLS: v.optional(v.pipe(v.string(), v.trim()), ""),
   NEXT_PUBLIC_ENABLE_LEVA: v.optional(v.picklist(["true", "false"]), "false"),
   NEXT_PUBLIC_SOLANA_RPC_URL: v.optional(v.pipe(v.string(), v.url()), "https://api.devnet.solana.com"),
 };
@@ -59,6 +60,7 @@ const readServerRuntimeEnv = () => ({
   CACHE_PURGE_API_TOKEN: process.env.CACHE_PURGE_API_TOKEN,
   CACHE_PURGE_ZONE_ID: process.env.CACHE_PURGE_ZONE_ID,
   NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+  NEXT_PUBLIC_ARWEAVE_FALLBACK_GATEWAY_BASE_URLS: process.env.NEXT_PUBLIC_ARWEAVE_FALLBACK_GATEWAY_BASE_URLS,
   NEXT_PUBLIC_ENABLE_LEVA: process.env.NEXT_PUBLIC_ENABLE_LEVA,
   NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
   IMAGE_MODEL: process.env.IMAGE_MODEL,
@@ -69,6 +71,7 @@ const readServerRuntimeEnv = () => ({
 
 const readPublicRuntimeEnv = () => ({
   NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+  NEXT_PUBLIC_ARWEAVE_FALLBACK_GATEWAY_BASE_URLS: process.env.NEXT_PUBLIC_ARWEAVE_FALLBACK_GATEWAY_BASE_URLS,
   NEXT_PUBLIC_ENABLE_LEVA: process.env.NEXT_PUBLIC_ENABLE_LEVA,
   NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
   IMAGE_MODEL: process.env.IMAGE_MODEL,

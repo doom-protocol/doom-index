@@ -79,7 +79,7 @@ describe("ArchiveGrid", () => {
     expect(images.slice(6).every((image) => image.getAttribute("data-loading") === "lazy")).toBe(true);
   });
 
-  it("bypasses the next/image optimizer for archive gateway thumbnails", async () => {
+  it("keeps archive gateway thumbnails on the next/image optimization path", async () => {
     const { ArchiveGrid } = await import("@/components/archive/archive-grid");
     const items = [createPainting(1), createPainting(2)];
 
@@ -88,6 +88,6 @@ describe("ArchiveGrid", () => {
     const images = getAllByRole("img");
 
     expect(images).toHaveLength(2);
-    expect(images.every((image) => image.getAttribute("data-unoptimized") === "true")).toBe(true);
+    expect(images.every((image) => image.getAttribute("data-unoptimized") === "false")).toBe(true);
   });
 });

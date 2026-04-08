@@ -2,7 +2,7 @@ import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import type { NextConfig } from "next";
 import { createRequire } from "node:module";
 import { resolve as resolvePath } from "node:path";
-import { buildArweaveGatewayBaseUrls } from "./src/lib/pure/arweave-gateway";
+import { buildArweaveGatewayBaseUrls, parseArweaveGatewayBaseUrls } from "./src/lib/pure/arweave-gateway";
 
 interface MutableWebpackConfig {
   optimization?: {
@@ -45,7 +45,12 @@ const serverBundleStubbedModules = [
 
 const isNextDev = process.env.npm_lifecycle_event === "dev" || process.argv[2] === "dev";
 const isCloudflareBuild = process.env.npm_lifecycle_event === "build:cf";
+const configuredArweaveFallbackGatewayUrls = parseArweaveGatewayBaseUrls(
+  process.env.NEXT_PUBLIC_ARWEAVE_FALLBACK_GATEWAY_BASE_URLS,
+);
 const arweaveGatewayUrls = buildArweaveGatewayBaseUrls({
+  fallbackGatewayBaseUrls:
+    configuredArweaveFallbackGatewayUrls.length > 0 ? configuredArweaveFallbackGatewayUrls : undefined,
   preferredGatewayBaseUrl: process.env.ARWEAVE_GATEWAY_BASE_URL,
 });
 
@@ -110,6 +115,8 @@ const nextConfig: NextConfig = {
   },
   pageExtensions: ["ts", "tsx", "mdx"],
   images: {
+    loader: "custom",
+    loaderFile: "./src/lib/image-loader.ts",
     remotePatterns: arweaveGatewayUrls.map((gatewayUrl) => {
       const parsedGatewayUrl = new URL(gatewayUrl);
 

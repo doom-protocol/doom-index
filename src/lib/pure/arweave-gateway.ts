@@ -7,6 +7,32 @@ interface BuildArweaveGatewayBaseUrlsParams {
   preferredGatewayBaseUrl?: string;
 }
 
+export function parseArweaveGatewayBaseUrls(value?: string): string[] {
+  if (!value) {
+    return [];
+  }
+
+  const gateways: string[] = [];
+  const seen = new Set<string>();
+
+  for (const gatewayBaseUrl of value.split(",")) {
+    const normalized = gatewayBaseUrl.trim();
+    if (!normalized) {
+      continue;
+    }
+
+    const normalizedGateway = normalizeArweaveGatewayBaseUrl(normalized);
+    if (seen.has(normalizedGateway)) {
+      continue;
+    }
+
+    seen.add(normalizedGateway);
+    gateways.push(normalizedGateway);
+  }
+
+  return gateways;
+}
+
 export function normalizeArweaveGatewayBaseUrl(gatewayBaseUrl: string): string {
   const normalized = gatewayBaseUrl.trim().replace(/\/+$/u, "");
 

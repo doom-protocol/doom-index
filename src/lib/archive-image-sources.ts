@@ -1,9 +1,6 @@
-import { IMAGE_PRESETS, transformImageUrlWithBaseUrl } from "@/lib/cloudflare-image";
-import { buildArweaveGatewayBaseUrls } from "@/lib/pure/arweave-gateway";
-import { getBaseUrl } from "@/utils/url";
+import { buildArweaveGatewayBaseUrls, parseArweaveGatewayBaseUrls } from "@/lib/pure/arweave-gateway";
 
 interface ArchiveImageSourceOptions {
-  baseUrl?: string;
   fallbackGatewayBaseUrls?: readonly string[];
 }
 
@@ -34,13 +31,12 @@ function buildArchiveImageCandidateUrls(imageUrl: string, fallbackGatewayBaseUrl
 }
 
 export function getArchiveImageSources(imageUrl: string, options: ArchiveImageSourceOptions = {}): string[] {
-  const baseUrl = options.baseUrl ?? getBaseUrl();
+  const configuredFallbackGatewayBaseUrls = parseArweaveGatewayBaseUrls(
+    process.env.NEXT_PUBLIC_ARWEAVE_FALLBACK_GATEWAY_BASE_URLS,
+  );
+  const fallbackGatewayBaseUrls =
+    options.fallbackGatewayBaseUrls ??
+    (configuredFallbackGatewayBaseUrls.length > 0 ? configuredFallbackGatewayBaseUrls : undefined);
 
-  return buildArchiveImageCandidateUrls(imageUrl, options.fallbackGatewayBaseUrls).map((candidateUrl) => {
-    if (candidateUrl.startsWith("http://") || candidateUrl.startsWith("https://")) {
-      return candidateUrl;
-    }
-
-    return transformImageUrlWithBaseUrl(candidateUrl, IMAGE_PRESETS.archiveGrid, baseUrl);
-  });
+  return buildArchiveImageCandidateUrls(imageUrl, fallbackGatewayBaseUrls);
 }

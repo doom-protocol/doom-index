@@ -3,18 +3,25 @@ import { describe, expect, it } from "bun:test";
 
 describe("archive image sources", () => {
   it("keeps external archive gateways as raw URLs in production", () => {
-    expect(
-      getArchiveImageSources("https://permagate.io/painting-1", {
-        baseUrl: "https://doomindex.fun",
-      }),
-    ).toEqual(["https://permagate.io/painting-1", "https://arweave.net/painting-1"]);
+    expect(getArchiveImageSources("https://permagate.io/painting-1")).toEqual([
+      "https://permagate.io/painting-1",
+      "https://arweave.net/painting-1",
+    ]);
   });
 
-  it("still transforms local archive paths in production", () => {
+  it("keeps local archive paths raw so the custom image loader can transform them", () => {
+    expect(getArchiveImageSources("/images/archive/painting-1.png")).toEqual(["/images/archive/painting-1.png"]);
+  });
+
+  it("keeps fallback gateway order deterministic when an allowlist is provided", () => {
     expect(
-      getArchiveImageSources("/images/archive/painting-1.png", {
-        baseUrl: "https://doomindex.fun",
+      getArchiveImageSources("https://permagate.io/painting-1", {
+        fallbackGatewayBaseUrls: ["https://gateway.example", "https://arweave.net"],
       }),
-    ).toEqual(["/cdn-cgi/image/width=320,quality=70,fit=cover,format=auto/images/archive/painting-1.png"]);
+    ).toEqual([
+      "https://permagate.io/painting-1",
+      "https://gateway.example/painting-1",
+      "https://arweave.net/painting-1",
+    ]);
   });
 });

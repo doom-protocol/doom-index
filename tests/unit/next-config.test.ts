@@ -44,7 +44,7 @@ describe("next.config", () => {
     process.env.npm_lifecycle_event = originalLifecycleEvent;
   });
 
-  it("uses the standard next/image optimizer and permits the archive gateway hosts", async () => {
+  it("uses the Cloudflare custom image loader and permits the archive gateway hosts", async () => {
     const config = await loadNextConfig();
     const images = config.images ?? {};
     const hasPermagatePattern = images.remotePatterns?.some(
@@ -54,8 +54,8 @@ describe("next.config", () => {
       (pattern) => pattern.protocol === "https" && pattern.hostname === "arweave.net",
     );
 
-    expect(images.loader).toBeUndefined();
-    expect(images.loaderFile).toBeUndefined();
+    expect(images.loader).toBe("custom");
+    expect(images.loaderFile).toBe("./src/lib/image-loader.ts");
     expect(hasPermagatePattern).toBe(true);
     expect(hasArweaveNetPattern).toBe(true);
   });
